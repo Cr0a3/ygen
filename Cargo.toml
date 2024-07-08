@@ -1,0 +1,14 @@
+[workspace]
+members = [
+    "tools/ygen-mc"
+]
+
+[workspace.dependencies]
+Ygen = { path = "." }
+
+[package]
+name = "Ygen"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
