@@ -24,16 +24,10 @@ jobs:
     name: Documentation
     runs-on: ubuntu-latest
     needs: [build]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
-      - uses: KyleMayes/install-llvm-action@v1
-        with:
-          version: ${{ env.DOC_LLVM_VERSION }}
-      - name: Install Rust Nightly
-        uses: dtolnay/rust-toolchain@nightly
       - name: Build Documentation
-        run: cargo +nightly doc --features ${{ env.DOC_LLVM_FEATURE }},nightly --verbose --no-deps
+        run: cargo doc --no-deps
       - name: Doc Index Page Redirection
         run: echo '<meta http-equiv="refresh" content="1; url=Ygen/index.html">' > ${{ env.DOC_PATH }}/index.html
       - name: Deploy Documentation
