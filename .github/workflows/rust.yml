@@ -1,4 +1,4 @@
-name: Rust
+name: Ygen rust workflow
 
 on:
   push:
@@ -20,8 +20,15 @@ jobs:
       run: cargo check --all
     - name: Run tests
       run: cargo test --all
-    - run: cargo doc
-    - name: Upload artifact
-      uses: actions/upload-pages-artifact@v2
-      with:
-        path: "target/doc"
+    - name: Build docs
+    - run: cargo doc --no-deps
+    - name: Deploy docs to doc branch
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        git clone --branch=doc https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git doc
+        rsync -av target/doc/ doc/
+        cd doc
+        git add --all
+        git commit -m 'Update documentation'
+        git push origin doc
