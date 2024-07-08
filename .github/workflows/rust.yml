@@ -21,7 +21,7 @@ jobs:
     - name: Run tests
       run: cargo test --all
     - name: Build docs
-    - run: cargo doc --no-deps
+      run: cargo doc --no-deps
     - name: Deploy docs to doc branch
       run: |
         git config --global user.name 'github-actions[bot]'
