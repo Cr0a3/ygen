@@ -1,4 +1,4 @@
-name: Rust
+name: Ygen check source code
 
 on:
   push:
@@ -16,12 +16,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Check
-      run: cargo check --all
+    - name: Build
+      run: cargo build --all
     - name: Run tests
       run: cargo test --all
-    - run: cargo doc
-    - name: Upload artifact
-      uses: actions/upload-pages-artifact@v2
-      with:
-        path: "target/doc"
