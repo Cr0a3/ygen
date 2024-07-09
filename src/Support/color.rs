@@ -3,24 +3,24 @@
 const ANSI_RESET: &str = "\x1b[0m";
 
 /// Color style
-pub struct Style {
+pub(crate ) struct Style {
     /// If the text is bold
-    pub bold: bool,
+    pub(crate) bold: bool,
     /// If the text is italic
-    pub italic: bool,
+    pub(crate) italic: bool,
     /// If the text is underlined
-    pub underlined: bool,
+    pub(crate) underlined: bool,
     /// If the text is striketrough
-    pub strike: bool,
+    pub(crate) strike: bool,
 
     /// The background rgb color red channel
-    pub bg_r: u8,
+    pub(crate) bg_r: u8,
     /// The background rgb color green channel
-    pub bg_g: u8,
+    pub(crate) bg_g: u8,
     /// The background rgb color blue channel
-    pub bg_b: u8,
+    pub(crate) bg_b: u8,
     /// If the text has a background color
-    pub bg: bool,
+    pub(crate) bg: bool,
 }
 
 /// Clorize trait: Colorizes a string
@@ -439,7 +439,7 @@ pub(crate) struct ColoredString {
 }
 
 impl ColoredString {
-    pub fn new(_r: i16, _g: i16, _b: i16, _attr: Style, _str: &str) -> Self {
+    pub(crate) fn new(_r: i16, _g: i16, _b: i16, _attr: Style, _str: &str) -> Self {
         Self {
             r: _r,
             g: _g,
@@ -503,7 +503,7 @@ pub struct ColorEncoder {}
 
 impl ColorEncoder {
     /// Encodes a string by a specifed format
-    /// E.g: <blue>Hi I am blue<green>Hi I am green
+    /// E.g: <blue>Hi I am blue<green>Hi I am gree(crate)n
     pub fn encode(string: &str) -> String {
         let mut str: String = string.into();
 

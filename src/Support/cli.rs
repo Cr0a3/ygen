@@ -7,23 +7,23 @@ use std::process::exit;
 
 /// A cli option
 struct CliOpt {
-    pub short: String,
-    pub long: String,
-    pub desc: String,
+    pub(crate) short: String,
+    pub(crate) long: String,
+    pub(crate) desc: String,
 
-    pub was_there: bool, // if the scan is already done, this var saves if it was seen
+    pub(crate) was_there: bool, // if the scan is already done, this var saves if it was seen
 }
 
 /// A cli argument seperated by a =
 struct CliArg {
-    pub short: String,
-    pub long: String,
-    pub desc: String,
+    pub(crate) short: String,
+    pub(crate) long: String,
+    pub(crate) desc: String,
 
-    pub required: bool,
+    pub(crate) required: bool,
 
-    pub value: String, // if the scan is already done, this var saves what was there
-    pub was_there: bool, // if the scan is already done, this var saves if it was seen
+    pub(crate) value: String, // if the scan is already done, this var saves what was there
+    pub(crate) was_there: bool, // if the scan is already done, this var saves if it was seen
 }
 
 /// A command line parser
