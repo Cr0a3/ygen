@@ -1,8 +1,8 @@
 name: Doc
+
 on:
   push:
-   branches:
-   - main
+    branches: [ "main" ]
 
 env:
   CARGO_INCREMENTAL: 0
@@ -12,7 +12,6 @@ env:
 
 jobs:
   rustdoc:
-    if: github.repository == 'Toni-Graphics/ygen'
     runs-on: ubuntu-latest
 
     steps:
