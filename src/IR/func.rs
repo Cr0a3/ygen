@@ -2,6 +2,7 @@ use std::collections::VecDeque;
 
 use super::Block;
 use super::TypeMetadata;
+use super::VerifyError;
 use crate::Support::Colorize;
 
 /// Stores the function type
@@ -87,7 +88,7 @@ impl Function {
         });
 
         for block in &self.blocks {
-            string += &format!("    {}\n", block.dump());
+            string += &format!(" {}\n", block.dump());
         }
 
         string += "}";
@@ -110,11 +111,22 @@ impl Function {
         });
 
         for block in &self.blocks {
-            string += &format!("    {}\n", block.dumpColored());
+            string += &format!(" {}\n", block.dumpColored());
         }
 
         string += "}";
 
         string
+    }
+
+    /// Verifys if the function and all of its blocks are correct:
+    ///  * Checks if the return type is the actual specified return type of the function
+    ///  * Checks all ir nodes
+    pub fn verify(&self) -> Result<(), VerifyError> {
+        for block in &self.blocks {
+            block.verify(self)?
+        }
+
+        Ok(())
     }
 }

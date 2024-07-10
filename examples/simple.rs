@@ -1,6 +1,8 @@
+use std::{error::Error, process::exit};
+
 use Ygen::prelude::*;
 
-pub fn main() {
+pub fn main() -> Result<(), Box<dyn Error>> {
     let mut module = Module::new();
     let mut builder = IRBuilder::new();
 
@@ -11,11 +13,21 @@ pub fn main() {
     let entry = func.addBlock("entry");
     builder.positionAtEnd(entry); 
 
-    builder.BuildRet(
-        Type::i32(5)
-    );
+    let val = builder.BuildAdd(Type::i32(5), Type::i32(5))?;
+
+    builder.BuildRet( val );
+
+    match module.verify() {
+        Ok(_) => {},
+        Err(e) => {
+            println!("{}", e);
+            exit(0)
+        },
+    };
 
     println!("{}",
-        module.dump()
+        module.dumpColored()
     );
+
+    Ok(())
 }

@@ -1,4 +1,4 @@
-use super::{func::FunctionType, Function};
+use super::{func::FunctionType, Function, VerifyError};
 use std::collections::HashMap;
 
 /// ## The Module
@@ -59,5 +59,16 @@ impl Module {
         }
 
         string
+    }
+
+    /// Verifys if every function is correct:
+    ///  * Checks if the return type is the actual specified return type of the function
+    ///  * Checks all ir nodes
+    pub fn verify(&self) -> Result<(), VerifyError> {
+        for (_, func) in &self.funcs {
+            func.verify()?
+        }
+
+        Ok(())
     }
 }
