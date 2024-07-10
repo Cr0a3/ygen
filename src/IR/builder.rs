@@ -30,3 +30,8 @@ impl<'a> IRBuilder<'a> {
         self.curr = 0; // Can cause an intenger underflow but shouldn't
     }
 }
+
+/// Creates an new IRBuilder
+pub fn IRBuilder<'a>() -> IRBuilder<'a> {
+    IRBuilder::new()
+}

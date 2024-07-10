@@ -8,11 +8,16 @@ pub struct Var {
 }
 
 impl Var {
-    /// Creats an new variable
+    /// Creats a new variable
     pub fn new(block: &mut Block, ty: TypeMetadata) -> Self {
         Self {
             name: format!("%{}", block.reqVarName()),
             ty: ty,
         }
     } 
+}
+
+/// Creates a new variable
+pub fn Var(block: &mut Block, ty: TypeMetadata) -> Var {
+    Var::new(block, ty)
 }

@@ -11,7 +11,7 @@ use std::error::Error;
 use std::fmt::Display;
 
 pub use module::Module;
-pub use func::{Function, FunctionType};
+pub use func::{Function, FunctionType, FnTy, Func};
 pub use typ::Type;
 pub use typ::TypeMetadata;
 pub use builder::IRBuilder;

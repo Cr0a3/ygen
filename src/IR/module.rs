@@ -9,7 +9,7 @@ pub struct Module {
 }
 
 impl Module {
-    /// Creates a new Builder
+    /// Creates a new module
     pub fn new() -> Self {
         Self {
             funcs: HashMap::new(),
@@ -71,4 +71,9 @@ impl Module {
 
         Ok(())
     }
+}
+
+/// Creates a new module
+pub fn Module() -> Module {
+    Module::new()
 }

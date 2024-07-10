@@ -61,7 +61,7 @@ pub struct Function {
 }
 
 impl Function {
-    /// Creates an new Function
+    /// Creates a new Function
     pub fn new(name: String, ty: FunctionType) -> Self {
         Self {
             ty: ty,
@@ -143,4 +143,14 @@ impl Function {
 
         Ok(())
     }
+}
+
+/// Creates a new function type
+pub fn FnTy(args: Vec<TypeMetadata>, ret: TypeMetadata) -> FunctionType {
+    FunctionType::new(args, ret)
+}
+
+/// Creates a new Function
+pub fn Func(name: String, ty: FunctionType) -> Function {
+    Function::new(name, ty)
 }

@@ -71,3 +71,8 @@ impl Block {
         Ok(())
     }
 }
+
+/// Creates an new block
+pub fn Block(name: &str, func: &Function) -> Block {
+    Block::new(name, func)
+}

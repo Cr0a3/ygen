@@ -2,10 +2,10 @@ use std::error::Error;
 use Ygen::prelude::*;
 
 pub fn main() -> Result<(), Box<dyn Error>> {
-    let mut module = Module::new();
-    let mut builder = IRBuilder::new();
+    let mut module = Module();
+    let mut builder = IRBuilder();
 
-    let ty = FunctionType::new(vec![TypeMetadata::i32, TypeMetadata::i32], TypeMetadata::i32);
+    let ty = FnTy(vec![TypeMetadata::i32, TypeMetadata::i32], TypeMetadata::i32);
     let func = module.add(
         "add", &ty
     );
