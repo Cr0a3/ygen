@@ -1,4 +1,4 @@
-use std::{error::Error, fmt::Debug};
+use std::fmt::Debug;
 use super::{FunctionType, IRBuilder, Type, TypeMetadata, Var, VerifyError};
 
 macro_rules! IrTypeWith3 {
@@ -97,7 +97,7 @@ impl Ir for Return<Type> {
 
     fn dumpColored(&self) -> String {
         let metadata: TypeMetadata = self.inner1.into();
-        format!("{} {} {}", "ret".blue(), metadata.to_string().green(), self.inner1.val().to_string().blue())
+        format!("{} {} {}", "ret".blue(), metadata.to_string().cyan(), self.inner1.val().to_string().blue())
     }
 
     fn verify(&self, FuncTy: FunctionType) -> Result<(), VerifyError> {
@@ -121,7 +121,7 @@ impl Ir for Return<Var> {
     }
 
     fn dumpColored(&self) -> String {
-        format!("{} {} {}", "ret".blue(), self.inner1.ty.to_string().green(), self.inner1.name.to_string().blue())
+        format!("{} {} {}", "ret".blue(), self.inner1.ty.to_string().cyan(), self.inner1.name.to_string().magenta())
     }
 
     fn verify(&self, FuncTy: FunctionType) -> Result<(), VerifyError> {
@@ -148,17 +148,49 @@ impl Ir for Add<Type, Type, Var> {
         format!("{} = {} {} {}, {}", 
                 self.inner3.name.magenta(), 
                 "add".blue(), 
-                self.inner3.ty.to_string().green(), 
-                self.inner1.val().to_string().blue(), 
-                self.inner2.val().to_string().blue()
+                self.inner3.ty.to_string().cyan(), 
+                self.inner1.val().to_string().magenta(), 
+                self.inner2.val().to_string().magenta()
             )
     }
 
-    fn verify(&self, FuncTy: FunctionType) -> Result<(), VerifyError> {
-        let ty: TypeMetadata = self.inner1.into();
+    fn verify(&self, _: FunctionType) -> Result<(), VerifyError> {
+        Ok(())
+    }
+}
 
-        if ty != FuncTy.ret {
-            Err(VerifyError::RetTyNotFnTy(ty, FuncTy.ret))?
+impl Ir for Add<Var, Var, Var> {
+    fn clone_box(&self) -> Box<dyn Ir> {
+        Box::new(self.clone())
+    }
+
+    fn dump(&self) -> String {
+        format!("{} = add {} {}, {}", self.inner3.name, self.inner3.ty, self.inner1.name, self.inner2.name)
+    }
+
+    fn dumpColored(&self) -> String {
+        format!("{} = {} {} {}, {}", 
+                self.inner3.name.magenta(), 
+                "add".blue(), 
+                self.inner3.ty.to_string().cyan(), 
+                self.inner1.name.to_string().magenta(), 
+                self.inner2.name.to_string().magenta()
+            )
+    }
+
+    fn verify(&self, _: FunctionType) -> Result<(), VerifyError> {
+        let op0Ty: TypeMetadata = self.inner1.ty.into();
+        let op1Ty: TypeMetadata = self.inner2.ty.into();
+        let op2Ty: TypeMetadata = self.inner3.ty.into();
+
+        if !(op0Ty == op1Ty && op1Ty == op2Ty) {
+            if op0Ty != op1Ty {
+                Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op1Ty))?
+            } else if op1Ty != op2Ty {
+                Err(VerifyError::Op0Op1TyNoMatch(op1Ty, op2Ty))?
+            } if op0Ty != op2Ty {
+                Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op2Ty))?
+            } else { todo!("unknown error variant (debug: ty0 {} ty1 {} ty2 {})", op0Ty, op1Ty, op2Ty) }
         }
 
         Ok(())
@@ -192,26 +224,36 @@ impl BuildReturn<Var> for IRBuilder<'_> {
 /// So you can return a TypeConstant or a variable
 pub trait BuildAdd<T, U> {
     /// Adds to values
-    fn BuildAdd(&mut self, op0: T, op1: U) -> Result<Var, Box<dyn Error>>;
+    fn BuildAdd(&mut self, op0: T, op1: U) -> Var;
 }
 
 impl BuildAdd<Type, Type> for IRBuilder<'_> {
-    fn BuildAdd(&mut self, op0: Type, op1: Type)  -> Result<Var, Box<dyn Error>> {
+    fn BuildAdd(&mut self, op0: Type, op1: Type)  -> Var {
         let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
         
         let op0Ty: TypeMetadata = op0.into();
-        let op1Ty: TypeMetadata = op1.into();
-
-        if op0Ty != op1Ty {
-            Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op1Ty))?
-        }
 
         let ty = op0Ty; // now both types need to be the same
         let var = Var::new(block, ty);
 
         block.push_ir(Add::new(op0, op1, var.clone()));
 
-        Ok(var)
+        var
+    }
+}
+
+impl BuildAdd<Var, Var> for IRBuilder<'_> {
+    fn BuildAdd(&mut self, op0: Var, op1: Var)  -> Var {
+        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+        
+        let op0Ty: TypeMetadata = op0.ty.into();
+
+        let ty = op0Ty; // now both types need to be the same
+        let var = Var::new(block, ty);
+
+        block.push_ir(Add::new(op0, op1, var.clone()));
+
+        var
     }
 }
 

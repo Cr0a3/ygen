@@ -2,6 +2,7 @@ use std::collections::VecDeque;
 
 use super::Block;
 use super::TypeMetadata;
+use super::Var;
 use super::VerifyError;
 use crate::Support::Colorize;
 
@@ -33,6 +34,18 @@ impl FunctionType {
             ret: ret,
         }
     }
+
+    /// Returns the argument as a var
+    /// If the num doesn't exists, it panics
+    pub fn arg(&self, num: usize) -> Var {
+        for (n, meta) in &self.args {
+            if *n == num {
+                return Var { name: format!("%{}", n), ty: *meta }
+            }
+        }
+
+        todo!("display error that var doesn't exists")
+    }
 }
 
 /// A ir function with a known variable and arg size and count
@@ -40,8 +53,7 @@ impl FunctionType {
 pub struct Function {
     /// The function type
     pub ty: FunctionType,
-    
-    pub(crate) ret: TypeMetadata,
+
     pub(crate) name: String,
     
     pub(crate) inline: bool,
@@ -53,7 +65,6 @@ impl Function {
     pub fn new(name: String, ty: FunctionType) -> Self {
         Self {
             ty: ty,
-            ret: TypeMetadata::Void,
 
             blocks: VecDeque::new(),
 
@@ -77,7 +88,7 @@ impl Function {
     pub fn dump(&self) -> String {
         let mut string = String::new();
 
-        string += &format!("define {} @{}({}) {{\n", self.ret, self.name, {
+        string += &format!("define {} @{}({}) {{\n", self.ty.ret, self.name, {
             let mut fmt = String::new();
 
             for (name, metadata) in &self.ty.args {
@@ -100,11 +111,14 @@ impl Function {
     pub fn dumpColored(&self) -> String {
         let mut string = String::new();
 
-        string += &format!("{} {} @{}({}) {{\n", "define".blue(), self.ret.to_string().green(), self.name.cyan(), {
+        string += &format!("{} {} @{}({}) {{\n", "define".blue(), self.ty.ret.to_string().green(), self.name.cyan(), {
             let mut fmt = String::new();
 
             for (name, metadata) in &self.ty.args {
-                fmt += &format!("{} {},", metadata.to_string().blue(), format!("{}", name).green());
+                fmt += &format!(" {} {}, ", metadata.to_string().cyan(), format!("%{}", name).magenta());
+            }
+            if self.ty.args.len() != 0 {
+                fmt.remove(fmt.len() - 2); // The last comma
             }
 
             fmt

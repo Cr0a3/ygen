@@ -17,9 +17,9 @@ impl Module {
     }
 
     /// Adds a new function to the module
-    pub fn add(&mut self, name: &str, ty: FunctionType) -> &mut Function {
+    pub fn add(&mut self, name: &str, ty: &FunctionType) -> &mut Function {
         self.funcs
-            .insert(name.to_string(), Function::new(name.to_string(), ty));
+            .insert(name.to_string(), Function::new(name.to_string(), ty.to_owned()));
         self.funcs.get_mut(name).unwrap()
     }
 

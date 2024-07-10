@@ -13,12 +13,12 @@ pub struct Block {
 
 impl Block {
     /// Creates a new block
-    pub fn new(name: &str, _func: &Function) -> Self {
+    pub fn new(name: &str, func: &Function) -> Self {
         Self {
             //func: func.clone(),
             name: name.to_string(),
             nodes: vec![],
-            varCount: 0,
+            varCount: func.ty.args.len(),
         }
     }
 
