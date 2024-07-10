@@ -1,5 +1,7 @@
 #![allow(non_snake_case)]
 #![warn(missing_docs)]
+#![warn(unreachable_pub)]
+#![allow(clippy::redundant_field_names)]
 #![allow(rustdoc::invalid_html_tags)]
 
 //! Ygen - <b>Y</b>et another Code <b>Gen</b>erator

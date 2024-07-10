@@ -22,7 +22,9 @@ jobs:
       run: rustup update --no-self-update stable
 
     - name: Build Documentation
-      run: cargo doc --all --no-deps
+      run: | 
+        export RUSTDOCFLAGS="--no-check"
+        cargo doc --all --no-deps
       
     - name: Doc Index Page Redirection
       run: echo '<meta http-equiv="refresh" content="1; url=Ygen/index.html">' > ./target/doc/index.html

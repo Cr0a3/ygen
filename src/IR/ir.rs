@@ -7,11 +7,11 @@ macro_rules! IrTypeWith3 {
         #[derive(Debug, Clone)]
         pub struct $name<$param1, $param2, $param3> {
             /// first inner value
-            pub inner1: $param1,
+            pub(crate) inner1: $param1,
             /// second inner value
-            pub inner2: $param2,
+            pub(crate) inner2: $param2,
             /// third inner value
-            pub inner3: $param3,
+            pub(crate) inner3: $param3,
         }
 
 
@@ -62,7 +62,7 @@ macro_rules! IrTypeWith1 {
         #[derive(Debug, Clone)]
         pub(crate) struct $name<$param1> {
             /// inner value
-            pub inner1: $param1,
+            pub(crate) inner1: $param1,
         }
 
 
