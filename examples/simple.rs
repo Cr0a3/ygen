@@ -1,5 +1,4 @@
-use std::{error::Error, process::exit};
-
+use std::error::Error;
 use Ygen::prelude::*;
 
 pub fn main() -> Result<(), Box<dyn Error>> {
@@ -13,17 +12,11 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     let entry = func.addBlock("entry");
     builder.positionAtEnd(entry); 
 
-    let val = builder.BuildAdd(Type::i32(5), Type::i32(5))?;
+let val = builder.BuildAdd(Type::i32(5), Type::i32(5))?;
 
     builder.BuildRet( val );
 
-    match module.verify() {
-        Ok(_) => {},
-        Err(e) => {
-            println!("{}", e);
-            exit(0)
-        },
-    };
+    module.verify().print();
 
     println!("{}",
         module.dumpColored()

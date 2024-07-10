@@ -27,6 +27,7 @@ pub mod prelude {
     pub use crate::IR::FunctionType;
     pub use crate::IR::TypeMetadata;
     pub use crate::Target::Triple;
+    pub use crate::Support::PrintErrorAndExit;
     
     pub use crate::IR::ir::*;
 }
