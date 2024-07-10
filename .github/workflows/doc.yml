@@ -23,7 +23,6 @@ jobs:
 
     - name: Build Documentation
       run: | 
-        export RUSTDOCFLAGS="--no-check"
         cargo doc --all --no-deps
       
     - name: Doc Index Page Redirection
