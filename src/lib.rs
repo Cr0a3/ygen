@@ -21,13 +21,12 @@ pub mod Support;
 
 /// Most common used functions, classes, enums of this Libary
 pub mod prelude {
-    pub use crate::IR::Builder;
+    pub use crate::IR::Module;
+    pub use crate::IR::IRBuilder;
     pub use crate::IR::Type;
+    pub use crate::IR::FunctionType;
     pub use crate::IR::TypeMetadata;
     pub use crate::Target::Triple;
-
-    /// All ir items (e.g: `Return::new( Type::i32(5) )`)
-    pub mod Ir {
-        pub use crate::IR::ir::*;
-    }
+    
+    pub use crate::IR::ir::*;
 }

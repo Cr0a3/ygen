@@ -1,39 +1,60 @@
-use super::Builder;
-use super::Type;
+use std::collections::VecDeque;
+
+use super::Block;
 use super::TypeMetadata;
-use crate::prelude::Ir::*;
 use crate::Support::Colorize;
+
+/// Stores the function type
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FunctionType {
+    /// The function arguments (stored as: num, type)
+    pub args: Vec<(/*num*/usize, TypeMetadata)>,
+    /// The return type
+    pub ret: TypeMetadata,
+}
+
+impl FunctionType {
+    /// Creates a new function type
+    pub fn new(args: Vec<TypeMetadata>, ret: TypeMetadata) -> Self {
+        Self {
+            args: {
+                let mut ret = vec![];
+
+                let mut index = 0;
+                for arg in args {
+
+                    ret.push((index, arg));
+
+                    index += 1;
+                }
+                ret
+            },
+            ret: ret,
+        }
+    }
+}
 
 /// A ir function with a known variable and arg size and count
 #[derive(Debug, Clone)]
 pub struct Function {
-    #[allow(unused)]
-    pub(crate) builder: Builder,
-
-    pub(crate) args: Vec<(String, TypeMetadata)>,
-    pub(crate) vars: Vec<(String, TypeMetadata)>,
+    /// The function type
+    pub ty: FunctionType,
     
     pub(crate) ret: TypeMetadata,
-    
     pub(crate) name: String,
     
     pub(crate) inline: bool,
-    
-    pub(crate) ir: Vec<Box<dyn Ir>>,
+    pub(crate) blocks: VecDeque<Block>,
 }
 
 impl Function {
     /// Creates an new Function
-    pub fn new(builder: Builder, name: String) -> Self {
+    pub fn new(name: String, ty: FunctionType) -> Self {
         Self {
-            builder: builder,
-
-            args: vec![],
-            vars: vec![],
-
-            ir: vec![],
-
+            ty: ty,
             ret: TypeMetadata::Void,
+
+            blocks: VecDeque::new(),
 
             name: name,
             inline: false,
@@ -45,42 +66,28 @@ impl Function {
         self.inline = true;
     }
 
-    /// Sets the function args (name: String, type: TypeMetadata)
-    pub fn args(&mut self, args: Vec<(String, TypeMetadata)>) {
-        self.args = args;
-    }
-
-    /// Sets the function vars (name: String, type: TypeMetadata)
-    pub fn vars(&mut self, vars: Vec<(String, TypeMetadata)>) {
-        self.vars = vars;
-    }
-    
-    /// Sets the function return type
-    pub fn ret(&mut self, ret: TypeMetadata) {
-        self.ret = ret;
-    }
-
-    /// Adds a new Ir node to the function
-    pub fn push(&mut self, ir: Box<dyn Ir>) {
-        self.ir.push(ir);
+    /// Adds a new block to the function
+    pub fn addBlock(&mut self, name: &str) -> &mut Block {
+        self.blocks.push_back(Block::new(name, &self));
+        self.blocks.back_mut().expect("unreachable") // we previusly pushed something so here it is safe
     }
 
     /// Emits the Ir of the function into a string
-    pub fn emitToString(&self) -> String {
+    pub fn dump(&self) -> String {
         let mut string = String::new();
 
         string += &format!("define {} @{}({}) {{\n", self.ret, self.name, {
             let mut fmt = String::new();
 
-            for (name, metadata) in &self.args {
+            for (name, metadata) in &self.ty.args {
                 fmt += &format!("{} %{},", metadata, name);
             }
 
             fmt
         });
 
-        for instr in &self.ir {
-            string += &format!("    {}\n", instr.text_rep());
+        for block in &self.blocks {
+            string += &format!("    {}\n", block.dump());
         }
 
         string += "}";
@@ -89,30 +96,25 @@ impl Function {
     }
 
     /// Emits the Ir of the function into an colored string
-    pub fn emitToColoredString(&self) -> String {
+    pub fn dumpColored(&self) -> String {
         let mut string = String::new();
 
         string += &format!("{} {} @{}({}) {{\n", "define".blue(), self.ret.to_string().green(), self.name.cyan(), {
             let mut fmt = String::new();
 
-            for (name, metadata) in &self.args {
+            for (name, metadata) in &self.ty.args {
                 fmt += &format!("{} {},", metadata.to_string().blue(), format!("{}", name).green());
             }
 
             fmt
         });
 
-        for instr in &self.ir {
-            string += &format!("    {}\n", instr.text_rep_colored());
+        for block in &self.blocks {
+            string += &format!("    {}\n", block.dumpColored());
         }
 
         string += "}";
 
         string
-    }
-
-    /// Builds an return
-    pub fn BuildReturn(&mut self, val: Type) {
-        self.ir.push( Return::new( val) );
     }
 }

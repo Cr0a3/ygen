@@ -1,5 +1,5 @@
 use std::collections::VecDeque;
-use crate::IR::Builder;
+use crate::IR::Block;
 use super::Pass;
 
 /// The manager of all passes (PassManager)
@@ -26,9 +26,9 @@ impl<T> PassManager<T> where T: Pass + Clone {
     }
 
     /// Executes the entire pass queue
-    pub fn run(&self, builder: &mut Builder) {
+    pub fn run(&self, block: &mut Block) {
         for pass in &self.passes {
-            pass.run(builder);
+            pass.run(block);
         }
     }
 }
