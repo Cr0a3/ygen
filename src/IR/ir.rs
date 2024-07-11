@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{any::Any, fmt::Debug, hash::Hash};
 use super::{FunctionType, IRBuilder, Type, TypeMetadata, Var, VerifyError};
 
 macro_rules! IrTypeWith3 {
@@ -30,10 +30,10 @@ macro_rules! IrTypeWith3 {
         }
     };
 }
-/*macro_rules! IrTypeWith2 {
+macro_rules! IrTypeWith2 {
     ($name:tt, $param1:tt, $param2:tt) => {
         /// An Ir node
-        #[derive(Debug, Clone)]
+        #[derive(Debug, Clone, Hash)]
         pub struct $name<$param1, $param2> {
             /// first inner value
             pub inner1: $param1,
@@ -55,11 +55,11 @@ macro_rules! IrTypeWith3 {
             }
         }
     };
-}*/
+}
 macro_rules! IrTypeWith1 {
     ($name:tt, $param1:tt) => {
         /// An Ir node
-        #[derive(Debug, Clone)]
+        #[derive(Debug, Clone, Hash)]
         pub(crate) struct $name<$param1> {
             /// inner value
             pub(crate) inner1: $param1,
@@ -81,6 +81,7 @@ macro_rules! IrTypeWith1 {
 }
 
 IrTypeWith1!(Return, T);
+IrTypeWith2!(ConstAssign, T, U);
 IrTypeWith3!(Add, T, U, Z);
 
 use crate::Support::Colorize;
@@ -88,6 +89,10 @@ use crate::Support::Colorize;
 impl Ir for Return<Type> {
     fn clone_box(&self) -> Box<dyn Ir> {
         Box::new(self.clone())
+    }
+
+    fn name(&self) -> String {
+        "RetType".into()
     }
 
     fn dump(&self) -> String {
@@ -109,11 +114,19 @@ impl Ir for Return<Type> {
 
         Ok(())
     }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 impl Ir for Return<Var> {
     fn clone_box(&self) -> Box<dyn Ir> {
         Box::new(self.clone())
+    }
+
+    fn name(&self) -> String {
+        "RetVar".into()
     }
 
     fn dump(&self) -> String {
@@ -133,11 +146,19 @@ impl Ir for Return<Var> {
 
         Ok(())
     }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 impl Ir for Add<Type, Type, Var> {
     fn clone_box(&self) -> Box<dyn Ir> {
         Box::new(self.clone())
+    }
+
+    fn name(&self) -> String {
+        "AddTypeType".into()
     }
 
     fn dump(&self) -> String {
@@ -155,13 +176,35 @@ impl Ir for Add<Type, Type, Var> {
     }
 
     fn verify(&self, _: FunctionType) -> Result<(), VerifyError> {
+        let op0Ty: TypeMetadata = self.inner1.into();
+        let op1Ty: TypeMetadata = self.inner2.into();
+        let op2Ty: TypeMetadata = self.inner3.ty.into();
+
+        if !(op0Ty == op1Ty && op1Ty == op2Ty) {
+            if op0Ty != op1Ty {
+                Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op1Ty))?
+            } else if op1Ty != op2Ty {
+                Err(VerifyError::Op0Op1TyNoMatch(op1Ty, op2Ty))?
+            } if op0Ty != op2Ty {
+                Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op2Ty))?
+            } else { todo!("unknown error variant (debug: ty0 {} ty1 {} ty2 {})", op0Ty, op1Ty, op2Ty) }
+        }
+
         Ok(())
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
 impl Ir for Add<Var, Var, Var> {
     fn clone_box(&self) -> Box<dyn Ir> {
         Box::new(self.clone())
+    }
+
+    fn name(&self) -> String {
+        "AddVarVar".into()
     }
 
     fn dump(&self) -> String {
@@ -194,6 +237,48 @@ impl Ir for Add<Var, Var, Var> {
         }
 
         Ok(())
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+impl Ir for ConstAssign<Var, Type> {
+    fn dump(&self) -> String {
+        let meta: TypeMetadata = self.inner2.into();
+        format!("{} = {} {}", self.inner1.name, meta, self.inner2.val())
+    }
+
+    fn dumpColored(&self) -> String {
+        let meta: TypeMetadata = self.inner2.into();
+        format!("{} = {} {}", 
+            self.inner1.name.magenta(), 
+            meta.to_string().cyan(), 
+            self.inner2.val().to_string().blue()
+        )
+    }
+
+    fn name(&self) -> String {
+        "AssignVarType".into()
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn verify(&self, _: FunctionType) -> Result<(), VerifyError> {
+        let op0Ty = self.inner1.ty;
+        let op1Ty = self.inner2.into();
+        if op0Ty != op1Ty {
+            Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op1Ty))?
+        }
+
+        Ok(())
+    }
+
+    fn clone_box(&self) -> Box<dyn Ir> {
+        Box::new(self.clone())
     }
 }
 
@@ -258,11 +343,17 @@ impl BuildAdd<Var, Var> for IRBuilder<'_> {
 }
 
 /// The ir trait
-pub(crate) trait Ir: Debug {
+pub(crate) trait Ir: Debug + Any {
     /// Returns the ir node as his textual representation
     fn dump(&self) -> String;
     /// Returns the ir node as his textual representation with colors
     fn dumpColored(&self) -> String;
+
+    /// Returns the name of the ir expr
+    fn name(&self) -> String;
+
+    /// Turns the ir node to an any
+    fn as_any(&self) -> &dyn Any;
 
     fn verify(&self, FuncTy: FunctionType) -> Result<(), VerifyError>;
 
@@ -273,5 +364,17 @@ pub(crate) trait Ir: Debug {
 impl Clone for Box<dyn Ir> {
     fn clone(&self) -> Box<dyn Ir> {
         self.clone_box()
+    }
+}
+
+/// Used for sus workaround to replace current ir node
+pub trait Replace<T> {
+    /// Replaces current ir node
+    fn replace(&mut self, other: T);
+}
+
+impl Replace<Box<dyn Ir>> for Box<dyn Ir> {
+    fn replace(&mut self, other: Box<dyn Ir>) {
+        *self = other
     }
 }

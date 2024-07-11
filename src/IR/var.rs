@@ -1,7 +1,7 @@
 use super::{Block, TypeMetadata};
 
 /// A variable
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Var {
     pub(crate) name: String,
     pub(crate) ty: TypeMetadata,

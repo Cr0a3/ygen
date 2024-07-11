@@ -26,6 +26,7 @@ pub mod prelude {
     pub use crate::IR::*;
     pub use crate::Target::Triple;
     pub use crate::Support::PrintErrorAndExit;
+    pub use crate::PassManager::PassManager;
     
     pub use crate::IR::ir::*;
 }

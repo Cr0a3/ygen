@@ -3,11 +3,11 @@ use crate::IR::Block;
 use super::Pass;
 
 /// The manager of all passes (PassManager)
-pub struct PassManager<T> {
-    passes: VecDeque<T>,
+pub struct PassManager {
+    passes: VecDeque<Box<dyn Pass>>,
 }
 
-impl<T> PassManager<T> where T: Pass + Clone {
+impl PassManager {
     /// Creates an new pass manager
     pub fn new() -> Self {
         Self {
@@ -16,13 +16,13 @@ impl<T> PassManager<T> where T: Pass + Clone {
     }
 
     /// Adds a new pass to the back of the pass queue
-    pub fn add(&mut self, pass: T)  {
-        self.passes.push_back( pass.clone() );
+    pub fn add(&mut self, pass: Box<dyn Pass>)  {
+        self.passes.push_back( pass );
     }
 
     /// Adds a new pass to the front of the pass queue
-    pub fn add_front(&mut self, pass: T)  {
-        self.passes.push_front( pass.clone() );
+    pub fn addFront(&mut self, pass: Box<dyn Pass>)  {
+        self.passes.push_front( pass );
     }
 
     /// Executes the entire pass queue

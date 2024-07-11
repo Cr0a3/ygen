@@ -1,3 +1,5 @@
+use crate::PassManager;
+
 use super::{func::FunctionType, Function, VerifyError};
 use std::collections::HashMap;
 
@@ -61,7 +63,7 @@ impl Module {
         string
     }
 
-    /// Verifys if every function is correct:
+    /// Checks if every function is correct:
     ///  * Checks if the return type is the actual specified return type of the function
     ///  * Checks all ir nodes
     pub fn verify(&self) -> Result<(), VerifyError> {
@@ -70,6 +72,13 @@ impl Module {
         }
 
         Ok(())
+    }
+
+    /// Runs the pass manager over all functions
+    pub fn runPassMngr(&mut self, mngr: PassManager::PassManager) {
+        for (_, func) in &mut self.funcs {
+            func.runPassMngr(&mngr)
+        }
     }
 }
 

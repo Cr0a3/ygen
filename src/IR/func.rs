@@ -4,6 +4,7 @@ use super::Block;
 use super::TypeMetadata;
 use super::Var;
 use super::VerifyError;
+use crate::prelude::PassManager;
 use crate::Support::Colorize;
 
 /// Stores the function type
@@ -142,6 +143,13 @@ impl Function {
         }
 
         Ok(())
+    }
+    
+    /// Runs the pass manager over all blocks
+    pub fn runPassMngr(&mut self, mngr: &PassManager) {
+        for block in &mut self.blocks {
+            mngr.run(block);
+        }
     }
 }
 
