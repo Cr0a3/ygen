@@ -158,6 +158,7 @@ impl Triple {
                 "openBSD" => OS::OpenBSD,
                 "solaris" => OS::Solaris,
                 "win32" => OS::Win32,
+                "windows" => OS::Win32,
                 "haiku" => OS::Haiku,
                 "minix" => OS::Minix,
                 "rtems" => OS::Rtems,

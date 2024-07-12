@@ -10,16 +10,22 @@
 ///  * The target triple
 ///  * TargetRegistry
 pub mod Target;
+
 /// The ir module: functions for building function ir
 pub mod IR;
+
 /// The pass manager module:
 ///  * Includes all passes and their definition
 ///  * The PassManager
 pub mod PassManager;
+
 /// Other utilites like:
 ///  * Cli args
 ///  * String coloring and padding
 pub mod Support;
+
+/// Writing/Reading object files
+pub mod Obj;
 
 /// Most common used functions, classes, enums of this Libary
 pub mod prelude {
