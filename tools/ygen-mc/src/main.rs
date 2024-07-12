@@ -1,8 +1,26 @@
+#![allow(rustdoc::invalid_html_tags)]
+
+//! # `ygen-mc`: Ygen machine code code playground
+//! With the ygen machine code playground you can play around with assembler instructions
+//! and see their opcodes. <br>
+//! It's suppused to being the Ygen variant of the `llvm-mc`
+//! ### Usage
+//! **Options:** <br>
+//! 
+//! > **-h, --help**    Displays help<br>
+//! > **-v, --version** Displays the version<br>
+//! > **-clr, --color** Colorates the ouput<br>
+//!
+//! **Arguments:** <br>
+//!
+//! > **-as=<val>, --assemble-string=<val>** The assembly instruction to assemble <br>
+//! > **-triple=<val>, --triple=<val>**      The target triple <br>
+
 use Ygen::Support::Cli;
 
 fn main() {
     let mut cli = Cli::new(
-        "ygen-mc", "Ygen's machine code playground", "1.0", "Cr0a3"
+        "ygen-mc", "Ygens machine code playground", "1.0", "Cr0a3"
     );
 
     cli.add_opt("h", "help", "Displays help");
