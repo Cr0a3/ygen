@@ -1,4 +1,4 @@
-use object::write::{Relocation, SectionId, StandardSection, Symbol, SymbolId, SymbolSection};
+use object::write::{Relocation, SectionId, Symbol, SymbolId, SymbolSection};
 use object::{Architecture, BinaryFormat, Endianness, RelocationEncoding, RelocationFlags, RelocationKind, SectionKind, SymbolFlags, SymbolKind, SymbolScope};
 
 use crate::prelude::Triple;
@@ -44,6 +44,8 @@ pub struct Link {
     pub to: String,
     /// The binary offset of the start of the function
     pub at: usize,
+    /// The addend to use
+    pub addend: i64,
 }
 
 /// The linkage of the target symbol
@@ -213,11 +215,11 @@ impl ObjectBuilder {
                 flags: SymbolFlags::None,
             });
 
-            let def_section = match decl {
+            /*let def_section = match decl {
                 Decl::Function => obj.add_subsection(StandardSection::Text, name.as_bytes()),
                 Decl::Data => obj.add_subsection(StandardSection::Data, name.as_bytes()),
                 Decl::Constant => obj.add_subsection(StandardSection::ReadOnlyData, name.as_bytes()),
-            };
+            };*/
 
             let def_offset = match decl {
                 Decl::Function => obj.add_symbol_data(sym, secText, &data, 16),
@@ -225,7 +227,7 @@ impl ObjectBuilder {
                 Decl::Constant => obj.add_symbol_data(sym, secConsts, &data, 16),
             };
 
-            syms.insert(name.clone(), (Some(def_section), Some(def_offset), sym));
+            syms.insert(name.clone(), (None, Some(def_offset), sym));
         }
 
         for (name, decl, linkage) in &self.decls { // for extern symbols
@@ -251,13 +253,13 @@ impl ObjectBuilder {
         }
 
         for link in &self.links {
-            let (from_sec, from_off, _) = syms.get(&link.from).unwrap();
-            let (_, to_off, to_sym) = syms.get(&link.to).unwrap();
+            let (_, off, _) = syms.get(&link.from).unwrap();
+            let (_, _, to_sym) = syms.get(&link.to).unwrap();
 
-            obj.add_relocation(from_sec.unwrap().to_owned(), Relocation {
-                offset: from_off.unwrap() + link.at as u64,
+            obj.add_relocation(secText, Relocation {
+                offset: link.at as u64,
                 symbol: to_sym.to_owned(),
-                addend: {if let Some(off) = *to_off {off as i64} else {0}} + -4,
+                addend: link.addend + {if let Some(off) = off { *off as i64} else { 0 }},
                 flags: RelocationFlags::Generic { 
                     kind: RelocationKind::PltRelative, 
                     encoding: {
