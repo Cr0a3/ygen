@@ -1,10 +1,16 @@
+use std::sync::Mutex;
+
+use once_cell::sync::OnceCell;
+
 use super::Arch;
 
 /// The Target Registry: stores if a target was already initialized
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TargetRegistry {
-    inited_targets: Vec<Arch>,
+    pub(crate) inited_targets: Vec<Arch>,
 }
+
+pub(crate) static TARGETS: OnceCell<Mutex<TargetRegistry>> = OnceCell::new();
 
 impl TargetRegistry {
     /// Creates a new instance

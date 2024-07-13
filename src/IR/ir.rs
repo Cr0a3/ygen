@@ -333,7 +333,7 @@ impl BuildAdd<Var, Var> for IRBuilder<'_> {
         
         let op0Ty: TypeMetadata = op0.ty.into();
 
-        let ty = op0Ty; // now both types need to be the same
+        let ty = op0Ty;
         let var = Var::new(block, ty);
 
         block.push_ir(Add::new(op0, op1, var.clone()));

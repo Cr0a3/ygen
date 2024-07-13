@@ -3,6 +3,8 @@
 #![warn(unreachable_pub)]
 #![allow(clippy::redundant_field_names)]
 #![allow(rustdoc::invalid_html_tags)]
+#![allow(rustdoc::invalid_codeblock_attributes)]
+#![allow(non_camel_case_types)]
 
 //! # Ygen - <b>Y</b>et another Code <b>Gen</b>erator
 //! ### Description
@@ -22,7 +24,7 @@
 //! 
 //! ###### Here is a quick introduction to the YGEN-IR:
 //! A function is defined like this:
-//! ```
+//! ```no-run
 //! define i32 @add( i32 %0,  i32 %1 ) {
 //! entry:
 //!  %2 = add i32 %0, %1

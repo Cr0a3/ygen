@@ -27,7 +27,7 @@ impl PrintErrorAndExit for Result<(), VerifyError> {
         match self {
             Ok(_) => {},
             Err(e) => {
-                println!("{}", e);
+                eprintln!("{}", e);
                 exit(-1)
             }
         }

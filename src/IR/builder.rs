@@ -29,6 +29,11 @@ impl<'a> IRBuilder<'a> {
         self.blocks.push_front(block);
         self.curr = 0; // Can cause an intenger underflow but shouldn't
     }
+
+    /// Returns the last block of the builder
+    pub fn getLastBlock(&mut self) -> Option<&Block> {
+        Some(self.blocks.back()?.to_owned().to_owned())
+    }
 }
 
 /// Creates an new IRBuilder

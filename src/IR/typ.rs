@@ -4,7 +4,6 @@ use std::fmt::Display;
 /// 
 /// If you want an empty Type consider using `TypeMetadata`
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[allow(non_camel_case_types)]
 pub enum Type {
     /// Just an u16 with a value
     u16(u16),
@@ -26,7 +25,6 @@ pub enum Type {
 
 /// Stores type metadata (just the type without data)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[allow(non_camel_case_types)]
 pub enum TypeMetadata {
     /// u16
     u16,

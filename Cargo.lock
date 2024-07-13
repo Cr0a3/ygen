@@ -7,6 +7,7 @@ name = "Ygen"
 version = "0.1.0"
 dependencies = [
  "object",
+ "once_cell",
 ]
 
 [[package]]
