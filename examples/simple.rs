@@ -1,5 +1,5 @@
 use std::error::Error;
-use Ygen::{prelude::*, PassManager::Passes::PreComputeValue, Target::{initializeX64Target, CallConv}};
+use Ygen::{prelude::*, Target::{initializeX64Target, CallConv}};
 
 pub fn main() -> Result<(), Box<dyn Error>> {
     
@@ -17,11 +17,14 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     let entry = func.addBlock("entry");
     builder.positionAtEnd(entry); 
 
-    let val = builder.BuildAdd(ty.arg(0), ty.arg(1));
+    //let val = builder.BuildAdd(ty.arg(0), ty.arg(1));
     //let add2 = builder.BuildAdd(Type::i32(5), Type::i32(5));
     //let ret = builder.BuildAdd(val, add2);
 
     //builder.BuildRet( ret );
+
+    builder.BuildRet( Type::i32(5) );
+
     let block = builder.getLastBlock().clone().unwrap().clone();
     let func = func.clone().to_owned().clone();
 

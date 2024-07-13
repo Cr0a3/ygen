@@ -32,4 +32,28 @@ impl CallConv {
             CallConv::WindowsFastCall => vec!["rdx".into(), "rcx".into(), "r8".into(), "r9".into()],
         }
     }
+
+    /// Returns the return register
+    pub fn ret16(&self) -> String {
+        match  self {
+            CallConv::WindowsFastCall => "ax".into(),
+            CallConv::SystemV => "ax".into(),
+        }
+    }
+
+    /// Returns the return register
+    pub fn ret32(&self) -> String {
+        match  self {
+            CallConv::WindowsFastCall => "eax".into(),
+            CallConv::SystemV => "eax".into(),
+        }
+    }
+
+    /// Returns the return register
+    pub fn ret64(&self) -> String {
+        match  self {
+            CallConv::WindowsFastCall => "rax".into(),
+            CallConv::SystemV => "rax".into(),
+        }
+    }
 }

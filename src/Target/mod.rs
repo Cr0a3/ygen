@@ -2,11 +2,12 @@ mod triple;
 mod registry;
 mod x64;
 pub use x64::initializeX64Target;
+pub(crate) use registry::TARGETS;
 pub use triple::Triple;
 pub use registry::TargetRegistry;
 
 /// Target architecture
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Arch {
     /// Unknown Architecture
     Unknown,
@@ -111,7 +112,7 @@ pub enum Arch {
 }
 
 /// Target calling convention
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum CallConv {
     /// Windows standart
     WindowsFastCall,
@@ -120,7 +121,7 @@ pub enum CallConv {
 }
 
 /// Vendor
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Vendor {
     /// Unknown Vendor
     Unknown,
@@ -157,7 +158,7 @@ pub enum Vendor {
 }
 
 /// Target OS 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum OS {
     /// Unknown OS
     Unknown,
@@ -232,7 +233,7 @@ pub enum OS {
 }
 
 /// Target environment
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Environment {
     /// Unknown environment
     Unknown,
@@ -275,7 +276,7 @@ pub enum Environment {
 }
 
 /// Target object format
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ObjFormat {
     /// Unknown 
     Unknown,

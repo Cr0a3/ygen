@@ -2,6 +2,8 @@
 
 use std::sync::Mutex;
 
+use ir::*;
+
 use super::{registry::TARGETS, Arch, TargetRegistry};
 
 pub(crate) mod ir;
@@ -14,4 +16,7 @@ pub fn initializeX64Target() {
     });
 
     TARGETS.get().unwrap().lock().unwrap().set_inited(Arch::X86_64);
+
+    TARGETS.get().unwrap().lock().unwrap().setCompileFuncForRetType(Arch::X86_64, CompileRetType);
+    TARGETS.get().unwrap().lock().unwrap().setCompileFuncForRetVar(Arch::X86_64, CompileRetVar);
 }

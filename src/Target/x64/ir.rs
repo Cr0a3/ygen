@@ -1,92 +1,102 @@
-use std::{any::Any, collections::HashMap};
+use std::collections::HashMap;
 
-use crate::{prelude::{Block, Function, TypeMetadata, Var}, IR::ir::*};
+use crate::{prelude::{Block, Function, Type, TypeMetadata, Var}, Target::{registry::{BackendInfos, VarStorage}, TARGETS}, IR::ir::*};
 
 use crate::Target::CallConv;
 
-/// Stores compilation infos for ir node compilation
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct x64CompilationInfos {
-    pub(crate) varsStorage: HashMap<Var, VarStorage>,
-}
+pub(crate) fn CompileAddVarVar(add: &Add<Var, Var, Var>) -> Vec<String> {
+    let infos = &mut TARGETS.get().unwrap().lock().unwrap().backend;
 
-impl x64CompilationInfos {
-    pub(crate) fn insertVar(&mut self, var: Var, store: VarStorage) {
-        self.varsStorage.insert(var, store);
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) enum VarStorage {
-    Register(String),
-    Memory(String),
-}
-
-/// A trait which is used to implement compilability for ir nodes
-pub(crate) trait Compile: Ir {
-    /// Compiles the node into an asm string
-    fn compile(&self, infos: &mut x64CompilationInfos) -> Vec<String>;
-}
-
-impl Compile for Add<Var, Var, Var> {
-    fn compile(&self, infos: &mut x64CompilationInfos) -> Vec<String> {
-        let loc1 = if let Some(loc1) = infos.varsStorage.get(&self.inner1) {
-            loc1.clone()
-        } else {
-            panic!("unknown variable: {:?}", self.inner1)
-        };
+    let loc1 = if let Some(loc1) = infos.varsStorage.get(&add.inner1) {
+        loc1.clone()
+    } else {
+        panic!("unknown variable: {:?}", add.inner1)
+    };
+    
+    let loc2 = if let Some(loc2) = infos.varsStorage.get(&add.inner2) {
+        loc2.clone()
         
-        let loc2 = if let Some(loc2) = infos.varsStorage.get(&self.inner2) {
-            loc2.clone()
-            
-        } else {
-            panic!("unknown variable: {:?}", self.inner1)
-        };
+    } else {
+        panic!("unknown variable: {:?}", add.inner1)
+    };
 
-        let op0 = if let VarStorage::Register(ref reg) = loc1 {
-            reg.to_string()
-        } else if let VarStorage::Memory(ref mem) = loc1 {
-            mem.to_string()
-        } else { panic!() };
+    let op0 = if let VarStorage::Register(ref reg) = loc1 {
+        reg.to_string()
+    } else if let VarStorage::Memory(ref mem) = loc1 {
+        mem.to_string()
+    } else { panic!() };
 
-        let op1 = if let VarStorage::Register(ref reg) = loc2 {
-            reg.to_string()
-        } else if let VarStorage::Memory(ref mem) = loc2 {
-            mem.to_string()
-        } else { panic!() };
+    let op1 = if let VarStorage::Register(ref reg) = loc2 {
+        reg.to_string()
+    } else if let VarStorage::Memory(ref mem) = loc2 {
+        mem.to_string()
+    } else { panic!() };
 
-        let ret: String = "rax".into();
+    let ret: String = "rax".into();
+    todo!("implement actual variable storage information");
 
-        infos.insertVar(
-            self.inner3.clone(), 
-            VarStorage::Register(ret.clone())
-        );
+    infos.insertVar(
+        add.inner3.clone(), 
+        VarStorage::Register(ret.clone())
+    );
 
-        if let VarStorage::Register(_) = loc1 {
-            if let VarStorage::Register(_) = loc2 {
-                return vec![format!("lea {}, [{} + {}", ret, op0, op1)];
-            }
+    if let VarStorage::Register(_) = loc1 {
+        if let VarStorage::Register(_) = loc2 {
+            return vec![format!("lea {}, [{} + {}", ret, op0, op1)];
         }
-
-        if let VarStorage::Memory(_) = loc1 {
-            if let VarStorage::Memory(_) = loc2 {
-                return vec![
-                    format!("mov rax, {}", op0),
-                    format!("mov rbx, {}", op1),
-                    format!("add rax, rbx"),
-                    format!("mov rax, {}", ret),
-                ];
-            }
-        }
-
-        vec![]
     }
+
+    if let VarStorage::Memory(_) = loc1 {
+        if let VarStorage::Memory(_) = loc2 {
+            return vec![
+                format!("mov rax, {}", op0),
+                format!("mov rbx, {}", op1),
+                format!("add rax, rbx"),
+                format!("mov rax, {}", ret),
+            ];
+        }
+    }
+
+    vec![]
 }
 
+pub(crate) fn CompileRetType(ret: &Return<Type>) -> Vec<String> {
+    vec![format!("mov {}, {}", match ret.inner1 {
+        Type::u16(_) | Type::i16(_) => TARGETS.get().unwrap().lock().unwrap().call.ret16(),
+        Type::u32(_) | Type::i32(_) => TARGETS.get().unwrap().lock().unwrap().call.ret32(),
+        Type::u64(_) | Type::i64(_) => TARGETS.get().unwrap().lock().unwrap().call.ret64(),
+        Type::Void => todo!(), 
+    }, ret.inner1.val())]
+}
+
+
+pub(crate) fn CompileRetVar(ret: &Return<Var>) -> Vec<String> {
+    let target = TARGETS.get().unwrap().lock().unwrap();
+    let (var, loc) = if let Some(loc) = target.backend.varsStorage.get_key_value(&ret.inner1) {
+        loc.clone()
+    } else {
+        panic!("unknown variable: {:?}", ret.inner1)
+    };
+
+    if var.ty == TypeMetadata::Void {
+        return vec![];
+    }
+
+    vec![format!("mov {}, {}", match var.ty {
+        TypeMetadata::u16 | TypeMetadata::i16 => target.call.ret16(),
+        TypeMetadata::u32 | TypeMetadata::i32 => target.call.ret32(),
+        TypeMetadata::u64 | TypeMetadata::i64=> target.call.ret64(),
+        _ => unreachable!(),
+    }, {
+        if let VarStorage::Memory(mem) = loc { mem }
+        else if let VarStorage::Register(reg) = loc { reg }
+        else { unreachable!() }
+    })]
+}
 impl Block {
     /// Builds the block to x86 assembly intel syntax
     pub fn buildAsmX86(&self, func: &Function, call: &CallConv) -> Vec<String> {
-        let mut info = x64CompilationInfos { varsStorage: HashMap::new() };
+        let mut info = BackendInfos { varsStorage: HashMap::new() };
 
         let mut reg_vars = 0;
         let mut stack_off = 0;
@@ -116,8 +126,7 @@ impl Block {
         }
 
         for node in &self.nodes {
-            let ty = (node.as_any()).downcast_ref::<Box<dyn Compile>>().unwrap();
-            ty.compile(&mut info);
+            node.compile();
         }
 
         vec![]

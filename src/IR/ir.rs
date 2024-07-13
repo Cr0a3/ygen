@@ -1,5 +1,6 @@
 use std::{any::Any, fmt::Debug, hash::Hash};
 use super::{FunctionType, IRBuilder, Type, TypeMetadata, Var, VerifyError};
+use crate::Target::TARGETS;
 
 macro_rules! IrTypeWith3 {
     ($name:tt, $param1:tt, $param2:tt, $param3:tt) => {
@@ -118,6 +119,10 @@ impl Ir for Return<Type> {
     fn as_any(&self) -> &dyn Any {
         self
     }
+
+    fn compile(&self) -> Vec<String> {
+        TARGETS.get().unwrap().lock().unwrap().getCompileFuncRetType()(self)
+    }
 }
 
 impl Ir for Return<Var> {
@@ -149,6 +154,10 @@ impl Ir for Return<Var> {
 
     fn as_any(&self) -> &dyn Any {
         self
+    }
+
+    fn compile(&self) -> Vec<String> {
+        TARGETS.get().unwrap().lock().unwrap().getCompileFuncRetVar()(self)
     }
 }
 
@@ -196,6 +205,10 @@ impl Ir for Add<Type, Type, Var> {
     fn as_any(&self) -> &dyn Any {
         self
     }
+
+    fn compile(&self) -> Vec<String> {
+        TARGETS.get().unwrap().lock().unwrap().getCompileFuncAddTypeType()(self)
+    }
 }
 
 impl Ir for Add<Var, Var, Var> {
@@ -242,6 +255,10 @@ impl Ir for Add<Var, Var, Var> {
     fn as_any(&self) -> &dyn Any {
         self
     }
+
+    fn compile(&self) -> Vec<String> {
+        TARGETS.get().unwrap().lock().unwrap().getCompileFuncAddVarVar()(self)
+    }
 }
 
 impl Ir for ConstAssign<Var, Type> {
@@ -279,6 +296,10 @@ impl Ir for ConstAssign<Var, Type> {
 
     fn clone_box(&self) -> Box<dyn Ir> {
         Box::new(self.clone())
+    }
+
+    fn compile(&self) -> Vec<String> {
+        TARGETS.get().unwrap().lock().unwrap().getCompileFuncConstAssign()(self)
     }
 }
 
@@ -359,6 +380,9 @@ pub(crate) trait Ir: Debug + Any {
 
     /// Clones the node into a box of `Box<dyn Ir>`
     fn clone_box(&self) -> Box<dyn Ir>;
+
+    /// Compiles the node based on the initialized TARGETS.get().unwrap().lock().unwrap()
+    fn compile(&self) -> Vec<String>;
 }
 
 impl Clone for Box<dyn Ir> {
