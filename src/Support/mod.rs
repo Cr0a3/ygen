@@ -3,6 +3,7 @@ mod cli;
 mod pad;
 mod srcmngr;
 mod tokmngr;
+mod error;
 
 use std::process::exit;
 
@@ -11,6 +12,7 @@ pub use cli::Cli;
 pub use pad::Pad;
 pub use srcmngr::SrcMngr;
 pub use tokmngr::TokenMgr;
+pub use error::Error;
 
 use crate::IR::VerifyError;
 
