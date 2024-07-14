@@ -1,8 +1,8 @@
-use crate::{prelude::{Block, Function, Type, TypeMetadata, Var}, Target::{registry::VarStorage, TargetRegistry}, IR::ir::*};
+use crate::{prelude::{Block, Function, Type, TypeMetadata, Var}, Target::{registry::VarStorage, TargetBackendDescr}, IR::ir::*};
 
 use crate::Target::CallConv;
 
-pub(crate) fn CompileAddVarVar(add: &Add<Var, Var, Var>, registry: &mut TargetRegistry) -> Vec<String> {
+pub(crate) fn CompileAddVarVar(add: &Add<Var, Var, Var>, registry: &mut TargetBackendDescr) -> Vec<String> {
     let infos = &mut registry.backend;
 
     let loc1 = if let Some(loc1) = infos.varsStorage.get(&add.inner1) {
@@ -33,7 +33,7 @@ pub(crate) fn CompileAddVarVar(add: &Add<Var, Var, Var>, registry: &mut TargetRe
     let ty = &add.inner1.ty;
     
     let ret = {
-        if let Some(reg) = infos.getOpenReg() {
+        if let Some(reg) = infos.getOpenRegBasedOnTy(*ty) {
             VarStorage::Register(reg)
         } else {
             let addend = match ty {
@@ -82,13 +82,13 @@ pub(crate) fn CompileAddVarVar(add: &Add<Var, Var, Var>, registry: &mut TargetRe
     vec![]
 }
 
-pub(crate) fn CompileConstAssign(assign: &ConstAssign<Var, Type>, registry: &mut TargetRegistry) -> Vec<String> {
+pub(crate) fn CompileConstAssign(assign: &ConstAssign<Var, Type>, registry: &mut TargetBackendDescr) -> Vec<String> {
     let infos = &mut registry.backend;
 
     let ty = &assign.inner1.ty;
     
     let store = {
-        if let Some(reg) = infos.getOpenReg() {
+        if let Some(reg) = infos.getOpenRegBasedOnTy(*ty) {
             VarStorage::Register(reg)
         } else {
             let addend = match ty {
@@ -115,7 +115,7 @@ pub(crate) fn CompileConstAssign(assign: &ConstAssign<Var, Type>, registry: &mut
     } else { todo!() }
 }
 
-pub(crate) fn CompileAddTyTy(add: &Add<Type, Type, Var>, registry: &mut TargetRegistry) -> Vec<String> {
+pub(crate) fn CompileAddTyTy(add: &Add<Type, Type, Var>, registry: &mut TargetBackendDescr) -> Vec<String> {
     let val = add.inner1.val() + add.inner2.val();
     CompileConstAssign(&ConstAssign::new(add.inner3.clone(), {
         match add.inner3.ty {
@@ -130,7 +130,7 @@ pub(crate) fn CompileAddTyTy(add: &Add<Type, Type, Var>, registry: &mut TargetRe
     }), registry)
 }
 
-pub(crate) fn CompileRetType(ret: &Return<Type>, registry: &mut TargetRegistry) -> Vec<String> {
+pub(crate) fn CompileRetType(ret: &Return<Type>, registry: &mut TargetBackendDescr) -> Vec<String> {
     vec![format!("mov {}, {}", match ret.inner1 {
         Type::u16(_) | Type::i16(_) => registry.call.ret16(),
         Type::u32(_) | Type::i32(_) => registry.call.ret32(),
@@ -140,7 +140,7 @@ pub(crate) fn CompileRetType(ret: &Return<Type>, registry: &mut TargetRegistry) 
 }
 
 
-pub(crate) fn CompileRetVar(ret: &Return<Var>, registry: &mut TargetRegistry) -> Vec<String> {
+pub(crate) fn CompileRetVar(ret: &Return<Var>, registry: &mut TargetBackendDescr) -> Vec<String> {
     let (var, loc) = if let Some(loc) = registry.backend.varsStorage.get_key_value(&ret.inner1) {
         loc.clone()
     } else {
@@ -164,7 +164,7 @@ pub(crate) fn CompileRetVar(ret: &Return<Var>, registry: &mut TargetRegistry) ->
 }
 impl Block {
     /// Builds the block to x86 assembly intel syntax
-    pub fn buildAsmX86(&self, func: &Function, call: &CallConv, registry: &mut TargetRegistry) -> Vec<String> {
+    pub fn buildAsmX86(&self, func: &Function, call: &CallConv, registry: &mut TargetBackendDescr) -> Vec<String> {
         let info = &mut registry.backend;
 
         let mut reg_vars = 0;

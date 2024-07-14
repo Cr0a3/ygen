@@ -1,6 +1,6 @@
 use std::{any::Any, fmt::Debug, hash::Hash};
 use super::{FunctionType, IRBuilder, Type, TypeMetadata, Var, VerifyError};
-use crate::Target::TargetRegistry;
+use crate::Target::TargetBackendDescr;
 
 macro_rules! IrTypeWith3 {
     ($name:tt, $param1:tt, $param2:tt, $param3:tt) => {
@@ -120,7 +120,7 @@ impl Ir for Return<Type> {
         self
     }
 
-    fn compile(&self, registry: &mut TargetRegistry) -> Vec<String> {
+    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<String> {
         registry.getCompileFuncRetType()(self, registry)
     }
 }
@@ -156,8 +156,8 @@ impl Ir for Return<Var> {
         self
     }
 
-    fn compile(&self, registry: &mut TargetRegistry) -> Vec<String> {
-        registry.getCompileFuncRetVar()(self, registry)
+    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<String> {
+        registry.getCompileFuncForRetVar()(self, registry)
     }
 }
 
@@ -206,7 +206,7 @@ impl Ir for Add<Type, Type, Var> {
         self
     }
 
-    fn compile(&self, registry: &mut TargetRegistry) -> Vec<String> {
+    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<String> {
         registry.getCompileFuncForAddTypeType()(self, registry)
     }
 }
@@ -256,7 +256,7 @@ impl Ir for Add<Var, Var, Var> {
         self
     }
 
-    fn compile(&self, registry: &mut TargetRegistry) -> Vec<String> {
+    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<String> {
         registry.getCompileFuncForAddVarVar()(self, registry)
     }
 }
@@ -298,7 +298,7 @@ impl Ir for ConstAssign<Var, Type> {
         Box::new(self.clone())
     }
 
-    fn compile(&self, registry: &mut TargetRegistry) -> Vec<String> {
+    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<String> {
         registry.getCompileFuncForConstAssign()(self, registry)
     }
 }
@@ -382,7 +382,7 @@ pub(crate) trait Ir: Debug + Any {
     fn clone_box(&self) -> Box<dyn Ir>;
 
     /// Compiles the node based on the initialized TARGETS.lock().unwrap().lock().unwrap()
-    fn compile(&self, registry: &mut TargetRegistry) -> Vec<String>;
+    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<String>;
 }
 
 impl Clone for Box<dyn Ir> {

@@ -3,6 +3,7 @@ mod registry;
 mod x64;
 pub use x64::initializeX64Target;
 pub use triple::Triple;
+pub use registry::TargetBackendDescr;
 pub use registry::TargetRegistry;
 
 /// Target architecture

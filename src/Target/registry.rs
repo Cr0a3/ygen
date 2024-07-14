@@ -1,6 +1,6 @@
 use std::{collections::{HashMap, VecDeque}, fmt::Display};
 
-use crate::prelude::{ir::*, Type, Var};
+use crate::prelude::{ir::*, Type, TypeMetadata, Var};
 
 use super::{Arch, CallConv};
 
@@ -8,7 +8,10 @@ use super::{Arch, CallConv};
 pub(crate) struct BackendInfos {
     pub(crate) varsStorage: HashMap<Var, VarStorage>,
     pub(crate) currStackOffsetForLocalVars: isize,
-    pub(crate) openUsableRegisters: VecDeque<String>,
+    pub(crate) openUsableRegisters64: VecDeque<String>,
+    pub(crate) openUsableRegisters32: VecDeque<String>,
+    pub(crate) openUsableRegisters16: VecDeque<String>,
+    pub(crate) openUsableRegisters8: VecDeque<String>,
 }
 
 impl BackendInfos {
@@ -16,7 +19,10 @@ impl BackendInfos {
         Self {
             varsStorage: HashMap::new(),
             currStackOffsetForLocalVars: 0,
-            openUsableRegisters: VecDeque::new(),
+            openUsableRegisters64: VecDeque::new(),
+            openUsableRegisters32: VecDeque::new(),
+            openUsableRegisters16: VecDeque::new(),
+            openUsableRegisters8: VecDeque::new(),
         }
     }
 
@@ -24,8 +30,42 @@ impl BackendInfos {
         self.varsStorage.insert(var, store);
     }
 
-    pub(crate) fn getOpenReg(&mut self) -> Option<String> {
-        self.openUsableRegisters.pop_front()
+    pub(crate) fn getOpenReg64(&mut self) -> Option<String> {
+        self.openUsableRegisters32.pop_front(); // update all other members
+        self.openUsableRegisters16.pop_front();
+        self.openUsableRegisters8.pop_front();
+        self.openUsableRegisters64.pop_front()
+    }
+
+    pub(crate) fn getOpenReg32(&mut self) -> Option<String> {
+        self.openUsableRegisters64.pop_front(); // update all other members
+        self.openUsableRegisters16.pop_front();
+        self.openUsableRegisters8.pop_front();
+        self.openUsableRegisters32.pop_front()
+    }
+
+    pub(crate) fn getOpenReg16(&mut self) -> Option<String> {
+        self.openUsableRegisters64.pop_front(); // update all other members
+        self.openUsableRegisters32.pop_front();
+        self.openUsableRegisters8.pop_front();
+        self.openUsableRegisters16.pop_front()
+    }
+
+    #[allow(dead_code)]
+    pub(crate) fn getOpenReg8(&mut self) -> Option<String> {
+        self.openUsableRegisters64.pop_front(); // update all other members
+        self.openUsableRegisters32.pop_front();
+        self.openUsableRegisters16.pop_front();
+        self.openUsableRegisters8.pop_front()
+    }
+
+    pub(crate) fn getOpenRegBasedOnTy(&mut self, ty: TypeMetadata) -> Option<String> {
+        match ty {
+            TypeMetadata::u16 | TypeMetadata::i16 => self.getOpenReg16(),
+            TypeMetadata::u32 | TypeMetadata::i32 => self.getOpenReg32(),
+            TypeMetadata::u64 | TypeMetadata::i64 => self.getOpenReg64(),
+            TypeMetadata::Void => todo!("cannot use void as a register variable type. consider removing it"),
+        }
     }
 }
 
@@ -45,120 +85,117 @@ impl Display for VarStorage {
     }
 }
 
-pub(crate) type CompileFunc<T> = fn(&T, &mut TargetRegistry) -> Vec<String>;
+pub(crate) type CompileFunc<T> = fn(&T, &mut TargetBackendDescr) -> Vec<String>;
 
-/// The Target Registry: stores if a target was already initialized
+/// The TargetBackendDescr is used to store all the functions/information to compile ir nodes into assembly
 #[derive(Debug, Clone)]
-pub struct TargetRegistry {
-    pub(crate) inited_targets: Vec<Arch>,
-    funcForRetType: HashMap<Arch, CompileFunc<Return<Type>>>,
-    funcForRetVar: HashMap<Arch, CompileFunc<Return<Var>>>,
-    funcForConstAssign: HashMap<Arch, CompileFunc<ConstAssign<Var, Type>>>,
-    funcForAddVarVar: HashMap<Arch, CompileFunc<Add<Var, Var, Var>>>,
-    funcForAddTypeType: HashMap<Arch, CompileFunc<Add<Type, Type, Var>>>,
+pub struct TargetBackendDescr {
+    funcForRetType: Option<CompileFunc<Return<Type>>>,
+    funcForRetVar: Option<CompileFunc<Return<Var>>>,
+    funcForConstAssign: Option<CompileFunc<ConstAssign<Var, Type>>>,
+    funcForAddVarVar: Option<CompileFunc<Add<Var, Var, Var>>>,
+    funcForAddTypeType: Option<CompileFunc<Add<Type, Type, Var>>>,
     pub(crate) backend: BackendInfos,
     pub(crate) call: CallConv,
 }
 
-impl TargetRegistry {
+impl TargetBackendDescr {
     /// Creates a new instance
     pub fn new() -> Self {
         Self {
-            inited_targets: vec![],
-            funcForRetType: HashMap::new(),
-            funcForRetVar: HashMap::new(),
-            funcForConstAssign: HashMap::new(),
-            funcForAddVarVar: HashMap::new(),
-            funcForAddTypeType: HashMap::new(),
+            funcForRetType: None,
+            funcForRetVar: None,
+            funcForConstAssign: None,
+            funcForAddVarVar: None,
+            funcForAddTypeType: None,
+
             call: CallConv::SystemV,
             backend: BackendInfos::new(),
         }
     }
 
     /// sets the callback for compiling the return ir node into asm
-    pub(crate) fn setCompileFuncForRetType(&mut self, arch: Arch, callback: CompileFunc<Return<Type>>) {
-        if !self.funcForRetType.contains_key(&arch) {
-            self.funcForRetType.insert(arch, callback);
-        }
+    pub(crate) fn setCompileFuncForRetType(&mut self, callback: CompileFunc<Return<Type>>) {
+        self.funcForRetType = Some(callback);
     }
 
     /// gets the callback for compiling the return ir node into asm
     pub(crate) fn getCompileFuncRetType(&self) -> CompileFunc<Return<Type>> {
-        if let Some(last_arch) = self.inited_targets.last() {
-            if let Some(func) = self.funcForRetType.get(last_arch) {
-                *func
-            } else { todo!() }
-        } else { todo!()}
+        if let Some(func) = self.funcForRetType {
+            func
+        } else { todo!("an corresponding assembly handler needs to be registered in order to compile an ReturnType ir node")}
     }
 
     /// sets the callback for compiling the return ir node into asm
-    pub(crate) fn setCompileFuncForRetVar(&mut self, arch: Arch, callback: CompileFunc<Return<Var>>) {
-        if !self.funcForRetVar.contains_key(&arch) {
-            self.funcForRetVar.insert(arch, callback);
-        }
+    pub(crate) fn setCompileFuncForRetVar(&mut self, callback: CompileFunc<Return<Var>>) {
+        self.funcForRetVar = Some(callback)
     }
 
     /// gets the callback for compiling the return ir node into asm
-    pub(crate) fn getCompileFuncRetVar(&self) -> CompileFunc<Return<Var>> {
-        if let Some(last_arch) = self.inited_targets.last() {
-            if let Some(func) = self.funcForRetVar.get(last_arch) {
-                *func
-            } else { todo!() }
-        } else { todo!()}
+    pub(crate) fn getCompileFuncForRetVar(&self) -> CompileFunc<Return<Var>> {
+        if let Some(func) = self.funcForRetVar {
+            func
+        } else { todo!("an corresponding assembly handler needs to be registered in order to compile an ReturnVar ir node")}
     }
 
     /// sets the callback for compiling the const assign node into asm
-    pub(crate) fn setCompileFuncForConstAssign(&mut self, arch: Arch, callback: CompileFunc<ConstAssign<Var, Type>>) {
-        if !self.funcForConstAssign.contains_key(&arch) {
-            self.funcForConstAssign.insert(arch, callback);
-        }
+    pub(crate) fn setCompileFuncForConstAssign(&mut self, callback: CompileFunc<ConstAssign<Var, Type>>) {
+        self.funcForConstAssign = Some(callback);
     }
 
     /// gets the callback for compiling the const assign into asm
     pub(crate) fn getCompileFuncForConstAssign(&self) -> CompileFunc<ConstAssign<Var, Type>> {
-        if let Some(last_arch) = self.inited_targets.last() {
-            if let Some(func) = self.funcForConstAssign.get(last_arch) {
-                *func
-            } else { todo!() }
-        } else { todo!()}
+        if let Some(func) = self.funcForConstAssign {
+            func
+        } else { todo!("an corresponding assembly handler needs to be registered in order to compile an ConstAssign ir node")}
     }
 
     /// sets the callback for compiling the add var var ir node into asm
-    pub(crate) fn setCompileFuncForAddVarVar(&mut self, arch: Arch, callback: CompileFunc<Add<Var, Var, Var>>) {
-        if !self.funcForAddVarVar.contains_key(&arch) {
-            self.funcForAddVarVar.insert(arch, callback);
-        }
+    pub(crate) fn setCompileFuncForAddVarVar(&mut self, callback: CompileFunc<Add<Var, Var, Var>>) {
+        self.funcForAddVarVar = Some(callback);
     }
 
     /// gets the callback for compiling the add var var node into into asm
     pub(crate) fn getCompileFuncForAddVarVar(&self) -> CompileFunc<Add<Var, Var, Var>> {
-        if let Some(last_arch) = self.inited_targets.last() {
-            if let Some(func) = self.funcForAddVarVar.get(last_arch) {
-                *func
-            } else { todo!() }
-        } else { todo!()}
+        if let Some(func) = self.funcForAddVarVar {
+            func
+        } else { todo!("an corresponding assembly handler needs to be registered in order to compile an AddVarVar ir node")}
     }
 
     /// sets the callback for compiling the add var var ir node into asm
-    pub(crate) fn setCompileFuncForAddTypeType(&mut self, arch: Arch, callback: CompileFunc<Add<Type, Type, Var>>) {
-        if !self.funcForAddTypeType.contains_key(&arch) {
-            self.funcForAddTypeType.insert(arch, callback);
-        }
+    pub(crate) fn setCompileFuncForAddTypeType(&mut self, callback: CompileFunc<Add<Type, Type, Var>>) {
+        self.funcForAddTypeType = Some(callback);
     }
 
     /// gets the callback for compiling the add var var node into into asm
     pub(crate) fn getCompileFuncForAddTypeType(&self) -> CompileFunc<Add<Type, Type, Var>> {
-        if let Some(last_arch) = self.inited_targets.last() {
-            if let Some(func) = self.funcForAddTypeType.get(last_arch) {
-                *func
-            } else { todo!() }
-        } else { todo!()}
+        if let Some(func) = self.funcForAddTypeType {
+            func
+        } else { todo!("an corresponding assembly handler needs to be registered in order to compile an AddTypeType ir node")}
+    }
+}
+
+/// The target registry: is just a big HashMap of `Arch` and `TargetBackendDescr`
+#[derive(Debug, Clone)]
+pub struct TargetRegistry {
+    map: HashMap<Arch, TargetBackendDescr>
+}
+
+impl TargetRegistry {
+    /// Creates an new target registry
+    pub fn new() -> Self {
+        Self {
+            map: HashMap::new(),
+        }
     }
 
-    /// Sets an architecture as initialized
-    pub fn set_inited(&mut self, arch: Arch) {
-        if !self.inited_targets.contains(&arch) {
-            self.inited_targets.push(arch);
-        }
+    #[allow(dead_code)]
+    pub(crate) fn setInited(&mut self, arch: Arch, descr: TargetBackendDescr) {
+        self.map.insert(arch, descr);
+    }
+
+    #[allow(dead_code)]
+    pub(crate) fn getDescr(&mut self, arch: Arch) -> Option<&TargetBackendDescr> {
+        self.map.get(&arch)
     }
 }
