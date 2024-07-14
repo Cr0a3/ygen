@@ -1,49 +1,55 @@
 //! The x64 Target: used for compiling ir and inline asm into x64 machine code
 
-use std::collections::VecDeque;
+use std::{collections::VecDeque, error::Error, fs::OpenOptions, io::Write, path::Path};
 
 use ir::*;
 
-use super::{CallConv, TargetBackendDescr};
+use crate::prelude::Module;
+
+use super::{registry::Reg, CallConv, TargetBackendDescr};
+mod reg;
+pub(crate) use reg::*;
 
 pub(crate) mod ir;
 pub(crate) mod call;
+// mod AsmColorize; needs to be implementat
+// pub use AsmColorize::AsmColorizer;
 
 /// Initializes the x86-64 target
-pub fn initializeX64Target(call_conv: CallConv) -> TargetBackendDescr {
+pub fn initializeX64Target<'a>(call_conv: CallConv) -> TargetBackendDescr<'a> {
     let mut target = TargetBackendDescr::new();
 
     match call_conv {
         CallConv::WindowsFastCall => {
             target.backend.openUsableRegisters64 = VecDeque::from(
-                vec!["rsi".into(), "rdi".into(), 
-                "r10".into(), "r11".into(), "r12".into(), "r13".into(), "r14".into(), "r15".into()]
+                vec![x64Reg::Rsi.boxed(), x64Reg::Rdi.boxed(), 
+                x64Reg::R10.boxed(), x64Reg::R11.boxed(), x64Reg::R12.boxed(), x64Reg::R13.boxed(), x64Reg::R14.boxed(), x64Reg::R15.boxed()]
             );
             target.backend.openUsableRegisters32 = VecDeque::from(
-                vec!["esi".into(), "edi".into(), 
-                "r10d".into(), "r11d".into(), "r12d".into(), "r13d".into(), "r14d".into(), "r15d".into()]
+                vec![x64Reg::Esi.boxed(), x64Reg::Edi.boxed(), 
+                x64Reg::R10d.boxed(), x64Reg::R11d.boxed(), x64Reg::R12d.boxed(), x64Reg::R13d.boxed(), x64Reg::R14d.boxed(), x64Reg::R15d.boxed()]
             );
             target.backend.openUsableRegisters16 = VecDeque::from(
-                vec!["si".into(), "di".into(), 
-                "r10w".into(), "r11w".into(), "r12w".into(), "r13w".into(), "r14w".into(), "r15w".into()]
+                vec![x64Reg::Si.boxed(), x64Reg::Di.boxed(), 
+                x64Reg::R10w.boxed(), x64Reg::R11w.boxed(), x64Reg::R12w.boxed(), x64Reg::R13w.boxed(), x64Reg::R14w.boxed(), x64Reg::R15w.boxed()]
             );
             target.backend.openUsableRegisters8 = VecDeque::from(
-                vec!["sil".into(), "dil".into(), 
-                "r10b".into(), "r11b".into(), "r12b".into(), "r13b".into(), "r14b".into(), "r15b".into()]
+                vec![x64Reg::Sil.boxed(), x64Reg::Dil.boxed(), 
+                x64Reg::R10b.boxed(), x64Reg::R11b.boxed(), x64Reg::R12b.boxed(), x64Reg::R13b.boxed(), x64Reg::R14b.boxed(), x64Reg::R15b.boxed()]
             );
         },
         CallConv::SystemV => {
             target.backend.openUsableRegisters64 = VecDeque::from(
-                vec!["r10".into(), "r11".into(), "r12".into(), "r13".into(), "r14".into(), "r15".into()]
+                vec![x64Reg::R10.boxed(), x64Reg::R11.boxed(), x64Reg::R12.boxed(), x64Reg::R13.boxed(), x64Reg::R14.boxed(), x64Reg::R15.boxed()]
             );
             target.backend.openUsableRegisters32 = VecDeque::from(
-                vec!["r10d".into(), "r11d".into(), "r12d".into(), "r13d".into(), "r14d".into(), "r15d".into()]
+                vec![x64Reg::R10d.boxed(), x64Reg::R11d.boxed(), x64Reg::R12d.boxed(), x64Reg::R13d.boxed(), x64Reg::R14d.boxed(), x64Reg::R15d.boxed()]
             );
             target.backend.openUsableRegisters16 = VecDeque::from(
-                vec!["r10w".into(), "r11w".into(), "r12w".into(), "r13w".into(), "r14w".into(), "r15w".into()]
+                vec![x64Reg::R10w.boxed(), x64Reg::R11w.boxed(), x64Reg::R12w.boxed(), x64Reg::R13w.boxed(), x64Reg::R14w.boxed(), x64Reg::R15w.boxed()]
             );
             target.backend.openUsableRegisters8 = VecDeque::from(
-                vec!["r10b".into(), "r11b".into(), "r12b".into(), "r13b".into(), "r14b".into(), "r15b".into()]
+                vec![x64Reg::R10b.boxed(), x64Reg::R11b.boxed(), x64Reg::R12b.boxed(), x64Reg::R13b.boxed(), x64Reg::R14b.boxed(), x64Reg::R15b.boxed()]
             );
         },
     }
@@ -55,4 +61,38 @@ pub fn initializeX64Target(call_conv: CallConv) -> TargetBackendDescr {
     target.setCompileFuncForAddTypeType(CompileAddTyTy);
 
     target
+}
+
+impl Module {
+    /// Compiles the IR of the module into an string which will then gets written into an asm file using intel syntax
+    pub fn emitToAsmFile(&self, path: &Path) -> Result<(), Box<dyn Error>> {
+        let call = CallConv::WindowsFastCall; // todo: change it in the future to the actual target triple
+
+        let mut target = initializeX64Target(call);
+
+        let mut file = OpenOptions::new().create(true).write(true)
+                                .open(path)?;
+
+        let mut lines = String::new();
+
+        for (name, func) in &self.funcs {
+            lines += &format!("{}:\n", name);
+
+            for block in &func.blocks {
+                if block.name.to_lowercase() != "entry" {
+                    lines += &format!("  {}:\n", block.name)
+                }
+
+                let asm_lines = block.buildAsmX86(&func, &call, &mut target);
+
+                for line in asm_lines {
+                    lines += &format!("\t{}\n", line);
+                }
+            }
+        }
+
+        file.write_all(lines.as_bytes())?;
+
+        Ok(())
+    }
 }

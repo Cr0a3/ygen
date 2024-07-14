@@ -1,4 +1,4 @@
-use crate::{prelude::{Block, Function, Type, TypeMetadata, Var}, Target::{registry::VarStorage, TargetBackendDescr}, IR::ir::*};
+use crate::{prelude::{Block, Function, Type, TypeMetadata, Var}, Target::{registry::{Reg, VarStorage}, TargetBackendDescr}, IR::ir::*};
 
 use crate::Target::CallConv;
 
@@ -53,7 +53,17 @@ pub(crate) fn CompileAddVarVar(add: &Add<Var, Var, Var>, registry: &mut TargetBa
         ret.clone()
     );
 
-    
+    let boxed: Box<dyn Ir> = Box::new(add.clone());
+
+    if !registry.block.unwrap().isVarUsedAfterNode(&boxed, &add.inner1) {
+        infos.drop(&add.inner1);
+    }
+    if !registry.block.unwrap().isVarUsedAfterNode(&boxed, &add.inner2) {
+        infos.drop(&add.inner2);
+    }
+    if !registry.block.unwrap().isVarUsedAfterNode(&boxed, &add.inner3) {
+        return vec![]; // all of these calculations don't need to be done: dead code removal
+    }
 
     if let VarStorage::Register(_) = loc1 {
         if let VarStorage::Register(_) = loc2 {
@@ -108,6 +118,12 @@ pub(crate) fn CompileConstAssign(assign: &ConstAssign<Var, Type>, registry: &mut
         store.clone()
     );
 
+    let boxed: Box<dyn Ir> = Box::new(assign.clone());
+    
+    if !registry.block.unwrap().isVarUsedAfterNode(&boxed, &assign.inner1) {
+        return vec![]; // all of these calculations don't need to be done: dead code removal
+    }
+
     if let VarStorage::Register(reg) = &store {
         vec![format!("mov {}, {}", reg, assign.inner2.val())]
     } else if let VarStorage::Memory(mem) = &store {
@@ -117,6 +133,14 @@ pub(crate) fn CompileConstAssign(assign: &ConstAssign<Var, Type>, registry: &mut
 
 pub(crate) fn CompileAddTyTy(add: &Add<Type, Type, Var>, registry: &mut TargetBackendDescr) -> Vec<String> {
     let val = add.inner1.val() + add.inner2.val();
+    
+
+    let boxed: Box<dyn Ir> = Box::new(add.clone());
+
+    if !registry.block.unwrap().isVarUsedAfterNode(&boxed, &add.inner3) {
+        return vec![]; // all of these calculations don't need to be done: dead code removal
+    }
+
     CompileConstAssign(&ConstAssign::new(add.inner3.clone(), {
         match add.inner3.ty {
             TypeMetadata::u16 => Type::u16(val as u16),
@@ -157,14 +181,16 @@ pub(crate) fn CompileRetVar(ret: &Return<Var>, registry: &mut TargetBackendDescr
         TypeMetadata::u64 | TypeMetadata::i64=> registry.call.ret64(),
         _ => unreachable!(),
     }, {
-        if let VarStorage::Memory(mem) = loc { mem }
-        else if let VarStorage::Register(reg) = loc { reg }
+        if let VarStorage::Memory(mem) = loc { mem.to_string() }
+        else if let VarStorage::Register(reg) = loc { reg.to_string() }
         else { unreachable!() }
     })]
 }
 impl Block {
     /// Builds the block to x86 assembly intel syntax
-    pub fn buildAsmX86(&self, func: &Function, call: &CallConv, registry: &mut TargetBackendDescr) -> Vec<String> {
+    pub fn buildAsmX86<'a>(&'a self, func: &Function, call: &CallConv, registry: &mut TargetBackendDescr<'a>) -> Vec<String> {
+        registry.block = Some(&self);
+
         let info = &mut registry.backend;
 
         let mut reg_vars = 0;
@@ -187,12 +213,12 @@ impl Block {
                     VarStorage::Memory(format!("[rbp - {}]", stack_off - addend))
                 } else {
                     reg_vars += 1;
-                    VarStorage::Register(format!("{}", match meta {
-                        TypeMetadata::u16 | TypeMetadata::i16 => call.args16()[reg_vars - 1].clone(),
-                        TypeMetadata::u32 | TypeMetadata::i32 => call.args32()[reg_vars - 1].clone(),
-                        TypeMetadata::u64 | TypeMetadata::i64 => call.args64()[reg_vars - 1].clone(),
+                    VarStorage::Register( match meta {
+                        TypeMetadata::u16 | TypeMetadata::i16 => call.args16()[reg_vars - 1].boxed(),
+                        TypeMetadata::u32 | TypeMetadata::i32 => call.args32()[reg_vars - 1].boxed(),
+                        TypeMetadata::u64 | TypeMetadata::i64 => call.args64()[reg_vars - 1].boxed(),
                         TypeMetadata::Void => continue,
-                    }))
+                    })
                 }
             });
         }
@@ -200,11 +226,30 @@ impl Block {
         let mut out = vec![];
 
         for node in &self.nodes {
-            out.extend_from_slice(
-                &node.compile(registry)
-            );
+            let compiled = node.compile(registry);
+
+            out.extend_from_slice(&compiled);
         }
 
+        registry.block = None;
+
         out
+    }
+
+    pub(crate) fn isVarUsedAfterNode(&self, startingNode: &Box<dyn Ir>, var: &Var) -> bool {
+        let mut used = false;
+        let mut started = false;
+
+        for node in &self.nodes {
+            if node.uses(var) && started {
+                used = true;
+            }
+
+            if node.is(startingNode) {
+                started = true;
+            }
+        }
+
+        used
     }
 }

@@ -1,10 +1,7 @@
-use std::error::Error;
-use Ygen::{prelude::*, PassManager::Passes::PreComputeValue, Target::{initializeX64Target, CallConv}};
+use std::{error::Error, path::Path};
+use Ygen::{prelude::*, PassManager::Passes::PreComputeValue};
 
 pub fn main() -> Result<(), Box<dyn Error>> {
-    
-    let mut x64 = initializeX64Target(CallConv::WindowsFastCall);
-
     let mut module = Module();
 
     let mut builder = IRBuilder();
@@ -18,14 +15,9 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     builder.positionAtEnd(entry); 
 
     let val = builder.BuildAdd(ty.arg(0), ty.arg(1));
-    let add2 = builder.BuildAdd(Type::i32(5), Type::i32(5));
+    let add2 = builder.BuildAdd(Type::i32(5), Type::i32(5)); // If you wonder: this here tests the optimizer if it will be automaticly optimized out and inlined to 10
     let ret = builder.BuildAdd(val, add2);
-
     builder.BuildRet( ret );
-    
-
-    let block = builder.getLastBlock().clone().unwrap().clone();
-    let func = func.clone().to_owned().clone();
 
     module.verify().print();
 
@@ -38,7 +30,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         module.dumpColored()
     );
 
-    eprintln!("{:#?}", block.buildAsmX86(&func, &CallConv::WindowsFastCall, &mut x64));
+    module.emitToAsmFile(Path::new("out.asm"))?;
 
     Ok(())
 }

@@ -5,7 +5,7 @@ use crate::Target::TargetBackendDescr;
 macro_rules! IrTypeWith3 {
     ($name:tt, $param1:tt, $param2:tt, $param3:tt) => {
         /// An Ir node
-        #[derive(Debug, Clone)]
+        #[derive(Debug, Clone, PartialEq, Eq, Hash)]
         pub struct $name<$param1, $param2, $param3> {
             /// first inner value
             pub(crate) inner1: $param1,
@@ -34,7 +34,7 @@ macro_rules! IrTypeWith3 {
 macro_rules! IrTypeWith2 {
     ($name:tt, $param1:tt, $param2:tt) => {
         /// An Ir node
-        #[derive(Debug, Clone, Hash)]
+        #[derive(Debug, Clone, PartialEq, Eq, Hash)]
         pub struct $name<$param1, $param2> {
             /// first inner value
             pub inner1: $param1,
@@ -60,7 +60,7 @@ macro_rules! IrTypeWith2 {
 macro_rules! IrTypeWith1 {
     ($name:tt, $param1:tt) => {
         /// An Ir node
-        #[derive(Debug, Clone, Hash)]
+        #[derive(Debug, Clone, PartialEq, Eq, Hash)]
         pub(crate) struct $name<$param1> {
             /// inner value
             pub(crate) inner1: $param1,
@@ -159,6 +159,11 @@ impl Ir for Return<Var> {
     fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<String> {
         registry.getCompileFuncForRetVar()(self, registry)
     }
+
+    fn uses(&self, var: &Var) -> bool {
+        if *var == self.inner1 { true }
+        else { false }
+    }
 }
 
 impl Ir for Add<Type, Type, Var> {
@@ -208,6 +213,11 @@ impl Ir for Add<Type, Type, Var> {
 
     fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<String> {
         registry.getCompileFuncForAddTypeType()(self, registry)
+    }
+
+    fn uses(&self, var: &Var) -> bool {
+        if *var == self.inner3 { true }
+        else { false }
     }
 }
 
@@ -259,6 +269,11 @@ impl Ir for Add<Var, Var, Var> {
     fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<String> {
         registry.getCompileFuncForAddVarVar()(self, registry)
     }
+
+    fn uses(&self, var: &Var) -> bool {
+        if *var == self.inner1 || *var == self.inner2 || *var == self.inner3 { true }
+        else { false }
+    }
 }
 
 impl Ir for ConstAssign<Var, Type> {
@@ -300,6 +315,11 @@ impl Ir for ConstAssign<Var, Type> {
 
     fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<String> {
         registry.getCompileFuncForConstAssign()(self, registry)
+    }
+
+    fn uses(&self, var: &Var) -> bool {
+        if *var == self.inner1 { true }
+        else { false }
     }
 }
 
@@ -381,13 +401,26 @@ pub(crate) trait Ir: Debug + Any {
     /// Clones the node into a box of `Box<dyn Ir>`
     fn clone_box(&self) -> Box<dyn Ir>;
 
-    /// Compiles the node based on the initialized TARGETS.lock().unwrap().lock().unwrap()
+    /// Compiles the node based on the given target
     fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<String>;
+
+    /// Returns if the node uses the variable
+    fn uses(&self, _: &Var) -> bool {
+        false
+    }
+
+    fn is(&self, other: &Box<dyn Ir>) -> bool {
+        other.dump() == self.dump()
+    }
 }
 
 impl Clone for Box<dyn Ir> {
     fn clone(&self) -> Box<dyn Ir> {
         self.clone_box()
+    }
+    
+    fn clone_from(&mut self, source: &Self) {
+        *self = source.clone()
     }
 }
 

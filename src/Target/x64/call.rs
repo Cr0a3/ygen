@@ -1,5 +1,7 @@
 use crate::Target::CallConv;
 
+use super::x64Reg;
+
 impl CallConv {
     /// Returns the number of register arguments in the calling convention
     pub fn regArgs(&self) -> usize {
@@ -10,50 +12,50 @@ impl CallConv {
     }
 
     /// Returns the 16Bit intenger argument registers as a vec
-    pub fn args16(&self) -> Vec<String> {
+    pub fn args16(&self) -> Vec<x64Reg> {
         match self {
-            CallConv::SystemV => vec!["si".into(), "di".into(), "dx".into(), "cx".into(), "r8w".into(), "r9w".into()],
-            CallConv::WindowsFastCall => vec!["dx".into(), "cx".into(), "r8w".into(), "r9w".into()],
+            CallConv::SystemV => vec![x64Reg::Si, x64Reg::Di, x64Reg::Dx, x64Reg::Cx, x64Reg::R8w, x64Reg::R9w],
+            CallConv::WindowsFastCall => vec![x64Reg::Dx, x64Reg::Cx, x64Reg::R8w, x64Reg::R9w],
         }
     }
 
     /// Returns the 32Bit intenger argument registers as a vec
-    pub fn args32(&self) -> Vec<String> {
+    pub fn args32(&self) -> Vec<x64Reg> {
         match self {
-            CallConv::SystemV => vec!["esi".into(), "edi".into(), "edx".into(), "ecx".into(), "r8d".into(), "r9d".into()],
-            CallConv::WindowsFastCall => vec!["edx".into(), "ecx".into(), "r8d".into(), "r9d".into()],
+            CallConv::SystemV => vec![x64Reg::Esi, x64Reg::Edi, x64Reg::Edx, x64Reg::Ecx, x64Reg::R8d, x64Reg::R9d],
+            CallConv::WindowsFastCall => vec![x64Reg::Edx, x64Reg::Ecx, x64Reg::R8d, x64Reg::R9d],
         }
     }
 
     /// Returns the 16Bit intenger argument registers as a vec
-    pub fn args64(&self) -> Vec<String> {
+    pub fn args64(&self) -> Vec<x64Reg> {
         match self {
-            CallConv::SystemV => vec!["rsi".into(), "rdi".into(), "rdx".into(), "rcx".into(), "r8".into(), "r9".into()],
-            CallConv::WindowsFastCall => vec!["rdx".into(), "rcx".into(), "r8".into(), "r9".into()],
+            CallConv::SystemV => vec![x64Reg::Rsi, x64Reg::Rdi, x64Reg::Rdx, x64Reg::Rcx, x64Reg::R8, x64Reg::R9],
+            CallConv::WindowsFastCall => vec![x64Reg::Rdx, x64Reg::Rcx, x64Reg::R8, x64Reg::R9],
         }
     }
 
     /// Returns the return register
-    pub fn ret16(&self) -> String {
+    pub fn ret16(&self) -> x64Reg {
         match  self {
-            CallConv::WindowsFastCall => "ax".into(),
-            CallConv::SystemV => "ax".into(),
+            CallConv::WindowsFastCall => x64Reg::Ax,
+            CallConv::SystemV => x64Reg::Ax,
         }
     }
 
     /// Returns the return register
-    pub fn ret32(&self) -> String {
+    pub fn ret32(&self) -> x64Reg {
         match  self {
-            CallConv::WindowsFastCall => "eax".into(),
-            CallConv::SystemV => "eax".into(),
+            CallConv::WindowsFastCall =>x64Reg::Eax,
+            CallConv::SystemV => x64Reg::Eax,
         }
     }
 
     /// Returns the return register
-    pub fn ret64(&self) -> String {
+    pub fn ret64(&self) -> x64Reg {
         match  self {
-            CallConv::WindowsFastCall => "rax".into(),
-            CallConv::SystemV => "rax".into(),
+            CallConv::WindowsFastCall => x64Reg::Rax,
+            CallConv::SystemV => x64Reg::Rax,
         }
     }
 }
