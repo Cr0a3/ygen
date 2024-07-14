@@ -4,14 +4,14 @@ use std::collections::VecDeque;
 
 use ir::*;
 
-use super::{registry::TARGETS, Arch, CallConv};
+use super::{Arch, CallConv, TargetRegistry};
 
 pub(crate) mod ir;
 pub(crate) mod call;
 
 /// Initializes the x86-64 target
-pub fn initializeX64Target(call_conv: CallConv) {
-    let target = &mut TARGETS.lock().unwrap();
+pub fn initializeX64Target(call_conv: CallConv) -> TargetRegistry {
+    let mut target = TargetRegistry::new();
 
     target.set_inited(Arch::X86_64);
 
@@ -34,4 +34,6 @@ pub fn initializeX64Target(call_conv: CallConv) {
     target.setCompileFuncForConstAssign(Arch::X86_64, CompileConstAssign);
     target.setCompileFuncForAddVarVar(Arch::X86_64, CompileAddVarVar);
     target.setCompileFuncForAddTypeType(Arch::X86_64, CompileAddTyTy);
+
+    target
 }

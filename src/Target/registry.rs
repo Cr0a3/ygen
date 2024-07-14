@@ -1,6 +1,4 @@
-use std::{collections::{HashMap, VecDeque}, fmt::Display, sync::Mutex};
-
-use lazy_static::lazy_static;
+use std::{collections::{HashMap, VecDeque}, fmt::Display};
 
 use crate::prelude::{ir::*, Type, Var};
 
@@ -47,7 +45,7 @@ impl Display for VarStorage {
     }
 }
 
-pub(crate) type CompileFunc<T> = fn(&T/*, &mut BackendInfos*/) -> Vec<String>;
+pub(crate) type CompileFunc<T> = fn(&T, &mut TargetRegistry) -> Vec<String>;
 
 /// The Target Registry: stores if a target was already initialized
 #[derive(Debug, Clone)]
@@ -60,10 +58,6 @@ pub struct TargetRegistry {
     funcForAddTypeType: HashMap<Arch, CompileFunc<Add<Type, Type, Var>>>,
     pub(crate) backend: BackendInfos,
     pub(crate) call: CallConv,
-}
-
-lazy_static! {
-    pub(crate) static ref TARGETS: Mutex<TargetRegistry> = Mutex::new( TargetRegistry::new() );
 }
 
 impl TargetRegistry {

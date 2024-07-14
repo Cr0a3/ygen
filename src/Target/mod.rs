@@ -2,7 +2,6 @@ mod triple;
 mod registry;
 mod x64;
 pub use x64::initializeX64Target;
-pub(crate) use registry::TARGETS;
 pub use triple::Triple;
 pub use registry::TargetRegistry;
 
