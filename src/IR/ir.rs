@@ -121,7 +121,7 @@ impl Ir for Return<Type> {
     }
 
     fn compile(&self) -> Vec<String> {
-        TARGETS.get().unwrap().lock().unwrap().getCompileFuncRetType()(self)
+        TARGETS.lock().unwrap().getCompileFuncRetType()(self)
     }
 }
 
@@ -157,7 +157,7 @@ impl Ir for Return<Var> {
     }
 
     fn compile(&self) -> Vec<String> {
-        TARGETS.get().unwrap().lock().unwrap().getCompileFuncRetVar()(self)
+        TARGETS.lock().unwrap().getCompileFuncRetVar()(self)
     }
 }
 
@@ -207,7 +207,7 @@ impl Ir for Add<Type, Type, Var> {
     }
 
     fn compile(&self) -> Vec<String> {
-        TARGETS.get().unwrap().lock().unwrap().getCompileFuncAddTypeType()(self)
+        TARGETS.lock().unwrap().getCompileFuncForAddTypeType()(self)
     }
 }
 
@@ -257,7 +257,7 @@ impl Ir for Add<Var, Var, Var> {
     }
 
     fn compile(&self) -> Vec<String> {
-        TARGETS.get().unwrap().lock().unwrap().getCompileFuncAddVarVar()(self)
+        TARGETS.lock().unwrap().getCompileFuncForAddVarVar()(self)
     }
 }
 
@@ -299,7 +299,7 @@ impl Ir for ConstAssign<Var, Type> {
     }
 
     fn compile(&self) -> Vec<String> {
-        TARGETS.get().unwrap().lock().unwrap().getCompileFuncConstAssign()(self)
+        TARGETS.lock().unwrap().getCompileFuncForConstAssign()(self)
     }
 }
 
@@ -381,7 +381,7 @@ pub(crate) trait Ir: Debug + Any {
     /// Clones the node into a box of `Box<dyn Ir>`
     fn clone_box(&self) -> Box<dyn Ir>;
 
-    /// Compiles the node based on the initialized TARGETS.get().unwrap().lock().unwrap()
+    /// Compiles the node based on the initialized TARGETS.lock().unwrap().lock().unwrap()
     fn compile(&self) -> Vec<String>;
 }
 

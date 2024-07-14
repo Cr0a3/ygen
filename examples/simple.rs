@@ -1,9 +1,9 @@
 use std::error::Error;
-use Ygen::{prelude::*, Target::{initializeX64Target, CallConv}};
+use Ygen::{prelude::*, PassManager::Passes::PreComputeValue, Target::{initializeX64Target, CallConv}};
 
 pub fn main() -> Result<(), Box<dyn Error>> {
     
-    initializeX64Target();
+    initializeX64Target(CallConv::WindowsFastCall);
 
     let mut module = Module();
 
