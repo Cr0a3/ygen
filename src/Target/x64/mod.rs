@@ -19,6 +19,10 @@ pub(crate) mod call;
 pub fn initializeX64Target<'a>(call_conv: CallConv) -> TargetBackendDescr<'a> {
     let mut target = TargetBackendDescr::new();
 
+    target.backend.savedRegisters = vec![
+        x64Reg::R10.boxed(), x64Reg::R11.boxed(), x64Reg::R12.boxed(), x64Reg::R13.boxed(), x64Reg::R14.boxed(), x64Reg::R15.boxed(),
+    ];
+
     match call_conv {
         CallConv::WindowsFastCall => {
             target.backend.openUsableRegisters64 = VecDeque::from(

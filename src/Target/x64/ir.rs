@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use crate::{prelude::{Block, Function, Type, TypeMetadata, Var}, Target::{registry::{Reg, VarStorage}, TargetBackendDescr}, IR::ir::*};
 
 use crate::Target::CallConv;
@@ -155,12 +157,16 @@ pub(crate) fn CompileAddTyTy(add: &Add<Type, Type, Var>, registry: &mut TargetBa
 }
 
 pub(crate) fn CompileRetType(ret: &Return<Type>, registry: &mut TargetBackendDescr) -> Vec<String> {
-    vec![format!("mov {}, {}", match ret.inner1 {
-        Type::u16(_) | Type::i16(_) => registry.call.ret16(),
-        Type::u32(_) | Type::i32(_) => registry.call.ret32(),
-        Type::u64(_) | Type::i64(_) => registry.call.ret64(),
-        Type::Void => todo!(), 
-    }, ret.inner1.val())]
+    if ret.inner1 != Type::Void {
+        vec![format!("mov {}, {}", match ret.inner1 {
+            Type::u16(_) | Type::i16(_) => registry.call.ret16(),
+            Type::u32(_) | Type::i32(_) => registry.call.ret32(),
+            Type::u64(_) | Type::i64(_) => registry.call.ret64(),
+            Type::Void => todo!(), 
+        }, ret.inner1.val())]
+    } else {
+        vec![]
+    }
 }
 
 
@@ -186,6 +192,40 @@ pub(crate) fn CompileRetVar(ret: &Return<Var>, registry: &mut TargetBackendDescr
         else { unreachable!() }
     })]
 }
+
+pub(crate) fn x64BuildProlog(_: &Block, registry: &mut TargetBackendDescr) -> Vec<String> {
+    let mut res = vec![];
+
+    if registry.backend.currStackOffsetForLocalVars != 0 {
+        res.push(format!("push rbp"));
+        res.push(format!("mov rbp, rsp"));
+        res.push(format!("sub rsp, 16"));
+    }
+
+    for backuped in &registry.backend.saveRegister {
+        res.push( format!("push {}", backuped) )
+    }
+
+    res
+}
+
+pub(crate) fn x64BuildEpilog(_: &Block, registry: &mut TargetBackendDescr) -> Vec<String> {
+    let mut res = vec![];
+
+    for backuped in &registry.backend.saveRegister {
+        res.push( format!("pop {}", backuped) )
+    }
+
+    if registry.backend.currStackOffsetForLocalVars != 0 {
+        res.push(format!("add rsp, 16"));
+        res.push(format!("pop rbp"));
+    }
+
+    res.push(format!("ret"));
+
+    res
+}
+
 impl Block {
     /// Builds the block to x86 assembly intel syntax
     pub fn buildAsmX86<'a>(&'a self, func: &Function, call: &CallConv, registry: &mut TargetBackendDescr<'a>) -> Vec<String> {
@@ -195,10 +235,11 @@ impl Block {
 
         let mut reg_vars = 0;
         let mut stack_off = 0;
+        let mut var_index = 0;
 
-        for (index, meta) in &func.ty.args {
+        for (_, meta) in &func.ty.args {
             let mut var = Var(&mut self.clone(), meta.to_owned());
-            var.name = format!("%{}", index);
+            var.name = format!("%{}", var_index);
 
             info.insertVar(var, {
                 if reg_vars >= call.regArgs() {
@@ -221,19 +262,36 @@ impl Block {
                     })
                 }
             });
+
+            var_index += 1;
         }
 
-        let mut out = vec![];
+        if reg_vars < call.regArgs() {
+            info.dropReg(call.args64()[reg_vars - 1].boxed());        
+        }
+
+        let mut out = VecDeque::new();
 
         for node in &self.nodes {
             let compiled = node.compile(registry);
 
-            out.extend_from_slice(&compiled);
+            out.extend(compiled);
         }
+
+
 
         registry.block = None;
 
-        out
+        let mut prolog = x64BuildProlog(&self, registry);
+        prolog.reverse(); // cuz: push_front
+
+        for epAsm in prolog {
+            out.push_front(epAsm);
+        }
+
+        out.extend(x64BuildEpilog(&self, registry));
+
+        Vec::from(out)
     }
 
     pub(crate) fn isVarUsedAfterNode(&self, startingNode: &Box<dyn Ir>, var: &Var) -> bool {

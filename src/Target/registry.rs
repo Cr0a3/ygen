@@ -16,6 +16,12 @@ pub(crate) trait Reg: Display + ToString + Debug {
     fn from(&self, string: String) -> Box<dyn Reg>;
 }
 
+impl PartialEq for dyn Reg {
+    fn eq(&self, other: &Self) -> bool {
+        other.sub64() == self.sub64()
+    }
+}
+
 #[derive(Debug)]
 pub(crate) struct BackendInfos {
     pub(crate) varsStorage: HashMap<Var, VarStorage>,
@@ -24,6 +30,8 @@ pub(crate) struct BackendInfos {
     pub(crate) openUsableRegisters32: VecDeque<Box<dyn Reg>>,
     pub(crate) openUsableRegisters16: VecDeque<Box<dyn Reg>>,
     pub(crate) openUsableRegisters8: VecDeque<Box<dyn Reg>>,
+    pub(crate) saveRegister: Vec<Box<dyn Reg>>,
+    pub(crate) savedRegisters: Vec<Box<dyn Reg>>,
 }
 
 impl BackendInfos {
@@ -35,6 +43,9 @@ impl BackendInfos {
             openUsableRegisters32: VecDeque::new(),
             openUsableRegisters16: VecDeque::new(),
             openUsableRegisters8: VecDeque::new(),
+
+            saveRegister: vec![],
+            savedRegisters: vec![],
         }
     }
 
@@ -67,6 +78,14 @@ impl BackendInfos {
         }
     }
 
+    /// Adds the register back to the usable registers in the front
+    pub(crate) fn dropReg(&mut self, reg: Box<dyn Reg>) {
+        self.openUsableRegisters64.push_front(reg.from(reg.sub64()));
+        self.openUsableRegisters32.push_front(reg.from(reg.sub32()));
+        self.openUsableRegisters16.push_front(reg.from(reg.sub16()));
+        self.openUsableRegisters8.push_front(reg.from(reg.sub8()));
+    }
+
     pub(crate) fn insertVar(&mut self, var: Var, store: VarStorage) {
         self.varsStorage.insert(var, store);
     }
@@ -75,21 +94,42 @@ impl BackendInfos {
         self.openUsableRegisters32.pop_front(); // update all other members
         self.openUsableRegisters16.pop_front();
         self.openUsableRegisters8.pop_front();
-        self.openUsableRegisters64.pop_front()
+        let reg = self.openUsableRegisters64.pop_front()?;
+
+        if self.savedRegisters.contains(&reg) && !self.saveRegister.contains(&reg) {
+            self.savedRegisters.push(reg.boxed());
+        }
+
+
+        Some(reg)
     }
 
     pub(crate) fn getOpenReg32(&mut self) -> Option<Box<dyn Reg>> {
         self.openUsableRegisters64.pop_front(); // update all other members
         self.openUsableRegisters16.pop_front();
         self.openUsableRegisters8.pop_front();
-        self.openUsableRegisters32.pop_front()
+        let reg = self.openUsableRegisters32.pop_front()?;
+
+        if self.savedRegisters.contains(&reg) && !self.saveRegister.contains(&reg) {
+            self.savedRegisters.push(reg.boxed());
+        }
+
+
+        Some(reg)
     }
 
     pub(crate) fn getOpenReg16(&mut self) -> Option<Box<dyn Reg>> {
         self.openUsableRegisters64.pop_front(); // update all other members
         self.openUsableRegisters32.pop_front();
         self.openUsableRegisters8.pop_front();
-        self.openUsableRegisters16.pop_front()
+        let reg = self.openUsableRegisters16.pop_front()?;
+
+        if self.savedRegisters.contains(&reg) && !self.saveRegister.contains(&reg) {
+            self.savedRegisters.push(reg.boxed());
+        }
+
+
+        Some(reg)
     }
 
     #[allow(dead_code)]
@@ -97,7 +137,14 @@ impl BackendInfos {
         self.openUsableRegisters64.pop_front(); // update all other members
         self.openUsableRegisters32.pop_front();
         self.openUsableRegisters16.pop_front();
-        self.openUsableRegisters8.pop_front()
+        let reg = self.openUsableRegisters8.pop_front()?;
+
+        if self.savedRegisters.contains(&reg) && !self.saveRegister.contains(&reg) {
+            self.savedRegisters.push(reg.boxed());
+        }
+
+
+        Some(reg)
     }
 
     pub(crate) fn getOpenRegBasedOnTy(&mut self, ty: TypeMetadata) -> Option<Box<dyn Reg>> {
