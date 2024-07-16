@@ -32,6 +32,19 @@ pub(crate) fn CompileAddVarVar(add: &Add<Var, Var, Var>, registry: &mut TargetBa
         mem.to_string()
     } else { panic!() };
 
+
+    let boxed: Box<dyn Ir> = Box::new(add.clone());
+
+    if !registry.block.unwrap().isVarUsedAfterNode(&boxed, &add.inner1) {
+        infos.drop(&add.inner1);
+    }
+    if !registry.block.unwrap().isVarUsedAfterNode(&boxed, &add.inner2) {
+        infos.drop(&add.inner2);
+    }
+    if !registry.block.unwrap().isVarUsedAfterNode(&boxed, &add.inner3) {
+        return vec![]; // all of these calculations don't need to be done: dead code removal
+    }
+
     let ty = &add.inner1.ty;
     
     let ret = {
@@ -54,18 +67,6 @@ pub(crate) fn CompileAddVarVar(add: &Add<Var, Var, Var>, registry: &mut TargetBa
         add.inner3.clone(), 
         ret.clone()
     );
-
-    let boxed: Box<dyn Ir> = Box::new(add.clone());
-
-    if !registry.block.unwrap().isVarUsedAfterNode(&boxed, &add.inner1) {
-        infos.drop(&add.inner1);
-    }
-    if !registry.block.unwrap().isVarUsedAfterNode(&boxed, &add.inner2) {
-        infos.drop(&add.inner2);
-    }
-    if !registry.block.unwrap().isVarUsedAfterNode(&boxed, &add.inner3) {
-        return vec![]; // all of these calculations don't need to be done: dead code removal
-    }
 
     if let VarStorage::Register(_) = loc1 {
         if let VarStorage::Register(_) = loc2 {
@@ -99,6 +100,13 @@ pub(crate) fn CompileConstAssign(assign: &ConstAssign<Var, Type>, registry: &mut
 
     let ty = &assign.inner1.ty;
     
+
+    let boxed: Box<dyn Ir> = Box::new(assign.clone());
+    
+    if !registry.block.unwrap().isVarUsedAfterNode(&boxed, &assign.inner1) {
+        return vec![]; // all of these calculations don't need to be done: dead code removal
+    }
+    
     let store = {
         if let Some(reg) = infos.getOpenRegBasedOnTy(*ty) {
             VarStorage::Register(reg)
@@ -119,12 +127,6 @@ pub(crate) fn CompileConstAssign(assign: &ConstAssign<Var, Type>, registry: &mut
         assign.inner1.clone(), 
         store.clone()
     );
-
-    let boxed: Box<dyn Ir> = Box::new(assign.clone());
-    
-    if !registry.block.unwrap().isVarUsedAfterNode(&boxed, &assign.inner1) {
-        return vec![]; // all of these calculations don't need to be done: dead code removal
-    }
 
     if let VarStorage::Register(reg) = &store {
         vec![format!("mov {}, {}", reg, assign.inner2.val())]
@@ -266,8 +268,8 @@ impl Block {
             var_index += 1;
         }
 
-        if reg_vars < call.regArgs() {
-            info.dropReg(call.args64()[reg_vars - 1].boxed());        
+        if reg_vars <= call.regArgs() {
+            info.dropReg(call.args64()[reg_vars].boxed());        
         }
 
         let mut out = VecDeque::new();
