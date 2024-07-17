@@ -3,24 +3,7 @@ use core::fmt::Debug;
 
 use crate::prelude::{ir::*, Block, Type, TypeMetadata, Var};
 
-use super::CallConv;
-
-pub(crate) trait Reg: Display + ToString + Debug {
-    fn sub64(&self) -> String;
-    fn sub32(&self) -> String;
-    fn sub16(&self) -> String;
-    fn sub8(&self) -> String;
-
-    fn boxed(&self) -> Box<dyn Reg>;
-
-    fn from(&self, string: String) -> Box<dyn Reg>;
-}
-
-impl PartialEq for dyn Reg {
-    fn eq(&self, other: &Self) -> bool {
-        other.sub64() == self.sub64()
-    }
-}
+use super::{Reg, CallConv};
 
 #[derive(Debug)]
 pub(crate) struct BackendInfos {

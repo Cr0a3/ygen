@@ -1,9 +1,11 @@
 mod triple;
-mod registry;
+mod target_descr;
 mod x64;
-pub use x64::initializeX64Target;
+mod reg;
+pub use x64::*;
+pub(crate) use reg::Reg;
 pub use triple::Triple;
-pub use registry::TargetBackendDescr;
+pub use target_descr::TargetBackendDescr;
 
 /// Target architecture
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

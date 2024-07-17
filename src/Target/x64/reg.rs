@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::Target::registry::Reg;
+use super::Reg;
 
 /// A x64 register
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -11,6 +11,9 @@ pub enum x64Reg {
     Rdx, Edx, Dx, Dl,
     Rsi, Esi, Si, Sil,
     Rdi, Edi, Di, Dil,
+
+    Rsp, Esp, Sp, Spl,
+    Rbp, Ebp, Bp, Bpl,
 
     R8, R8d, R8w, R8b,
     R9, R9d, R9w, R9b,
@@ -38,6 +41,9 @@ impl Reg for x64Reg {
             Rdx | Edx | Dx | Dl => "rdx",
             Rsi | Esi | Si | Sil => "rsi",
             Rdi | Edi | Di | Dil => "rdi",
+
+            Rsp | Esp | Sp | Spl => "rsp",
+            Rbp | Ebp | Bp | Bpl => "rbp",
         
             R8 | R8d | R8w | R8b => "r8",
             R9 | R9d | R9w | R9b => "r9",
@@ -59,6 +65,9 @@ impl Reg for x64Reg {
             Rdx | Edx | Dx | Dl => "edx",
             Rsi | Esi | Si | Sil => "esi",
             Rdi | Edi | Di | Dil => "edi",
+
+            Rsp | Esp | Sp | Spl => "esp",
+            Rbp | Ebp | Bp | Bpl => "ebp",
         
             R8 | R8d | R8w | R8b => "r8d",
             R9 | R9d | R9w | R9b => "r9d",
@@ -80,6 +89,9 @@ impl Reg for x64Reg {
             Rdx | Edx | Dx | Dl => "dx",
             Rsi | Esi | Si | Sil => "si",
             Rdi | Edi | Di | Dil => "di",
+
+            Rsp | Esp | Sp | Spl => "sp",
+            Rbp | Ebp | Bp | Bpl => "bp",
         
             R8 | R8d | R8w | R8b => "r8w",
             R9 | R9d | R9w | R9b => "r9w",
@@ -101,6 +113,9 @@ impl Reg for x64Reg {
             Rdx | Edx | Dx | Dl => "dx",
             Rsi | Esi | Si | Sil => "sil",
             Rdi | Edi | Di | Dil => "dil",
+
+            Rsp | Esp | Sp | Spl => "spl",
+            Rbp | Ebp | Bp | Bpl => "bpl",
         
             R8 | R8d | R8w | R8b => "r8b",
             R9 | R9d | R9w | R9b => "r9b",
@@ -127,6 +142,9 @@ impl Reg for x64Reg {
             "rsi" => Rsi, "esi" => Esi, "si" => Si, "sil" => Sil,
             "rdi" => Rdi, "edi" => Edi, "di" => Di, "dil" => Dil,
 
+            "rsp" => Rsp, "esp" => Esp, "sp" => Sp, "spl" => Spl,
+            "rbp" => Rbp, "ebp" => Ebp, "bp" => Bp, "bpl" => Bpl,
+
             "r8" => R8, "r8d" => R8d, "r8w" => R8w, "r8b" => R8w,
             "r9" => R9, "r9d" => R9d, "r9w" => R9w, "r9b" => R9w,
             "r10" => R10, "r10d" => R10d, "r10w" => R10w, "r10b" => R10w,
@@ -137,5 +155,44 @@ impl Reg for x64Reg {
             "r15" => R15, "r15d" => R15d, "r15w" => R15w, "r15b" => R15w,
             _ => todo!("unknown register"),
         })
+    }
+    
+    fn is_gr64(&self) -> bool {
+        self.sub64() == format!("{}", self)
+    }
+    
+    fn is_gr32(&self) -> bool {
+        self.sub32() == format!("{}", self)
+    }
+    
+    fn is_gr16(&self) -> bool {
+        self.sub16() == format!("{}", self)
+    }
+    
+    fn is_gr8(&self) -> bool {
+        self.sub8() == format!("{}", self)
+    }
+
+    fn enc(&self) -> u8 {
+        match self {
+            x64Reg::Rax | x64Reg::Eax | x64Reg::Ax | x64Reg::Al => 0,
+            x64Reg::Rcx | x64Reg::Ecx | x64Reg::Cx | x64Reg::Cl => 1,
+            x64Reg::Rdx | x64Reg::Edx | x64Reg::Dx | x64Reg::Dl => 2,
+            x64Reg::Rbx | x64Reg::Ebx | x64Reg::Bx | x64Reg::Bl => 3,
+            x64Reg::Rsi | x64Reg::Esi | x64Reg::Si | x64Reg::Sil => 4,
+            x64Reg::Rdi | x64Reg::Edi | x64Reg::Di | x64Reg::Dil => 5,
+            x64Reg::Rsp | x64Reg::Esp | x64Reg::Sp | x64Reg::Spl => 6,
+            x64Reg::Rbp | x64Reg::Ebp | x64Reg::Bp | x64Reg::Bpl => 0,
+
+            // this here use a prefix
+            x64Reg::R8 | x64Reg::R8d | x64Reg::R8w | x64Reg::R8b => 1,
+            x64Reg::R9 | x64Reg::R9d | x64Reg::R9w | x64Reg::R9b => 2,
+            x64Reg::R10 | x64Reg::R10d | x64Reg::R10w | x64Reg::R10b => 3,
+            x64Reg::R11 | x64Reg::R11d | x64Reg::R11w | x64Reg::R11b => 4,
+            x64Reg::R12 | x64Reg::R12d | x64Reg::R12w | x64Reg::R12b => 5,
+            x64Reg::R13 | x64Reg::R13d | x64Reg::R13w | x64Reg::R13b => 6,
+            x64Reg::R14 | x64Reg::R14d | x64Reg::R14w | x64Reg::R14b => 7,
+            x64Reg::R15 | x64Reg::R15d | x64Reg::R15w | x64Reg::R15b => 8,
+        }
     }
 }

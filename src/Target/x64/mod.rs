@@ -6,14 +6,15 @@ use ir::*;
 
 use crate::prelude::Module;
 
-use super::{registry::Reg, CallConv, TargetBackendDescr};
+use super::{Reg, CallConv, TargetBackendDescr};
 mod reg;
 pub(crate) use reg::*;
 
 pub(crate) mod ir;
 pub(crate) mod call;
-// mod AsmColorize; needs to be implementat
-// pub use AsmColorize::AsmColorizer;
+mod asm;
+
+pub use asm::*;
 
 /// Initializes the x86-64 target
 pub fn initializeX64Target<'a>(call_conv: CallConv) -> TargetBackendDescr<'a> {

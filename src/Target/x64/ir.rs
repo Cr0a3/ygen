@@ -1,6 +1,9 @@
 use std::collections::VecDeque;
 
-use crate::{prelude::{Block, Function, Type, TypeMetadata, Var}, Target::{registry::{Reg, VarStorage}, TargetBackendDescr}, IR::ir::*};
+use crate::prelude::{Block, Function, Type, TypeMetadata, Var};
+use crate::Target::target_descr::{TargetBackendDescr, VarStorage};
+use crate::Target::Reg;
+use crate::IR::ir::*;
 
 use crate::Target::CallConv;
 
