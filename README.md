@@ -33,8 +33,6 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
     module.verify().print();
 
-    module.runPassMngr(passes);
-
     eprintln!("{}",
         module.dumpColored()
     );
