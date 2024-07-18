@@ -2,10 +2,26 @@ mod triple;
 mod target_descr;
 mod x64;
 mod reg;
+mod registry;
 pub use x64::*;
 pub(crate) use reg::Reg;
 pub use triple::Triple;
 pub use target_descr::TargetBackendDescr;
+pub use registry::TargetRegistry;
+pub use registry::RegistryError;
+mod lexer;
+mod compiler;
+pub use lexer::Lexer;
+pub use compiler::Compiler;
+
+/// Initializes all targets
+pub fn initializeAllTargets<'a>() -> TargetRegistry<'a> {
+    let mut registry = TargetRegistry::new();
+
+    registry.add( Arch::X86_64, initializeX64Target(CallConv::SystemV) );
+
+    registry
+}
 
 /// Target architecture
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -119,6 +135,10 @@ pub enum CallConv {
     WindowsFastCall,
     /// Linux standart
     SystemV,
+    /// Apple version of the aarch64 calling convention
+    AppleAarch64,
+    /// The webassembly calling convention
+    WasmBasicCAbi,
 }
 
 /// Vendor

@@ -3,4 +3,4 @@ mod compiler;
 mod compile;
 
 pub use lexer::*;
-pub use compiler::Compiler;
+pub use compiler::x64Compiler;

@@ -6,19 +6,18 @@ use crate::Support::Colorize;
 use super::Token;
 use super::compile::*;
 
-/// An assembly parser
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Compiler {
+pub(crate) struct Compiler {
     tokens: VecDeque<Token>,
 
     /// the generated machine code
-    pub out: Vec<u8>,
+    pub(crate) out: Vec<u8>,
     index: usize,
 }
 
 impl Compiler {
     /// Creates a new parser
-    pub fn new(tokens: Vec<Token>) -> Self {
+    pub(crate) fn new(tokens: Vec<Token>) -> Self {
         Self {
             tokens: tokens.into(),
             out: vec![],
@@ -27,7 +26,7 @@ impl Compiler {
     }
 
     /// Parses the tokens into expressions
-    pub fn parse(&mut self) -> Result<(), Box<dyn Error>> {
+    pub(crate) fn parse(&mut self) -> Result<(), Box<dyn Error>> {
         let out = if let Some(tok) = self.tokens.front() {
             match &tok {
                 Token::btr => Some(compile_btr(&mut self.tokens)),
@@ -148,5 +147,48 @@ impl Compiler {
         }
 
         Ok(())
+    }
+}
+
+/// The asm compiler for the x64 backend
+/// 
+/// # Don't use!! It is for internal pourpuses only
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct x64Compiler {
+    pub(crate) inner: Option<Compiler>,
+}
+
+impl x64Compiler {
+    /// Creates an new x64 backend
+    /// # Don't use!! This structure is for internal pourpuses only
+    pub fn new() -> Self {
+        Self {
+            inner: None,
+        }
+    }
+}
+
+impl crate::Target::Compiler for x64Compiler {
+    fn parse(&mut self) -> Result<(), Box<dyn Error>> {
+        let mut compiler = self.inner.clone().unwrap();
+        compiler.parse()?;
+        self.inner = Some(compiler);
+
+        Ok(())
+    }
+
+    fn boxed(&self) -> Box<dyn crate::Target::Compiler> {
+        Box::from( self.clone() )
+    }
+    
+    fn new(&self, tokens: Vec<Token>) -> Box<dyn crate::Target::Compiler> {
+        Self {
+            inner: Some(Compiler::new(tokens)),
+        }.boxed()
+    }
+    
+    fn out(&self) -> Vec<u8> {
+        let compiler = self.inner.clone().unwrap();
+        compiler.out
     }
 }

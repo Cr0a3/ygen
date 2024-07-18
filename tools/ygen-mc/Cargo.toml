@@ -3,5 +3,9 @@ name = "ygen-mc"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "ygen-mc"
+path = "main.rs"
+
 [dependencies]
 Ygen = { workspace = true }

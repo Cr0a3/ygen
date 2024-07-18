@@ -2,7 +2,7 @@ use std::{error::Error, fmt::Display, num::ParseIntError};
 
 use logos::Logos;
 
-use crate::Target::{x64Reg, Reg};
+use crate::Target::{x64Reg, Lexer, Reg};
 
 /// An error which can occure during lexing
 #[derive(Default, Debug, Clone, PartialEq)]
@@ -340,13 +340,23 @@ impl Mem {
 	}
 }
 
-/// Lexes (Turns the source into tokens) the incoming assembly string and outputs tokens
-pub fn lex(string: String) -> Result<Vec<Token>, Box<dyn Error>> {
-    let mut tokens = vec![];
 
-    for tok in Token::lexer(&string) {
-        tokens.push( tok? );
-    }
+/// A temporary structure which implements the Lexer trait 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct x64Lexer {}
 
-    Ok(tokens)
+impl Lexer for x64Lexer {
+	fn lex(&self, string: String) -> Result<Vec<Token>, Box<dyn Error>> {
+		let mut tokens = vec![];
+	
+		for tok in Token::lexer(&string) {
+			tokens.push( tok? );
+		}
+	
+		Ok(tokens)
+	}
+
+	fn boxed(&self) -> Box<dyn Lexer> {
+		Box::from( self.clone() )
+	}
 }

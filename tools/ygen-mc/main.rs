@@ -19,7 +19,7 @@
 
 use std::error::Error;
 
-use Ygen::{self, Support::Colorize};
+use Ygen::{self, Support::Colorize, Target::{initializeAllTargets, Triple}};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut cli = Ygen::Support::Cli::new(
@@ -42,14 +42,26 @@ fn main() -> Result<(), Box<dyn Error>> {
         cli.version();
     }
 
+
+    let triple = {
+        if let Some(triple) = cli.arg_val("triple") {
+            Triple::parse(&triple)?
+        } else {
+            Triple::host()
+        }
+    };
+
+    let mut registry = initializeAllTargets();
+    let backend = registry.getBasedOnTriple(triple)?;
+
     let asm =  cli.arg_val("as").expect("we said it was required");
-    let lexed = Ygen::Target::lex(asm.clone())?;
+    let lexed = backend.lexer().lex(asm.clone())?;
 
     if cli.opt("lex") {
         println!("{}: {:?}", "Lexing result".gray(), lexed);
     }
 
-    let mut comp = Ygen::Target::Compiler::new(lexed);
+    let mut comp = backend.compiler().new(lexed);
     comp.parse()?;
 
     println!("{}: {}", "Asm string".gray(), asm);
@@ -57,7 +69,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("{}: {}", "Compilation result".gray(), {
         let mut fmt = String::from("0x");
 
-        for byte in comp.out {
+        for byte in comp.out() {
             fmt += &format!("{:#04X}", byte).replace("0x", "");
         }
 

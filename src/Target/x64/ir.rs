@@ -38,13 +38,13 @@ pub(crate) fn CompileAddVarVar(add: &Add<Var, Var, Var>, registry: &mut TargetBa
 
     let boxed: Box<dyn Ir> = Box::new(add.clone());
 
-    if !registry.block.unwrap().isVarUsedAfterNode(&boxed, &add.inner1) {
+    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &add.inner1) {
         infos.drop(&add.inner1);
     }
-    if !registry.block.unwrap().isVarUsedAfterNode(&boxed, &add.inner2) {
+    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &add.inner2) {
         infos.drop(&add.inner2);
     }
-    if !registry.block.unwrap().isVarUsedAfterNode(&boxed, &add.inner3) {
+    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &add.inner3) {
         return vec![]; // all of these calculations don't need to be done: dead code removal
     }
 
@@ -106,7 +106,7 @@ pub(crate) fn CompileConstAssign(assign: &ConstAssign<Var, Type>, registry: &mut
 
     let boxed: Box<dyn Ir> = Box::new(assign.clone());
     
-    if !registry.block.unwrap().isVarUsedAfterNode(&boxed, &assign.inner1) {
+    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &assign.inner1) {
         return vec![]; // all of these calculations don't need to be done: dead code removal
     }
     
@@ -144,7 +144,7 @@ pub(crate) fn CompileAddTyTy(add: &Add<Type, Type, Var>, registry: &mut TargetBa
 
     let boxed: Box<dyn Ir> = Box::new(add.clone());
 
-    if !registry.block.unwrap().isVarUsedAfterNode(&boxed, &add.inner3) {
+    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &add.inner3) {
         return vec![]; // all of these calculations don't need to be done: dead code removal
     }
 
@@ -231,88 +231,85 @@ pub(crate) fn x64BuildEpilog(_: &Block, registry: &mut TargetBackendDescr) -> Ve
     res
 }
 
-impl Block {
-    /// Builds the block to x86 assembly intel syntax
-    pub fn buildAsmX86<'a>(&'a self, func: &Function, call: &CallConv, registry: &mut TargetBackendDescr<'a>) -> Vec<String> {
-        registry.block = Some(&self);
+pub(crate) fn buildAsmX86<'a>(block: &'a Block, func: &Function, call: &CallConv, registry: &mut TargetBackendDescr<'a>) -> Vec<String> {
+    registry.block = Some(&block);
 
-        let info = &mut registry.backend;
+    let info = &mut registry.backend;
 
-        let mut reg_vars = 0;
-        let mut stack_off = 0;
-        let mut var_index = 0;
+    let mut reg_vars = 0;
+    let mut stack_off = 0;
+    let mut var_index = 0;
 
-        for (_, meta) in &func.ty.args {
-            let mut var = Var(&mut self.clone(), meta.to_owned());
-            var.name = format!("%{}", var_index);
+    for (_, meta) in &func.ty.args {
+        let mut var = Var(&mut block.clone(), meta.to_owned());
+        var.name = format!("%{}", var_index);
 
-            info.insertVar(var, {
-                if reg_vars >= call.regArgs() {
-                    let addend = match meta {
-                        TypeMetadata::u16 | TypeMetadata::i16=> 2,
-                        TypeMetadata::u32 | TypeMetadata::i32=> 4,
-                        TypeMetadata::u64 | TypeMetadata::i64=> 8,
-                        TypeMetadata::Void => continue,
-                    };
+        info.insertVar(var, {
+            if reg_vars >= call.regArgs() {
+                let addend = match meta {
+                    TypeMetadata::u16 | TypeMetadata::i16=> 2,
+                    TypeMetadata::u32 | TypeMetadata::i32=> 4,
+                    TypeMetadata::u64 | TypeMetadata::i64=> 8,
+                    TypeMetadata::Void => continue,
+                };
 
-                    stack_off += addend;
-                    VarStorage::Memory(format!("[rbp - {}]", stack_off - addend))
-                } else {
-                    reg_vars += 1;
-                    VarStorage::Register( match meta {
-                        TypeMetadata::u16 | TypeMetadata::i16 => call.args16()[reg_vars - 1].boxed(),
-                        TypeMetadata::u32 | TypeMetadata::i32 => call.args32()[reg_vars - 1].boxed(),
-                        TypeMetadata::u64 | TypeMetadata::i64 => call.args64()[reg_vars - 1].boxed(),
-                        TypeMetadata::Void => continue,
-                    })
-                }
-            });
+                stack_off += addend;
+                VarStorage::Memory(format!("[rbp - {}]", stack_off - addend))
+            } else {
+                reg_vars += 1;
+                VarStorage::Register( match meta {
+                    TypeMetadata::u16 | TypeMetadata::i16 => call.args16()[reg_vars - 1].boxed(),
+                    TypeMetadata::u32 | TypeMetadata::i32 => call.args32()[reg_vars - 1].boxed(),
+                    TypeMetadata::u64 | TypeMetadata::i64 => call.args64()[reg_vars - 1].boxed(),
+                    TypeMetadata::Void => continue,
+                })
+            }
+        });
 
-            var_index += 1;
-        }
-
-        if reg_vars <= call.regArgs() {
-            info.dropReg(call.args64()[reg_vars].boxed());        
-        }
-
-        let mut out = VecDeque::new();
-
-        for node in &self.nodes {
-            let compiled = node.compile(registry);
-
-            out.extend(compiled);
-        }
-
-
-
-        registry.block = None;
-
-        let mut prolog = x64BuildProlog(&self, registry);
-        prolog.reverse(); // cuz: push_front
-
-        for epAsm in prolog {
-            out.push_front(epAsm);
-        }
-
-        out.extend(x64BuildEpilog(&self, registry));
-
-        Vec::from(out)
+        var_index += 1;
     }
 
-    pub(crate) fn isVarUsedAfterNode(&self, startingNode: &Box<dyn Ir>, var: &Var) -> bool {
-        let mut used = false;
-        let mut started = false;
+    if reg_vars <= call.regArgs() {
+        info.dropReg(call.args64()[reg_vars].boxed());        
+    }
 
-        for node in &self.nodes {
-            if node.uses(var) && started {
-                used = true;
-            }
+    let mut out = VecDeque::new();
 
-            if node.is(startingNode) {
-                started = true;
-            }
+    for node in &block.nodes {
+        let compiled = node.compile(registry);
+
+        out.extend(compiled);
+    }
+
+
+
+    registry.block = None;
+
+    let mut prolog = x64BuildProlog(&block, registry);
+    prolog.reverse(); // cuz: push_front
+
+    for epAsm in prolog {
+        out.push_front(epAsm);
+    }
+
+    out.extend(x64BuildEpilog(&block, registry));
+
+    Vec::from(out)
+}
+
+pub(crate) fn BlockX86FuncisVarUsedAfterNode(block: &Block, startingNode: &Box<dyn Ir>, var: &Var) -> bool {
+    let mut used = false;
+    let mut started = false;
+
+    for node in &block.nodes {
+        if node.uses(var) && started {
+            used = true;
         }
 
-        used
+        if node.is(startingNode) {
+            started = true;
+        }
     }
+
+    used
 }

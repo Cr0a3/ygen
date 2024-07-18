@@ -1,9 +1,9 @@
 use std::{collections::{HashMap, VecDeque}, fmt::Display};
 use core::fmt::Debug;
 
-use crate::prelude::{ir::*, Block, Type, TypeMetadata, Var};
+use crate::prelude::{ir::*, Block, Function, Type, TypeMetadata, Var};
 
-use super::{Reg, CallConv};
+use super::{CallConv, Compiler, Lexer, Reg};
 
 #[derive(Debug)]
 pub(crate) struct BackendInfos {
@@ -167,13 +167,19 @@ impl Display for VarStorage {
 pub(crate) type CompileFunc<T> = fn(&T, &mut TargetBackendDescr) -> Vec<String>;
 
 /// The TargetBackendDescr is used to store all the functions/information to compile ir nodes into assembly
-#[derive(Debug)]
 pub struct TargetBackendDescr<'a> {
     funcForRetType: Option<CompileFunc<Return<Type>>>,
     funcForRetVar: Option<CompileFunc<Return<Var>>>,
     funcForConstAssign: Option<CompileFunc<ConstAssign<Var, Type>>>,
     funcForAddVarVar: Option<CompileFunc<Add<Var, Var, Var>>>,
     funcForAddTypeType: Option<CompileFunc<Add<Type, Type, Var>>>,
+
+    pub(crate) buildAsm: Option<for<'b> fn(&'b Block, &Function, &CallConv, &mut TargetBackendDescr<'b>) -> Vec<String>>,
+    pub(crate) init: Option<fn(CallConv)->TargetBackendDescr<'a>>,
+
+    pub(crate) lexer: Option<Box<dyn Lexer>>,
+    pub(crate) compile: Option<Box<dyn Compiler>>,
+
     pub(crate) block: Option<&'a Block>,
     pub(crate) backend: BackendInfos,
     pub(crate) call: CallConv,
@@ -188,6 +194,11 @@ impl<'a> TargetBackendDescr<'a> {
             funcForConstAssign: None,
             funcForAddVarVar: None,
             funcForAddTypeType: None,
+            init: None,
+            buildAsm: None,
+
+            lexer: None,
+            compile: None,
 
             block: None,
 
@@ -254,5 +265,15 @@ impl<'a> TargetBackendDescr<'a> {
         if let Some(func) = self.funcForAddTypeType {
             func
         } else { todo!("an corresponding assembly handler needs to be registered in order to compile an AddTypeType ir node")}
+    }
+
+    /// Returns the lexer to use with the TargetBackendDescr
+    pub fn lexer(&self) -> Box<dyn Lexer> {
+        self.lexer.clone().unwrap()
+    }
+
+    /// Returns the compiler to use with the TargetBackendDescr
+    pub fn compiler(&self) -> Box<dyn Compiler> {
+        self.compile.clone().unwrap()
     }
 }

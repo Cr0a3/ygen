@@ -1,4 +1,4 @@
-use std::{error::Error, fmt::Display};
+use std::{error::Error, fmt::Display, process::Command};
 use crate::Support::Colorize;
 
 use super::*;
@@ -29,6 +29,8 @@ pub enum TripleError {
     UnknownEnv(String),
     /// An unknown object file format
     UnknownObj(String),
+    /// An unsupported target triple
+    UnsuportedTriple(Triple),
 }
 
 impl Display for TripleError {
@@ -39,6 +41,7 @@ impl Display for TripleError {
                 TripleError::UnknownOs(name) => format!("Unknown operating system: '{}'", name),
                 TripleError::UnknownEnv(name) => format!("Unknown environment (maybe unknown vendor cuz error handling isn't implemented the right way): '{}'", name),
                 TripleError::UnknownObj(name) => format!("Unknown object file format: '{}'", name),
+                TripleError::UnsuportedTriple(triple) => format!("Unsupported triple: {:?}", triple),
             }
         })
     }
@@ -234,5 +237,58 @@ impl Triple {
     /// Just another name for the parse function
     pub fn from(value: &str) -> Result<Triple, TripleError> {
         Triple::parse(value)
+    }
+
+    /// returns the calling convention used by the triple
+    pub fn getCallConv(&self) -> Result<CallConv, TripleError> {
+        Ok(match self.os {
+            OS::Darwin | OS::Ios | OS::TvOS | OS::MacOS | OS::WatchOS => {
+                match self.arch {
+                    Arch::Aarch64 => CallConv::AppleAarch64,
+                    _ => CallConv::SystemV,
+                }
+            },
+
+            OS::Win32 => CallConv::WindowsFastCall,
+
+            OS::Unknown => {
+                match self.arch {
+                    Arch::Wasm32 | Arch::Wasm64 => CallConv::WasmBasicCAbi,
+                    _ => Err(TripleError::UnsuportedTriple(self.clone()))?
+                }
+            }
+
+            
+            _ => CallConv::SystemV,
+        })
+    }
+
+    /// Returns the host target triple
+    pub fn host() -> Triple {
+        Triple::parse(&getHostTargetTripleViaRustc()).unwrap()
+    }
+}
+use std::str;
+
+fn getHostTargetTripleViaRustc() -> String {
+    let output = Command::new("rustc")
+    .arg("--version")
+    .arg("--verbose")
+    .output()
+    .expect("Failed to execute rustc");
+
+    if output.status.success() {
+        let mut out = String::new();
+        let stdout = str::from_utf8(&output.stdout).expect("Failed to parse output");
+        for line in stdout.lines() {
+            if line.starts_with("host:") {
+                let target_triple = line.split_whitespace().nth(1).expect("Failed to parse target triple");
+                out = target_triple.to_string();
+            }
+        }
+
+        return out;
+    } else {
+        panic!()
     }
 }

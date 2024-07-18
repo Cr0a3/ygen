@@ -6,7 +6,7 @@ use ir::*;
 
 use crate::prelude::Module;
 
-use super::{Reg, CallConv, TargetBackendDescr};
+use super::{CallConv, Lexer, Reg, TargetBackendDescr};
 mod reg;
 pub(crate) use reg::*;
 
@@ -16,9 +16,17 @@ mod asm;
 
 pub use asm::*;
 
+use crate::Target::Compiler;
+
 /// Initializes the x86-64 target
 pub fn initializeX64Target<'a>(call_conv: CallConv) -> TargetBackendDescr<'a> {
     let mut target = TargetBackendDescr::new();
+
+    target.init = Some(initializeX64Target);
+    target.buildAsm = Some(buildAsmX86);
+
+    target.lexer = Some(x64Lexer {}.boxed());
+    target.compile = Some(x64Compiler::new().boxed());
 
     target.backend.savedRegisters = vec![
         x64Reg::R10.boxed(), x64Reg::R11.boxed(), x64Reg::R12.boxed(), x64Reg::R13.boxed(), x64Reg::R14.boxed(), x64Reg::R15.boxed(),
@@ -57,6 +65,8 @@ pub fn initializeX64Target<'a>(call_conv: CallConv) -> TargetBackendDescr<'a> {
                 vec![x64Reg::R10b.boxed(), x64Reg::R11b.boxed(), x64Reg::R12b.boxed(), x64Reg::R13b.boxed(), x64Reg::R14b.boxed(), x64Reg::R15b.boxed()]
             );
         },
+        CallConv::AppleAarch64 => todo!(),
+        CallConv::WasmBasicCAbi => todo!(),
     }
 
     target.setCompileFuncForRetType(CompileRetType);
@@ -88,7 +98,7 @@ impl Module {
                     lines += &format!("  {}:\n", block.name)
                 }
 
-                let asm_lines = block.buildAsmX86(&func, &call, &mut target);
+                let asm_lines = buildAsmX86(block, &func, &call, &mut target);
 
                 for line in asm_lines {
                     lines += &format!("\t{}\n", line);
