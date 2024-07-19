@@ -1,7 +1,7 @@
-use crate::PassManager;
+use crate::{prelude::Triple, Obj::{Decl, Linkage, ObjectBuilder}, PassManager, Target::TargetRegistry};
 
 use super::{func::FunctionType, Function, VerifyError};
-use std::collections::HashMap;
+use std::{collections::HashMap, error::Error};
 
 /// ## The Module
 /// The main class for handeling functions
@@ -79,6 +79,27 @@ impl Module {
         for (_, func) in &mut self.funcs {
             func.runPassMngr(&mngr)
         }
+    }
+
+    /// emits the machine code of the module into an object file (in the form of an object builder)
+    pub fn emitMachineCode(&self, triple: Triple, registry: &mut TargetRegistry) -> Result<ObjectBuilder, Box<dyn Error>> {
+        let mut obj = ObjectBuilder::new(triple);
+
+        for (name, func) in &self.funcs {
+            obj.decl( (&name, Decl::Function, Linkage::External));
+
+            let mut comp = vec![];
+
+            for block in &func.blocks {
+                comp.extend_from_slice(
+                    &registry.buildMachineCodeForTarget(triple, block, &func)?
+                );
+            }
+
+            obj.define(&name, comp);
+        }
+
+        Ok(obj)
     }
 }
 

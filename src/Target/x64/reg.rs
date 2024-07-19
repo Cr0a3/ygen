@@ -179,10 +179,10 @@ impl Reg for x64Reg {
             x64Reg::Rcx | x64Reg::Ecx | x64Reg::Cx | x64Reg::Cl => 1,
             x64Reg::Rdx | x64Reg::Edx | x64Reg::Dx | x64Reg::Dl => 2,
             x64Reg::Rbx | x64Reg::Ebx | x64Reg::Bx | x64Reg::Bl => 3,
-            x64Reg::Rsi | x64Reg::Esi | x64Reg::Si | x64Reg::Sil => 4,
-            x64Reg::Rdi | x64Reg::Edi | x64Reg::Di | x64Reg::Dil => 5,
-            x64Reg::Rsp | x64Reg::Esp | x64Reg::Sp | x64Reg::Spl => 6,
-            x64Reg::Rbp | x64Reg::Ebp | x64Reg::Bp | x64Reg::Bpl => 0,
+            x64Reg::Rsi | x64Reg::Esi | x64Reg::Si | x64Reg::Sil => 6,
+            x64Reg::Rbp | x64Reg::Ebp | x64Reg::Bp | x64Reg::Bpl => 5,
+            x64Reg::Rsp | x64Reg::Esp | x64Reg::Sp | x64Reg::Spl => 4,
+            x64Reg::Rdi | x64Reg::Edi | x64Reg::Di | x64Reg::Dil => 7,
 
             // this here use a prefix
             x64Reg::R8 | x64Reg::R8d | x64Reg::R8w | x64Reg::R8b => 1,

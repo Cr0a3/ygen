@@ -2517,6 +2517,7 @@ pub(crate) fn compile_lea(tokens: &mut VecDeque<Token>) -> Result<Vec<u8>, Box<d
 				tokens.pop_front(); // skip ,
 			}
 		if let Some(Token::Mem(mut op1)) = tokens.pop_front() {
+				result.push(103);
 				result.push(141);
 				result.extend_from_slice(&op1.enc(op0));
 			} else {

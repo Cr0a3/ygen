@@ -1,5 +1,5 @@
-use std::{error::Error, path::Path};
-use Ygen::prelude::*;
+use std::{error::Error, fs::OpenOptions, path::Path};
+use Ygen::{prelude::*, Target::initializeAllTargets};
 
 pub fn main() -> Result<(), Box<dyn Error>> {
     let mut module = Module();
@@ -24,6 +24,14 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     );
 
     module.emitToAsmFile(Path::new("out.asm"))?;
+
+    module
+        .emitMachineCode(
+            Triple::host(), 
+            &mut initializeAllTargets()
+        )?.emit(
+            OpenOptions::new().write(true).create(true).open("out.o")?
+    )?;
 
     Ok(())
 }

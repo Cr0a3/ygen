@@ -28,6 +28,8 @@ pub fn initializeX64Target<'a>(call_conv: CallConv) -> TargetBackendDescr<'a> {
     target.lexer = Some(x64Lexer {}.boxed());
     target.compile = Some(x64Compiler::new().boxed());
 
+    target.call = call_conv;
+
     target.backend.savedRegisters = vec![
         x64Reg::R10.boxed(), x64Reg::R11.boxed(), x64Reg::R12.boxed(), x64Reg::R13.boxed(), x64Reg::R14.boxed(), x64Reg::R15.boxed(),
     ];

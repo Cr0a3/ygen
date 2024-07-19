@@ -1,4 +1,4 @@
-use std::{collections::HashMap, error::Error, fmt::Display};
+use std::{collections::{HashMap, VecDeque}, error::Error, fmt::Display};
 
 use crate::prelude::{Block, Function};
 
@@ -52,6 +52,40 @@ impl<'a> TargetRegistry<'a> {
                     &org.init.unwrap()(triple.getCallConv()?).call, // Unnessecary (and slow) but prevents
                     &mut org.init.unwrap()(triple.getCallConv()?))  // lifetime issues 
                 )
+        } else {
+            Err(Box::from( 
+                RegistryError::UnsuportedArch(triple.arch) 
+            ))
+        }
+    }
+
+    /// Builds the ir of the given triple into machine code
+    pub fn buildMachineCodeForTarget(&mut self, triple: Triple, block: &Block, funct: &Function) -> Result<Vec<u8>, Box<dyn Error>> {
+        if let Some(org) = self.targets.get_mut(&triple.arch) {
+
+            let call = (org.init.unwrap()(triple.getCallConv()?)).call;
+
+            println!("{:?}", call);
+
+            let asm: VecDeque<String> = org.buildAsm.unwrap()(
+                &block, &funct, 
+                &call,
+                &mut org.init.unwrap()(triple.getCallConv()?)).into();
+
+            println!("{:#?}", asm);
+
+            let mut res = vec![];
+
+            for instr in &asm {
+                let lexed = org.lexer().lex(instr.clone())?;
+            
+                let mut comp = org.compiler().new(lexed);
+                comp.parse()?;
+
+                res.extend_from_slice(&comp.out());
+            }
+
+            Ok(res)
         } else {
             Err(Box::from( 
                 RegistryError::UnsuportedArch(triple.arch) 

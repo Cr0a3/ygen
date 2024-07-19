@@ -97,7 +97,6 @@ impl BackendInfos {
             self.savedRegisters.push(reg.boxed());
         }
 
-
         Some(reg)
     }
 
