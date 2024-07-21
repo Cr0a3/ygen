@@ -72,8 +72,6 @@ impl<'a> TargetRegistry<'a> {
                 &call,
                 &mut org.init.unwrap()(triple.getCallConv()?)).into();
 
-            println!("{:#?}", asm);
-
             let mut res = vec![];
 
             for instr in &asm {

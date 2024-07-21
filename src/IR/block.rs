@@ -2,8 +2,8 @@ use crate::Support::Colorize;
 
 use super::{ir::Ir, Function, VerifyError};
 
-#[derive(Debug, Clone)]
 /// A basic block: stores ir of a specific area of a function
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Block {
     //pub(crate) func: Function,
     pub(crate) name: String,

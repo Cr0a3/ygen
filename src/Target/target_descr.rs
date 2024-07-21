@@ -3,7 +3,7 @@ use core::fmt::Debug;
 
 use crate::prelude::{ir::*, Block, Function, Type, TypeMetadata, Var};
 
-use super::{CallConv, Compiler, Lexer, Reg};
+use super::{x64Reg, CallConv, Compiler, Lexer, Reg};
 
 #[derive(Debug)]
 pub(crate) struct BackendInfos {
@@ -13,6 +13,7 @@ pub(crate) struct BackendInfos {
     pub(crate) openUsableRegisters32: VecDeque<Box<dyn Reg>>,
     pub(crate) openUsableRegisters16: VecDeque<Box<dyn Reg>>,
     pub(crate) openUsableRegisters8: VecDeque<Box<dyn Reg>>,
+    pub(crate) tmpReg: Box<dyn Reg>,
     pub(crate) saveRegister: Vec<Box<dyn Reg>>,
     pub(crate) savedRegisters: Vec<Box<dyn Reg>>,
 }
@@ -26,6 +27,8 @@ impl BackendInfos {
             openUsableRegisters32: VecDeque::new(),
             openUsableRegisters16: VecDeque::new(),
             openUsableRegisters8: VecDeque::new(),
+
+            tmpReg: x64Reg::Rax.boxed(),
 
             saveRegister: vec![],
             savedRegisters: vec![],
@@ -137,6 +140,27 @@ impl BackendInfos {
             TypeMetadata::Void => todo!("cannot use void as a register variable type. consider removing it"),
         }
     }
+
+    pub(crate) fn getTmpReg16(&mut self) -> Box<dyn Reg> {
+        self.tmpReg.from( self.tmpReg.sub16() )
+    }
+
+    pub(crate) fn getTmpReg32(&mut self) -> Box<dyn Reg> {
+        self.tmpReg.from( self.tmpReg.sub32() )
+    }
+
+    pub(crate) fn getTmpReg64(&mut self) -> Box<dyn Reg> {
+        self.tmpReg.from( self.tmpReg.sub64() )
+    }
+
+    pub(crate) fn getTmpBasedOnTy(&mut self, ty: TypeMetadata) -> Box<dyn Reg> {
+        match ty {
+            TypeMetadata::u16 | TypeMetadata::i16 => self.getTmpReg16(),
+            TypeMetadata::u32 | TypeMetadata::i32 => self.getTmpReg32(),
+            TypeMetadata::u64 | TypeMetadata::i64 => self.getTmpReg64(),
+            TypeMetadata::Void => todo!("cannot use void as a register variable type. consider removing it"),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -170,8 +194,12 @@ pub struct TargetBackendDescr<'a> {
     funcForRetType: Option<CompileFunc<Return<Type>>>,
     funcForRetVar: Option<CompileFunc<Return<Var>>>,
     funcForConstAssign: Option<CompileFunc<ConstAssign<Var, Type>>>,
+
     funcForAddVarVar: Option<CompileFunc<Add<Var, Var, Var>>>,
     funcForAddTypeType: Option<CompileFunc<Add<Type, Type, Var>>>,
+    
+    funcForSubVarVar: Option<CompileFunc<Sub<Var, Var, Var>>>,
+    funcForSubTypeType: Option<CompileFunc<Sub<Type, Type, Var>>>,
 
     pub(crate) buildAsm: Option<for<'b> fn(&'b Block, &Function, &CallConv, &mut TargetBackendDescr<'b>) -> Vec<String>>,
     pub(crate) init: Option<fn(CallConv)->TargetBackendDescr<'a>>,
@@ -193,6 +221,8 @@ impl<'a> TargetBackendDescr<'a> {
             funcForConstAssign: None,
             funcForAddVarVar: None,
             funcForAddTypeType: None,
+            funcForSubVarVar: None,
+            funcForSubTypeType: None,
             init: None,
             buildAsm: None,
 
@@ -264,6 +294,30 @@ impl<'a> TargetBackendDescr<'a> {
         if let Some(func) = self.funcForAddTypeType {
             func
         } else { todo!("an corresponding assembly handler needs to be registered in order to compile an AddTypeType ir node")}
+    }
+
+    /// sets the callback for compiling the add var var ir node into asm
+    pub(crate) fn setCompileFuncForSubVarVar(&mut self, callback: CompileFunc<Sub<Var, Var, Var>>) {
+        self.funcForSubVarVar = Some(callback);
+    }
+
+    /// gets the callback for compiling the add var var node into into asm
+    pub(crate) fn getCompileFuncForSubVarVar(&self) -> CompileFunc<Sub<Var, Var, Var>> {
+        if let Some(func) = self.funcForSubVarVar {
+            func
+        } else { todo!("an corresponding assembly handler needs to be registered in order to compile an SubVarVar ir node")}
+    }
+
+    /// sets the callback for compiling the add var var ir node into asm
+    pub(crate) fn setCompileFuncForSubTypeType(&mut self, callback: CompileFunc<Sub<Type, Type, Var>>) {
+        self.funcForSubTypeType = Some(callback);
+    }
+
+    /// gets the callback for compiling the add var var node into into asm
+    pub(crate) fn getCompileFuncForSubTypeType(&self) -> CompileFunc<Sub<Type, Type, Var>> {
+        if let Some(func) = self.funcForSubTypeType {
+            func
+        } else { todo!("an corresponding assembly handler needs to be registered in order to compile an SubTypeType ir node")}
     }
 
     /// Returns the lexer to use with the TargetBackendDescr

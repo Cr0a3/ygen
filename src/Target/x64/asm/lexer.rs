@@ -42,17 +42,19 @@ pub enum Token {
 	#[regex("[a-zA-Z0-9_]+", priority = 5, callback = |lex| lex.slice().to_string())]
 	Ident(String),
 
-	#[regex("[0x0-9_]+", priority = 6, callback = |lex| {
+	#[regex("[x0-9_-]+", priority = 6, callback = |lex| {
 		let string = lex.slice();
 		if string.starts_with("0x") {
-			u64::from_str_radix(&string.replace("0x", ""), 16)
+			i64::from_str_radix(&string.replace("0x", ""), 16)
 		} else if string.starts_with("0b") {
-			u64::from_str_radix(&string.replace("0b", ""), 2)
+			i64::from_str_radix(&string.replace("0b", ""), 2)
+		} else if string.starts_with("-") {
+			Ok(-(string.replace("-", "").parse::<i64>()?))
 		} else {
 			string.parse()
 		}
 	})]
-	Num(u64),
+	Num(i64),
 
     #[token(",")]
     Comma,
@@ -336,12 +338,16 @@ impl Mem {
 		} else if let Some(Token::Reg(op0)) = tokens.front() {
 			if let Some(Token::Add) = tokens.get(1) {
 				if let Some(Token::Reg(op1)) = tokens.get(2) {
-					let enc = vec![0b00000100, 0 | op1.enc() << 3 | op0.enc()];
+					let enc = vec![0b100, 0 | op1.enc() << 3 | op0.enc()];
 					Ok(Self {
 						enc: enc,
 					})
 				} else if let Some(Token::Num(x)) = tokens.get(2) {
-					todo!()
+					let mut enc = vec![0b01 << 6 | op0.enc()];
+					enc.push(*x as u8);
+					Ok(Self {
+						enc: enc,
+					})
 				} else { todo!("print error") }
 			} else {
 				let enc = vec![0 | op0.enc()];

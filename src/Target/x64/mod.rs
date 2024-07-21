@@ -76,6 +76,8 @@ pub fn initializeX64Target<'a>(call_conv: CallConv) -> TargetBackendDescr<'a> {
     target.setCompileFuncForConstAssign(CompileConstAssign);
     target.setCompileFuncForAddVarVar(CompileAddVarVar);
     target.setCompileFuncForAddTypeType(CompileAddTyTy);
+    target.setCompileFuncForSubVarVar(CompileSubVarVar);
+    target.setCompileFuncForSubTypeType(CompileSubTyTy);
 
     target
 }

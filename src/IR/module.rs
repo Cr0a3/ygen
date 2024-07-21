@@ -1,6 +1,6 @@
 use crate::{prelude::Triple, Obj::{Decl, Linkage, ObjectBuilder}, PassManager, Target::TargetRegistry};
 
-use super::{func::FunctionType, Function, VerifyError};
+use super::{func::FunctionType, Block, Function, VerifyError};
 use std::{collections::HashMap, error::Error};
 
 /// ## The Module
@@ -90,10 +90,14 @@ impl Module {
 
             let mut comp = vec![];
 
+            let mut positions: Vec<(Block, /*offset from 0*/ usize)> = vec![];
+
             for block in &func.blocks {
-                comp.extend_from_slice(
-                    &registry.buildMachineCodeForTarget(triple, block, &func)?
-                );
+                let compiled = &registry.buildMachineCodeForTarget(triple, block, &func)?;
+
+                positions.push((block.clone(), comp.len()));
+
+                comp.extend_from_slice(&compiled);
             }
 
             obj.define(&name, comp);

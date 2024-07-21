@@ -84,6 +84,7 @@ macro_rules! IrTypeWith1 {
 IrTypeWith1!(Return, T);
 IrTypeWith2!(ConstAssign, T, U);
 IrTypeWith3!(Add, T, U, Z);
+IrTypeWith3!(Sub, T, U, Z);
 
 use crate::Support::Colorize;
 
@@ -221,6 +222,61 @@ impl Ir for Add<Type, Type, Var> {
     }
 }
 
+impl Ir for Sub<Type, Type, Var> {
+    fn clone_box(&self) -> Box<dyn Ir> {
+        Box::new(self.clone())
+    }
+
+    fn name(&self) -> String {
+        "SubTypeType".into()
+    }
+
+    fn dump(&self) -> String {
+        format!("{} = sub {} {}, {}", self.inner3.name, self.inner3.ty, self.inner1.val(), self.inner2.val())
+    }
+
+    fn dumpColored(&self) -> String {
+        format!("{} = {} {} {}, {}", 
+                self.inner3.name.magenta(), 
+                "sub".blue(), 
+                self.inner3.ty.to_string().cyan(), 
+                self.inner1.val().to_string().magenta(), 
+                self.inner2.val().to_string().magenta()
+            )
+    }
+
+    fn verify(&self, _: FunctionType) -> Result<(), VerifyError> {
+        let op0Ty: TypeMetadata = self.inner1.into();
+        let op1Ty: TypeMetadata = self.inner2.into();
+        let op2Ty: TypeMetadata = self.inner3.ty.into();
+
+        if !(op0Ty == op1Ty && op1Ty == op2Ty) {
+            if op0Ty != op1Ty {
+                Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op1Ty))?
+            } else if op1Ty != op2Ty {
+                Err(VerifyError::Op0Op1TyNoMatch(op1Ty, op2Ty))?
+            } if op0Ty != op2Ty {
+                Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op2Ty))?
+            } else { todo!("unknown error variant (debug: ty0 {} ty1 {} ty2 {})", op0Ty, op1Ty, op2Ty) }
+        }
+
+        Ok(())
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<String> {
+        registry.getCompileFuncForSubTypeType()(self, registry)
+    }
+
+    fn uses(&self, var: &Var) -> bool {
+        if *var == self.inner3 { true }
+        else { false }
+    }
+}
+
 impl Ir for Add<Var, Var, Var> {
     fn clone_box(&self) -> Box<dyn Ir> {
         Box::new(self.clone())
@@ -268,6 +324,61 @@ impl Ir for Add<Var, Var, Var> {
 
     fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<String> {
         registry.getCompileFuncForAddVarVar()(self, registry)
+    }
+
+    fn uses(&self, var: &Var) -> bool {
+        if *var == self.inner1 || *var == self.inner2 || *var == self.inner3 { true }
+        else { false }
+    }
+}
+
+impl Ir for Sub<Var, Var, Var> {
+    fn clone_box(&self) -> Box<dyn Ir> {
+        Box::new(self.clone())
+    }
+
+    fn name(&self) -> String {
+        "SubVarVar".into()
+    }
+
+    fn dump(&self) -> String {
+        format!("{} = sub {} {}, {}", self.inner3.name, self.inner3.ty, self.inner1.name, self.inner2.name)
+    }
+
+    fn dumpColored(&self) -> String {
+        format!("{} = {} {} {}, {}", 
+                self.inner3.name.magenta(), 
+                "sub".blue(), 
+                self.inner3.ty.to_string().cyan(), 
+                self.inner1.name.to_string().magenta(), 
+                self.inner2.name.to_string().magenta()
+            )
+    }
+
+    fn verify(&self, _: FunctionType) -> Result<(), VerifyError> {
+        let op0Ty: TypeMetadata = self.inner1.ty.into();
+        let op1Ty: TypeMetadata = self.inner2.ty.into();
+        let op2Ty: TypeMetadata = self.inner3.ty.into();
+
+        if !(op0Ty == op1Ty && op1Ty == op2Ty) {
+            if op0Ty != op1Ty {
+                Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op1Ty))?
+            } else if op1Ty != op2Ty {
+                Err(VerifyError::Op0Op1TyNoMatch(op1Ty, op2Ty))?
+            } if op0Ty != op2Ty {
+                Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op2Ty))?
+            } else { todo!("unknown error variant (debug: ty0 {} ty1 {} ty2 {})", op0Ty, op1Ty, op2Ty) }
+        }
+
+        Ok(())
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<String> {
+        registry.getCompileFuncForSubVarVar()(self, registry)
     }
 
     fn uses(&self, var: &Var) -> bool {
@@ -325,7 +436,6 @@ impl Ir for ConstAssign<Var, Type> {
 
 /// Trait for the return instruction
 /// Used for overloading the CreateRet function
-/// So you can return a TypeConstant or a variable
 pub trait BuildReturn<T> {
     /// Returns specified value
     fn BuildRet(&mut self, val: T);
@@ -345,11 +455,11 @@ impl BuildReturn<Var> for IRBuilder<'_> {
     }
 }
 
-/// Trait for the return instruction
-/// Used for overloading the CreateRet function
-/// So you can return a TypeConstant or a variable
+
+/// Trait for the add function
+/// Used for overloading the BuildAdd function
 pub trait BuildAdd<T, U> {
-    /// Adds to values
+    /// Adds the values
     fn BuildAdd(&mut self, op0: T, op1: U) -> Var;
 }
 
@@ -378,6 +488,43 @@ impl BuildAdd<Var, Var> for IRBuilder<'_> {
         let var = Var::new(block, ty);
 
         block.push_ir(Add::new(op0, op1, var.clone()));
+
+        var
+    }
+}
+
+/// Trait for the sub function
+/// Used for overloading the BuildSub function
+pub trait BuildSub<T, U> {
+    /// Subs the values
+    fn BuildSub(&mut self, op0: T, op1: U) -> Var;
+}
+
+impl BuildSub<Type, Type> for IRBuilder<'_> {
+    fn BuildSub(&mut self, op0: Type, op1: Type)  -> Var {
+        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+        
+        let op0Ty: TypeMetadata = op0.into();
+
+        let ty = op0Ty; // now both types need to be the same
+        let var = Var::new(block, ty);
+
+        block.push_ir(Sub::new(op0, op1, var.clone()));
+
+        var
+    }
+}
+
+impl BuildSub<Var, Var> for IRBuilder<'_> {
+    fn BuildSub(&mut self, op0: Var, op1: Var)  -> Var {
+        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+        
+        let op0Ty: TypeMetadata = op0.ty.into();
+
+        let ty = op0Ty;
+        let var = Var::new(block, ty);
+
+        block.push_ir(Sub::new(op0, op1, var.clone()));
 
         var
     }
@@ -413,6 +560,14 @@ pub(crate) trait Ir: Debug + Any {
         other.dump() == self.dump()
     }
 }
+
+impl PartialEq for Box<dyn Ir> {
+    fn eq(&self, other: &Self) -> bool {
+        self.is(other)
+    }
+}
+
+impl Eq for Box<dyn Ir> { }
 
 impl Clone for Box<dyn Ir> {
     fn clone(&self) -> Box<dyn Ir> {
