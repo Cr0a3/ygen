@@ -1,6 +1,6 @@
 use std::{any::Any, fmt::Debug, hash::Hash};
 use super::{FunctionType, IRBuilder, Type, TypeMetadata, Var, VerifyError};
-use crate::Target::TargetBackendDescr;
+use crate::Target::{Instr, TargetBackendDescr};
 
 macro_rules! IrTypeWith3 {
     ($name:tt, $param1:tt, $param2:tt, $param3:tt) => {
@@ -121,7 +121,7 @@ impl Ir for Return<Type> {
         self
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<String> {
+    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
         registry.getCompileFuncRetType()(self, registry)
     }
 }
@@ -157,7 +157,7 @@ impl Ir for Return<Var> {
         self
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<String> {
+    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
         registry.getCompileFuncForRetVar()(self, registry)
     }
 
@@ -212,7 +212,7 @@ impl Ir for Add<Type, Type, Var> {
         self
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<String> {
+    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
         registry.getCompileFuncForAddTypeType()(self, registry)
     }
 
@@ -267,7 +267,7 @@ impl Ir for Sub<Type, Type, Var> {
         self
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<String> {
+    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
         registry.getCompileFuncForSubTypeType()(self, registry)
     }
 
@@ -322,7 +322,7 @@ impl Ir for Add<Var, Var, Var> {
         self
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<String> {
+    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
         registry.getCompileFuncForAddVarVar()(self, registry)
     }
 
@@ -377,7 +377,7 @@ impl Ir for Sub<Var, Var, Var> {
         self
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<String> {
+    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
         registry.getCompileFuncForSubVarVar()(self, registry)
     }
 
@@ -424,7 +424,7 @@ impl Ir for ConstAssign<Var, Type> {
         Box::new(self.clone())
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<String> {
+    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
         registry.getCompileFuncForConstAssign()(self, registry)
     }
 
@@ -549,7 +549,7 @@ pub(crate) trait Ir: Debug + Any {
     fn clone_box(&self) -> Box<dyn Ir>;
 
     /// Compiles the node based on the given target
-    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<String>;
+    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr>;
 
     /// Returns if the node uses the variable
     fn uses(&self, _: &Var) -> bool {

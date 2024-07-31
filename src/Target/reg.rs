@@ -1,6 +1,7 @@
 use std::fmt::{Display, Debug};
 
-pub(crate) trait Reg: Display + ToString + Debug {
+/// A register
+pub trait Reg: Display + ToString + Debug {
     fn sub64(&self) -> String;
     fn sub32(&self) -> String;
     fn sub16(&self) -> String;

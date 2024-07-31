@@ -1,6 +1,6 @@
 use std::{collections::{HashMap, VecDeque}, error::Error, fmt::Display};
 
-use crate::prelude::{Block, Function};
+use crate::{prelude::{Block, Function}, Target::Instr};
 
 use super::{Arch, CallConv, TargetBackendDescr, Triple};
 
@@ -46,12 +46,20 @@ impl<'a> TargetRegistry<'a> {
     /// Builds the ir of the given triple into text assembly code
     pub fn buildAsmForTarget(&mut self, triple: Triple, block: &Block, funct: &Function) -> Result<Vec<String>, Box<dyn Error>> {
         if let Some(org) = self.targets.get_mut(&triple.arch) {
-            Ok(
-                org.buildAsm.unwrap()(
-                    &block, &funct, 
-                    &org.init.unwrap()(triple.getCallConv()?).call, // Unnessecary (and slow) but prevents
-                    &mut org.init.unwrap()(triple.getCallConv()?))  // lifetime issues 
+            let instrs = org.buildAsm.unwrap()(
+                &block, &funct, 
+                &org.init.unwrap()(triple.getCallConv()?).call, // Unnessecary (and slow) but prevents
+                &mut org.init.unwrap()(triple.getCallConv()?));  // lifetime issues 
+
+            let mut asm = vec![];
+
+            for instr in instrs {
+                asm.push(
+                    instr.to_string()
                 )
+            }
+
+            Ok(asm)
         } else {
             Err(Box::from( 
                 RegistryError::UnsuportedArch(triple.arch) 
@@ -65,9 +73,7 @@ impl<'a> TargetRegistry<'a> {
 
             let call = (org.init.unwrap()(triple.getCallConv()?)).call;
 
-            println!("{:?}", call);
-
-            let asm: VecDeque<String> = org.buildAsm.unwrap()(
+            let asm: VecDeque<Instr> = org.buildAsm.unwrap()(
                 &block, &funct, 
                 &call,
                 &mut org.init.unwrap()(triple.getCallConv()?)).into();
@@ -75,12 +81,9 @@ impl<'a> TargetRegistry<'a> {
             let mut res = vec![];
 
             for instr in &asm {
-                let lexed = org.lexer().lex(instr.clone())?;
-            
-                let mut comp = org.compiler().new(lexed);
-                comp.parse()?;
-
-                res.extend_from_slice(&comp.out());
+                res.extend_from_slice(
+                    &instr.encode()?
+                );
             }
 
             Ok(res)

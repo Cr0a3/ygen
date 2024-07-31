@@ -3,7 +3,7 @@ use core::fmt::Debug;
 
 use crate::prelude::{ir::*, Block, Function, Type, TypeMetadata, Var};
 
-use super::{x64Reg, CallConv, Compiler, Lexer, Reg};
+use super::{x64Reg, CallConv, Compiler, Instr, Lexer, MemOp, Reg};
 
 #[derive(Debug)]
 pub(crate) struct BackendInfos {
@@ -166,14 +166,14 @@ impl BackendInfos {
 #[derive(Debug)]
 pub(crate) enum VarStorage {
     Register(Box<dyn Reg>),
-    Memory(String),
+    Memory(MemOp),
 }
 
 impl Clone for VarStorage {
     fn clone(&self) -> Self {
         match self {
-            Self::Register(arg0) => Self::Register(arg0.boxed()),
-            Self::Memory(arg0) => Self::Memory(arg0.clone()),
+            Self::Register(ref arg0) => Self::Register(arg0.boxed()),
+            Self::Memory(ref arg0) => Self::Memory(arg0.clone()),
         }
     }
 }
@@ -187,7 +187,7 @@ impl Display for VarStorage {
     }
 }
 
-pub(crate) type CompileFunc<T> = fn(&T, &mut TargetBackendDescr) -> Vec<String>;
+pub(crate) type CompileFunc<T> = fn(&T, &mut TargetBackendDescr) -> Vec<Instr>;
 
 /// The TargetBackendDescr is used to store all the functions/information to compile ir nodes into assembly
 pub struct TargetBackendDescr<'a> {
@@ -201,7 +201,7 @@ pub struct TargetBackendDescr<'a> {
     funcForSubVarVar: Option<CompileFunc<Sub<Var, Var, Var>>>,
     funcForSubTypeType: Option<CompileFunc<Sub<Type, Type, Var>>>,
 
-    pub(crate) buildAsm: Option<for<'b> fn(&'b Block, &Function, &CallConv, &mut TargetBackendDescr<'b>) -> Vec<String>>,
+    pub(crate) buildAsm: Option<for<'b> fn(&'b Block, &Function, &CallConv, &mut TargetBackendDescr<'b>) -> Vec<Instr>>,
     pub(crate) init: Option<fn(CallConv)->TargetBackendDescr<'a>>,
 
     pub(crate) lexer: Option<Box<dyn Lexer>>,
