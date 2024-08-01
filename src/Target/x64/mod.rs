@@ -1,10 +1,8 @@
 //! The x64 Target: used for compiling ir and inline asm into x64 machine code
 
-use std::{collections::VecDeque, error::Error, fs::OpenOptions, io::Write, path::Path};
+use std::collections::VecDeque;
 
 use ir::*;
-
-use crate::prelude::Module;
 
 use super::{CallConv, Lexer, Reg, TargetBackendDescr};
 mod reg;
@@ -80,38 +78,4 @@ pub fn initializeX64Target<'a>(call_conv: CallConv) -> TargetBackendDescr<'a> {
     target.setCompileFuncForSubTypeType(CompileSubTyTy);
 
     target
-}
-
-impl Module {
-    /// Compiles the IR of the module into an string which will then gets written into an asm file using intel syntax
-    pub fn emitToAsmFile(&self, path: &Path) -> Result<(), Box<dyn Error>> {
-        let call = CallConv::WindowsFastCall; // todo: change it in the future to the actual target triple
-
-        let mut target = initializeX64Target(call);
-
-        let mut file = OpenOptions::new().create(true).write(true)
-                                .open(path)?;
-
-        let mut lines = String::new();
-
-        for (name, func) in &self.funcs {
-            lines += &format!("{}:\n", name);
-
-            for block in &func.blocks {
-                if block.name.to_lowercase() != "entry" {
-                    lines += &format!("  {}:\n", block.name)
-                }
-
-                let asm_lines = buildAsmX86(block, &func, &call, &mut target);
-
-                for line in asm_lines {
-                    lines += &format!("\t{}\n", line);
-                }
-            }
-        }
-
-        file.write_all(lines.as_bytes())?;
-
-        Ok(())
-    }
 }

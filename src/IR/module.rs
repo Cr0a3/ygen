@@ -1,7 +1,7 @@
 use crate::{prelude::Triple, Obj::{Decl, Linkage, ObjectBuilder}, PassManager, Target::TargetRegistry};
 
 use super::{func::FunctionType, Block, Function, VerifyError};
-use std::{collections::HashMap, error::Error};
+use std::{collections::HashMap, error::Error, fs::OpenOptions, io::Write, path::Path};
 
 /// ## The Module
 /// The main class for handeling functions
@@ -104,6 +104,37 @@ impl Module {
         }
 
         Ok(obj)
+    }
+
+    /// emits all function into one asm file
+    pub fn emitToAsmFile(&self, triple: Triple, registry: &mut TargetRegistry, path: &Path) -> Result<(), Box<dyn Error>> {
+        let mut file = OpenOptions::new().create(true).write(true)
+                                .open(path)?;
+
+        let mut lines = String::new();
+        lines.push_str(&format!("// made using {} v{}\n", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION")));
+        lines.push_str(&format!("// by {}\n\n", env!("CARGO_PKG_AUTHORS").replace(";", " ")));
+        lines.push_str("section .text\n\n");
+
+        for (name, func) in &self.funcs {
+            lines += &format!("{}:\n", name);
+
+            for block in &func.blocks {
+                if block.name.to_lowercase() != "entry" {
+                    lines += &format!("  {}:\n", block.name)
+                }
+
+                let asm_lines = registry.buildAsmForTarget(triple, block, func)?;
+
+                for line in asm_lines {
+                    lines += &format!("\t{}\n", line);
+                }
+            }
+        }
+
+        file.write_all(lines.as_bytes())?;
+
+        Ok(())
     }
 }
 

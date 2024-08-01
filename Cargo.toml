@@ -10,6 +10,7 @@ Ygen = { path = "." }
 name = "Ygen"
 version = "0.1.0"
 edition = "2021"
+authors = ["Cr0a3"]
 
 [dependencies]
 logos = "0.14.0"

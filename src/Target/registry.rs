@@ -1,6 +1,6 @@
 use std::{collections::{HashMap, VecDeque}, error::Error, fmt::Display};
 
-use crate::{prelude::{Block, Function}, Target::Instr};
+use crate::{prelude::{Block, Function}, Obj::Linkage, Target::Instr};
 
 use super::{Arch, CallConv, TargetBackendDescr, Triple};
 
@@ -52,6 +52,10 @@ impl<'a> TargetRegistry<'a> {
                 &mut org.init.unwrap()(triple.getCallConv()?));  // lifetime issues 
 
             let mut asm = vec![];
+
+            if funct.linkage == Linkage::Extern {
+                asm.push(format!("global {}", funct.name))
+            }
 
             for instr in instrs {
                 asm.push(

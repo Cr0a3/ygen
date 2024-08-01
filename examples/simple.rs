@@ -23,6 +23,8 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         "sub", &ty
     );
 
+    func.extrn();
+
     let entry = func.addBlock("entry");
     builder.positionAtEnd(entry); 
 
@@ -35,7 +37,11 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         module.dumpColored()
     );
 
-    module.emitToAsmFile(Path::new("out.asm"))?;
+    module.emitToAsmFile(
+        Triple::host(),
+        &mut initializeAllTargets(),
+        Path::new("out.asm")
+    )?;
 
     module
         .emitMachineCode(

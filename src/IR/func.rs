@@ -5,6 +5,7 @@ use super::TypeMetadata;
 use super::Var;
 use super::VerifyError;
 use crate::prelude::PassManager;
+use crate::Obj::Linkage;
 use crate::Support::Colorize;
 
 /// Stores the function type
@@ -58,6 +59,7 @@ pub struct Function {
     pub(crate) name: String,
     
     pub(crate) inline: bool,
+    pub(crate) linkage: Linkage,
     pub(crate) blocks: VecDeque<Block>,
 }
 
@@ -71,12 +73,24 @@ impl Function {
 
             name: name,
             inline: false,
+
+            linkage: Linkage::Internal,
         }
     }
 
     /// Makes the function inline
     pub fn inline(&mut self) {
         self.inline = true;
+    }
+
+    /// Sets that the function is externally visible (same as: `extern "C"`)
+    pub fn extrn(&mut self) {
+        self.linkage = Linkage::Extern;
+    }
+
+    /// Sets that the function is only internally visible (same as a normal function)
+    pub fn private(&mut self) {
+        self.linkage = Linkage::Internal;
     }
 
     /// Adds a new block to the function
