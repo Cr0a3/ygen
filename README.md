@@ -8,6 +8,10 @@ But it also lacks many ir nodes, usable optimization techniques, tools and contr
 
 The IR doesn't differ to much from LLVMs.
 
+#### Roadmap
+You can see our todos status etc in our Trello todo list: <br>
+[Roadmap](https://trello.com/invite/b/66ab5a8aa54980643608f04b/ATTI5864e0012c9fe67ddafdd621a32dc9cfE2074861/ygen)
+
 ### Simple example
 Here is a simple example on how to use Ygen to build a simple add function:
 ```rust
