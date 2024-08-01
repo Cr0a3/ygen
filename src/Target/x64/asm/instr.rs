@@ -3,7 +3,7 @@ use std::{fmt::Display, ops::{Add, Sub}};
 use crate::Target::{x64Reg, Reg};
 
 /// The target instruction
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Instr {
     /// The mnemonic to use
     pub mnemonic: Mnemonic,
@@ -43,9 +43,77 @@ impl Instr {
 
     /// Encodes the instruction (some will say compiles)
     pub fn encode(&self) -> Result<Vec<u8>, InstrEncodingError> {
-        // let out = vec![];
-        // Ok(out)
-        todo!()
+        self.verify()?;
+        //let mut out = vec![];
+        todo!("TODO: implement instruction encoding");
+
+        //Ok(out)
+    }
+
+    /// Verifys the instruction (like checking the right opcodes etc.)
+    pub fn verify(&self) -> Result<(), InstrEncodingError> {
+        match self.mnemonic {
+            Mnemonic::Lea => {
+                if self.op2 == None || self.op1 == None {
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "lea needs to have two operand".into()))?
+                }
+                if let Some(Operand::Reg(_)) = self.op1 {} else {
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "leas first operand needs to be an register".into()))?
+                }
+                if let Some(Operand::Mem(_)) = self.op1 {} else {
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "leas secound operand needs to be an memop".into()))?
+                }
+            },
+            Mnemonic::Mov => {
+                if self.op2 == None || self.op1 == None {
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "mov needs to have two operand".into()))?
+                }
+                if let Some(Operand::Imm(_)) = self.op1 {} else {
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "the mov instructions requires that the first operand is either a reg or a memop".into()))?
+                }
+            },
+            Mnemonic::Add => {
+                if self.op2 == None || self.op1 == None {
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "add needs to have two operand".into()))?
+                }
+                if let Some(Operand::Imm(_)) = self.op1 {} else {
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "the add instructions requires that the first operand is either a reg or a memop".into()))?
+                }
+            },
+            Mnemonic::Sub => {
+                if self.op2 == None || self.op1 == None {
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "sub needs to have two operand".into()))?
+                }
+                if let Some(Operand::Imm(_)) = self.op1 {} else {
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "the sub instructions requires that the first operand is either a reg or a memop".into()))?
+                }
+            },
+            Mnemonic::Push => {
+                if let Some(Operand::Imm(_)) = self.op1 {
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "the push instruction needs to have an op1 of either reg or mem".into()))?
+                }
+
+                if self.op2 != None || self.op1 == None {
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "push needs to have one operand".into()))?
+                }
+            },
+            Mnemonic::Pop => {
+                if let Some(Operand::Imm(_)) = self.op1 {
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "the pop instruction needs to have an op1 of either reg or mem".into()))?
+                }
+
+                if self.op2 != None || self.op1 == None {
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "pop needs to have one operand".into()))?
+                }
+            },
+            Mnemonic::Ret => {
+                if self.op1 != None || self.op2 != None {
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "ret isn't allowed to have operands".into()))?
+                }
+            },
+        };
+
+        Ok(())
     }
 
     /// Does the same as the encode function just for naming pourpuses
@@ -75,7 +143,7 @@ impl Display for Instr {
 }
 
 /// An error which can occure during encoding instructions
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum InstrEncodingError {
     /// The given instruction has an invalid variant
     InvalidVariant(Instr, String),
@@ -120,7 +188,7 @@ impl Display for Mnemonic {
 }
 
 /// The operand type and value to use
-#[derive(Debug)]
+#[derive(Debug, Clone, Eq)]
 pub enum Operand {
     /// A number operand
     Imm(i64),
@@ -128,6 +196,17 @@ pub enum Operand {
     Reg(Box<dyn Reg>),
     /// A memory displacement
     Mem(MemOp),
+}
+
+impl PartialEq for Operand {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Imm(l0), Self::Imm(r0)) => l0 == r0,
+            (Self::Reg(l0), Self::Reg(r0)) => l0 == r0,
+            (Self::Mem(l0), Self::Mem(r0)) => l0 == r0,
+            _ => false,
+        }
+    }
 }
 
 impl Display for Operand {
@@ -141,6 +220,7 @@ impl Display for Operand {
 }
 
 /// A memory displacement
+#[derive(Eq)]
 pub struct MemOp {
     /// The base register
     pub base: Box<dyn Reg>,
@@ -152,6 +232,12 @@ pub struct MemOp {
     pub displ: isize,
     /// The operation (true -> +, false -> -)
     pub add: bool,
+}
+
+impl PartialEq for MemOp {
+    fn eq(&self, other: &Self) -> bool {
+        self.base == other.base.clone() && self.index == other.index && self.scale == other.scale && self.displ == other.displ && self.add == other.add
+    }
 }
 
 impl core::fmt::Debug for MemOp {

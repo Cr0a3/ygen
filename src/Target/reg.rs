@@ -20,8 +20,16 @@ pub trait Reg: Display + ToString + Debug {
     fn from(&self, string: String) -> Box<dyn Reg>;
 }
 
-impl PartialEq for dyn Reg {
+impl PartialEq for Box<dyn Reg> {
     fn eq(&self, other: &Self) -> bool {
         other.sub64() == self.sub64()
+    }
+}
+
+impl Eq for Box<dyn Reg> {}
+
+impl Clone for Box<dyn Reg> {
+    fn clone(&self) -> Self {
+        self.boxed()
     }
 }
