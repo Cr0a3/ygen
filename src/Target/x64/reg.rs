@@ -25,6 +25,34 @@ pub enum x64Reg {
     R15, R15d, R15w, R15b,
 }
 
+impl x64Reg {
+    pub fn parse(string: String) -> Option<Self> {
+        use x64Reg::*;
+        match string.to_ascii_lowercase().as_str() {
+            "rax" => Some(Rax), "eax" => Some(Eax), "ax" => Some(Ax), "al" => Some(Al),
+            "rbx" => Some(Rbx), "ebx" => Some(Ebx), "bx" => Some(Bx), "bl" => Some(Bl),
+            "rcx" => Some(Rcx), "ecx" => Some(Ecx), "cx" => Some(Cx), "cl" => Some(Cl),
+            "rdx" => Some(Rdx), "edx" => Some(Edx), "dx" => Some(Dx), "dl" => Some(Dl),
+            "rsi" => Some(Rsi), "esi" => Some(Esi), "si" => Some(Si), "sil" => Some(Sil),
+            "rdi" => Some(Rdi), "edi" => Some(Edi), "di" => Some(Di), "dil" => Some(Dil),
+
+            "rsp" => Some(Rsp), "esp" => Some(Esp), "sp" => Some(Sp), "spl" => Some(Spl),
+            "rbp" => Some(Rbp), "ebp" => Some(Ebp), "bp" => Some(Bp), "bpl" => Some(Bpl),
+
+            "r8" => Some(R8), "r8d" => Some(R8d), "r8w" => Some(R8w), "r8b" => Some(R8b),
+            "r9" => Some(R9), "r9d" => Some(R9d), "r9w" => Some(R9w), "r9b" => Some(R9b),
+            "r10" => Some(R10), "r10d" => Some(R10d), "r10w" => Some(R10w), "r10b" => Some(R10b),
+            "r11" => Some(R11), "r11d" => Some(R11d), "r11w" => Some(R11w), "r11b" => Some(R11b),
+            "r12" => Some(R12), "r12d" => Some(R12d), "r12w" => Some(R12w), "r12b" => Some(R12b),
+            "r13" => Some(R13), "r13d" => Some(R13d), "r13w" => Some(R13w), "r13b" => Some(R13b),
+            "r14" => Some(R14), "r14d" => Some(R14d), "r14w" => Some(R14w), "r14b" => Some(R14b),
+            "r15" => Some(R15), "r15d" => Some(R15d), "r15w" => Some(R15w), "r15b" => Some(R15b),
+            
+            _ => None,
+        }
+    }
+}
+
 impl Display for x64Reg {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", format!("{:?}", self).to_lowercase())

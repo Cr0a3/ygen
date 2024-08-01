@@ -69,7 +69,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("{}: {}", "Compilation result".gray(), {
         let mut fmt = String::from("0x");
 
-        for byte in comp.out() {
+        for byte in comp.out()? {
             fmt += &format!("{:#04X}", byte).replace("0x", "");
         }
 

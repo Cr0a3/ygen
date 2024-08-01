@@ -9,7 +9,7 @@ pub trait Compiler {
     /// compiles an assembly string into machine code
     fn parse(&mut self) -> Result<(), Box<dyn Error>>;
     /// Returns the output machine code
-    fn out(&self) -> Vec<u8>;
+    fn out(&self) -> Result<Vec<u8>, Box<dyn Error>>;
     
     #[doc(hidden)]
     fn boxed(&self) -> Box<dyn Compiler>;

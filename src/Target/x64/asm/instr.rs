@@ -68,7 +68,7 @@ impl Instr {
                 if self.op2 == None || self.op1 == None {
                     Err(InstrEncodingError::InvalidVariant(self.clone(), "mov needs to have two operand".into()))?
                 }
-                if let Some(Operand::Imm(_)) = self.op1 {} else {
+                if let Some(Operand::Imm(_)) = self.op1 {
                     Err(InstrEncodingError::InvalidVariant(self.clone(), "the mov instructions requires that the first operand is either a reg or a memop".into()))?
                 }
             },
@@ -164,13 +164,13 @@ impl std::error::Error for InstrEncodingError {}
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[allow(missing_docs)]
 pub enum Mnemonic {
+    Add,
     Lea,
     Mov,
-    Add,
-    Sub,
     Push,
     Pop,
     Ret,
+    Sub,
 }
 
 impl Display for Mnemonic {

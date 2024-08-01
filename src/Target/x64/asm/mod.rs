@@ -1,8 +1,7 @@
 mod lexer;
-mod compiler;
-mod compile;
+mod parser;
 mod instr;
 
 pub use lexer::*;
-pub use compiler::x64Compiler;
+pub use parser::*;
 pub use instr::*;

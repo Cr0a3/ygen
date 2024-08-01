@@ -24,7 +24,7 @@ pub fn initializeX64Target<'a>(call_conv: CallConv) -> TargetBackendDescr<'a> {
     target.buildAsm = Some(buildAsmX86);
 
     target.lexer = Some(x64Lexer {}.boxed());
-    target.compile = Some(x64Compiler::new().boxed());
+    target.compile = Some(x64Parser { tokens: VecDeque::new(), out: None }.boxed());
 
     target.call = call_conv;
 
