@@ -1,16 +1,15 @@
 # Ygen - Yet another Code Generator
 Ygen is a libary to build backends for compilers.
-It has an easy to use API like LLVMSwift. 
 
-But one advantage: it is made in Rust. <br>
-The dissavantages: everything.
+Its primary focus is having an really easy to use API like LLVMSwift (ygen is also implemented easily so everybody can add their own ir nodes and the compilation backends).
 
-It's primary focus is having an really easy to use API (which is also implemented easily so everybody can add their own ir nodes).
+It has some advantages over llvm like being more memory safe cuz it's written in rust.
+But it also lacks many ir nodes, usable optimization techniques, tools and contributours.
 
 The IR doesn't differ to much from LLVMs.
 
 ### Simple example
-Here is a simple example on how to use Ygen to build an simple add function:
+Here is a simple example on how to use Ygen to build a simple add function:
 ```rust
 use std::error::Error;
 use Ygen::prelude::*;
@@ -24,6 +23,8 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     let func = module.add(
         "add", &ty
     );
+
+    func.extrn(); // make function externally visible
 
     let entry = func.addBlock("entry");
     builder.positionAtEnd(entry); 
@@ -51,8 +52,18 @@ define i32 @add( i32 %0,  i32 %1 ) {
 
 You can add following lines (you need to include `std::fs::Path`) to compile the IR down to assembly:
 ```Rust
-module.emitToAsmFile(Path::new("out.asm"))?;
+module.emitToAsmFile(
+    Triple::host(),
+    &mut initializeAllTargets(),
+    Path::new("out.asm")
+)?;
 ```
+
+### Support
+Ygen currently supports following architectures
+|Name    |Full ir |Full isa|
+|--------|--------|--------|
+|   x64  |         <b style="color:green">X</b>              | <b style="color:red">X</b>|
 
 ### Copyright
 This project is owned by Cr0a3 and licensed under the MIT License

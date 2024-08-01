@@ -11,6 +11,12 @@ name = "Ygen"
 version = "0.1.0"
 edition = "2021"
 authors = ["Cr0a3"]
+documentation = "https://toni-graphics.github.io/ygen/Ygen/index.html"
+repository = "https://github.com/Toni-Graphics/ygen"
+license = "Apache2"
+description = "Another code generation libary like LLVM"
+categories = ["FFI"]
+keywords = ["compiler", "codegen", "llvm"]
 
 [dependencies]
 logos = "0.14.0"
