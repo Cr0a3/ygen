@@ -1,6 +1,6 @@
 use std::{any::Any, fmt::Debug, hash::Hash};
 use super::{FunctionType, IRBuilder, Type, TypeMetadata, Var, VerifyError};
-use crate::Target::{Instr, TargetBackendDescr};
+use crate::Target::{instr::Instr, TargetBackendDescr};
 
 macro_rules! IrTypeWith3 {
     ($name:tt, $param1:tt, $param2:tt, $param3:tt) => {

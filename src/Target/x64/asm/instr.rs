@@ -1,6 +1,8 @@
-use std::{fmt::Display, ops::{Add, Sub}};
+use std::{fmt::Display, ops::{Add, Sub}, str::FromStr};
 
-use crate::Target::{x64Reg, Reg};
+use crate::Target::{isa::{buildOpcode, MandatoryPrefix, RexPrefix}, x64Reg, Reg};
+
+use super::isa::ModRm;
 
 /// The target instruction
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -44,10 +46,107 @@ impl Instr {
     /// Encodes the instruction (some will say compiles)
     pub fn encode(&self) -> Result<Vec<u8>, InstrEncodingError> {
         self.verify()?;
-        //let mut out = vec![];
-        todo!("TODO: implement instruction encoding");
+        
+        Ok(match self.mnemonic {
+            Mnemonic::Add | Mnemonic::Adc | Mnemonic::And | Mnemonic::Or | Mnemonic::Sub | Mnemonic::Xor => {
 
-        //Ok(out)
+                let mandatory = if let Some(Operand::Reg(reg)) = &self.op1 {
+                    if reg.is_gr16() { Some(MandatoryPrefix::t16BitOps)}
+                    else { None }
+                } else { None };
+
+                let rex: Option<RexPrefix> = if let Some(Operand::Reg(reg)) = &self.op1 {
+                    if reg.is_gr64() { Some(RexPrefix { w: true, r: false, x: false, b: false })}
+                    else { None }
+                } else { None };
+
+                let (mut r, mut m, _) = match self.mnemonic {
+                    Mnemonic::Add => (0x01, 0x03, 0),
+                    Mnemonic::Adc => (0x11, 0x03, 2),
+                    Mnemonic::Sub => (0x29, 0x2B, 5),
+                    Mnemonic::And => (0x21, 0x23, 4),
+                    Mnemonic::Or => (0x09, 0x0B, 1),
+                    Mnemonic::Xor => (0x31, 0x33, 6),
+                    _ => unreachable!(),
+                };
+
+                if let Some(Operand::Reg(reg)) = &self.op1 {
+                    if reg.is_gr8() { r -= 1; m -= 1; }
+                }
+
+                match self.op2.as_ref().expect("verifycation failed") {
+                    Operand::Reg(reg) => {
+                        let reg = reg.as_any().downcast_ref::<x64Reg>().expect("expected x64 registers and not the ones from other archs");
+
+                        let mut rex = if reg.extended() {
+                            if let Some(mut rex) = rex {
+                                rex.r = true;
+                                Some(rex)
+                            }  else {
+                                Some(RexPrefix { w: false, r: true, x: false, b: false })
+                            }
+                        } else { rex };
+                        let mut op = vec![];
+
+                        if let Some(Operand::Reg(op0)) = &self.op1 {
+                            let op0 = op0.as_any().downcast_ref::<x64Reg>().expect("expected x64 registers and not the ones from other archs");
+
+                            rex = if op0.extended() {
+                                if let Some(mut rex) = rex {
+                                    rex.b = true;
+                                    Some(rex)
+                                }  else {
+                                    Some(RexPrefix { w: false, r: false, x: false, b: true })
+                                }
+                            } else { rex };
+
+                            op.push(m);
+                            op.extend_from_slice(&ModRm::reg2(
+                                *reg, 
+                                *op0
+                            ));
+
+                        } else if let Some(Operand::Mem(mem)) = &self.op1 {
+                            op.push(m);
+                            op.extend_from_slice(&ModRm::regM(
+                                *reg.as_any().downcast_ref::<x64Reg>().expect("expected x64 registers and not the ones from other archs"), 
+                                mem.clone(),
+                            ))
+                        } else { todo!() }
+
+                        buildOpcode(mandatory, rex, op)
+                    },
+                    Operand::Mem(mem) => {
+                        let mut op = vec![];
+                        let mut rex = None;
+
+                        if let Some(Operand::Reg(op0)) = &self.op1 {
+                            let op0 = op0.as_any().downcast_ref::<x64Reg>().expect("expected x64 registers and not the ones from other archs");
+
+                            if op0.extended() { 
+                                rex = Some(RexPrefix { w: false, r: false, x: false, b: true }); 
+                            }
+
+                            op.push(r);
+                            op.extend_from_slice(&ModRm::memR(
+                                mem.clone(), 
+                                *op0
+                            ));
+
+                        } else { todo!() }
+
+                        buildOpcode(mandatory, rex, op)
+                    },
+                    
+                    _ => todo!(),
+                }
+            },
+            Mnemonic::Lea => todo!(),
+            Mnemonic::Mov => todo!(),
+            Mnemonic::Push => todo!(),
+            Mnemonic::Pop => todo!(),
+            Mnemonic::Ret => vec![0xC3],
+        })
     }
 
     /// Verifys the instruction (like checking the right opcodes etc.)
@@ -60,7 +159,7 @@ impl Instr {
                 if let Some(Operand::Reg(_)) = self.op1 {} else {
                     Err(InstrEncodingError::InvalidVariant(self.clone(), "leas first operand needs to be an register".into()))?
                 }
-                if let Some(Operand::Mem(_)) = self.op1 {} else {
+                if let Some(Operand::Mem(_)) = self.op2 {} else {
                     Err(InstrEncodingError::InvalidVariant(self.clone(), "leas secound operand needs to be an memop".into()))?
                 }
             },
@@ -71,21 +170,25 @@ impl Instr {
                 if let Some(Operand::Imm(_)) = self.op1 {
                     Err(InstrEncodingError::InvalidVariant(self.clone(), "the mov instructions requires that the first operand is either a reg or a memop".into()))?
                 }
-            },
-            Mnemonic::Add => {
-                if self.op2 == None || self.op1 == None {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "add needs to have two operand".into()))?
-                }
-                if let Some(Operand::Imm(_)) = self.op1 {} else {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "the add instructions requires that the first operand is either a reg or a memop".into()))?
+
+                if let Some(Operand::Mem(_)) = self.op1 {
+                    if let Some(Operand::Mem(_)) = self.op2 {
+                        Err(InstrEncodingError::InvalidVariant(self.clone(), "add/sub/or/xor can't have two mem operands".into()))?
+                    }
                 }
             },
-            Mnemonic::Sub => {
+            Mnemonic::Add | Mnemonic::Adc | Mnemonic::Sub | Mnemonic::And | Mnemonic::Or | Mnemonic::Xor => {
                 if self.op2 == None || self.op1 == None {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "sub needs to have two operand".into()))?
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "add/sub/and/or/xor needs to have two operand".into()))?
                 }
-                if let Some(Operand::Imm(_)) = self.op1 {} else {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "the sub instructions requires that the first operand is either a reg or a memop".into()))?
+                if let Some(Operand::Imm(_)) = self.op1 {
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "the add/sub/and/or/xor instructions requires that the first operand is either a reg or a memop".into()))?
+                }
+
+                if let Some(Operand::Mem(_)) = self.op1 {
+                    if let Some(Operand::Mem(_)) = self.op2 {
+                        Err(InstrEncodingError::InvalidVariant(self.clone(), "add/sub/or/xor can't have two mem operands".into()))?
+                    }
                 }
             },
             Mnemonic::Push => {
@@ -165,21 +268,51 @@ impl std::error::Error for InstrEncodingError {}
 #[allow(missing_docs)]
 pub enum Mnemonic {
     Add,
+    Adc,
+    And,
+    Or,
+    Xor,
+    Sub,
+
     Lea,
     Mov,
     Push,
     Pop,
     Ret,
-    Sub,
+}
+
+impl FromStr for Mnemonic {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Mnemonic, Self::Err> {
+        match s {
+            "add" => Ok(Mnemonic::Add),
+            "adc" => Ok(Mnemonic::Adc),
+            "and" => Ok(Mnemonic::And),
+            "or" => Ok(Mnemonic::Or),
+            "xor" => Ok(Mnemonic::Xor),
+            "sub" => Ok(Mnemonic::Sub),
+            "lea" => Ok(Mnemonic::Lea),
+            "mov" => Ok(Mnemonic::Mov),
+            "push" => Ok(Mnemonic::Push),
+            "pop" => Ok(Mnemonic::Pop),
+            "ret" => Ok(Mnemonic::Ret),
+            _ => Err(()),
+        }
+    }
 }
 
 impl Display for Mnemonic {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", match self {
+        write!(f, "{}", match self {    
+            Mnemonic::Add => "add",
+            Mnemonic::Adc => "adc",
+            Mnemonic::And => "and",
+            Mnemonic::Or => "or",
+            Mnemonic::Xor => "xor",
+            Mnemonic::Sub => "sub",
             Mnemonic::Lea => "lea",
             Mnemonic::Mov => "mov",
-            Mnemonic::Add => "add",
-            Mnemonic::Sub => "sub",
             Mnemonic::Push => "push",
             Mnemonic::Pop => "pop",
             Mnemonic::Ret => "ret",
@@ -232,6 +365,20 @@ pub struct MemOp {
     pub displ: isize,
     /// The operation (true -> +, false -> -)
     pub add: bool,
+}
+
+impl MemOp {
+    #[doc(hidden)]
+    pub fn encode(&self) -> Vec<u8> {
+        todo!()
+    }
+
+    #[doc(hidden)]
+    pub fn _mod(&self) -> u8 {
+        if self.displ == 0 { 0 }
+        else if self.displ <= u8::MAX as isize { 0b01 }
+        else  { 0b10 }
+    }
 }
 
 impl PartialEq for MemOp {

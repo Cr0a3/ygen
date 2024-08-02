@@ -1,7 +1,7 @@
-use std::fmt::{Display, Debug};
+use std::{any::Any, fmt::{Debug, Display}};
 
 /// A register
-pub trait Reg: Display + ToString + Debug {
+pub trait Reg: Display + ToString + Debug + Any {
     /// sub64 variant (e.g: eax -> rax (x64) or x0 -> x0 (aarch64))
     fn sub64(&self) -> String;
     /// sub32 variant (e.g: rax -> eax (x64) or x0 -> x0 (aarch64))
@@ -29,6 +29,9 @@ pub trait Reg: Display + ToString + Debug {
 
     /// parses the string variant
     fn from(&self, string: String) -> Box<dyn Reg>;
+
+    #[doc(hidden)]
+    fn as_any(&self) -> &dyn Any;
 }
 
 impl PartialEq for Box<dyn Reg> {

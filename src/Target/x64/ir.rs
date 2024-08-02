@@ -7,7 +7,7 @@ use crate::IR::ir::*;
 
 use crate::Target::CallConv;
 
-use super::{x64Reg, Instr, Mnemonic, Operand};
+use super::{x64Reg, instr::*};
 
 pub(crate) fn CompileAddVarVar(add: &Add<Var, Var, Var>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
     let infos = &mut registry.backend;

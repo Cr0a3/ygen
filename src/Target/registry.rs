@@ -1,6 +1,6 @@
 use std::{collections::{HashMap, VecDeque}, error::Error, fmt::Display};
 
-use crate::{prelude::{Block, Function}, Obj::Linkage, Target::Instr};
+use crate::{prelude::{Block, Function}, Obj::Linkage, Target::instr::Instr};
 
 use super::{Arch, CallConv, TargetBackendDescr, Triple};
 

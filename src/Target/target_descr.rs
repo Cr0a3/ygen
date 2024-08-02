@@ -3,7 +3,7 @@ use core::fmt::Debug;
 
 use crate::prelude::{ir::*, Block, Function, Type, TypeMetadata, Var};
 
-use super::{x64Reg, CallConv, Compiler, Instr, Lexer, MemOp, Reg};
+use super::{x64Reg, CallConv, Compiler, instr::Instr, Lexer, instr::MemOp, Reg};
 
 #[derive(Debug)]
 pub(crate) struct BackendInfos {

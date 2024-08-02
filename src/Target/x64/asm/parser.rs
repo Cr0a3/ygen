@@ -1,8 +1,8 @@
-use std::{collections::VecDeque, error::Error, fmt::Display};
+use std::{collections::VecDeque, error::Error, fmt::Display, str::FromStr};
 
 use crate::Target::{x64Reg, Compiler, Reg};
 
-use super::{Instr, Mnemonic, Operand, Token};
+use super::{instr::*, Token};
 
 /// The parser for parsing x64 assembly instructions
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -31,15 +31,11 @@ impl x64Parser {
 
         self.tokens.pop_front(); // advance
 
-        match instr.to_ascii_lowercase().as_str() { // so you are able to use MOV and mov or Mov it's all the same
-            "add" => self.parse_instr(Mnemonic::Add)?,
-            "lea" => self.parse_instr(Mnemonic::Lea)?,
-            "mov" => self.parse_instr(Mnemonic::Mov)?,
-            "push" => self.parse_instr(Mnemonic::Push)?,
-            "pop" => self.parse_instr(Mnemonic::Pop)?,
-            "ret" => self.parse_instr(Mnemonic::Ret)?,
-            "sub" => self.parse_instr(Mnemonic::Sub)?,
-            _ => Err(ParsingError::UnknownInstruction(instr.to_owned()))?
+        let string = instr.to_ascii_lowercase();
+        let parsed = Mnemonic::from_str(&string);
+        match parsed {
+            Ok(mne) => self.parse_instr(mne)?,
+            Err(_) => Err(ParsingError::UnknownInstruction(string))?
         }
 
         Ok(())

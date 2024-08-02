@@ -53,6 +53,22 @@ impl x64Reg {
             _ => None,
         }
     }
+    
+    /// Returns if the reg is in the extendet region (r8->r15)
+    pub fn extended(&self) -> bool {
+        use x64Reg::*;
+        match self {
+            R8 | R8d | R8w | R8b |
+            R9 | R9d | R9w | R9b |
+            R10 | R10d | R10w | R10b |
+            R11 | R11d | R11w | R11b |
+            R12 | R12d | R12w | R12b |
+            R13 | R13d | R13w | R13b |
+            R14 | R14d | R14w | R14b |
+            R15 | R15d | R15w | R15b  => true,
+            _ => false,
+        }
+    }
 }
 
 impl Display for x64Reg {
@@ -167,19 +183,47 @@ impl Reg for x64Reg {
     }
     
     fn is_gr64(&self) -> bool {
-        self.sub64() == format!("{}", self)
+        use x64Reg::*;
+        match self {
+            Rax | Rbx | Rcx | Rdx | Rsi | Rdi |
+            Rsp | Rbp | R8 | R9 | R10 | R11 |
+            R12 | R13 | R14 | R15 => true,
+
+            _ => false,
+        }
     }
     
     fn is_gr32(&self) -> bool {
-        self.sub32() == format!("{}", self)
+        use x64Reg::*;
+        match self {
+            Eax | Ebx | Ecx | Edx | Esi | Edi |
+            Esp | Ebp | R8d | R9d | R10d | R11d |
+            R12d | R13d | R14d | R15d => true,
+
+            _ => false,
+        }
     }
     
     fn is_gr16(&self) -> bool {
-        self.sub16() == format!("{}", self)
+        use x64Reg::*;
+        match self {
+            Ax | Bx | Cx | Dx | Si | Di |
+            Sp | Bp | R8w | R9w | R10w | R11w |
+            R12w | R13w | R14w | R15w => true,
+
+            _ => false,
+        }
     }
     
     fn is_gr8(&self) -> bool {
-        self.sub8() == format!("{}", self)
+        use x64Reg::*;
+        match self {
+            Al | Bl | Cl | Dl | Sil | Dil |
+            Spl | Bpl | R8b | R9b | R10b |
+            R11b | R12b | R13b | R14b | R15b => true,
+
+            _ => false,
+        }
     }
 
     fn enc(&self) -> u8 {
@@ -203,5 +247,9 @@ impl Reg for x64Reg {
             x64Reg::R14 | x64Reg::R14d | x64Reg::R14w | x64Reg::R14b => 7,
             x64Reg::R15 | x64Reg::R15d | x64Reg::R15w | x64Reg::R15b => 8,
         }
+    }
+    
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }
