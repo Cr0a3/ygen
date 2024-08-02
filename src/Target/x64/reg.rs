@@ -4,6 +4,7 @@ use super::Reg;
 
 /// A x64 register
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[allow(missing_docs)]
 pub enum x64Reg {
     Rax, Eax, Ax, Al,
     Rbx, Ebx, Bx, Bl,
@@ -26,6 +27,7 @@ pub enum x64Reg {
 }
 
 impl x64Reg {
+    /// Parses the string to an register (Returns none if it's invalid)
     pub fn parse(string: String) -> Option<Self> {
         use x64Reg::*;
         match string.to_ascii_lowercase().as_str() {
@@ -161,28 +163,7 @@ impl Reg for x64Reg {
     }
     
     fn from(&self, string: String) -> Box<dyn Reg> {
-        use x64Reg::*;
-        Box::new(match string.as_str() {
-            "rax" => Rax, "eax" => Eax, "ax" => Ax, "al" => Al,
-            "rbx" => Rbx, "ebx" => Ebx, "bx" => Bx, "bl" => Bl,
-            "rcx" => Rcx, "ecx" => Ecx, "cx" => Cx, "cl" => Cl,
-            "rdx" => Rdx, "edx" => Edx, "dx" => Dx, "dl" => Dl,
-            "rsi" => Rsi, "esi" => Esi, "si" => Si, "sil" => Sil,
-            "rdi" => Rdi, "edi" => Edi, "di" => Di, "dil" => Dil,
-
-            "rsp" => Rsp, "esp" => Esp, "sp" => Sp, "spl" => Spl,
-            "rbp" => Rbp, "ebp" => Ebp, "bp" => Bp, "bpl" => Bpl,
-
-            "r8" => R8, "r8d" => R8d, "r8w" => R8w, "r8b" => R8w,
-            "r9" => R9, "r9d" => R9d, "r9w" => R9w, "r9b" => R9w,
-            "r10" => R10, "r10d" => R10d, "r10w" => R10w, "r10b" => R10w,
-            "r11" => R11, "r11d" => R11d, "r11w" => R11w, "r11b" => R11w,
-            "r12" => R12, "r12d" => R12d, "r12w" => R12w, "r12b" => R12w,
-            "r13" => R13, "r13d" => R13d, "r13w" => R13w, "r13b" => R13w,
-            "r14" => R14, "r14d" => R14d, "r14w" => R14w, "r14b" => R14w,
-            "r15" => R15, "r15d" => R15d, "r15w" => R15w, "r15b" => R15w,
-            _ => todo!("unknown register"),
-        })
+        x64Reg::parse(string).expect("need valid register").boxed()
     }
     
     fn is_gr64(&self) -> bool {

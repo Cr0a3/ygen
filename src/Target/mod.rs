@@ -4,7 +4,7 @@ mod x64;
 mod reg;
 mod registry;
 pub use x64::*;
-pub(crate) use reg::Reg;
+pub use reg::Reg;
 pub use triple::Triple;
 pub use target_descr::TargetBackendDescr;
 pub use registry::TargetRegistry;

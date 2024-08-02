@@ -6,7 +6,7 @@ use ir::*;
 
 use super::{CallConv, Lexer, Reg, TargetBackendDescr};
 mod reg;
-pub(crate) use reg::*;
+pub use reg::*;
 
 pub(crate) mod ir;
 pub(crate) mod call;
