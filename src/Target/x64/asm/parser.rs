@@ -64,6 +64,7 @@ impl x64Parser {
         } else if let Some(Token::L_Bracket) = self.tokens.front() {
             instr.op1 = Some(Operand::Mem(self.parse_mem()?));
             first_op = true;
+            self.tokens.pop_front(); // advance over ]
         }
 
         if first_op {

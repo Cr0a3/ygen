@@ -60,18 +60,18 @@ impl Instr {
                     else { None }
                 } else { None };
 
-                let (mut r, mut m, _) = match self.mnemonic {
+                let (mut r, mut m, mut i) = match self.mnemonic {
                     Mnemonic::Add => (0x01, 0x03, 0),
                     Mnemonic::Adc => (0x11, 0x03, 2),
                     Mnemonic::Sub => (0x29, 0x2B, 5),
-                    Mnemonic::And => (0x21, 0x23, 4),
+                    Mnemonic::And => (0x21, 0x23, 3),
                     Mnemonic::Or => (0x09, 0x0B, 1),
                     Mnemonic::Xor => (0x31, 0x33, 6),
                     _ => unreachable!(),
                 };
 
                 if let Some(Operand::Reg(reg)) = &self.op1 {
-                    if reg.is_gr8() { r -= 1; m -= 1; }
+                    if reg.is_gr8() { r -= 1; m -= 1; i -= 1; }
                 }
 
                 match self.op2.as_ref().expect("verifycation failed") {
@@ -170,14 +170,81 @@ impl Instr {
 
                         buildOpcode(mandatory, rex, op)
                     },
-                    
-                    _ => todo!(),
+                    Operand::Imm(num) => {
+                        let mut mandatory = None;
+                        let mut rex = None;
+                        let mut op = vec![];
+
+                        if let Some(Operand::Reg(op0)) = &self.op1 {
+                            let op0 = op0.as_any().downcast_ref::<x64Reg>().expect("expected x64 registers and not the ones from other archs");
+
+                            if op0.extended() { 
+                                rex = Some(RexPrefix { w: false, r: false, x: false, b: true });
+                            } 
+                            if op0.is_gr64() { 
+                                rex = Some(RexPrefix { w: true, r: false, x: false, b: false });  
+                            }
+                            if op0.is_gr16() {
+                                mandatory = Some(MandatoryPrefix::t16BitOps);
+                            }
+
+                            op.push(0x81);
+                            op.extend_from_slice(&ModRm::regWimm(i, *op0));
+
+                            let bytes = (*num).to_be_bytes();
+
+                            if op0.is_gr64() || op0.is_gr32() {
+                                op.push(bytes[7]); op.push(bytes[6]);
+                                op.push(bytes[5]); op.push(bytes[4]);
+                            } else if op0.is_gr16() {
+                                op.push(bytes[7]); op.push(bytes[6]);
+                            } else if op0.is_gr8() {
+                                op.push(*num as u8);
+                            }
+                        } else { todo!() }
+
+                        buildOpcode(mandatory, rex, op)
+                    }
                 }
             },
             Mnemonic::Lea => todo!(),
             Mnemonic::Mov => todo!(),
-            Mnemonic::Push => todo!(),
-            Mnemonic::Pop => todo!(),
+            Mnemonic::Push | Mnemonic::Pop => {
+                let mut mandatory = None;
+                let mut rex = None;
+                let mut op = vec![];
+
+                let (opcode, i) = match self.mnemonic {
+                    Mnemonic::Push => (0xff, 6),
+                    Mnemonic::Pop => (0x8f, 0),
+                    _ => unreachable!()
+                };
+
+                if let Some(Operand::Reg(op0)) = &self.op1 {
+                    let op0 = op0.as_any().downcast_ref::<x64Reg>().expect("expected x64 registers and not the ones from other archs");
+
+                    if op0.extended() { 
+                        rex = Some(RexPrefix { w: false, r: false, x: false, b: true });
+                    } 
+                    if op0.is_gr64() { 
+                        rex = Some(RexPrefix { w: true, r: false, x: false, b: false });  
+                    }
+                    if op0.is_gr16() {
+                        mandatory = Some(MandatoryPrefix::t16BitOps);
+                    }
+                    
+                    op.push(opcode);
+                    op.push(0b11 << 6 | i << 3 | op0.enc());
+
+                } else if let Some(Operand::Mem(mem)) = &self.op1 {
+                    op.push(opcode);
+                    let enc = mem.encode(None);
+                    op.push(enc.0 | i << 3 | 0b100);
+                    op.extend_from_slice(&enc.1);
+                } else { todo!() }
+
+                buildOpcode(mandatory, rex, op)
+            },
             Mnemonic::Ret => vec![0xC3],
         })
     }
@@ -221,6 +288,9 @@ impl Instr {
                 if let Some(Operand::Mem(_)) = self.op1 {
                     if let Some(Operand::Mem(_)) = self.op2 {
                         Err(InstrEncodingError::InvalidVariant(self.clone(), "add/sub/or/xor can't have two mem operands".into()))?
+                    }
+                    if let Some(Operand::Imm(_)) = self.op2 {
+                        Err(InstrEncodingError::InvalidVariant(self.clone(), "add/sub/or/xor can't have mem, num (idk why)".into()))?
                     }
                 }
             },

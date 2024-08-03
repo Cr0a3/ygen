@@ -67,7 +67,6 @@ impl ModRm {
     }
 
     pub fn regM(reg: x64Reg, mem: MemOp) -> Vec<u8> {
-        println!("regM");
         let enc = mem.encode(Some(reg.boxed()));
         let mut out = vec![];
 
@@ -80,9 +79,12 @@ impl ModRm {
     }
 
     pub fn memR(mem: MemOp, reg: x64Reg) -> Vec<u8> {
-        println!("memR");
         let mut out = vec![mem.encode(Some(reg.boxed())).0 << 6 | reg.enc() << 3 | 0b100];
         out.extend_from_slice(&mem.encode(Some(reg.boxed())).1);
         out
+    }
+
+    pub fn regWimm(i: u8, reg: x64Reg) -> Vec<u8> {
+        vec![0b11 << 6 | i << 3 | reg.enc()]
     }
 }
