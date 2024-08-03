@@ -100,17 +100,26 @@ impl Instr {
                                 }
                             } else { rex };
 
-                            op.push(m);
-                            op.extend_from_slice(&ModRm::reg2(
-                                *reg, 
-                                *op0
-                            ));
+                            if reg.extended() || op0.extended() { 
+                                op.push(r);
+                                op.extend_from_slice(&ModRm::reg2(
+                                    *op0, 
+                                    *reg
+                                ));
+                            }
+                            else {
+                                op.push(m);
+                                op.extend_from_slice(&ModRm::reg2(
+                                    *reg, 
+                                    *op0
+                                ));
+                            }
 
                         } else if let Some(Operand::Mem(mem)) = &self.op1 {
                             op.push(m);
-                            op.extend_from_slice(&ModRm::regM(
-                                *reg.as_any().downcast_ref::<x64Reg>().expect("expected x64 registers and not the ones from other archs"), 
+                            op.extend_from_slice(&ModRm::memR(
                                 mem.clone(),
+                                *reg.as_any().downcast_ref::<x64Reg>().expect("expected x64 registers and not the ones from other archs")
                             ))
                         } else { todo!() }
 
@@ -124,13 +133,14 @@ impl Instr {
                             let op0 = op0.as_any().downcast_ref::<x64Reg>().expect("expected x64 registers and not the ones from other archs");
 
                             if op0.extended() { 
-                                rex = Some(RexPrefix { w: false, r: false, x: false, b: true }); 
-                            }
-
-                            op.push(r);
-                            op.extend_from_slice(&ModRm::memR(
-                                mem.clone(), 
-                                *op0
+                                if op0.is_gr64() { rex = Some(RexPrefix { w: true, r: false, x: false, b: true });  }
+                                else { rex = Some(RexPrefix { w: false, r: false, x: false, b: true });  }
+                            } else if op0.is_gr64() { rex = Some(RexPrefix { w: true, r: false, x: false, b: false });  }
+                            op.push(m);
+                            
+                            op.extend_from_slice(&ModRm::regM(
+                                *op0,
+                                mem.clone()
                             ));
 
                         } else { todo!() }
@@ -360,36 +370,68 @@ pub struct MemOp {
     /// The index register
     pub index: Option<Box<dyn Reg>>,
     /// The scale
-    pub scale: isize,
+    scale: isize,
     /// The displacement
     pub displ: isize,
-    /// The operation (true -> +, false -> -)
-    pub add: bool,
 }
 
 impl MemOp {
     #[doc(hidden)]
-    pub fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
+    pub fn encode(&self) -> (/*modrm mod*/u8, Vec<u8>) {
+        let scale = match self.scale {
+            1 => 0,
+            2 => 1,
+            4 => 2,
+            8 => 3,
+            _ => todo!("scale needs to be either 1/2/4/8")
+        };
 
-    #[doc(hidden)]
-    pub fn _mod(&self) -> u8 {
-        if self.displ == 0 { 0 }
-        else if self.displ <= u8::MAX as isize { 0b01 }
-        else  { 0b10 }
+        let mut sib = 0;
+
+        if let Some(index) = &self.index {
+            sib |= (scale << 6) | (index.enc() << 3) | self.base.enc();
+        } else {
+            sib |= (scale << 6) |  0b100 << 3 | self.base.enc();
+        }
+
+        let mut displ = vec![];
+        let mut modrm = 0;
+
+        if self.displ == 0 {
+            modrm |= 0b00 << 6;
+        } else if self.displ >= -128 && self.displ <= 127 {
+            modrm |= 0b01 << 6;
+            displ.push(self.displ as u8);
+        } else {
+            modrm |= 0b10 << 6;
+            displ.extend_from_slice(&(self.displ as i32).to_le_bytes());
+        
+        }
+
+        let mut encoding = vec![sib];
+        encoding.extend_from_slice(&displ);
+
+        (modrm, encoding)
     }
 }
 
 impl PartialEq for MemOp {
     fn eq(&self, other: &Self) -> bool {
-        self.base == other.base.clone() && self.index == other.index && self.scale == other.scale && self.displ == other.displ && self.add == other.add
+        self.base == other.base.clone() && 
+        self.index == other.index && 
+        self.scale == other.scale && 
+        self.displ == other.displ
     }
 }
 
 impl core::fmt::Debug for MemOp {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("MemOp").field("base", &self.base).field("index", &self.index).field("scale", &self.scale).field("displ", &self.displ).field("add", &self.add).finish()
+        f.debug_struct("MemOp")
+            .field("base", &self.base)
+            .field("index", &self.index)
+            .field("scale", &self.scale)
+            .field("displ", &self.displ)
+        .finish()
     }
 }
 
@@ -403,16 +445,27 @@ impl Clone for MemOp {
             },
             scale: self.scale.clone(), 
             displ: self.displ.clone(), 
-            add: self.add.clone() 
         }
     }
 }
 
 impl Display for MemOp {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut string = String::from("[");
+        let mut string = String::from("[ ");
 
-        string.push(']');
+        string.push_str(&format!("{} ", self.base));
+
+        if let Some(index) = &self.index {
+            string.push_str(&format!("+ {}", index))
+        } else if self.displ != 0 {
+            if self.displ > 0 { string.push_str("+ ") }
+            else { string.push_str("- ") }
+            string.push_str(&format!("{}", self.displ))
+        }
+
+        
+
+        string.push_str(" ]");
 
         write!(f, "{}", string)
     }
@@ -425,9 +478,8 @@ impl Add<u32> for x64Reg {
         MemOp {
             base: self.boxed(),
             index: None,
-            scale: 1,
+            scale: 2,
             displ: rhs as isize,
-            add: true,
         }
     }
 }
@@ -439,9 +491,8 @@ impl Add<x64Reg> for x64Reg {
         MemOp {
             base: self.boxed(),
             index: Some(rhs.boxed()),
-            scale: 0,
+            scale: 1,
             displ: 0,
-            add: true,
         }
     }
 }
@@ -453,23 +504,8 @@ impl Sub<u32> for x64Reg {
         MemOp {
             base: self.boxed(),
             index: None,
-            scale: 1,
-            displ: rhs as isize,
-            add: false,
-        }
-    }
-}
-
-impl Sub<x64Reg> for x64Reg {
-    type Output = MemOp;
-
-    fn sub(self, rhs: x64Reg) -> Self::Output {
-        MemOp {
-            base: self.boxed(),
-            index: Some(rhs.boxed()),
-            scale: 0,
-            displ: 0,
-            add: false,
+            scale: 2,
+            displ: -(rhs as isize),
         }
     }
 }

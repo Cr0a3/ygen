@@ -52,14 +52,19 @@ impl ModRm {
     }
 
     pub fn regM(reg: x64Reg, mem: MemOp) -> Vec<u8> {
-        let mut out = vec![mem._mod() << 6 | reg.enc() << 3 | 0b100];
-        out.extend_from_slice(&mem.encode());
+        let enc = mem.encode();
+        let mut out = {
+            if let Some(_) = mem.index {
+                vec![enc.0 << 6 | reg.enc() << 3 | 0b100]
+            } else { vec![] }
+        };
+        out.extend_from_slice(&enc.1);
         out
     }
 
     pub fn memR(mem: MemOp, reg: x64Reg) -> Vec<u8> {
-        let mut out = vec![0 << 6 | reg.enc() << 3 | 0b100];
-        out.extend_from_slice(&mem.encode());
+        let mut out = vec![mem.encode().0 << 6 | reg.enc() << 3 | 0b100];
+        out.extend_from_slice(&mem.encode().1);
         out
     }
 }

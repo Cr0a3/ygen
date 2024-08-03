@@ -53,7 +53,7 @@ impl x64Reg {
             _ => None,
         }
     }
-    
+
     /// Returns if the reg is in the extendet region (r8->r15)
     pub fn extended(&self) -> bool {
         use x64Reg::*;
@@ -238,14 +238,14 @@ impl Reg for x64Reg {
             x64Reg::Rdi | x64Reg::Edi | x64Reg::Di | x64Reg::Dil => 7,
 
             // this here use a prefix
-            x64Reg::R8 | x64Reg::R8d | x64Reg::R8w | x64Reg::R8b => 1,
-            x64Reg::R9 | x64Reg::R9d | x64Reg::R9w | x64Reg::R9b => 2,
-            x64Reg::R10 | x64Reg::R10d | x64Reg::R10w | x64Reg::R10b => 3,
-            x64Reg::R11 | x64Reg::R11d | x64Reg::R11w | x64Reg::R11b => 4,
-            x64Reg::R12 | x64Reg::R12d | x64Reg::R12w | x64Reg::R12b => 5,
-            x64Reg::R13 | x64Reg::R13d | x64Reg::R13w | x64Reg::R13b => 6,
-            x64Reg::R14 | x64Reg::R14d | x64Reg::R14w | x64Reg::R14b => 7,
-            x64Reg::R15 | x64Reg::R15d | x64Reg::R15w | x64Reg::R15b => 8,
+            x64Reg::R8 | x64Reg::R8d | x64Reg::R8w | x64Reg::R8b => 0,
+            x64Reg::R9 | x64Reg::R9d | x64Reg::R9w | x64Reg::R9b => 1,
+            x64Reg::R10 | x64Reg::R10d | x64Reg::R10w | x64Reg::R10b => 2,
+            x64Reg::R11 | x64Reg::R11d | x64Reg::R11w | x64Reg::R11b => 3,
+            x64Reg::R12 | x64Reg::R12d | x64Reg::R12w | x64Reg::R12b => 4,
+            x64Reg::R13 | x64Reg::R13d | x64Reg::R13w | x64Reg::R13b => 5,
+            x64Reg::R14 | x64Reg::R14d | x64Reg::R14w | x64Reg::R14b => 6,
+            x64Reg::R15 | x64Reg::R15d | x64Reg::R15w | x64Reg::R15b => 7,
         }
     }
     
