@@ -42,7 +42,7 @@ pub enum Token {
 	#[regex("[a-zA-Z0-9_]+", priority = 5, callback = |lex| lex.slice().to_string())]
 	Ident(String),
 
-	#[regex("[x0-9_-]+", priority = 6, callback = |lex| {
+	#[regex("[x0-9_]+", priority = 6, callback = |lex| {
 		let string = lex.slice();
 		if string.starts_with("0x") {
 			i64::from_str_radix(&string.replace("0x", ""), 16)

@@ -11,6 +11,21 @@ pub struct RexPrefix {
     pub b: bool,
 }
 
+impl RexPrefix {
+    pub fn sync(&self, other: RexPrefix) -> Self {
+        RexPrefix {
+            w: self.w || other.w,
+            r: self.r || other.r,
+            x: self.r || other.r,
+            b: self.b || other.b,
+        }
+    }
+
+    pub fn none() -> Self {
+        RexPrefix { w: false, r: false, x: false, b: false }
+    }
+}
+
 #[doc(hidden)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MandatoryPrefix {
@@ -52,19 +67,22 @@ impl ModRm {
     }
 
     pub fn regM(reg: x64Reg, mem: MemOp) -> Vec<u8> {
-        let enc = mem.encode();
-        let mut out = {
-            if let Some(_) = mem.index {
-                vec![enc.0 << 6 | reg.enc() << 3 | 0b100]
-            } else { vec![] }
-        };
+        println!("regM");
+        let enc = mem.encode(Some(reg.boxed()));
+        let mut out = vec![];
+
+        if let Some(_) = mem.index {
+            out = vec![enc.0 << 6 | reg.enc() << 3 | 0b100]
+        }
+
         out.extend_from_slice(&enc.1);
         out
     }
 
     pub fn memR(mem: MemOp, reg: x64Reg) -> Vec<u8> {
-        let mut out = vec![mem.encode().0 << 6 | reg.enc() << 3 | 0b100];
-        out.extend_from_slice(&mem.encode().1);
+        println!("memR");
+        let mut out = vec![mem.encode(Some(reg.boxed())).0 << 6 | reg.enc() << 3 | 0b100];
+        out.extend_from_slice(&mem.encode(Some(reg.boxed())).1);
         out
     }
 }

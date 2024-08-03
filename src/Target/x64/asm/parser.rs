@@ -61,6 +61,9 @@ impl x64Parser {
             }
             self.tokens.pop_front(); // advance
             first_op = true;
+        } else if let Some(Token::L_Bracket) = self.tokens.front() {
+            instr.op1 = Some(Operand::Mem(self.parse_mem()?));
+            first_op = true;
         }
 
         if first_op {
@@ -76,7 +79,9 @@ impl x64Parser {
                         Err(ParsingError::UnknownRegOrUnexpectedIdent(reg.to_string()))?
                     }
                     self.tokens.pop_front(); // advance
-                } else {
+                } else if let Some(Token::L_Bracket) = self.tokens.front() {
+                    instr.op2 = Some(Operand::Mem(self.parse_mem()?));
+                }else {
                     Err(ParsingError::CommaWithoutOperandAfter)?
                 }
             } else if self.tokens.len() > 0 {
@@ -91,6 +96,56 @@ impl x64Parser {
         self.out = Some(instr);
 
         Ok(())
+    }
+
+    fn parse_mem(&mut self) -> Result<MemOp, Box<dyn Error>> {
+        let mut mem = MemOp {
+            base: None,
+            index: None,
+            scale: 1,
+            displ: 0,
+        };
+
+        self.tokens.pop_front();
+
+        if let Some(Token::Num(n)) = self.tokens.front() {
+            mem.displ = *n as isize;
+            self.tokens.pop_front(); // advance
+        } else if let Some(Token::Ident(reg)) = self.tokens.front() {
+            if let Some(reg) = x64Reg::parse(reg.to_string()) {
+                mem.base = Some(reg.boxed());
+            } else {
+                Err(ParsingError::UnknownRegOrUnexpectedIdent(reg.to_string()))?
+            }
+            self.tokens.pop_front(); // advance
+        } else if let Some(Token::R_Bracket) = self.tokens.front() {
+            Err(ParsingError::EmptyMemoryDisplacment)?
+        } else if let Some(token) = self.tokens.front() { 
+            Err(ParsingError::UnexpectedToken(token.clone()))? 
+        } else { todo!() }
+
+        if let Some(Token::L_Bracket) = self.tokens.front() {} else {
+            let mut sub = false;
+            if let Some(Token::Sub) = self.tokens.front() { sub = true; self.tokens.pop_front(); }
+            if let Some(Token::Add) = self.tokens.front() { sub = false; self.tokens.pop_front(); }
+
+            if let Some(Token::Num(n)) = self.tokens.front() {
+                if sub { mem.displ -= *n as isize; }
+                else { mem.displ += *n as isize; }
+                self.tokens.pop_front(); // advance
+            } else if let Some(Token::Ident(reg)) = self.tokens.front() {
+                if let Some(reg) = x64Reg::parse(reg.to_string()) {
+                    mem.index = Some(reg.boxed());
+                } else {
+                    Err(ParsingError::UnknownRegOrUnexpectedIdent(reg.to_string()))?
+                }
+                self.tokens.pop_front(); // advance
+            } else if let Some(token) = self.tokens.front() { 
+                Err(ParsingError::UnexpectedToken(token.clone()))? 
+            }
+        }
+
+        Ok(mem)
     }
 }
 
@@ -125,6 +180,10 @@ pub enum ParsingError {
     UnexpectedTokens(Vec<Token>),
     /// There is an unexpected comma
     CommaWithoutOperandAfter,
+    /// An empty memory displacment []
+    EmptyMemoryDisplacment,
+    /// Unexpected token
+    UnexpectedToken(Token),
 }
 
 impl Display for ParsingError {
@@ -135,6 +194,8 @@ impl Display for ParsingError {
             ParsingError::UnknownRegOrUnexpectedIdent(name) => format!("unexpected ident: '{}' (maybe you missspeld on of the registers)", name), 
             ParsingError::UnexpectedTokens(toks) => format!("unexpected tokens (maybe forgott an comma): {:?}", toks),
             ParsingError::CommaWithoutOperandAfter => "found comma but no valid operand after it".to_string(),
+            ParsingError::EmptyMemoryDisplacment => "memory displacments aren't allowed to be empty".to_string(),
+            ParsingError::UnexpectedToken(tok) => format!("unexpected token: {:?}", tok),
         })
     }
 }

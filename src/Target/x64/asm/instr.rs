@@ -86,19 +86,33 @@ impl Instr {
                                 Some(RexPrefix { w: false, r: true, x: false, b: false })
                             }
                         } else { rex };
+
+                        if reg.is_gr64() {
+                            if let Some(mut rex) = rex {
+                                rex.w = true;
+                            }  else {
+                                rex = Some(RexPrefix { w: true, r: false, x: false, b: false })
+                            }
+                        }
                         let mut op = vec![];
 
                         if let Some(Operand::Reg(op0)) = &self.op1 {
                             let op0 = op0.as_any().downcast_ref::<x64Reg>().expect("expected x64 registers and not the ones from other archs");
 
-                            rex = if op0.extended() {
+                            if op0.extended() {
                                 if let Some(mut rex) = rex {
                                     rex.b = true;
-                                    Some(rex)
                                 }  else {
-                                    Some(RexPrefix { w: false, r: false, x: false, b: true })
-                                }
-                            } else { rex };
+                                    rex = Some(RexPrefix { w: false, r: false, x: false, b: true })
+                                };
+                            }
+                            if op0.is_gr64() {
+                                if let Some(mut rex) = rex {
+                                    rex.w = true;
+                                }  else {
+                                    rex = Some(RexPrefix { w: true, r: false, x: false, b: false })
+                                };
+                            }
 
                             if reg.extended() || op0.extended() { 
                                 op.push(r);
@@ -116,7 +130,10 @@ impl Instr {
                             }
 
                         } else if let Some(Operand::Mem(mem)) = &self.op1 {
-                            op.push(m);
+                            op.push(r);
+                            if let Some(rex) = rex.as_mut() {
+                                rex.sync(mem.rex());
+                            }
                             op.extend_from_slice(&ModRm::memR(
                                 mem.clone(),
                                 *reg.as_any().downcast_ref::<x64Reg>().expect("expected x64 registers and not the ones from other archs")
@@ -137,6 +154,12 @@ impl Instr {
                                 else { rex = Some(RexPrefix { w: false, r: false, x: false, b: true });  }
                             } else if op0.is_gr64() { rex = Some(RexPrefix { w: true, r: false, x: false, b: false });  }
                             op.push(m);
+
+                            if let Some(rext) = rex {
+                                rex = Some(rext.sync(mem.rex()));
+                            }
+
+
                             
                             op.extend_from_slice(&ModRm::regM(
                                 *op0,
@@ -366,33 +389,26 @@ impl Display for Operand {
 #[derive(Eq)]
 pub struct MemOp {
     /// The base register
-    pub base: Box<dyn Reg>,
+    pub base: Option<Box<dyn Reg>>,
     /// The index register
     pub index: Option<Box<dyn Reg>>,
     /// The scale
-    scale: isize,
+    pub scale: isize,
     /// The displacement
     pub displ: isize,
 }
 
 impl MemOp {
     #[doc(hidden)]
-    pub fn encode(&self) -> (/*modrm mod*/u8, Vec<u8>) {
-        let scale = match self.scale {
+    pub fn encode(&self, basis: Option<Box<dyn Reg>>) -> (/*modrm mod*/u8, Vec<u8>) {
+        let mut scale = match self.scale {
+            0 => 0,
             1 => 0,
             2 => 1,
             4 => 2,
             8 => 3,
             _ => todo!("scale needs to be either 1/2/4/8")
         };
-
-        let mut sib = 0;
-
-        if let Some(index) = &self.index {
-            sib |= (scale << 6) | (index.enc() << 3) | self.base.enc();
-        } else {
-            sib |= (scale << 6) |  0b100 << 3 | self.base.enc();
-        }
 
         let mut displ = vec![];
         let mut modrm = 0;
@@ -401,17 +417,61 @@ impl MemOp {
             modrm |= 0b00 << 6;
         } else if self.displ >= -128 && self.displ <= 127 {
             modrm |= 0b01 << 6;
+            scale = 1;
             displ.push(self.displ as u8);
         } else {
             modrm |= 0b10 << 6;
+            scale = 4;
             displ.extend_from_slice(&(self.displ as i32).to_le_bytes());
         
+        }
+
+        let mut sib = 0;
+
+        if let Some(index) = &self.index {
+            if let Some(base) = &self.base {
+                sib |= (scale << 6) | (index.enc() << 3) | base.enc();
+            } else {
+                if let Some(base) = &basis {
+                    sib |= (scale << 6) | (index.enc() << 3) | base.enc();
+                } else {
+                    sib |= (scale << 6) | (index.enc() << 3);
+                }
+            }
+        } else {
+            if let Some(base) = &self.base {
+                if let Some(basis) = &basis {
+                    sib |= (scale << 6) | basis.enc() << 3 | base.enc();
+                } else {
+                    sib |= (scale << 6) | 0b100 << 3 | base.enc();
+                }
+            } else {
+                if let Some(base) = &basis {
+                    sib |= (scale << 6) | 0b100 << 3 | base.enc();
+                } else {
+                    sib |= (scale << 6) | 0b100 << 3 | 0b100;
+                }
+            }
         }
 
         let mut encoding = vec![sib];
         encoding.extend_from_slice(&displ);
 
         (modrm, encoding)
+    }
+
+    /// Returns the used rex prefix for the memory displacment
+    pub fn rex(&self) -> RexPrefix {
+        let mut rex = RexPrefix::none();
+        if let Some(base) = &self.base {
+            rex.b = base.as_any().downcast_ref::<x64Reg>().unwrap().extended();
+        }
+        
+        if let Some(index) = &self.index {
+            rex.x = index.as_any().downcast_ref::<x64Reg>().unwrap().extended();
+        }
+
+        rex
     }
 }
 
@@ -438,7 +498,7 @@ impl core::fmt::Debug for MemOp {
 impl Clone for MemOp {
     fn clone(&self) -> Self {
         Self { 
-            base: self.base.boxed(), 
+            base: self.base.clone(), 
             index: {
                 if let Some(index) = &self.index { Some(index.boxed()) }
                 else { None }
@@ -453,7 +513,9 @@ impl Display for MemOp {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut string = String::from("[ ");
 
-        string.push_str(&format!("{} ", self.base));
+        if let Some(base) = &self.base {
+            string.push_str(&format!("{} ", base));
+        }
 
         if let Some(index) = &self.index {
             string.push_str(&format!("+ {}", index))
@@ -476,7 +538,7 @@ impl Add<u32> for x64Reg {
 
     fn add(self, rhs: u32) -> Self::Output {
         MemOp {
-            base: self.boxed(),
+            base: Some(self.boxed()),
             index: None,
             scale: 2,
             displ: rhs as isize,
@@ -489,7 +551,7 @@ impl Add<x64Reg> for x64Reg {
 
     fn add(self, rhs: x64Reg) -> Self::Output {
         MemOp {
-            base: self.boxed(),
+            base: Some(self.boxed()),
             index: Some(rhs.boxed()),
             scale: 1,
             displ: 0,
@@ -502,7 +564,7 @@ impl Sub<u32> for x64Reg {
 
     fn sub(self, rhs: u32) -> Self::Output {
         MemOp {
-            base: self.boxed(),
+            base: Some(self.boxed()),
             index: None,
             scale: 2,
             displ: -(rhs as isize),
