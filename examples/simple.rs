@@ -20,7 +20,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
     
     let func = module.add(
-        "sub", &ty
+        "xor", &ty
     );
 
     func.extrn();
@@ -28,7 +28,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     let entry = func.addBlock("entry");
     builder.positionAtEnd(entry); 
 
-    let val = builder.BuildSub(ty.arg(0), ty.arg(1));
+    let val = builder.BuildXor(ty.arg(0), ty.arg(1));
     builder.BuildRet( val );
 
     module.verify().print();

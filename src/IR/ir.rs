@@ -644,7 +644,7 @@ impl BuildSub<Var, Var> for IRBuilder<'_> {
 /// Trait for the xor function
 /// Used for overloading the BuildXor function
 pub trait BuildXor<T, U> {
-    /// Subs the values
+    /// Xors values
     fn BuildXor(&mut self, op0: T, op1: U) -> Var;
 }
 
