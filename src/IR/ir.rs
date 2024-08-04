@@ -86,6 +86,8 @@ IrTypeWith2!(ConstAssign, T, U);
 IrTypeWith3!(Add, T, U, Z);
 IrTypeWith3!(Sub, T, U, Z);
 IrTypeWith3!(Xor, T, U, Z);
+IrTypeWith3!(Or, T, U, Z);
+IrTypeWith3!(And, T, U, Z);
 
 use crate::Support::Colorize;
 
@@ -243,6 +245,8 @@ macro_rules! MathIrNode {
 MathIrNode!(Add, getCompileFuncForAddVarVar, getCompileFuncForAddTypeType, BuildAdd, BuildAdd, "add", "AddVarVar", "AddTypeType");
 MathIrNode!(Sub, getCompileFuncForSubVarVar, getCompileFuncForSubTypeType, BuildSub, BuildSub, "sub", "SubVarVar", "SubTypeType");
 MathIrNode!(Xor, getCompileFuncForXorVarVar, getCompileFuncForXorTypeType, BuildXor, BuildXor, "xor", "XorVarVar", "XorTypeType");
+MathIrNode!(Or, getCompileFuncForOrVarVar, getCompileFuncForOrTypeType, BuildOr, BuildOr, "or", "OrVarVar", "OrTypeType");
+MathIrNode!(And, getCompileFuncForAndVarVar, getCompileFuncForAndTypeType, BuildAnd, BuildAnd, "and", "AndVarVar", "AndTypeType");
 
 
 impl Ir for Return<Type> {

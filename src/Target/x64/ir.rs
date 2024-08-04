@@ -133,10 +133,14 @@ macro_rules! CompileMathTyTy {
 CompileMathVarVar!(CompileAddVarVar, Add, Mnemonic::Add);
 CompileMathVarVar!(CompileSubVarVar, Sub, Mnemonic::Sub);
 CompileMathVarVar!(CompileXorVarVar, Xor, Mnemonic::Xor);
+CompileMathVarVar!(CompileOrVarVar, Or, Mnemonic::Or);
+CompileMathVarVar!(CompileAndVarVar, And, Mnemonic::And);
 
 CompileMathTyTy!(CompileAddTyTy, Add, +);
 CompileMathTyTy!(CompileSubTyTy, Sub, -);
 CompileMathTyTy!(CompileXorTyTy, Xor, ^);
+CompileMathTyTy!(CompileOrTyTy, Or, ^);
+CompileMathTyTy!(CompileAndTyTy, And, ^);
 
 pub(crate) fn CompileConstAssign(assign: &ConstAssign<Var, Type>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
     let infos = &mut registry.backend;
