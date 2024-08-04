@@ -16,13 +16,18 @@ impl RexPrefix {
         RexPrefix {
             w: self.w || other.w,
             r: self.r || other.r,
-            x: self.r || other.r,
+            x: self.x || other.x,
             b: self.b || other.b,
         }
     }
 
     pub fn none() -> Self {
         RexPrefix { w: false, r: false, x: false, b: false }
+    }
+
+    pub fn empty(&self) -> bool {
+        if self.w || self.r || self.x || self.b { false }
+        else { true }
     }
 }
 

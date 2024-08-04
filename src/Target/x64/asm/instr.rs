@@ -154,12 +154,12 @@ impl Instr {
                             } else if op0.is_gr64() { rex = Some(RexPrefix { w: true, r: false, x: false, b: false });  }
                             op.push(m);
 
-                            if let Some(rext) = rex {
-                                rex = Some(rext.sync(mem.rex()));
+                            if !mem.rex().empty() {
+                                if let Some(rext) = rex {
+                                    rex = Some(rext.sync(mem.rex()));
+                                } else {rex = Some(mem.rex())}
                             }
 
-
-                            
                             op.extend_from_slice(&ModRm::regM(
                                 *op0,
                                 mem.clone()
@@ -223,8 +223,10 @@ impl Instr {
                 let mut op = vec![];
 
                 if let Some(Operand::Mem(mem)) = &self.op2 {
-                    if let Some(rext) = rex {
-                        rex = Some(rext.sync(mem.rex()));
+                    if !mem.rex().empty() {
+                        if let Some(rext) = rex {
+                            rex = Some(rext.sync(mem.rex()));
+                        } else {rex = Some(mem.rex())}
                     }
 
                     op.push(0x8D);
@@ -308,8 +310,10 @@ impl Instr {
 
                         } else if let Some(Operand::Mem(mem)) = &self.op1 {
                             op.push(r);
-                            if let Some(rex) = rex.as_mut() {
-                                rex.sync(mem.rex());
+                            if !mem.rex().empty() {
+                                if let Some(rext) = rex {
+                                    rex = Some(rext.sync(mem.rex()));
+                                } else {rex = Some(mem.rex())}
                             }
                             op.extend_from_slice(&ModRm::memR(
                                 mem.clone(),
