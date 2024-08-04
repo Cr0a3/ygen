@@ -201,6 +201,9 @@ pub struct TargetBackendDescr<'a> {
     funcForSubVarVar: Option<CompileFunc<Sub<Var, Var, Var>>>,
     funcForSubTypeType: Option<CompileFunc<Sub<Type, Type, Var>>>,
 
+    funcForXorVarVar: Option<CompileFunc<Xor<Var, Var, Var>>>,
+    funcForXorTypeType: Option<CompileFunc<Xor<Type, Type, Var>>>,
+
     pub(crate) buildAsm: Option<for<'b> fn(&'b Block, &Function, &CallConv, &mut TargetBackendDescr<'b>) -> Vec<Instr>>,
     pub(crate) init: Option<fn(CallConv)->TargetBackendDescr<'a>>,
 
@@ -223,6 +226,8 @@ impl<'a> TargetBackendDescr<'a> {
             funcForAddTypeType: None,
             funcForSubVarVar: None,
             funcForSubTypeType: None,
+            funcForXorVarVar: None,
+            funcForXorTypeType: None,
             init: None,
             buildAsm: None,
 
@@ -308,14 +313,38 @@ impl<'a> TargetBackendDescr<'a> {
         } else { todo!("an corresponding assembly handler needs to be registered in order to compile an SubVarVar ir node")}
     }
 
-    /// sets the callback for compiling the add var var ir node into asm
+    /// sets the callback for compiling the sub var var ir node into asm
     pub(crate) fn setCompileFuncForSubTypeType(&mut self, callback: CompileFunc<Sub<Type, Type, Var>>) {
         self.funcForSubTypeType = Some(callback);
     }
 
-    /// gets the callback for compiling the add var var node into into asm
+    /// gets the callback for compiling the sub var var node into into asm
     pub(crate) fn getCompileFuncForSubTypeType(&self) -> CompileFunc<Sub<Type, Type, Var>> {
         if let Some(func) = self.funcForSubTypeType {
+            func
+        } else { todo!("an corresponding assembly handler needs to be registered in order to compile an SubTypeType ir node")}
+    }
+
+    /// sets the callback for compiling the add var var ir node into asm
+    pub(crate) fn setCompileFuncForXorVarVar(&mut self, callback: CompileFunc<Xor<Var, Var, Var>>) {
+        self.funcForXorVarVar = Some(callback);
+    }
+
+    /// gets the callback for compiling the xor var var node into into asm
+    pub(crate) fn getCompileFuncForXorVarVar(&self) -> CompileFunc<Xor<Var, Var, Var>> {
+        if let Some(func) = self.funcForXorVarVar {
+            func
+        } else { todo!("an corresponding assembly handler needs to be registered in order to compile an SubVarVar ir node")}
+    }
+
+    /// sets the callback for compiling the xor var var ir node into asm
+    pub(crate) fn setCompileFuncForXorTypeType(&mut self, callback: CompileFunc<Xor<Type, Type, Var>>) {
+        self.funcForXorTypeType = Some(callback);
+    }
+
+    /// gets the callback for compiling the xor var var node into into asm
+    pub(crate) fn getCompileFuncForXorTypeType(&self) -> CompileFunc<Xor<Type, Type, Var>> {
+        if let Some(func) = self.funcForXorTypeType {
             func
         } else { todo!("an corresponding assembly handler needs to be registered in order to compile an SubTypeType ir node")}
     }
