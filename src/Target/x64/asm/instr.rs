@@ -241,6 +241,24 @@ impl Instr {
                     let enc = mem.encode(None);
                     op.push(enc.0 | i << 3 | 0b100);
                     op.extend_from_slice(&enc.1);
+                } else if self.mnemonic == Mnemonic::Push {
+                    if let Some(Operand::Imm(num)) = &self.op1 {
+                        let bytes = (*num).to_be_bytes();
+                        if *num >= i8::MIN as i64 && *num <= i8::MAX as i64 {
+                            op.push(0x6A);
+                            op.push(bytes[7]);
+                        } else if *num >= i16::MIN as i64 && *num <= i16::MAX as i64 {
+                            op.push(0x68);
+                            op.push(bytes[7]);
+                            op.push(bytes[6]);
+                        } else if *num >= i32::MIN as i64 && *num <= i32::MAX as i64 {
+                            op.push(0x68);
+                            op.push(bytes[7]);
+                            op.push(bytes[6]);
+                            op.push(bytes[5]);
+                            op.push(bytes[4]);
+                        } else { todo!("you can't push 64bit ints")}
+                    } else { todo!()}
                 } else { todo!() }
 
                 buildOpcode(mandatory, rex, op)
@@ -295,10 +313,6 @@ impl Instr {
                 }
             },
             Mnemonic::Push => {
-                if let Some(Operand::Imm(_)) = self.op1 {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "the push instruction needs to have an op1 of either reg or mem".into()))?
-                }
-
                 if self.op2 != None || self.op1 == None {
                     Err(InstrEncodingError::InvalidVariant(self.clone(), "push needs to have one operand".into()))?
                 }
@@ -493,7 +507,6 @@ impl MemOp {
             modrm |= 0b10 << 6;
             scale = 4;
             displ.extend_from_slice(&(self.displ as i32).to_le_bytes());
-        
         }
 
         let mut sib = 0;
