@@ -9,278 +9,134 @@ use crate::Target::CallConv;
 
 use super::{x64Reg, instr::*};
 
-pub(crate) fn CompileAddVarVar(add: &Add<Var, Var, Var>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-    let infos = &mut registry.backend;
+macro_rules! CompileMathVarVar {
+    ($name:ident, $node:ident, $mnemonic:expr) => {
+        pub(crate) fn $name(node: &$node<Var, Var, Var>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
+            let infos = &mut registry.backend;
 
-    let loc1 = if let Some(loc1) = infos.varsStorage.get(&add.inner1) {
-        loc1.clone()
-    } else {
-        panic!("unknown variable: {:?}", add.inner1)
-    };
-    
-    let loc2 = if let Some(loc2) = infos.varsStorage.get(&add.inner2) {
-        loc2.clone()
-        
-    } else {
-        panic!("unknown variable: {:?}", add.inner1)
-    };
-
-    let boxed: Box<dyn Ir> = Box::new(add.clone());
-
-    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &add.inner1) {
-        infos.drop(&add.inner1);
-    }
-    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &add.inner2) {
-        infos.drop(&add.inner2);
-    }
-    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &add.inner3) {
-        return vec![]; // all of these calculations don't need to be done: dead code removal
-    }
-
-    let ty = &add.inner1.ty;
-    
-    let ret = {
-        if let Some(reg) = infos.getOpenRegBasedOnTy(*ty) {
-            VarStorage::Register(reg)
-        } else {
-            let addend = match ty {
-                TypeMetadata::u16 | TypeMetadata::i16=> 2,
-                TypeMetadata::u32 | TypeMetadata::i32=> 4,
-                TypeMetadata::u64 | TypeMetadata::i64=> 8,
-                TypeMetadata::Void => todo!("cant output an addition into an void"),
+            let loc1 = if let Some(loc1) = infos.varsStorage.get(&node.inner1) {
+                loc1.clone()
+            } else {
+                panic!("unknown variable: {:?}", node.inner1)
+            };
+            
+            let loc2 = if let Some(loc2) = infos.varsStorage.get(&node.inner2) {
+                loc2.clone()
+                
+            } else {
+                panic!("unknown variable: {:?}", node.inner1)
             };
 
-            infos.currStackOffsetForLocalVars += addend;
-            VarStorage::Memory(x64Reg::Rbp - (infos.currStackOffsetForLocalVars - addend) as u32)
-        }
-    };
+            let boxed: Box<dyn Ir> = Box::new(node.clone());
 
-    infos.insertVar(
-        add.inner3.clone(), 
-        ret.clone()
-    );
-    let tmp = infos.getTmpBasedOnTy(*ty);
+            if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &node.inner1) {
+                infos.drop(&node.inner1);
+            }
+            if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &node.inner2) {
+                infos.drop(&node.inner2);
+            }
+            if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &node.inner3) {
+                return vec![]; // all of these calculations don't need to be done: dead code removal
+            }
 
-    if let VarStorage::Register(loc1Reg) = &loc1 {
-        if let VarStorage::Register(loc2Reg) = &loc2 {
-            if let VarStorage::Register(reg) = &ret {
-                return vec![
-                    Instr::with2(Mnemonic::Mov, Operand::Reg(tmp.boxed()), Operand::Reg(loc2Reg.boxed())),
-                    Instr::with2(Mnemonic::Add, Operand::Reg(tmp.boxed()), Operand::Reg(loc1Reg.boxed())),
-                    Instr::with2(Mnemonic::Mov, Operand::Reg(reg.boxed()), Operand::Reg(tmp.boxed())),
-                ]
-            } else if let VarStorage::Memory(mem) = &ret {
-                return vec![
-                    Instr::with2(Mnemonic::Mov, Operand::Reg(tmp.boxed()), Operand::Reg(loc2Reg.boxed())),
-                    Instr::with2(Mnemonic::Add, Operand::Reg(tmp.boxed()), Operand::Reg(loc1Reg.boxed())),
-                    Instr::with2(Mnemonic::Mov, Operand::Mem(mem.clone()), Operand::Reg(tmp.boxed())),
-                    ];
-            } else { todo!() }
-        }
-    }
-
-    if let VarStorage::Memory(mem1) = loc1 {
-        if let VarStorage::Memory(mem2) = loc2 {
-            if let VarStorage::Register(reg) = &ret {
-                return vec![
-                    Instr::with2(Mnemonic::Mov, Operand::Reg(tmp.boxed()), Operand::Mem(mem1.clone())),
-                    Instr::with2(Mnemonic::Add, Operand::Reg(tmp.boxed()), Operand::Mem(mem2.clone())),
-                    Instr::with2(Mnemonic::Mov, Operand::Reg(reg.boxed()), Operand::Reg(tmp.boxed())),
-                ];
-            } else if let VarStorage::Memory(mem) = &ret {
-                return vec![
-                    Instr::with2(Mnemonic::Mov, Operand::Reg(tmp.boxed()), Operand::Mem(mem1.clone())),
-                    Instr::with2(Mnemonic::Add, Operand::Reg(tmp.boxed()), Operand::Mem(mem2.clone())),
-                    Instr::with2(Mnemonic::Mov, Operand::Mem(mem.clone()), Operand::Reg(tmp.boxed())),
-                ];
-            } else { todo!() }
-        }
-    }
-
-    vec![]
-}
-
-pub(crate) fn CompileSubVarVar(sub: &Sub<Var, Var, Var>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-    let infos = &mut registry.backend;
-
-    let loc1 = if let Some(loc1) = infos.varsStorage.get(&sub.inner1) {
-        loc1.clone()
-    } else {
-        panic!("unknown variable: {:?}", sub.inner1)
-    };
+            let ty = &node.inner1.ty;
     
-    let loc2 = if let Some(loc2) = infos.varsStorage.get(&sub.inner2) {
-        loc2.clone()
-        
-    } else {
-        panic!("unknown variable: {:?}", sub.inner1)
-    };
+            let ret = {
+                if let Some(reg) = infos.getOpenRegBasedOnTy(*ty) {
+                    VarStorage::Register(reg)
+                } else {
+                    let addend = match ty {
+                        TypeMetadata::u16 | TypeMetadata::i16=> 2,
+                        TypeMetadata::u32 | TypeMetadata::i32=> 4,
+                        TypeMetadata::u64 | TypeMetadata::i64=> 8,
+                        TypeMetadata::Void => todo!("cant output an addition into an void"),
+                    };
 
-    let boxed: Box<dyn Ir> = Box::new(sub.clone());
-
-    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &sub.inner1) {
-        infos.drop(&sub.inner1);
-    }
-    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &sub.inner2) {
-        infos.drop(&sub.inner2);
-    }
-    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &sub.inner3) {
-        return vec![]; // all of these calculations don't need to be done: dead code removal
-    }
-
-    let ty = &sub.inner1.ty;
-    
-    let ret = {
-        if let Some(reg) = infos.getOpenRegBasedOnTy(*ty) {
-            VarStorage::Register(reg)
-        } else {
-            let addend = match ty {
-                TypeMetadata::u16 | TypeMetadata::i16=> 2,
-                TypeMetadata::u32 | TypeMetadata::i32=> 4,
-                TypeMetadata::u64 | TypeMetadata::i64=> 8,
-                TypeMetadata::Void => todo!("cant output an addition into an void"),
+                    infos.currStackOffsetForLocalVars += addend;
+                    VarStorage::Memory(x64Reg::Rbp - (infos.currStackOffsetForLocalVars - addend) as u32)
+                }
             };
 
-            infos.currStackOffsetForLocalVars += addend;
-            VarStorage::Memory(x64Reg::Rbp - (infos.currStackOffsetForLocalVars - addend) as u32)
+            infos.insertVar(
+                node.inner3.clone(), 
+                ret.clone()
+            );
+            let tmp = infos.getTmpBasedOnTy(*ty);
+
+            if let VarStorage::Register(loc1Reg) = &loc1 {
+                if let VarStorage::Register(loc2Reg) = &loc2 {
+                    if let VarStorage::Register(reg) = &ret {
+                        return vec![
+                            Instr::with2(Mnemonic::Mov, Operand::Reg(tmp.boxed()), Operand::Reg(loc2Reg.boxed())),
+                            Instr::with2($mnemonic, Operand::Reg(tmp.boxed()), Operand::Reg(loc1Reg.boxed())),
+                            Instr::with2(Mnemonic::Mov, Operand::Reg(reg.boxed()), Operand::Reg(tmp.boxed())),
+                        ]
+                    } else if let VarStorage::Memory(mem) = &ret {
+                        return vec![
+                            Instr::with2(Mnemonic::Mov, Operand::Reg(tmp.boxed()), Operand::Reg(loc2Reg.boxed())),
+                            Instr::with2($mnemonic, Operand::Reg(tmp.boxed()), Operand::Reg(loc1Reg.boxed())),
+                            Instr::with2(Mnemonic::Mov, Operand::Mem(mem.clone()), Operand::Reg(tmp.boxed())),
+                            ];
+                    } else { todo!() }
+                }
+            }
+
+            if let VarStorage::Memory(mem1) = loc1 {
+                if let VarStorage::Memory(mem2) = loc2 {
+                    if let VarStorage::Register(reg) = &ret {
+                        return vec![
+                            Instr::with2(Mnemonic::Mov, Operand::Reg(tmp.boxed()), Operand::Mem(mem1.clone())),
+                            Instr::with2($mnemonic, Operand::Reg(tmp.boxed()), Operand::Mem(mem2.clone())),
+                            Instr::with2(Mnemonic::Mov, Operand::Reg(reg.boxed()), Operand::Reg(tmp.boxed())),
+                        ];
+                    } else if let VarStorage::Memory(mem) = &ret {
+                        return vec![
+                            Instr::with2(Mnemonic::Mov, Operand::Reg(tmp.boxed()), Operand::Mem(mem1.clone())),
+                            Instr::with2($mnemonic, Operand::Reg(tmp.boxed()), Operand::Mem(mem2.clone())),
+                            Instr::with2(Mnemonic::Mov, Operand::Mem(mem.clone()), Operand::Reg(tmp.boxed())),
+                        ];
+                    } else { todo!() }
+                }
+            }
+
+            todo!(); // nothing was compiled
         }
     };
-
-    infos.insertVar(
-        sub.inner3.clone(), 
-        ret.clone()
-    );
-    let tmp = infos.getTmpBasedOnTy(*ty);
-
-    if let VarStorage::Register(loc1Reg) = &loc1 {
-        if let VarStorage::Register(loc2Reg) = &loc2 {
-            if let VarStorage::Register(reg) = &ret {
-                return vec![
-                    Instr::with2(Mnemonic::Mov, Operand::Reg(tmp.boxed()), Operand::Reg(loc2Reg.boxed())),
-                    Instr::with2(Mnemonic::Sub, Operand::Reg(tmp.boxed()), Operand::Reg(loc1Reg.boxed())),
-                    Instr::with2(Mnemonic::Mov, Operand::Reg(reg.boxed()), Operand::Reg(tmp.boxed())),
-                ]
-            } else if let VarStorage::Memory(mem) = &ret {
-                return vec![
-                    Instr::with2(Mnemonic::Mov, Operand::Reg(tmp.boxed()), Operand::Reg(loc2Reg.boxed())),
-                    Instr::with2(Mnemonic::Sub, Operand::Reg(tmp.boxed()), Operand::Reg(loc1Reg.boxed())),
-                    Instr::with2(Mnemonic::Mov, Operand::Mem(mem.clone()), Operand::Reg(tmp.boxed())),
-                    ];
-            } else { todo!() }
-        }
-    }
-
-    if let VarStorage::Memory(mem1) = loc1 {
-        if let VarStorage::Memory(mem2) = loc2 {
-            if let VarStorage::Register(reg) = &ret {
-                return vec![
-                    Instr::with2(Mnemonic::Mov, Operand::Reg(tmp.boxed()), Operand::Mem(mem1.clone())),
-                    Instr::with2(Mnemonic::Sub, Operand::Reg(tmp.boxed()), Operand::Mem(mem2.clone())),
-                    Instr::with2(Mnemonic::Mov, Operand::Reg(reg.boxed()), Operand::Reg(tmp.boxed())),
-                ];
-            } else if let VarStorage::Memory(mem) = &ret {
-                return vec![
-                    Instr::with2(Mnemonic::Mov, Operand::Reg(tmp.boxed()), Operand::Mem(mem1.clone())),
-                    Instr::with2(Mnemonic::Sub, Operand::Reg(tmp.boxed()), Operand::Mem(mem2.clone())),
-                    Instr::with2(Mnemonic::Mov, Operand::Mem(mem.clone()), Operand::Reg(tmp.boxed())),
-                ];
-            } else { todo!() }
-        }
-    }
-
-    vec![]
 }
 
-pub(crate) fn CompileXorVarVar(sub: &Xor<Var, Var, Var>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-    let infos = &mut registry.backend;
-
-    let loc1 = if let Some(loc1) = infos.varsStorage.get(&sub.inner1) {
-        loc1.clone()
-    } else {
-        panic!("unknown variable: {:?}", sub.inner1)
-    };
-    
-    let loc2 = if let Some(loc2) = infos.varsStorage.get(&sub.inner2) {
-        loc2.clone()
+macro_rules! CompileMathTyTy {
+    ($name:ident, $node:ident, $op:tt) => {
+        pub(crate) fn $name(node: &$node<Type, Type, Var>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
+            let val = node.inner1.val() $op node.inner2.val();
         
-    } else {
-        panic!("unknown variable: {:?}", sub.inner1)
-    };
-
-    let boxed: Box<dyn Ir> = Box::new(sub.clone());
-
-    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &sub.inner1) {
-        infos.drop(&sub.inner1);
-    }
-    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &sub.inner2) {
-        infos.drop(&sub.inner2);
-    }
-    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &sub.inner3) {
-        return vec![]; // all of these calculations don't need to be done: dead code removal
-    }
-
-    let ty = &sub.inner1.ty;
-    
-    let ret = {
-        if let Some(reg) = infos.getOpenRegBasedOnTy(*ty) {
-            VarStorage::Register(reg)
-        } else {
-            let addend = match ty {
-                TypeMetadata::u16 | TypeMetadata::i16=> 2,
-                TypeMetadata::u32 | TypeMetadata::i32=> 4,
-                TypeMetadata::u64 | TypeMetadata::i64=> 8,
-                TypeMetadata::Void => todo!("cant output an addition into an void"),
-            };
-
-            infos.currStackOffsetForLocalVars += addend;
-            VarStorage::Memory(x64Reg::Rbp - (infos.currStackOffsetForLocalVars - addend) as u32)
-        }
-    };
-
-    infos.insertVar(
-        sub.inner3.clone(), 
-        ret.clone()
-    );
-    let tmp = infos.getTmpBasedOnTy(*ty);
-
-    if let VarStorage::Register(loc1Reg) = &loc1 {
-        if let VarStorage::Register(loc2Reg) = &loc2 {
-            if let VarStorage::Register(reg) = &ret {
-                return vec![
-                    Instr::with2(Mnemonic::Mov, Operand::Reg(tmp.boxed()), Operand::Reg(loc2Reg.boxed())),
-                    Instr::with2(Mnemonic::Xor, Operand::Reg(tmp.boxed()), Operand::Reg(loc1Reg.boxed())),
-                    Instr::with2(Mnemonic::Mov, Operand::Reg(reg.boxed()), Operand::Reg(tmp.boxed())),
-                ]
-            } else if let VarStorage::Memory(mem) = &ret {
-                return vec![
-                    Instr::with2(Mnemonic::Mov, Operand::Reg(tmp.boxed()), Operand::Reg(loc2Reg.boxed())),
-                    Instr::with2(Mnemonic::Xor, Operand::Reg(tmp.boxed()), Operand::Reg(loc1Reg.boxed())),
-                    Instr::with2(Mnemonic::Mov, Operand::Mem(mem.clone()), Operand::Reg(tmp.boxed())),
-                    ];
-            } else { todo!() }
+            let boxed: Box<dyn Ir> = Box::new(node.clone());
+        
+            if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &node.inner3) {
+                return vec![]; // all of these calculations don't need to be done: dead code removal
+            }
+        
+            CompileConstAssign(&ConstAssign::new(node.inner3.clone(), {
+                match node.inner3.ty {
+                    TypeMetadata::u16 => Type::u16(val as u16),
+                    TypeMetadata::u32 => Type::u32(val as u32),
+                    TypeMetadata::u64 => Type::u64(val as u64),
+                    TypeMetadata::i16 => Type::i16(val as i16),
+                    TypeMetadata::i32 => Type::i32(val as i32),
+                    TypeMetadata::i64 => Type::i64(val as i64),
+                    TypeMetadata::Void =>Type::Void,
+                }
+            }), registry)
         }
     }
-
-    if let VarStorage::Memory(mem1) = loc1 {
-        if let VarStorage::Memory(mem2) = loc2 {
-            if let VarStorage::Register(reg) = &ret {
-                return vec![
-                    Instr::with2(Mnemonic::Mov, Operand::Reg(tmp.boxed()), Operand::Mem(mem1.clone())),
-                    Instr::with2(Mnemonic::Xor, Operand::Reg(tmp.boxed()), Operand::Mem(mem2.clone())),
-                    Instr::with2(Mnemonic::Mov, Operand::Reg(reg.boxed()), Operand::Reg(tmp.boxed())),
-                ];
-            } else if let VarStorage::Memory(mem) = &ret {
-                return vec![
-                    Instr::with2(Mnemonic::Mov, Operand::Reg(tmp.boxed()), Operand::Mem(mem1.clone())),
-                    Instr::with2(Mnemonic::Xor, Operand::Reg(tmp.boxed()), Operand::Mem(mem2.clone())),
-                    Instr::with2(Mnemonic::Mov, Operand::Mem(mem.clone()), Operand::Reg(tmp.boxed())),
-                ];
-            } else { todo!() }
-        }
-    }
-
-    vec![]
 }
+
+CompileMathVarVar!(CompileAddVarVar, Add, Mnemonic::Add);
+CompileMathVarVar!(CompileSubVarVar, Sub, Mnemonic::Sub);
+CompileMathVarVar!(CompileXorVarVar, Xor, Mnemonic::Xor);
+
+CompileMathTyTy!(CompileAddTyTy, Add, +);
+CompileMathTyTy!(CompileSubTyTy, Sub, -);
+CompileMathTyTy!(CompileXorTyTy, Xor, ^);
 
 pub(crate) fn CompileConstAssign(assign: &ConstAssign<Var, Type>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
     let infos = &mut registry.backend;
@@ -322,74 +178,6 @@ pub(crate) fn CompileConstAssign(assign: &ConstAssign<Var, Type>, registry: &mut
     } else { todo!() }
 }
 
-pub(crate) fn CompileAddTyTy(add: &Add<Type, Type, Var>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-    let val = add.inner1.val() + add.inner2.val();
-    
-
-    let boxed: Box<dyn Ir> = Box::new(add.clone());
-
-    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &add.inner3) {
-        return vec![]; // all of these calculations don't need to be done: dead code removal
-    }
-
-    CompileConstAssign(&ConstAssign::new(add.inner3.clone(), {
-        match add.inner3.ty {
-            TypeMetadata::u16 => Type::u16(val as u16),
-            TypeMetadata::u32 => Type::u32(val as u32),
-            TypeMetadata::u64 => Type::u64(val as u64),
-            TypeMetadata::i16 => Type::i16(val as i16),
-            TypeMetadata::i32 => Type::i32(val as i32),
-            TypeMetadata::i64 => Type::i64(val as i64),
-            TypeMetadata::Void =>Type::Void,
-        }
-    }), registry)
-}
-
-pub(crate) fn CompileSubTyTy(sub: &Sub<Type, Type, Var>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-    let val = sub.inner1.val() - sub.inner2.val();
-    
-
-    let boxed: Box<dyn Ir> = Box::new(sub.clone());
-
-    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &sub.inner3) {
-        return vec![]; // all of these calculations don't need to be done: dead code removal
-    }
-
-    CompileConstAssign(&ConstAssign::new(sub.inner3.clone(), {
-        match sub.inner3.ty {
-            TypeMetadata::u16 => Type::u16(val as u16),
-            TypeMetadata::u32 => Type::u32(val as u32),
-            TypeMetadata::u64 => Type::u64(val as u64),
-            TypeMetadata::i16 => Type::i16(val as i16),
-            TypeMetadata::i32 => Type::i32(val as i32),
-            TypeMetadata::i64 => Type::i64(val as i64),
-            TypeMetadata::Void =>Type::Void,
-        }
-    }), registry)
-}
-
-pub(crate) fn CompileXorTyTy(sub: &Xor<Type, Type, Var>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-    let val = sub.inner1.val() ^ sub.inner2.val();
-
-    let boxed: Box<dyn Ir> = Box::new(sub.clone());
-
-    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &sub.inner3) {
-        return vec![]; // all of these calculations don't need to be done: dead code removal
-    }
-
-    CompileConstAssign(&ConstAssign::new(sub.inner3.clone(), {
-        match sub.inner3.ty {
-            TypeMetadata::u16 => Type::u16(val as u16),
-            TypeMetadata::u32 => Type::u32(val as u32),
-            TypeMetadata::u64 => Type::u64(val as u64),
-            TypeMetadata::i16 => Type::i16(val as i16),
-            TypeMetadata::i32 => Type::i32(val as i32),
-            TypeMetadata::i64 => Type::i64(val as i64),
-            TypeMetadata::Void =>Type::Void,
-        }
-    }), registry)
-}
-
 pub(crate) fn CompileRetType(ret: &Return<Type>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
     if ret.inner1 != Type::Void {
         vec![Instr::with2(Mnemonic::Mov, match ret.inner1.into() {
@@ -402,7 +190,6 @@ pub(crate) fn CompileRetType(ret: &Return<Type>, registry: &mut TargetBackendDes
         vec![]
     }
 }
-
 
 pub(crate) fn CompileRetVar(ret: &Return<Var>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
     let (var, loc) = if let Some(loc) = registry.backend.varsStorage.get_key_value(&ret.inner1) {
