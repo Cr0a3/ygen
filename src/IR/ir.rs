@@ -89,6 +89,162 @@ IrTypeWith3!(Xor, T, U, Z);
 
 use crate::Support::Colorize;
 
+macro_rules! MathIrNode {
+    ($name:ident, $compileFuncVarVar:ident, $compileFuncTyTy:ident, $buildTraitName:ident, $buildFuncName:ident, $dump:expr, $variantVarVar:expr, $variantTypeType:expr) => {
+        /// Used for overloading the build function
+        pub trait $buildTraitName<T, U> {
+            /// Xors values
+            fn $buildFuncName(&mut self, op0: T, op1: U) -> Var;
+        }
+
+        impl $buildTraitName<Type, Type> for IRBuilder<'_> {
+            fn $buildFuncName(&mut self, op0: Type, op1: Type)  -> Var {
+                let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+                
+                let op0Ty: TypeMetadata = op0.into();
+
+                let ty = op0Ty; // now both types need to be the same
+                let var = Var::new(block, ty);
+
+                block.push_ir($name::new(op0, op1, var.clone()));
+
+                var
+            }
+        }
+
+        impl $buildTraitName<Var, Var> for IRBuilder<'_> {
+            fn $buildFuncName(&mut self, op0: Var, op1: Var)  -> Var {
+                let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+                
+                let op0Ty: TypeMetadata = op0.ty.into();
+
+                let ty = op0Ty;
+                let var = Var::new(block, ty);
+
+                block.push_ir($name::new(op0, op1, var.clone()));
+
+                var
+            }
+        }
+
+        impl Ir for $name<Type, Type, Var> {
+            fn clone_box(&self) -> Box<dyn Ir> {
+                Box::new(self.clone())
+            }
+        
+            fn name(&self) -> String {
+                $variantTypeType.into()
+            }
+        
+            fn dump(&self) -> String {
+                format!("{} = {} {} {}, {}", $dump, self.inner3.name, self.inner3.ty, self.inner1.val(), self.inner2.val())
+            }
+        
+            fn dumpColored(&self) -> String {
+                format!("{} = {} {} {}, {}", 
+                        self.inner3.name.magenta(), 
+                        $dump.blue(), 
+                        self.inner3.ty.to_string().cyan(), 
+                        self.inner1.val().to_string().magenta(), 
+                        self.inner2.val().to_string().magenta()
+                    )
+            }
+        
+            fn verify(&self, _: FunctionType) -> Result<(), VerifyError> {
+                let op0Ty: TypeMetadata = self.inner1.into();
+                let op1Ty: TypeMetadata = self.inner2.into();
+                let op2Ty: TypeMetadata = self.inner3.ty.into();
+        
+                if !(op0Ty == op1Ty && op1Ty == op2Ty) {
+                    if op0Ty != op1Ty {
+                        Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op1Ty))?
+                    } else if op1Ty != op2Ty {
+                        Err(VerifyError::Op0Op1TyNoMatch(op1Ty, op2Ty))?
+                    } if op0Ty != op2Ty {
+                        Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op2Ty))?
+                    } else { todo!("unknown error variant (debug: ty0 {} ty1 {} ty2 {})", op0Ty, op1Ty, op2Ty) }
+                }
+        
+                Ok(())
+            }
+        
+            fn as_any(&self) -> &dyn Any {
+                self
+            }
+        
+            fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
+                registry.$compileFuncTyTy()(self, registry)
+            }
+        
+            fn uses(&self, var: &Var) -> bool {
+                if *var == self.inner3 { true }
+                else { false }
+            }
+        }
+        
+        impl Ir for $name<Var, Var, Var> {
+            fn clone_box(&self) -> Box<dyn Ir> {
+                Box::new(self.clone())
+            }
+        
+            fn name(&self) -> String {
+                $variantVarVar.into()
+            }
+        
+            fn dump(&self) -> String {
+                format!("{} = {} {} {}, {}", $dump, self.inner3.name, self.inner3.ty, self.inner1.name, self.inner2.name)
+            }
+        
+            fn dumpColored(&self) -> String {
+                format!("{} = {} {} {}, {}", 
+                        self.inner3.name.magenta(), 
+                        $dump.blue(), 
+                        self.inner3.ty.to_string().cyan(), 
+                        self.inner1.name.to_string().magenta(), 
+                        self.inner2.name.to_string().magenta()
+                    )
+            }
+        
+            fn verify(&self, _: FunctionType) -> Result<(), VerifyError> {
+                let op0Ty: TypeMetadata = self.inner1.ty.into();
+                let op1Ty: TypeMetadata = self.inner2.ty.into();
+                let op2Ty: TypeMetadata = self.inner3.ty.into();
+        
+                if !(op0Ty == op1Ty && op1Ty == op2Ty) {
+                    if op0Ty != op1Ty {
+                        Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op1Ty))?
+                    } else if op1Ty != op2Ty {
+                        Err(VerifyError::Op0Op1TyNoMatch(op1Ty, op2Ty))?
+                    } if op0Ty != op2Ty {
+                        Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op2Ty))?
+                    } else { todo!("unknown error variant (debug: ty0 {} ty1 {} ty2 {})", op0Ty, op1Ty, op2Ty) }
+                }
+        
+                Ok(())
+            }
+        
+            fn as_any(&self) -> &dyn Any {
+                self
+            }
+        
+            fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
+                registry.$compileFuncVarVar()(self, registry)
+            }
+        
+            fn uses(&self, var: &Var) -> bool {
+                if *var == self.inner1 || *var == self.inner2 || *var == self.inner3 { true }
+                else { false }
+            }
+        }
+        
+    };
+}
+
+MathIrNode!(Add, getCompileFuncForAddVarVar, getCompileFuncForAddTypeType, BuildAdd, BuildAdd, "add", "AddVarVar", "AddTypeType");
+MathIrNode!(Sub, getCompileFuncForSubVarVar, getCompileFuncForSubTypeType, BuildSub, BuildSub, "sub", "SubVarVar", "SubTypeType");
+MathIrNode!(Xor, getCompileFuncForXorVarVar, getCompileFuncForXorTypeType, BuildXor, BuildXor, "xor", "XorVarVar", "XorTypeType");
+
+
 impl Ir for Return<Type> {
     fn clone_box(&self) -> Box<dyn Ir> {
         Box::new(self.clone())
@@ -168,226 +324,6 @@ impl Ir for Return<Var> {
     }
 }
 
-impl Ir for Add<Type, Type, Var> {
-    fn clone_box(&self) -> Box<dyn Ir> {
-        Box::new(self.clone())
-    }
-
-    fn name(&self) -> String {
-        "AddTypeType".into()
-    }
-
-    fn dump(&self) -> String {
-        format!("{} = add {} {}, {}", self.inner3.name, self.inner3.ty, self.inner1.val(), self.inner2.val())
-    }
-
-    fn dumpColored(&self) -> String {
-        format!("{} = {} {} {}, {}", 
-                self.inner3.name.magenta(), 
-                "add".blue(), 
-                self.inner3.ty.to_string().cyan(), 
-                self.inner1.val().to_string().magenta(), 
-                self.inner2.val().to_string().magenta()
-            )
-    }
-
-    fn verify(&self, _: FunctionType) -> Result<(), VerifyError> {
-        let op0Ty: TypeMetadata = self.inner1.into();
-        let op1Ty: TypeMetadata = self.inner2.into();
-        let op2Ty: TypeMetadata = self.inner3.ty.into();
-
-        if !(op0Ty == op1Ty && op1Ty == op2Ty) {
-            if op0Ty != op1Ty {
-                Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op1Ty))?
-            } else if op1Ty != op2Ty {
-                Err(VerifyError::Op0Op1TyNoMatch(op1Ty, op2Ty))?
-            } if op0Ty != op2Ty {
-                Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op2Ty))?
-            } else { todo!("unknown error variant (debug: ty0 {} ty1 {} ty2 {})", op0Ty, op1Ty, op2Ty) }
-        }
-
-        Ok(())
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-        registry.getCompileFuncForAddTypeType()(self, registry)
-    }
-
-    fn uses(&self, var: &Var) -> bool {
-        if *var == self.inner3 { true }
-        else { false }
-    }
-}
-
-impl Ir for Sub<Type, Type, Var> {
-    fn clone_box(&self) -> Box<dyn Ir> {
-        Box::new(self.clone())
-    }
-
-    fn name(&self) -> String {
-        "SubTypeType".into()
-    }
-
-    fn dump(&self) -> String {
-        format!("{} = sub {} {}, {}", self.inner3.name, self.inner3.ty, self.inner1.val(), self.inner2.val())
-    }
-
-    fn dumpColored(&self) -> String {
-        format!("{} = {} {} {}, {}", 
-                self.inner3.name.magenta(), 
-                "sub".blue(), 
-                self.inner3.ty.to_string().cyan(), 
-                self.inner1.val().to_string().magenta(), 
-                self.inner2.val().to_string().magenta()
-            )
-    }
-
-    fn verify(&self, _: FunctionType) -> Result<(), VerifyError> {
-        let op0Ty: TypeMetadata = self.inner1.into();
-        let op1Ty: TypeMetadata = self.inner2.into();
-        let op2Ty: TypeMetadata = self.inner3.ty.into();
-
-        if !(op0Ty == op1Ty && op1Ty == op2Ty) {
-            if op0Ty != op1Ty {
-                Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op1Ty))?
-            } else if op1Ty != op2Ty {
-                Err(VerifyError::Op0Op1TyNoMatch(op1Ty, op2Ty))?
-            } if op0Ty != op2Ty {
-                Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op2Ty))?
-            } else { todo!("unknown error variant (debug: ty0 {} ty1 {} ty2 {})", op0Ty, op1Ty, op2Ty) }
-        }
-
-        Ok(())
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-        registry.getCompileFuncForSubTypeType()(self, registry)
-    }
-
-    fn uses(&self, var: &Var) -> bool {
-        if *var == self.inner3 { true }
-        else { false }
-    }
-}
-
-impl Ir for Add<Var, Var, Var> {
-    fn clone_box(&self) -> Box<dyn Ir> {
-        Box::new(self.clone())
-    }
-
-    fn name(&self) -> String {
-        "AddVarVar".into()
-    }
-
-    fn dump(&self) -> String {
-        format!("{} = add {} {}, {}", self.inner3.name, self.inner3.ty, self.inner1.name, self.inner2.name)
-    }
-
-    fn dumpColored(&self) -> String {
-        format!("{} = {} {} {}, {}", 
-                self.inner3.name.magenta(), 
-                "add".blue(), 
-                self.inner3.ty.to_string().cyan(), 
-                self.inner1.name.to_string().magenta(), 
-                self.inner2.name.to_string().magenta()
-            )
-    }
-
-    fn verify(&self, _: FunctionType) -> Result<(), VerifyError> {
-        let op0Ty: TypeMetadata = self.inner1.ty.into();
-        let op1Ty: TypeMetadata = self.inner2.ty.into();
-        let op2Ty: TypeMetadata = self.inner3.ty.into();
-
-        if !(op0Ty == op1Ty && op1Ty == op2Ty) {
-            if op0Ty != op1Ty {
-                Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op1Ty))?
-            } else if op1Ty != op2Ty {
-                Err(VerifyError::Op0Op1TyNoMatch(op1Ty, op2Ty))?
-            } if op0Ty != op2Ty {
-                Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op2Ty))?
-            } else { todo!("unknown error variant (debug: ty0 {} ty1 {} ty2 {})", op0Ty, op1Ty, op2Ty) }
-        }
-
-        Ok(())
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-        registry.getCompileFuncForAddVarVar()(self, registry)
-    }
-
-    fn uses(&self, var: &Var) -> bool {
-        if *var == self.inner1 || *var == self.inner2 || *var == self.inner3 { true }
-        else { false }
-    }
-}
-
-impl Ir for Sub<Var, Var, Var> {
-    fn clone_box(&self) -> Box<dyn Ir> {
-        Box::new(self.clone())
-    }
-
-    fn name(&self) -> String {
-        "SubVarVar".into()
-    }
-
-    fn dump(&self) -> String {
-        format!("{} = sub {} {}, {}", self.inner3.name, self.inner3.ty, self.inner1.name, self.inner2.name)
-    }
-
-    fn dumpColored(&self) -> String {
-        format!("{} = {} {} {}, {}", 
-                self.inner3.name.magenta(), 
-                "sub".blue(), 
-                self.inner3.ty.to_string().cyan(), 
-                self.inner1.name.to_string().magenta(), 
-                self.inner2.name.to_string().magenta()
-            )
-    }
-
-    fn verify(&self, _: FunctionType) -> Result<(), VerifyError> {
-        let op0Ty: TypeMetadata = self.inner1.ty.into();
-        let op1Ty: TypeMetadata = self.inner2.ty.into();
-        let op2Ty: TypeMetadata = self.inner3.ty.into();
-
-        if !(op0Ty == op1Ty && op1Ty == op2Ty) {
-            if op0Ty != op1Ty {
-                Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op1Ty))?
-            } else if op1Ty != op2Ty {
-                Err(VerifyError::Op0Op1TyNoMatch(op1Ty, op2Ty))?
-            } if op0Ty != op2Ty {
-                Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op2Ty))?
-            } else { todo!("unknown error variant (debug: ty0 {} ty1 {} ty2 {})", op0Ty, op1Ty, op2Ty) }
-        }
-
-        Ok(())
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-        registry.getCompileFuncForSubVarVar()(self, registry)
-    }
-
-    fn uses(&self, var: &Var) -> bool {
-        if *var == self.inner1 || *var == self.inner2 || *var == self.inner3 { true }
-        else { false }
-    }
-}
-
 impl Ir for ConstAssign<Var, Type> {
     fn dump(&self) -> String {
         let meta: TypeMetadata = self.inner2.into();
@@ -434,118 +370,6 @@ impl Ir for ConstAssign<Var, Type> {
         else { false }
     }
 }
-
-impl Ir for Xor<Type, Type, Var> {
-    fn clone_box(&self) -> Box<dyn Ir> {
-        Box::new(self.clone())
-    }
-
-    fn name(&self) -> String {
-        "XorTypeType".into()
-    }
-
-    fn dump(&self) -> String {
-        format!("{} = xor {} {}, {}", self.inner3.name, self.inner3.ty, self.inner1.val(), self.inner2.val())
-    }
-
-    fn dumpColored(&self) -> String {
-        format!("{} = {} {} {}, {}", 
-                self.inner3.name.magenta(), 
-                "xor".blue(), 
-                self.inner3.ty.to_string().cyan(), 
-                self.inner1.val().to_string().magenta(), 
-                self.inner2.val().to_string().magenta()
-            )
-    }
-
-    fn verify(&self, _: FunctionType) -> Result<(), VerifyError> {
-        let op0Ty: TypeMetadata = self.inner1.into();
-        let op1Ty: TypeMetadata = self.inner2.into();
-        let op2Ty: TypeMetadata = self.inner3.ty.into();
-
-        if !(op0Ty == op1Ty && op1Ty == op2Ty) {
-            if op0Ty != op1Ty {
-                Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op1Ty))?
-            } else if op1Ty != op2Ty {
-                Err(VerifyError::Op0Op1TyNoMatch(op1Ty, op2Ty))?
-            } if op0Ty != op2Ty {
-                Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op2Ty))?
-            } else { todo!("unknown error variant (debug: ty0 {} ty1 {} ty2 {})", op0Ty, op1Ty, op2Ty) }
-        }
-
-        Ok(())
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-        registry.getCompileFuncForXorTypeType()(self, registry)
-    }
-
-    fn uses(&self, var: &Var) -> bool {
-        if *var == self.inner3 { true }
-        else { false }
-    }
-}
-
-impl Ir for Xor<Var, Var, Var> {
-    fn clone_box(&self) -> Box<dyn Ir> {
-        Box::new(self.clone())
-    }
-
-    fn name(&self) -> String {
-        "XorVarVar".into()
-    }
-
-    fn dump(&self) -> String {
-        format!("{} = xor {} {}, {}", self.inner3.name, self.inner3.ty, self.inner1.name, self.inner2.name)
-    }
-
-    fn dumpColored(&self) -> String {
-        format!("{} = {} {} {}, {}", 
-                self.inner3.name.magenta(), 
-                "xor".blue(), 
-                self.inner3.ty.to_string().cyan(), 
-                self.inner1.name.to_string().magenta(), 
-                self.inner2.name.to_string().magenta()
-            )
-    }
-
-    fn verify(&self, _: FunctionType) -> Result<(), VerifyError> {
-        let op0Ty: TypeMetadata = self.inner1.ty.into();
-        let op1Ty: TypeMetadata = self.inner2.ty.into();
-        let op2Ty: TypeMetadata = self.inner3.ty.into();
-
-        if !(op0Ty == op1Ty && op1Ty == op2Ty) {
-            if op0Ty != op1Ty {
-                Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op1Ty))?
-            } else if op1Ty != op2Ty {
-                Err(VerifyError::Op0Op1TyNoMatch(op1Ty, op2Ty))?
-            } if op0Ty != op2Ty {
-                Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op2Ty))?
-            } else { todo!("unknown error variant (debug: ty0 {} ty1 {} ty2 {})", op0Ty, op1Ty, op2Ty) }
-        }
-
-        Ok(())
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-        registry.getCompileFuncForXorVarVar()(self, registry)
-    }
-
-    fn uses(&self, var: &Var) -> bool {
-        if *var == self.inner1 || *var == self.inner2 || *var == self.inner3 { true }
-        else { false }
-    }
-}
-
-
 /// Trait for the return instruction
 /// Used for overloading the CreateRet function
 pub trait BuildReturn<T> {
@@ -564,117 +388,6 @@ impl BuildReturn<Var> for IRBuilder<'_> {
     fn BuildRet(&mut self, var: Var) {
         self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one")
             .push_ir(Return::new(var))
-    }
-}
-
-
-/// Trait for the add function
-/// Used for overloading the BuildAdd function
-pub trait BuildAdd<T, U> {
-    /// Adds the values
-    fn BuildAdd(&mut self, op0: T, op1: U) -> Var;
-}
-
-impl BuildAdd<Type, Type> for IRBuilder<'_> {
-    fn BuildAdd(&mut self, op0: Type, op1: Type)  -> Var {
-        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
-        
-        let op0Ty: TypeMetadata = op0.into();
-
-        let ty = op0Ty; // now both types need to be the same
-        let var = Var::new(block, ty);
-
-        block.push_ir(Add::new(op0, op1, var.clone()));
-
-        var
-    }
-}
-
-impl BuildAdd<Var, Var> for IRBuilder<'_> {
-    fn BuildAdd(&mut self, op0: Var, op1: Var)  -> Var {
-        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
-        
-        let op0Ty: TypeMetadata = op0.ty.into();
-
-        let ty = op0Ty;
-        let var = Var::new(block, ty);
-
-        block.push_ir(Add::new(op0, op1, var.clone()));
-
-        var
-    }
-}
-
-/// Trait for the sub function
-/// Used for overloading the BuildSub function
-pub trait BuildSub<T, U> {
-    /// Subs the values
-    fn BuildSub(&mut self, op0: T, op1: U) -> Var;
-}
-
-impl BuildSub<Type, Type> for IRBuilder<'_> {
-    fn BuildSub(&mut self, op0: Type, op1: Type)  -> Var {
-        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
-        
-        let op0Ty: TypeMetadata = op0.into();
-
-        let ty = op0Ty; // now both types need to be the same
-        let var = Var::new(block, ty);
-
-        block.push_ir(Sub::new(op0, op1, var.clone()));
-
-        var
-    }
-}
-
-impl BuildSub<Var, Var> for IRBuilder<'_> {
-    fn BuildSub(&mut self, op0: Var, op1: Var)  -> Var {
-        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
-        
-        let op0Ty: TypeMetadata = op0.ty.into();
-
-        let ty = op0Ty;
-        let var = Var::new(block, ty);
-
-        block.push_ir(Sub::new(op0, op1, var.clone()));
-
-        var
-    }
-}
-/// Trait for the xor function
-/// Used for overloading the BuildXor function
-pub trait BuildXor<T, U> {
-    /// Xors values
-    fn BuildXor(&mut self, op0: T, op1: U) -> Var;
-}
-
-impl BuildXor<Type, Type> for IRBuilder<'_> {
-    fn BuildXor(&mut self, op0: Type, op1: Type)  -> Var {
-        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
-        
-        let op0Ty: TypeMetadata = op0.into();
-
-        let ty = op0Ty; // now both types need to be the same
-        let var = Var::new(block, ty);
-
-        block.push_ir(Xor::new(op0, op1, var.clone()));
-
-        var
-    }
-}
-
-impl BuildXor<Var, Var> for IRBuilder<'_> {
-    fn BuildXor(&mut self, op0: Var, op1: Var)  -> Var {
-        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
-        
-        let op0Ty: TypeMetadata = op0.ty.into();
-
-        let ty = op0Ty;
-        let var = Var::new(block, ty);
-
-        block.push_ir(Xor::new(op0, op1, var.clone()));
-
-        var
     }
 }
 

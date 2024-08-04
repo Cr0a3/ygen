@@ -117,6 +117,10 @@ impl Module {
         lines.push_str("section .text\n\n");
 
         for (name, func) in &self.funcs {
+            if func.linkage == Linkage::Extern {
+                lines += &format!("global {}\n", name);
+            }
+
             lines += &format!("{}:\n", name);
 
             for block in &func.blocks {
