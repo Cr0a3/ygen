@@ -48,7 +48,7 @@ impl Instr {
         self.verify()?;
         
         Ok(match self.mnemonic {
-            Mnemonic::Add | Mnemonic::Adc | Mnemonic::And | Mnemonic::Or | Mnemonic::Sub | Mnemonic::Xor => {
+            Mnemonic::Add | Mnemonic::Adc | Mnemonic::And | Mnemonic::Or | Mnemonic::Sub | Mnemonic::Xor | Mnemonic::Mov => {
                 let mandatory = if let Some(Operand::Reg(reg)) = &self.op1 {
                     if reg.is_gr16() { Some(MandatoryPrefix::t16BitOps)}
                     else { None }
@@ -59,13 +59,14 @@ impl Instr {
                     else { None }
                 } else { None };
 
-                let (mut r, mut m, mut i) = match self.mnemonic {
-                    Mnemonic::Add => (0x01, 0x03, 0),
-                    Mnemonic::Adc => (0x11, 0x03, 2),
-                    Mnemonic::Sub => (0x29, 0x2B, 5),
-                    Mnemonic::And => (0x21, 0x23, 3),
-                    Mnemonic::Or => (0x09, 0x0B, 1),
-                    Mnemonic::Xor => (0x31, 0x33, 6),
+                let (mut r, mut m, mut i, ibase, ibase8) = match self.mnemonic {
+                    Mnemonic::Add => (0x01, 0x03, 0, 0x81, 0x80),
+                    Mnemonic::Adc => (0x11, 0x03, 2, 0x81, 0x80),
+                    Mnemonic::Sub => (0x29, 0x2B, 5, 0x81, 0x80),
+                    Mnemonic::And => (0x21, 0x23, 3, 0x81, 0x80),
+                    Mnemonic::Or => (0x09, 0x0B, 1, 0x81, 0x80),
+                    Mnemonic::Xor => (0x31, 0x33, 6, 0x81, 0x80),
+                    Mnemonic::Mov => (0x89, 0x8B, 0, 0xC7, 0xC6),
                     _ => unreachable!(),
                 };
 
@@ -187,18 +188,23 @@ impl Instr {
                                 mandatory = Some(MandatoryPrefix::t16BitOps);
                             }
 
-                            op.push(0x81);
+                            if !op0.is_gr8() {
+                                op.push(ibase);
+                            } else {
+                                op.push(ibase8);
+                            }
+
                             op.extend_from_slice(&ModRm::regWimm(i, *op0));
 
-                            let bytes = (*num).to_be_bytes();
+                            let bytes = (*num).to_le_bytes();
 
                             if op0.is_gr64() || op0.is_gr32() {
-                                op.push(bytes[7]); op.push(bytes[6]);
-                                op.push(bytes[5]); op.push(bytes[4]);
+                                op.push(bytes[0]); op.push(bytes[1]);
+                                op.push(bytes[2]); op.push(bytes[3]);
                             } else if op0.is_gr16() {
-                                op.push(bytes[7]); op.push(bytes[6]);
+                                op.push(bytes[0]); op.push(bytes[1]);
                             } else if op0.is_gr8() {
-                                op.push(*num as u8);
+                                op.push(bytes[0]);
                             }
                         } else { todo!() }
 
@@ -234,159 +240,6 @@ impl Instr {
                 } else { todo!() }
 
                 buildOpcode(mandatory, rex, op)
-            },
-            Mnemonic::Mov => {
-                let mandatory = if let Some(Operand::Reg(reg)) = &self.op1 {
-                    if reg.is_gr16() { Some(MandatoryPrefix::t16BitOps)}
-                    else { None }
-                } else { None };
-
-                let rex: Option<RexPrefix> = if let Some(Operand::Reg(reg)) = &self.op1 {
-                    if reg.is_gr64() { Some(RexPrefix { w: true, r: false, x: false, b: false })}
-                    else { None }
-                } else { None };
-
-                let (mut r, mut m, mut i) = (0x89, 0x8B, 0xC7);
-
-                if let Some(Operand::Reg(reg)) = &self.op1 {
-                    if reg.is_gr8() { r -= 1; m -= 1; i -= 1; }
-                }
-
-                match self.op2.as_ref().expect("verifycation failed") {
-                    Operand::Reg(reg) => {
-                        let reg = reg.as_any().downcast_ref::<x64Reg>().expect("expected x64 registers and not the ones from other archs");
-
-                        let mut rex = if reg.extended() {
-                            if let Some(mut rex) = rex {
-                                rex.r = true;
-                                Some(rex)
-                            }  else {
-                                Some(RexPrefix { w: false, r: true, x: false, b: false })
-                            }
-                        } else { rex };
-
-                        if reg.is_gr64() {
-                            if let Some(mut rex) = rex {
-                                rex.w = true;
-                            }  else {
-                                rex = Some(RexPrefix { w: true, r: false, x: false, b: false })
-                            }
-                        }
-
-                        let mut op = vec![];
-
-                        if let Some(Operand::Reg(op0)) = &self.op1 {
-                            let op0 = op0.as_any().downcast_ref::<x64Reg>().expect("expected x64 registers and not the ones from other archs");
-
-                            if op0.extended() {
-                                if let Some(mut rex) = rex {
-                                    rex.b = true;
-                                }  else {
-                                    rex = Some(RexPrefix { w: false, r: false, x: false, b: true })
-                                };
-                            }
-                            if op0.is_gr64() {
-                                if let Some(mut rex) = rex {
-                                    rex.w = true;
-                                }  else {
-                                    rex = Some(RexPrefix { w: true, r: false, x: false, b: false })
-                                };
-                            }
-
-                            if reg.extended() || op0.extended() { 
-                                op.push(r);
-                                op.extend_from_slice(&ModRm::reg2(
-                                    *op0, 
-                                    *reg
-                                ));
-                            }
-                            else {
-                                op.push(m);
-                                op.extend_from_slice(&ModRm::reg2(
-                                    *reg, 
-                                    *op0
-                                ));
-                            }
-
-                        } else if let Some(Operand::Mem(mem)) = &self.op1 {
-                            op.push(r);
-                            if !mem.rex().empty() {
-                                if let Some(rext) = rex {
-                                    rex = Some(rext.sync(mem.rex()));
-                                } else {rex = Some(mem.rex())}
-                            }
-                            op.extend_from_slice(&ModRm::memR(
-                                mem.clone(),
-                                *reg.as_any().downcast_ref::<x64Reg>().expect("expected x64 registers and not the ones from other archs")
-                            ))
-                        } else { todo!() }
-
-                        buildOpcode(mandatory, rex, op)
-                    },
-                    Operand::Mem(mem) => {
-                        let mut op = vec![];
-                        let mut rex = None;
-
-                        if let Some(Operand::Reg(op0)) = &self.op1 {
-                            let op0 = op0.as_any().downcast_ref::<x64Reg>().expect("expected x64 registers and not the ones from other archs");
-
-                            if op0.extended() { 
-                                if op0.is_gr64() { rex = Some(RexPrefix { w: true, r: false, x: false, b: true });  }
-                                else { rex = Some(RexPrefix { w: false, r: false, x: false, b: true });  }
-                            } else if op0.is_gr64() { rex = Some(RexPrefix { w: true, r: false, x: false, b: false });  }
-                            op.push(m);
-
-                            if let Some(rext) = rex {
-                                rex = Some(rext.sync(mem.rex()));
-                            }
-
-
-                            
-                            op.extend_from_slice(&ModRm::regM(
-                                *op0,
-                                mem.clone()
-                            ));
-
-                        } else { todo!() }
-
-                        buildOpcode(mandatory, rex, op)
-                    },
-                    Operand::Imm(num) => {
-                        let mut mandatory = None;
-                        let mut rex = None;
-                        let mut op = vec![];
-
-                        if let Some(Operand::Reg(op0)) = &self.op1 {
-                            let op0 = op0.as_any().downcast_ref::<x64Reg>().expect("expected x64 registers and not the ones from other archs");
-
-                            if op0.extended() { 
-                                rex = Some(RexPrefix { w: false, r: false, x: false, b: true });
-                            } 
-                            if op0.is_gr64() { 
-                                rex = Some(RexPrefix { w: true, r: false, x: false, b: false });  
-                            }
-                            if op0.is_gr16() {
-                                mandatory = Some(MandatoryPrefix::t16BitOps);
-                            }
-
-                            op.push(i);
-                            op.extend_from_slice(&ModRm::regWimm(0, *op0));
-
-                            let bytes = (*num).to_be_bytes();
-
-                            if op0.is_gr64() || op0.is_gr32() {
-                                op.push(bytes[7]); op.push(bytes[6]);
-                                op.push(bytes[5]); op.push(bytes[4]);
-                            } else if op0.is_gr16() {
-                                op.push(bytes[7]); op.push(bytes[6]);
-                            } else if op0.is_gr8() {
-                                op.push(*num as u8);
-                            }
-                        } else { todo!() }
-
-                        buildOpcode(mandatory, rex, op)
-                    }
-                }
             },
             Mnemonic::Push | Mnemonic::Pop => {
                 let mut mandatory = None;
