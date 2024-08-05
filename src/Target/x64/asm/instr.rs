@@ -1,6 +1,6 @@
 use std::{fmt::Display, ops::{Add, Sub}, str::FromStr};
 
-use crate::Target::{isa::{buildOpcode, MandatoryPrefix, RexPrefix}, x64Reg, Reg};
+use crate::{Support::{ColorClass, ColorProfile}, Target::{isa::{buildOpcode, MandatoryPrefix, RexPrefix}, x64Reg, Reg}};
 
 use super::isa::ModRm;
 
@@ -376,6 +376,28 @@ impl Instr {
     /// Returns the instruction as assembly representation
     pub fn to_string(&self) -> String {
         format!("{}", self)
+    }
+
+    /// emits the instruction as one colored string
+    pub fn color(&self, profile: ColorProfile) -> String {
+        let mut string = profile.markup(&format!("{}", self.mnemonic), ColorClass::Instr);
+
+        if let Some(op1) = &self.op1 {
+            string.push_str(&format!(" {}", match op1 {
+                Operand::Imm(num) => profile.markup(&num.to_string(), ColorClass::Value),
+                Operand::Reg(reg) => profile.markup(&reg.to_string(), ColorClass::Var),
+                Operand::Mem(mem) => profile.markup(&format!("{}", mem), ColorClass::Var),
+            }));
+            if let Some(op2) = &self.op2 {
+                string.push_str(&format!(", {}", match op2 {
+                    Operand::Imm(num) => profile.markup(&format!("{}", num.to_string()), ColorClass::Value),
+                    Operand::Reg(reg) => profile.markup(&format!(", {}", reg.to_string()), ColorClass::Var),
+                    Operand::Mem(mem) => profile.markup(&format!("{}", mem), ColorClass::Var),
+                }));
+            }
+        }
+
+        string
     }
 }
 

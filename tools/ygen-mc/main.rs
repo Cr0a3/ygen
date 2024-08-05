@@ -19,7 +19,7 @@
 
 use std::error::Error;
 
-use Ygen::{self, Support::Colorize, Target::{initializeAllTargets, Triple}};
+use Ygen::{self, Support::{ColorProfile, Colorize}, Target::{initializeAllTargets, Triple}};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut cli = Ygen::Support::Cli::new(
@@ -28,7 +28,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     cli.add_opt("h", "help", "Displays help");
     cli.add_opt("v", "version", "Displays the version");
-    cli.add_opt("clr", "color", "Colorates the ouput");
+    cli.add_opt("no-clr", "no-color", "Disables colors in the ouput");
     cli.add_arg("as", "assemble-string", "The assembly instruction to assemble", /*required*/ true);
     cli.add_arg("triple", "triple", "The target triple", /*required*/ false);
 
@@ -64,17 +64,33 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut comp = backend.compiler().new(lexed);
     comp.parse()?;
 
-    println!("{}: {}", "Asm string".gray(), asm);
+    if !cli.opt("no-color") {
+        println!("{}: {}", "Asm string".gray(), comp.coloredOut(ColorProfile::default()));
+    } else {
+        println!("Asm string: {}", comp.printOut());
+    }
 
-    println!("{}: {}", "Compilation result".gray(), {
-        let mut fmt = String::from("0x");
+    if !cli.opt("no-color") {
+        println!("{}: {}", "Compilation result".gray(), {
+            let mut fmt = String::from("0x");
+    
+            for byte in comp.out()? {
+                fmt += &format!("{:#04X}", byte).replace("0x", "");
+            }
+    
+            fmt
+        }.magenta());
+    } else {   
+        println!("Compilation result: 0x{}", {
+            let mut fmt = String::new();
 
-        for byte in comp.out()? {
-            fmt += &format!("{:#04X}", byte).replace("0x", "");
-        }
+            for byte in comp.out()? {
+                fmt += &format!("{:#04X}", byte).replace("0x", "");
+            }
 
-        fmt
-    }.magenta());
+            fmt
+        });
+    }
 
     Ok(())
 }

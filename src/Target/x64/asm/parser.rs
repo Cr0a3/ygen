@@ -1,6 +1,6 @@
 use std::{collections::VecDeque, error::Error, fmt::Display, str::FromStr};
 
-use crate::Target::{x64Reg, Compiler, Reg};
+use crate::{Support::ColorProfile, Target::{x64Reg, Compiler, Reg}};
 
 use super::{instr::*, Token};
 
@@ -165,6 +165,14 @@ impl Compiler for x64Parser {
 
     fn boxed(&self) -> Box<dyn Compiler> {
         Box::from(self.clone())
+    }
+    
+    fn coloredOut(&self, profile: ColorProfile) -> String {
+        self.out.as_ref().unwrap().color(profile)
+    }
+    
+    fn printOut(&self) -> String {
+        self.out.as_ref().unwrap().to_string()
     }
 }
 

@@ -1,5 +1,7 @@
 use std::error::Error;
 
+use crate::Support::ColorProfile;
+
 use super::Token;
 
 /// An wrapper trait for assembly compilers
@@ -11,6 +13,12 @@ pub trait Compiler {
     /// Returns the output machine code
     fn out(&self) -> Result<Vec<u8>, Box<dyn Error>>;
     
+    /// Returns the parsed instruction colored
+    fn coloredOut(&self, profile: ColorProfile) -> String;
+
+    /// Returns the parsed instruction as a string
+    fn printOut(&self) -> String;
+
     #[doc(hidden)]
     fn boxed(&self) -> Box<dyn Compiler>;
 }
