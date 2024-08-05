@@ -1,4 +1,4 @@
-use crate::{prelude::Triple, Obj::{Decl, Linkage, ObjectBuilder}, PassManager, Target::TargetRegistry};
+use crate::{prelude::Triple, Obj::{Decl, Linkage, ObjectBuilder}, PassManager, Support::ColorProfile, Target::TargetRegistry};
 
 use super::{func::FunctionType, Block, Function, VerifyError};
 use std::{collections::HashMap, error::Error, fs::OpenOptions, io::Write, path::Path};
@@ -53,11 +53,11 @@ impl Module {
     
     /// Emits the ir of the entire module into a colored string
     /// Maybe output to stdout
-    pub fn dumpColored(&self) -> String {
+    pub fn dumpColored(&self, profile: ColorProfile) -> String {
         let mut string = String::new();
 
         for (_, func) in &self.funcs {
-            string += &format!("{}\n", func.dumpColored());
+            string += &format!("{}\n", func.dumpColored(profile));
         }
 
         string

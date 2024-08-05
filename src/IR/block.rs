@@ -1,4 +1,4 @@
-use crate::Support::Colorize;
+use crate::Support::{ColorProfile, Colorize};
 
 use super::{ir::Ir, Function, VerifyError};
 
@@ -40,13 +40,13 @@ impl Block {
     }
 
     /// Emits the ir of the block into one colored string
-    pub fn dumpColored(&self) -> String {
+    pub fn dumpColored(&self, profile: ColorProfile) -> String {
         let mut dump = String::new();
 
         dump += &format!("{}:\n", self.name.cyan());
 
         for node in &self.nodes {
-            dump += &format!("    {}\n", node.dumpColored());
+            dump += &format!("    {}\n", node.dumpColored(profile));
         }
 
         dump

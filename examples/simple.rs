@@ -1,5 +1,5 @@
 use std::{error::Error, fs::OpenOptions, path::Path};
-use Ygen::{prelude::*, Target::initializeAllTargets};
+use Ygen::{prelude::*, Support::ColorProfile, Target::initializeAllTargets};
 
 
 pub fn main() -> Result<(), Box<dyn Error>> {
@@ -18,6 +18,12 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
     let val = builder.BuildAdd(ty.arg(0), ty.arg(1));
     builder.BuildRet( val );
+
+    module.verify()?;
+
+    eprintln!(
+        "{}", module.dumpColored(ColorProfile::default())
+    );
 
     module.emitToAsmFile(
         Triple::host(),

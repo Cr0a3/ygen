@@ -4,10 +4,12 @@ mod pad;
 mod srcmngr;
 mod tokmngr;
 mod error;
+mod profile;
 
 use std::process::exit;
 
-pub use color::{Colorize, ColorEncoder};
+pub use color::{Colorize, ColorEncoder, Color};
+pub use profile::{ColorProfile, ColorClass};
 pub use cli::Cli;
 pub use pad::Pad;
 pub use srcmngr::SrcMngr;

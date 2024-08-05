@@ -89,7 +89,7 @@ IrTypeWith3!(Xor, T, U, Z);
 IrTypeWith3!(Or, T, U, Z);
 IrTypeWith3!(And, T, U, Z);
 
-use crate::Support::Colorize;
+use crate::Support::{ColorClass, ColorProfile};
 
 macro_rules! MathIrNode {
     ($name:ident, $compileFuncVarVar:ident, $compileFuncTyTy:ident, $buildTraitName:ident, $buildFuncName:ident, $dump:expr, $variantVarVar:expr, $variantTypeType:expr) => {
@@ -142,14 +142,14 @@ macro_rules! MathIrNode {
                 format!("{} = {} {} {}, {}", $dump, self.inner3.name, self.inner3.ty, self.inner1.val(), self.inner2.val())
             }
         
-            fn dumpColored(&self) -> String {
+            fn dumpColored(&self, profile: ColorProfile) -> String {
                 format!("{} = {} {} {}, {}", 
-                        self.inner3.name.magenta(), 
-                        $dump.blue(), 
-                        self.inner3.ty.to_string().cyan(), 
-                        self.inner1.val().to_string().magenta(), 
-                        self.inner2.val().to_string().magenta()
-                    )
+                    profile.markup(&self.inner3.name, ColorClass::Var), 
+                    profile.markup($dump, ColorClass::Instr), 
+                    profile.markup(&self.inner3.ty.to_string(), ColorClass::Ty), 
+                    profile.markup(&self.inner1.val().to_string(), ColorClass::Value), 
+                    profile.markup(&self.inner2.val().to_string(), ColorClass::Value)
+                )
             }
         
             fn verify(&self, _: FunctionType) -> Result<(), VerifyError> {
@@ -197,14 +197,14 @@ macro_rules! MathIrNode {
                 format!("{} = {} {} {}, {}", $dump, self.inner3.name, self.inner3.ty, self.inner1.name, self.inner2.name)
             }
         
-            fn dumpColored(&self) -> String {
+            fn dumpColored(&self, profile: ColorProfile) -> String {
                 format!("{} = {} {} {}, {}", 
-                        self.inner3.name.magenta(), 
-                        $dump.blue(), 
-                        self.inner3.ty.to_string().cyan(), 
-                        self.inner1.name.to_string().magenta(), 
-                        self.inner2.name.to_string().magenta()
-                    )
+                    profile.markup(&self.inner3.name, ColorClass::Var), 
+                    profile.markup($dump, ColorClass::Instr), 
+                    profile.markup(&self.inner3.ty.to_string(), ColorClass::Ty), 
+                    profile.markup(&self.inner1.name.to_string(), ColorClass::Var), 
+                    profile.markup(&self.inner2.name.to_string(), ColorClass::Var)
+                )
             }
         
             fn verify(&self, _: FunctionType) -> Result<(), VerifyError> {
@@ -263,9 +263,13 @@ impl Ir for Return<Type> {
         format!("ret {} {}", metadata, self.inner1.val())
     }
 
-    fn dumpColored(&self) -> String {
+    fn dumpColored(&self, profile: ColorProfile) -> String {
         let metadata: TypeMetadata = self.inner1.into();
-        format!("{} {} {}", "ret".blue(), metadata.to_string().cyan(), self.inner1.val().to_string().blue())
+        format!("{} {} {}", 
+            profile.markup("ret", ColorClass::Instr),
+            profile.markup(&metadata.to_string(), ColorClass::Ty), 
+            profile.markup(&self.inner1.val().to_string(), ColorClass::Var),
+        )
     }
 
     fn verify(&self, FuncTy: FunctionType) -> Result<(), VerifyError> {
@@ -300,8 +304,12 @@ impl Ir for Return<Var> {
         format!("ret {} {}", self.inner1.ty, self.inner1.name)
     }
 
-    fn dumpColored(&self) -> String {
-        format!("{} {} {}", "ret".blue(), self.inner1.ty.to_string().cyan(), self.inner1.name.to_string().magenta())
+    fn dumpColored(&self, profile: ColorProfile) -> String {
+        format!("{} {} {}", 
+            profile.markup("ret", ColorClass::Instr), 
+            profile.markup(&self.inner1.ty.to_string(), ColorClass::Ty), 
+            profile.markup(&self.inner1.name.to_string(), ColorClass::Var),
+        )
     }
 
     fn verify(&self, FuncTy: FunctionType) -> Result<(), VerifyError> {
@@ -334,12 +342,12 @@ impl Ir for ConstAssign<Var, Type> {
         format!("{} = {} {}", self.inner1.name, meta, self.inner2.val())
     }
 
-    fn dumpColored(&self) -> String {
+    fn dumpColored(&self, profile: ColorProfile) -> String {
         let meta: TypeMetadata = self.inner2.into();
         format!("{} = {} {}", 
-            self.inner1.name.magenta(), 
-            meta.to_string().cyan(), 
-            self.inner2.val().to_string().blue()
+            profile.markup(&self.inner1.name, ColorClass::Var), 
+            profile.markup(&meta.to_string(), ColorClass::Instr), 
+            profile.markup(&self.inner2.val().to_string(), ColorClass::Value),
         )
     }
 
@@ -400,7 +408,7 @@ pub(crate) trait Ir: Debug + Any {
     /// Returns the ir node as his textual representation
     fn dump(&self) -> String;
     /// Returns the ir node as his textual representation with colors
-    fn dumpColored(&self) -> String;
+    fn dumpColored(&self, profile: ColorProfile) -> String;
 
     /// Returns the name of the ir expr
     fn name(&self) -> String;

@@ -23,6 +23,27 @@ pub(crate ) struct Style {
     pub(crate) bg: bool,
 }
 
+/// A simple color
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Color {
+    /// Red color channel
+    pub r: u8,
+    /// Green color channel
+    pub g: u8,
+    /// Blue color channel
+    pub b: u8,
+}
+
+impl Default for Color {
+    fn default() -> Self {
+        Self { 
+            r: Default::default(), 
+            g: Default::default(), 
+            b: Default::default() 
+        }
+    }
+}
+
 /// Clorize trait: Colorizes a string
 pub trait Colorize {
     /// Makes the string to the specified color

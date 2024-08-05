@@ -6,6 +6,7 @@ use super::Var;
 use super::VerifyError;
 use crate::prelude::PassManager;
 use crate::Obj::Linkage;
+use crate::Support::ColorProfile;
 use crate::Support::Colorize;
 
 /// Stores the function type
@@ -123,7 +124,7 @@ impl Function {
     }
 
     /// Emits the Ir of the function into an colored string
-    pub fn dumpColored(&self) -> String {
+    pub fn dumpColored(&self, profile: ColorProfile) -> String {
         let mut string = String::new();
 
         string += &format!("{} {} @{}({}) {{\n", "define".blue(), self.ty.ret.to_string().green(), self.name.cyan(), {
@@ -140,7 +141,7 @@ impl Function {
         });
 
         for block in &self.blocks {
-            string += &format!(" {}\n", block.dumpColored());
+            string += &format!(" {}\n", block.dumpColored(profile));
         }
 
         string += "}";
