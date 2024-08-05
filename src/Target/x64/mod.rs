@@ -74,18 +74,23 @@ pub fn initializeX64Target<'a>(call_conv: CallConv) -> TargetBackendDescr<'a> {
     target.setCompileFuncForConstAssign(CompileConstAssign);
 
     target.setCompileFuncForAddVarVar(CompileAddVarVar);
+    target.setCompileFuncForAddVarType(CompileAddVarTy);
     target.setCompileFuncForAddTypeType(CompileAddTyTy);
 
     target.setCompileFuncForSubVarVar(CompileSubVarVar);
+    target.setCompileFuncForSubVarType(CompileSubVarTy);
     target.setCompileFuncForSubTypeType(CompileSubTyTy);
 
     target.setCompileFuncForXorVarVar(CompileXorVarVar);
+    target.setCompileFuncForXorVarType(CompileXorVarTy);
     target.setCompileFuncForXorTypeType(CompileXorTyTy);
 
     target.setCompileFuncForAndVarVar(CompileAndVarVar);
+    target.setCompileFuncForAndVarType(CompileAndVarTy);
     target.setCompileFuncForAndTypeType(CompileAndTyTy);
 
     target.setCompileFuncForOrVarVar(CompileOrVarVar);
+    target.setCompileFuncForOrVarType(CompileOrVarTy);
     target.setCompileFuncForOrTypeType(CompileOrTyTy);
 
     target

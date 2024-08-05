@@ -92,7 +92,7 @@ IrTypeWith3!(And, T, U, Z);
 use crate::Support::{ColorClass, ColorProfile};
 
 macro_rules! MathIrNode {
-    ($name:ident, $compileFuncVarVar:ident, $compileFuncTyTy:ident, $buildTraitName:ident, $buildFuncName:ident, $dump:expr, $variantVarVar:expr, $variantTypeType:expr) => {
+    ($name:ident, $compileFuncVarVar:ident, $compileFuncVarTy:ident, $compileFuncTyTy:ident, $buildTraitName:ident, $buildFuncName:ident, $dump:expr, $variantVarVar:expr, $variantVarType:expr, $variantTypeType:expr) => {
         /// Used for overloading the build function
         pub trait $buildTraitName<T, U> {
             /// Xors values
@@ -116,6 +116,21 @@ macro_rules! MathIrNode {
 
         impl $buildTraitName<Var, Var> for IRBuilder<'_> {
             fn $buildFuncName(&mut self, op0: Var, op1: Var)  -> Var {
+                let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+                
+                let op0Ty: TypeMetadata = op0.ty.into();
+
+                let ty = op0Ty;
+                let var = Var::new(block, ty);
+
+                block.push_ir($name::new(op0, op1, var.clone()));
+
+                var
+            }
+        }
+
+        impl $buildTraitName<Var, Type> for IRBuilder<'_> {
+            fn $buildFuncName(&mut self, op0: Var, op1: Type)  -> Var {
                 let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
                 
                 let op0Ty: TypeMetadata = op0.ty.into();
@@ -239,14 +254,69 @@ macro_rules! MathIrNode {
             }
         }
         
+        impl Ir for $name<Var, Type, Var> {
+            fn clone_box(&self) -> Box<dyn Ir> {
+                Box::new(self.clone())
+            }
+        
+            fn name(&self) -> String {
+                $variantVarType.into()
+            }
+        
+            fn dump(&self) -> String {
+                format!("{} = {} {} {}, {}", $dump, self.inner3.name, self.inner1.ty, self.inner1.name, self.inner2.val())
+            }
+        
+            fn dumpColored(&self, profile: ColorProfile) -> String {
+                format!("{} = {} {} {}, {}", 
+                    profile.markup(&self.inner3.name, ColorClass::Var), 
+                    profile.markup($dump, ColorClass::Instr), 
+                    profile.markup(&self.inner1.ty.to_string(), ColorClass::Ty), 
+                    profile.markup(&self.inner1.name.to_string(), ColorClass::Var), 
+                    profile.markup(&self.inner2.val().to_string(), ColorClass::Var)
+                )
+            }
+        
+            fn verify(&self, _: FunctionType) -> Result<(), VerifyError> {
+                let op0Ty: TypeMetadata = self.inner1.ty.into();
+                let op1Ty: TypeMetadata = self.inner3.ty.into();
+                let op2Ty: TypeMetadata = self.inner2.into();
+        
+                if !(op0Ty == op1Ty && op1Ty == op2Ty) {
+                    if op0Ty != op1Ty {
+                        Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op1Ty))?
+                    } else if op1Ty != op2Ty {
+                        Err(VerifyError::Op0Op1TyNoMatch(op1Ty, op2Ty))?
+                    } if op0Ty != op2Ty {
+                        Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op2Ty))?
+                    } else { todo!("unknown error variant (debug: ty0 {} ty1 {} ty2 {})", op0Ty, op1Ty, op2Ty) }
+                }
+        
+                Ok(())
+            }
+        
+            fn as_any(&self) -> &dyn Any {
+                self
+            }
+        
+            fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
+                registry.$compileFuncVarTy()(self, registry)
+            }
+        
+            fn uses(&self, var: &Var) -> bool {
+                if *var == self.inner1 || *var == self.inner3 { true }
+                else { false }
+            }
+        }
+        
     };
 }
 
-MathIrNode!(Add, getCompileFuncForAddVarVar, getCompileFuncForAddTypeType, BuildAdd, BuildAdd, "add", "AddVarVar", "AddTypeType");
-MathIrNode!(Sub, getCompileFuncForSubVarVar, getCompileFuncForSubTypeType, BuildSub, BuildSub, "sub", "SubVarVar", "SubTypeType");
-MathIrNode!(Xor, getCompileFuncForXorVarVar, getCompileFuncForXorTypeType, BuildXor, BuildXor, "xor", "XorVarVar", "XorTypeType");
-MathIrNode!(Or, getCompileFuncForOrVarVar, getCompileFuncForOrTypeType, BuildOr, BuildOr, "or", "OrVarVar", "OrTypeType");
-MathIrNode!(And, getCompileFuncForAndVarVar, getCompileFuncForAndTypeType, BuildAnd, BuildAnd, "and", "AndVarVar", "AndTypeType");
+MathIrNode!(Add, getCompileFuncForAddVarVar, getCompileFuncForAddVarType, getCompileFuncForAddTypeType, BuildAdd, BuildAdd, "add", "AddVarVar", "AddVarType", "AddTypeType");
+MathIrNode!(Sub, getCompileFuncForSubVarVar, getCompileFuncForSubVarType, getCompileFuncForSubTypeType, BuildSub, BuildSub, "sub", "SubVarVar", "SubVarType", "SubTypeType");
+MathIrNode!(Xor, getCompileFuncForXorVarVar, getCompileFuncForXorVarType, getCompileFuncForXorTypeType, BuildXor, BuildXor, "xor", "XorVarVar", "XorVarType", "XorTypeType");
+MathIrNode!(Or, getCompileFuncForOrVarVar, getCompileFuncForOrVarType, getCompileFuncForOrTypeType, BuildOr, BuildOr, "or", "OrVarVar", "OrVarType", "OrTypeType");
+MathIrNode!(And, getCompileFuncForAndVarVar, getCompileFuncForAndVarType, getCompileFuncForAndTypeType, BuildAnd, BuildAnd, "and", "AndVarVar", "AndVarType", "AndTypeType");
 
 
 impl Ir for Return<Type> {

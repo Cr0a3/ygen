@@ -196,18 +196,23 @@ pub struct TargetBackendDescr<'a> {
     funcForConstAssign: Option<CompileFunc<ConstAssign<Var, Type>>>,
 
     funcForAddVarVar: Option<CompileFunc<Add<Var, Var, Var>>>,
+    funcForAddVarType: Option<CompileFunc<Add<Var, Type, Var>>>,
     funcForAddTypeType: Option<CompileFunc<Add<Type, Type, Var>>>,
     
     funcForSubVarVar: Option<CompileFunc<Sub<Var, Var, Var>>>,
+    funcForSubVarType: Option<CompileFunc<Sub<Var, Type, Var>>>,
     funcForSubTypeType: Option<CompileFunc<Sub<Type, Type, Var>>>,
 
     funcForXorVarVar: Option<CompileFunc<Xor<Var, Var, Var>>>,
+    funcForXorVarType: Option<CompileFunc<Xor<Var, Type, Var>>>,
     funcForXorTypeType: Option<CompileFunc<Xor<Type, Type, Var>>>,
 
     funcForOrVarVar: Option<CompileFunc<Or<Var, Var, Var>>>,
+    funcForOrVarType: Option<CompileFunc<Or<Var, Type, Var>>>,
     funcForOrTypeType: Option<CompileFunc<Or<Type, Type, Var>>>,
 
     funcForAndVarVar: Option<CompileFunc<And<Var, Var, Var>>>,
+    funcForAndVarType: Option<CompileFunc<And<Var, Type, Var>>>,
     funcForAndTypeType: Option<CompileFunc<And<Type, Type, Var>>>,
 
     pub(crate) buildAsm: Option<for<'b> fn(&'b Block, &Function, &CallConv, &mut TargetBackendDescr<'b>) -> Vec<Instr>>,
@@ -230,18 +235,23 @@ impl<'a> TargetBackendDescr<'a> {
             funcForConstAssign: None,
 
             funcForAddVarVar: None,
+            funcForAddVarType: None,
             funcForAddTypeType: None,
 
             funcForSubVarVar: None,
+            funcForSubVarType: None,
             funcForSubTypeType: None,
 
             funcForXorVarVar: None,
+            funcForXorVarType: None,
             funcForXorTypeType: None,
 
             funcForOrVarVar: None,
+            funcForOrVarType: None,
             funcForOrTypeType: None,
 
             funcForAndVarVar: None,
+            funcForAndVarType: None,
             funcForAndTypeType: None,
 
             init: None,
@@ -305,14 +315,25 @@ impl<'a> TargetBackendDescr<'a> {
         } else { todo!("an corresponding assembly handler needs to be registered in order to compile an AddVarVar ir node")}
     }
 
+    /// gets the callback for compiling the add var var node into into asm
+    pub(crate) fn getCompileFuncForAddTypeType(&self) -> CompileFunc<Add<Type, Type, Var>> {
+        if let Some(func) = self.funcForAddTypeType {
+            func
+        } else { todo!("an corresponding assembly handler needs to be registered in order to compile an AddTypeType ir node")}
+    }
+
     /// sets the callback for compiling the add var var ir node into asm
     pub(crate) fn setCompileFuncForAddTypeType(&mut self, callback: CompileFunc<Add<Type, Type, Var>>) {
         self.funcForAddTypeType = Some(callback);
     }
 
-    /// gets the callback for compiling the add var var node into into asm
-    pub(crate) fn getCompileFuncForAddTypeType(&self) -> CompileFunc<Add<Type, Type, Var>> {
-        if let Some(func) = self.funcForAddTypeType {
+    /// sets the callback for compiling the add var type ir node into asm
+    pub(crate) fn setCompileFuncForAddVarType(&mut self, callback: CompileFunc<Add<Var, Type, Var>>) {
+        self.funcForAddVarType = Some(callback);
+    }
+    /// gets the callback for compiling the add var type node into into asm
+    pub(crate) fn getCompileFuncForAddVarType(&self) -> CompileFunc<Add<Var, Type, Var>> {
+        if let Some(func) = self.funcForAddVarType {
             func
         } else { todo!("an corresponding assembly handler needs to be registered in order to compile an AddTypeType ir node")}
     }
@@ -329,6 +350,16 @@ impl<'a> TargetBackendDescr<'a> {
         } else { todo!("an corresponding assembly handler needs to be registered in order to compile an SubVarVar ir node")}
     }
 
+    /// sets the callback for compiling the sub var type ir node into asm
+    pub(crate) fn setCompileFuncForSubVarType(&mut self, callback: CompileFunc<Sub<Var, Type, Var>>) {
+        self.funcForSubVarType = Some(callback);
+    }
+    /// gets the callback for compiling the sub var type node into into asm
+    pub(crate) fn getCompileFuncForSubVarType(&self) -> CompileFunc<Sub<Var, Type, Var>> {
+        if let Some(func) = self.funcForSubVarType {
+            func
+        } else { todo!("an corresponding assembly handler needs to be registered in order to compile an AddTypeType ir node")}
+    }
     /// sets the callback for compiling the sub var var ir node into asm
     pub(crate) fn setCompileFuncForSubTypeType(&mut self, callback: CompileFunc<Sub<Type, Type, Var>>) {
         self.funcForSubTypeType = Some(callback);
@@ -365,6 +396,16 @@ impl<'a> TargetBackendDescr<'a> {
         } else { todo!("an corresponding assembly handler needs to be registered in order to compile an SubTypeType ir node")}
     }
 
+    /// sets the callback for compiling the add var type ir node into asm
+    pub(crate) fn setCompileFuncForXorVarType(&mut self, callback: CompileFunc<Xor<Var, Type, Var>>) {
+        self.funcForXorVarType = Some(callback);
+    }
+    /// gets the callback for compiling the add var type node into into asm
+    pub(crate) fn getCompileFuncForXorVarType(&self) -> CompileFunc<Xor<Var, Type, Var>> {
+        if let Some(func) = self.funcForXorVarType {
+            func
+        } else { todo!("an corresponding assembly handler needs to be registered in order to compile an AddTypeType ir node")}
+    }
     /// sets the callback for compiling the or var var ir node into asm
     pub(crate) fn setCompileFuncForOrTypeType(&mut self, callback: CompileFunc<Or<Type, Type, Var>>) {
         self.funcForOrTypeType = Some(callback);
@@ -389,6 +430,16 @@ impl<'a> TargetBackendDescr<'a> {
         } else { todo!("an corresponding assembly handler needs to be registered in order to compile an SubVarVar ir node")}
     }
 
+    /// sets the callback for compiling the or var type ir node into asm
+    pub(crate) fn setCompileFuncForOrVarType(&mut self, callback: CompileFunc<Or<Var, Type, Var>>) {
+        self.funcForOrVarType = Some(callback);
+    }
+    /// gets the callback for compiling the or var type node into into asm
+    pub(crate) fn getCompileFuncForOrVarType(&self) -> CompileFunc<Or<Var, Type, Var>> {
+        if let Some(func) = self.funcForOrVarType {
+            func
+        } else { todo!("an corresponding assembly handler needs to be registered in order to compile an AddTypeType ir node")}
+    }
     /// sets the callback for compiling the or var var ir node into asm
     pub(crate) fn setCompileFuncForAndTypeType(&mut self, callback: CompileFunc<And<Type, Type, Var>>) {
         self.funcForAndTypeType = Some(callback);
@@ -411,6 +462,17 @@ impl<'a> TargetBackendDescr<'a> {
         if let Some(func) = self.funcForAndVarVar {
             func
         } else { todo!("an corresponding assembly handler needs to be registered in order to compile an SubVarVar ir node")}
+    }
+
+    /// sets the callback for compiling the add var type ir node into asm
+    pub(crate) fn setCompileFuncForAndVarType(&mut self, callback: CompileFunc<And<Var, Type, Var>>) {
+        self.funcForAndVarType = Some(callback);
+    }
+    /// gets the callback for compiling the add var type node into into asm
+    pub(crate) fn getCompileFuncForAndVarType(&self) -> CompileFunc<And<Var, Type, Var>> {
+        if let Some(func) = self.funcForAndVarType {
+            func
+        } else { todo!("an corresponding assembly handler needs to be registered in order to compile an AddTypeType ir node")}
     }
 
     /// Returns the lexer to use with the TargetBackendDescr
