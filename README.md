@@ -70,4 +70,4 @@ Ygen currently supports following architectures
 |   x64  |         <b style="color:green">X</b>              | <b style="color:red">X</b>|
 
 ### Copyright
-This project is owned by Cr0a3 and licensed under the MIT License
+This project is owned by Cr0a3 and licensed under the Apache2 License
