@@ -51,7 +51,7 @@ pub mod IR;
 /// The pass manager module:
 ///  * Includes all passes and their definition
 ///  * The PassManager
-pub mod PassManager;
+pub mod Optimizations;
 
 /// Other utilites like:
 ///  * Cli args
@@ -66,7 +66,7 @@ pub mod prelude {
     pub use crate::IR::*;
     pub use crate::Target::Triple;
     pub use crate::Support::PrintErrorAndExit;
-    pub use crate::PassManager::PassManager;
+    pub use crate::Optimizations::PassManager;
     
     pub use crate::IR::ir::*;
 }

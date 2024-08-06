@@ -1,4 +1,4 @@
-use crate::{prelude::*, PassManager::Pass};
+use crate::{prelude::*, Optimizations::Pass};
 
 /// ## Pass InlineConstValue <br>
 /// Inlines constant values

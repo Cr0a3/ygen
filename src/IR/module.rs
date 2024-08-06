@@ -1,4 +1,4 @@
-use crate::{prelude::Triple, Obj::{Decl, Linkage, ObjectBuilder}, PassManager, Support::ColorProfile, Target::TargetRegistry};
+use crate::{prelude::Triple, Obj::{Decl, Linkage, ObjectBuilder}, Optimizations::PassManager, Support::ColorProfile, Target::TargetRegistry};
 
 use super::{func::FunctionType, Block, Function, VerifyError};
 use std::{collections::HashMap, error::Error, fs::OpenOptions, io::Write, path::Path};
@@ -75,7 +75,7 @@ impl Module {
     }
 
     /// Runs the pass manager over all functions
-    pub fn runPassMngr(&mut self, mngr: PassManager::PassManager) {
+    pub fn runPassMngr(&mut self, mngr: PassManager) {
         for (_, func) in &mut self.funcs {
             func.runPassMngr(&mngr)
         }
