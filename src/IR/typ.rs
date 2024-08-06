@@ -59,6 +59,30 @@ impl Type {
     }
 }
 
+impl TypeMetadata {
+    /// Returns the size of the type in bits
+    pub fn bitSize(&self) -> usize {
+        match self {
+            TypeMetadata::u16 => 2,
+            TypeMetadata::u32 => 4,
+            TypeMetadata::u64 => 8,
+            TypeMetadata::i16 => 2,
+            TypeMetadata::i32 => 4,
+            TypeMetadata::i64 => 8,
+            TypeMetadata::Void => 0,
+        }
+    }
+
+    /// Returns the size of the type in bytes
+    pub fn byteSize(&self) -> usize {
+        if *self != TypeMetadata::Void {
+            self.bitSize() / 8
+        } else {
+            0
+        }
+    }
+}
+
 impl Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", match &self {

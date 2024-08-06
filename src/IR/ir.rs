@@ -481,7 +481,6 @@ impl Ir for Cast<Var, TypeMetadata, Var> {
         if self.inner3.ty != self.inner2 {
             Err(VerifyError::Op0Op1TyNoMatch(self.inner3.ty, self.inner2))?
         }
-
         Ok(())
     }
 

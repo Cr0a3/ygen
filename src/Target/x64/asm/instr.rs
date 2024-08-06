@@ -296,6 +296,7 @@ impl Instr {
                 buildOpcode(mandatory, rex, op)
             },
             Mnemonic::Ret => vec![0xC3],
+            Mnemonic::Movzx => todo!(),
         })
     }
 
@@ -363,6 +364,7 @@ impl Instr {
                     Err(InstrEncodingError::InvalidVariant(self.clone(), "ret isn't allowed to have operands".into()))?
                 }
             },
+            Mnemonic::Movzx => todo!(),
         };
 
         Ok(())
@@ -478,6 +480,7 @@ pub enum Mnemonic {
 
     Lea,
     Mov,
+    Movzx,
     Push,
     Pop,
     Ret,
@@ -496,6 +499,7 @@ impl FromStr for Mnemonic {
             "sub" => Ok(Mnemonic::Sub),
             "lea" => Ok(Mnemonic::Lea),
             "mov" => Ok(Mnemonic::Mov),
+            "movzx" => Ok(Mnemonic::Movzx),
             "push" => Ok(Mnemonic::Push),
             "pop" => Ok(Mnemonic::Pop),
             "ret" => Ok(Mnemonic::Ret),
@@ -515,6 +519,7 @@ impl Display for Mnemonic {
             Mnemonic::Sub => "sub",
             Mnemonic::Lea => "lea",
             Mnemonic::Mov => "mov",
+            Mnemonic::Movzx => "movzx",
             Mnemonic::Push => "push",
             Mnemonic::Pop => "pop",
             Mnemonic::Ret => "ret",
