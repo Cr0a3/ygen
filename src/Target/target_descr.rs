@@ -194,6 +194,7 @@ pub struct TargetBackendDescr<'a> {
     funcForRetType: Option<CompileFunc<Return<Type>>>,
     funcForRetVar: Option<CompileFunc<Return<Var>>>,
     funcForConstAssign: Option<CompileFunc<ConstAssign<Var, Type>>>,
+    funcForCastTyVar: Option<CompileFunc<Cast<Var, TypeMetadata, Var>>>,
 
     funcForAddVarVar: Option<CompileFunc<Add<Var, Var, Var>>>,
     funcForAddVarType: Option<CompileFunc<Add<Var, Type, Var>>>,
@@ -233,6 +234,7 @@ impl<'a> TargetBackendDescr<'a> {
             funcForRetType: None,
             funcForRetVar: None,
             funcForConstAssign: None,
+            funcForCastTyVar: None,
 
             funcForAddVarVar: None,
             funcForAddVarType: None,
@@ -301,6 +303,18 @@ impl<'a> TargetBackendDescr<'a> {
         if let Some(func) = self.funcForConstAssign {
             func
         } else { todo!("an corresponding assembly handler needs to be registered in order to compile an ConstAssign ir node")}
+    }
+
+    /// sets the callback for compiling the cast node into asm
+    pub(crate) fn setCompileFuncForCastTyVar(&mut self, callback: CompileFunc<Cast<Var, TypeMetadata, Var>>) {
+        self.funcForCastTyVar = Some(callback);
+    }
+
+    /// gets the callback for compiling the cast into asm
+    pub(crate) fn getCompileFuncForCastTyVar(&self) ->  CompileFunc<Cast<Var, TypeMetadata, Var>> {
+        if let Some(func) = self.funcForCastTyVar {
+            func
+        } else { todo!("an corresponding assembly handler needs to be registered in order to compile an Cast ir node")}
     }
 
     /// sets the callback for compiling the add var var ir node into asm

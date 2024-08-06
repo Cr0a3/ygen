@@ -456,14 +456,14 @@ impl Ir for ConstAssign<Var, Type> {
 
 impl Ir for Cast<Var, TypeMetadata, Var> {
     fn dump(&self) -> String {
-        format!("{} = cast {} to {}", self.inner1.name, self.inner3.name, self.inner2)
+        format!("{} = cast {} to {}", self.inner3.name, self.inner1.name, self.inner2)
     }
 
     fn dumpColored(&self, profile: ColorProfile) -> String {
         format!("{} = {} {} {} {}", 
-            profile.markup(&self.inner1.name, ColorClass::Var), 
-            profile.markup(&"cast", ColorClass::Instr),
             profile.markup(&self.inner3.name, ColorClass::Var), 
+            profile.markup(&"cast", ColorClass::Instr),
+            profile.markup(&self.inner1.name, ColorClass::Var), 
             profile.markup(&"to", ColorClass::Instr),
             profile.markup(&self.inner2.to_string(), ColorClass::Ty),
         )
@@ -495,7 +495,7 @@ impl Ir for Cast<Var, TypeMetadata, Var> {
 }
 
 /// Trait for the return instruction
-/// Used for overloading the CreateRet function
+/// Used for overloading the BuildRet function
 pub trait BuildReturn<T> {
     /// Returns specified value
     fn BuildRet(&mut self, val: T);
@@ -515,6 +515,24 @@ impl BuildReturn<Var> for IRBuilder<'_> {
     }
 }
 
+/// Trait for the cast instruction
+/// Used for overloading the BuildCast function
+pub trait BuildCast<T, U> {
+    /// builds an cast to form one variable into another type
+    fn BuildCast(&mut self, var: T, ty: U) -> Var;
+}
+
+impl BuildCast<Var, TypeMetadata> for IRBuilder<'_> {
+    fn BuildCast(&mut self, var: Var, ty: TypeMetadata) -> Var {
+        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+        
+        let out = Var::new(block, ty);
+
+        block.push_ir(Cast::new(var, ty, out.clone()));
+
+        out
+    }
+}
 /// The ir trait
 pub(crate) trait Ir: Debug + Any {
     /// Returns the ir node as his textual representation
