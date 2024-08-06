@@ -8,7 +8,7 @@ Ygen = { path = "." }
 
 [package]
 name = "Ygen"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Cr0a3"]
 documentation = "https://toni-graphics.github.io/ygen/Ygen/index.html"
