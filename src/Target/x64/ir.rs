@@ -4,6 +4,7 @@ use crate::prelude::{Block, Function, Type, TypeMetadata, Var};
 use crate::Target::target_descr::{TargetBackendDescr, VarStorage};
 use crate::Target::Reg;
 use crate::IR::ir::*;
+use super::Optimize;
 
 use crate::Target::CallConv;
 
@@ -401,7 +402,7 @@ pub(crate) fn buildAsmX86<'a>(block: &'a Block, func: &Function, call: &CallConv
 
     out.extend(x64BuildEpilog(&block, registry));
 
-    Vec::from(out)
+    Vec::from(out).optimize()
 }
 
 pub(crate) fn BlockX86FuncisVarUsedAfterNode(block: &Block, startingNode: &Box<dyn Ir>, var: &Var) -> bool {

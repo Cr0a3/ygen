@@ -4,6 +4,8 @@ mod parser;
 pub mod instr;
 /// x64 instruction set architecture specific stuff like rex prefix
 pub mod isa;
+mod optimizer;
 
 pub use lexer::*;
 pub use parser::*;
+pub use optimizer::*;

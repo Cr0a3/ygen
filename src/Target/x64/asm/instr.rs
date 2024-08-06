@@ -399,6 +399,21 @@ impl Instr {
 
         string
     }
+
+    /// Returns if the current instruction is the other instruction but inverted
+    pub fn invert_of(&self, other: &Instr) -> bool {
+        let mut out = false;
+
+        if self.mnemonic == Mnemonic::Mov && other.mnemonic == Mnemonic::Mov {
+            if self.op1 == other.op2 {
+                if self.op2 == other.op1 {
+                    out = true;
+                }
+            }
+        }
+
+        out
+    }
 }
 
 impl Display for Instr {
