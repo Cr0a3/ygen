@@ -83,6 +83,7 @@ macro_rules! IrTypeWith1 {
 
 IrTypeWith1!(Return, T);
 IrTypeWith2!(ConstAssign, T, U);
+IrTypeWith3!(Cast, T, U, Z);
 IrTypeWith3!(Add, T, U, Z);
 IrTypeWith3!(Sub, T, U, Z);
 IrTypeWith3!(Xor, T, U, Z);
@@ -452,6 +453,47 @@ impl Ir for ConstAssign<Var, Type> {
         else { false }
     }
 }
+
+impl Ir for Cast<Var, TypeMetadata, Var> {
+    fn dump(&self) -> String {
+        format!("{} = cast {} to {}", self.inner1.name, self.inner3.name, self.inner2)
+    }
+
+    fn dumpColored(&self, profile: ColorProfile) -> String {
+        format!("{} = {} {} {} {}", 
+            profile.markup(&self.inner1.name, ColorClass::Var), 
+            profile.markup(&"cast", ColorClass::Instr),
+            profile.markup(&self.inner3.name, ColorClass::Var), 
+            profile.markup(&"to", ColorClass::Instr),
+            profile.markup(&self.inner2.to_string(), ColorClass::Ty),
+        )
+    }
+
+    fn name(&self) -> String {
+        "CastTyVar".into()
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn verify(&self, _: FunctionType) -> Result<(), VerifyError> {
+        if self.inner3.ty != self.inner2 {
+            Err(VerifyError::Op0Op1TyNoMatch(self.inner3.ty, self.inner2))?
+        }
+
+        Ok(())
+    }
+
+    fn clone_box(&self) -> Box<dyn Ir> {
+        Box::from( self.clone() )
+    }
+
+    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
+        registry.getCompileFuncForCastTyVar()(self, registry)
+    }
+}
+
 /// Trait for the return instruction
 /// Used for overloading the CreateRet function
 pub trait BuildReturn<T> {
