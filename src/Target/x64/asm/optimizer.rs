@@ -42,12 +42,16 @@ impl Optimize<Instr> for Vec<Instr> {
                             }
                         }
                     }
-                } else if last.mnemonic == Mnemonic::Mov  && last.op1 == instr.op1 {
-                    if let Some(Operand::Reg(_)) = instr.op1 {
-                        out.pop();
-                        optimized = true;
-                    }
                 } 
+                else if instr.op1 == instr.op2 {
+                    optimized = true;
+                }
+                else if instr.uses_mut(&last.op1) {
+                    out.pop();
+                    optimized = true;
+                }
+                
+
                 if !optimized {
                     if instr.invert_of(last) {
                         out.pop();

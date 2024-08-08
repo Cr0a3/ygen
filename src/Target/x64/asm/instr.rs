@@ -432,6 +432,21 @@ impl Instr {
 
         out
     }
+
+    /// returns true if it overrides the given operand
+    pub fn uses_mut(&self, op: &Option<Operand>) -> bool {
+        match self.mnemonic {
+            Mnemonic::Add | Mnemonic::Adc | Mnemonic::And | 
+            Mnemonic::Or | Mnemonic::Xor |Mnemonic::Sub | 
+            Mnemonic::Mov | Mnemonic::Movzx | Mnemonic::Lea => {
+              if self.op1 == *op {
+                true
+              } else { false }
+            },
+            
+            _ => false,
+        }
+    }
 }
 
 impl Display for Instr {

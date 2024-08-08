@@ -455,6 +455,8 @@ pub(crate) fn buildAsmX86<'a>(block: &'a Block, func: &Function, call: &CallConv
 
     for node in &block.nodes {
         let compiled = node.compile(registry);
+        println!("{:?}", node);
+        println!("{:?}", compiled);
 
         out.extend(compiled);
     }
