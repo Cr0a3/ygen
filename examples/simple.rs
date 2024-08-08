@@ -7,7 +7,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
     let mut builder = IRBuilder();
 
-    let ty = FnTy(vec![TypeMetadata::i32, TypeMetadata::i32], TypeMetadata::i64);
+    let ty = FnTy(vec![TypeMetadata::i32, TypeMetadata::i32], TypeMetadata::i32);
     
     let func = module.add(
         "add", &ty
@@ -17,7 +17,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     builder.positionAtEnd(entry); 
 
     let val = builder.BuildAdd(ty.arg(0), ty.arg(1));
-    let val = builder.BuildCast(val, TypeMetadata::i64);
+    //let val = builder.BuildCast(val, TypeMetadata::i64);
     builder.BuildRet( val );
 
     module.verify()?;

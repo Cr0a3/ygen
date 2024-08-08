@@ -484,6 +484,14 @@ impl Ir for Cast<Var, TypeMetadata, Var> {
         Ok(())
     }
 
+    fn uses(&self, var: &Var) -> bool {
+        let var = var.to_owned();
+
+        if var == self.inner1 || var == self.inner3 {
+            true
+        } else { false }
+    }
+
     fn clone_box(&self) -> Box<dyn Ir> {
         Box::from( self.clone() )
     }

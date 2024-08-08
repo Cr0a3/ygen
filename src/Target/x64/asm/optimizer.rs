@@ -13,6 +13,7 @@ impl Optimize<Instr> for Vec<Instr> {
         let mut out: Vec<Instr> = vec![];
 
         for instr in self.iter() {
+            let mut optimized = false;
 
             if instr.mnemonic == Mnemonic::Ret {
                 out.push(instr.clone());
@@ -35,14 +36,25 @@ impl Optimize<Instr> for Vec<Instr> {
                                                 + 
                                                 *op2.as_any().downcast_ref::<x64Reg>().unwrap()
                                             ) 
-                                        ))
+                                        ));
+                                    optimized = true;
                                 }
                             }
                         }
                     }
-                } else if instr.invert_of(last) {
-                    out.pop();
-                } else { out.push(instr.to_owned()) }
+                } else if last.mnemonic == Mnemonic::Mov  && last.op1 == instr.op1 {
+                    if let Some(Operand::Reg(_)) = instr.op1 {
+                        out.pop();
+                        optimized = true;
+                    }
+                } 
+                if !optimized {
+                    if instr.invert_of(last) {
+                        out.pop();
+                    } else {
+                        out.push(instr.to_owned()) 
+                    }
+                }
             } else { out.push(instr.to_owned()) }
         }
 
