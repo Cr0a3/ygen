@@ -1,5 +1,5 @@
 use std::{any::Any, fmt::Debug, hash::Hash};
-use super::{FunctionType, IRBuilder, Type, TypeMetadata, Var, VerifyError};
+use super::{Function, FunctionType, IRBuilder, Type, TypeMetadata, Var, VerifyError};
 use crate::Target::{instr::Instr, TargetBackendDescr};
 
 macro_rules! IrTypeWith3 {
@@ -82,6 +82,7 @@ macro_rules! IrTypeWith1 {
 }
 
 IrTypeWith1!(Return, T);
+IrTypeWith3!(Call, T, U, Z);
 IrTypeWith2!(ConstAssign, T, U);
 IrTypeWith3!(Cast, T, U, Z);
 IrTypeWith3!(Add, T, U, Z);
@@ -498,6 +499,54 @@ impl Ir for Cast<Var, TypeMetadata, Var> {
 
     fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
         registry.getCompileFuncForCastTyVar()(self, registry)
+    }
+}
+
+impl Ir for Call<Function, Vec<Type>, Var> {
+    fn dump(&self) -> String {
+        format!("{} = call {} {} {:?}", self.inner3.name, self.inner1.ty.ret, self.inner1.name, self.inner2)
+    }
+
+    fn dumpColored(&self, profile: ColorProfile) -> String {
+        format!("{} = {} {} {} {:?}", 
+            profile.markup(&self.inner3.name, ColorClass::Var),
+            profile.markup("call", ColorClass::Instr),
+            profile.markup(&self.inner1.ty.ret.to_string(), ColorClass::Ty),
+            profile.markup(&self.inner1.name, ColorClass::Var),
+            self.inner2
+        )
+    }
+
+    fn name(&self) -> String {
+        "Call".to_string()
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn verify(&self, _: FunctionType) -> Result<(), VerifyError> {
+        if self.inner3.ty != self.inner1.ty.ret {
+            Err(VerifyError::Op0Op1TyNoMatch(self.inner3.ty, self.inner1.ty.ret))?
+        }
+
+        let mut index = 0;
+        for arg in &self.inner2 {
+            if matches!(self.inner1.ty.args.get(index), Some((_, argty)) if *argty != (*arg).into()) {
+                Err(VerifyError::IDontWantToAddAnErrorMessageHereButItsAnError)?
+            }
+            index += 1;
+        }
+
+        Ok(())
+    }
+
+    fn clone_box(&self) -> Box<dyn Ir> {
+        Box::from( self.clone() )
+    }
+
+    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
+        todo!()
     }
 }
 
