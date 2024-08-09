@@ -326,9 +326,9 @@ pub(crate) fn CompileCast(cast: &Cast<Var, TypeMetadata, Var>, registry: &mut Ta
             VarStorage::Register(reg)
         } else {
             let addend = match cast.inner2 {
-                TypeMetadata::u16 | TypeMetadata::i16=> 2,
-                TypeMetadata::u32 | TypeMetadata::i32=> 4,
-                TypeMetadata::u64 | TypeMetadata::i64=> 8,
+                TypeMetadata::u16 | TypeMetadata::i16 => 2,
+                TypeMetadata::u32 | TypeMetadata::i32 => 4,
+                TypeMetadata::u64 | TypeMetadata::i64 => 8,
                 TypeMetadata::Void => todo!("cant cast into void"),
             };
 
