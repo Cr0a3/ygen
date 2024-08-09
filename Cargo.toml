@@ -1,10 +1,12 @@
 [workspace]
 members = [
-    "tools/ygen-mc"
+    "tools/ygen-mc",
+    "src/proc",
 ]
 
 [workspace.dependencies]
 Ygen = { path = "." }
+proc = { path = "src/proc/."}
 
 [package]
 name = "Ygen"
@@ -21,3 +23,4 @@ keywords = ["compiler", "codegen", "llvm"]
 [dependencies]
 logos = "0.14.0"
 object = { version = "0.36.1", features = ["write"] }
+proc = { workspace = true }
