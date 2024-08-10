@@ -6,8 +6,8 @@ use super::Var;
 use super::VerifyError;
 use crate::prelude::PassManager;
 use crate::Obj::Linkage;
+use crate::Support::ColorClass;
 use crate::Support::ColorProfile;
-use crate::Support::Colorize;
 
 /// Stores the function type
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -89,6 +89,11 @@ impl Function {
         self.linkage = Linkage::Extern;
     }
 
+    /// Sets that the function is imported from another object file (same as: `extern "C" fn abc(i32, i32) -> i32;`)
+    pub fn import(&mut self) {
+        self.linkage = Linkage::Extern;
+    }
+
     /// Sets that the function is only internally visible (same as a normal function)
     pub fn private(&mut self) {
         self.linkage = Linkage::Internal;
@@ -102,6 +107,21 @@ impl Function {
 
     /// Emits the Ir of the function into a string
     pub fn dump(&self) -> String {
+        if self.linkage == Linkage::Extern {
+            let string = format!("declare {} @{}({})\n",
+                self.ty.ret,
+                self.name, {
+                    let mut fmt = String::new();
+        
+                    for (name, metadata) in &self.ty.args {
+                        fmt += &format!("{} %{},", metadata, name);
+                    }
+        
+                    fmt
+                });
+            return string;
+        }
+
         let mut string = String::new();
 
         string += &format!("define {} @{}({}) {{\n", self.ty.ret, self.name, {
@@ -109,6 +129,10 @@ impl Function {
 
             for (name, metadata) in &self.ty.args {
                 fmt += &format!("{} %{},", metadata, name);
+            }
+
+            if self.ty.args.len() != 0 {
+                fmt.remove(fmt.len() - 2); // The last comma
             }
 
             fmt
@@ -125,13 +149,42 @@ impl Function {
 
     /// Emits the Ir of the function into an colored string
     pub fn dumpColored(&self, profile: ColorProfile) -> String {
+        if self.linkage == Linkage::Extern {
+            let string = format!("{} {} @{}( {})\n",
+                profile.markup("declare", ColorClass::Instr),
+                profile.markup(&self.ty.ret.to_string(), ColorClass::Ty),
+                profile.markup(&self.name, ColorClass::Name), {
+                    let mut fmt = String::new();
+        
+                    for (name, metadata) in &self.ty.args {
+                        fmt += &format!("{} {}, ", 
+                                profile.markup(&metadata.to_string(), ColorClass::Ty),
+                                profile.markup(&format!("%{}", name), ColorClass::Var)
+                            );
+                    }
+
+                    if self.ty.args.len() != 0 {
+                        fmt.remove(fmt.len() - 2); // The last comma
+                    }
+        
+                    fmt
+                });
+            return string;
+        }
+
         let mut string = String::new();
 
-        string += &format!("{} {} @{}({}) {{\n", "define".blue(), self.ty.ret.to_string().green(), self.name.cyan(), {
+        string += &format!("{} {} @{}({}) {{\n", 
+                        profile.markup("define", ColorClass::Instr),
+                        profile.markup(&self.ty.ret.to_string(), ColorClass::Ty), 
+                        profile.markup(&self.name, ColorClass::Name), {
             let mut fmt = String::new();
 
             for (name, metadata) in &self.ty.args {
-                fmt += &format!(" {} {}, ", metadata.to_string().cyan(), format!("%{}", name).magenta());
+                fmt += &format!(" {} {}, ", 
+                        profile.markup(&metadata.to_string(), ColorClass::Ty),
+                        profile.markup(&format!("%{}", name), ColorClass::Var)
+                    );
             }
             if self.ty.args.len() != 0 {
                 fmt.remove(fmt.len() - 2); // The last comma

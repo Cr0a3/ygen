@@ -359,7 +359,7 @@ impl Ir for Return<Type> {
     }
 
     fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-        registry.getCompileFuncRetType()(self, registry)
+        registry.getCompileFuncForRetType()(self, registry)
     }
 }
 
@@ -502,18 +502,31 @@ impl Ir for Cast<Var, TypeMetadata, Var> {
     }
 }
 
-impl Ir for Call<Function, Vec<Type>, Var> {
+impl Ir for Call<Function, Vec<Var>, Var> {
     fn dump(&self) -> String {
-        format!("{} = call {} {} {:?}", self.inner3.name, self.inner1.ty.ret, self.inner1.name, self.inner2)
+        let mut fmt = String::new();
+        
+        for arg in &self.inner2 {
+            fmt.push_str(&format!("{}", arg))
+        }
+
+        format!("{} = call {} {} {}", self.inner3.name, self.inner1.ty.ret, self.inner1.name, fmt)
     }
 
     fn dumpColored(&self, profile: ColorProfile) -> String {
-        format!("{} = {} {} {} {:?}", 
+        let mut fmt = String::new();
+        
+        for arg in &self.inner2 {
+            fmt.push_str(&arg.to_colored_string(profile));
+            fmt.push(' ');
+        }
+
+        format!("{} = {} {} {} {}", 
             profile.markup(&self.inner3.name, ColorClass::Var),
             profile.markup("call", ColorClass::Instr),
             profile.markup(&self.inner1.ty.ret.to_string(), ColorClass::Ty),
-            profile.markup(&self.inner1.name, ColorClass::Var),
-            self.inner2
+            profile.markup(&self.inner1.name, ColorClass::Name),
+            fmt
         )
     }
 
@@ -532,7 +545,7 @@ impl Ir for Call<Function, Vec<Type>, Var> {
 
         let mut index = 0;
         for arg in &self.inner2 {
-            if matches!(self.inner1.ty.args.get(index), Some((_, argty)) if *argty != (*arg).into()) {
+            if matches!(self.inner1.ty.args.get(index), Some((_, argty)) if *argty != (*arg).ty.into()) {
                 Err(VerifyError::IDontWantToAddAnErrorMessageHereButItsAnError)?
             }
             index += 1;
@@ -546,7 +559,21 @@ impl Ir for Call<Function, Vec<Type>, Var> {
     }
 
     fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-        todo!()
+        registry.getCompileFuncForCall()(self, registry)
+    }
+
+    fn uses(&self, var: &Var) -> bool {
+        if self.inner3 == *var {
+            return true;
+        }
+
+        for arg in &self.inner2 {
+            if *arg == *var {
+                return true;
+            }
+        }
+
+        false
     }
 }
 
@@ -589,6 +616,25 @@ impl BuildCast<Var, TypeMetadata> for IRBuilder<'_> {
         out
     }
 }
+
+/// Trait for the call instruction
+/// Used for overloading the BuildCall function
+pub trait BuildCall<T, U> {
+    /// builds a function call
+    fn BuildCall(&mut self, func: T, args: U) -> Var;
+}
+impl BuildCall<&Function, Vec<Var>> for IRBuilder<'_> {
+    fn BuildCall(&mut self, func: &Function, args: Vec<Var>) -> Var {
+        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+        
+        let out = Var::new(block, func.ty.ret);
+
+        block.push_ir(Call::new(func.clone(), args, out.clone()));
+
+        out 
+    }
+}
+
 /// The ir trait
 pub(crate) trait Ir: Debug + Any {
     /// Returns the ir node as his textual representation
