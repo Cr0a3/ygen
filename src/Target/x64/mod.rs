@@ -94,5 +94,7 @@ pub fn initializeX64Target<'a>(call_conv: CallConv) -> TargetBackendDescr<'a> {
     target.setCompileFuncForOrVarType(CompileOrVarTy);
     target.setCompileFuncForOrTypeType(CompileOrTyTy);
 
+    target.setCompileFuncForCall(CompileCall);
+
     target
 }

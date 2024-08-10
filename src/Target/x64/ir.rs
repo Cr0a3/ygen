@@ -376,6 +376,10 @@ pub(crate) fn CompileCast(cast: &Cast<Var, TypeMetadata, Var>, registry: &mut Ta
     vec![]
 }
 
+pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
+    vec![]
+}
+
 pub(crate) fn x64BuildProlog(_: &Block, registry: &mut TargetBackendDescr) -> Vec<Instr> {
     let mut res = vec![];
 

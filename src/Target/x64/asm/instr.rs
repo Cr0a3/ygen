@@ -297,6 +297,62 @@ impl Instr {
             },
             Mnemonic::Ret => vec![0xC3],
             Mnemonic::Movzx => todo!(),
+            Mnemonic::Call => {
+                let (i, m, r) = (0xE8, 0xFF, 2);
+
+                let mut op = vec![];
+                if let Some(Operand::Reg(reg)) = &self.op1 {
+                    op.push(m);
+                    op.extend_from_slice(&ModRm::regWimm(r, *reg.as_any().downcast_ref::<x64Reg>().unwrap()));
+                } else if let Some(Operand::Mem(mem)) = &self.op1 {
+                    op.push(m);
+                    op.extend_from_slice(&ModRm::imMem(r, mem.clone()));
+                } else if let Some(Operand::Imm(imm)) = self.op1 {
+                    op.push(i);
+                    let bytes = imm.to_be_bytes();
+                    if imm < i16::MAX as i64 && imm > i16::MIN as i64 {
+                        op.push(bytes[7]);
+                        op.push(bytes[6]);
+                    } else {
+                        op.push(bytes[7]);
+                        op.push(bytes[6]);
+                        op.push(bytes[5]);
+                        op.push(bytes[4]);
+                    }
+                } else { todo!() }
+
+                buildOpcode(None, None, op)
+            }
+            Mnemonic::Jmp => {
+                let (m, r) = (0xFF, 4);
+
+                let mut op = vec![];
+                if let Some(Operand::Reg(reg)) = &self.op1 {
+                    op.push(m);
+                    op.extend_from_slice(&ModRm::regWimm(r, *reg.as_any().downcast_ref::<x64Reg>().unwrap()));
+                } else if let Some(Operand::Mem(mem)) = &self.op1 {
+                    op.push(m);
+                    op.extend_from_slice(&ModRm::imMem(r, mem.clone()));
+                } else if let Some(Operand::Imm(imm)) = self.op1 {
+                    op.push(0xE9);
+                    let bytes = imm.to_be_bytes();
+                    if imm < i8::MAX as i64 && imm > i8::MIN as i64 {
+                        op.pop(); op.push(0xEB);
+                        op.push(bytes[7]);
+                    } else if imm < i16::MAX as i64 && imm > i16::MIN as i64 {
+                        op.push(bytes[7]);
+                        op.push(bytes[6]);
+                    } else {
+                        op.push(bytes[7]);
+                        op.push(bytes[6]);
+                        op.push(bytes[5]);
+                        op.push(bytes[4]);
+                    }
+                } else { todo!() }
+
+                buildOpcode(None, None, op)
+            }
+            
         })
     }
 
@@ -365,6 +421,17 @@ impl Instr {
                 }
             },
             Mnemonic::Movzx => todo!(),
+            Mnemonic::Call | Mnemonic::Jmp => {
+                if self.op2 != None {
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "call/jmp only needs one operand".into()))?
+                }
+
+                if let Some(Operand::Imm(_)) = self.op1 {} else {
+                    if let Some(Operand::Mem(_)) = self.op1 {} else {
+                        Err(InstrEncodingError::InvalidVariant(self.clone(), "call/jmp can only have num/mem operand".into()))?
+                    }
+                }
+            }
         };
 
         Ok(())
@@ -499,6 +566,9 @@ pub enum Mnemonic {
     Push,
     Pop,
     Ret,
+
+    Call,
+    Jmp,
 }
 
 impl FromStr for Mnemonic {
@@ -518,6 +588,8 @@ impl FromStr for Mnemonic {
             "push" => Ok(Mnemonic::Push),
             "pop" => Ok(Mnemonic::Pop),
             "ret" => Ok(Mnemonic::Ret),
+            "call" => Ok(Mnemonic::Call),
+            "jmp" => Ok(Mnemonic::Jmp),
             _ => Err(()),
         }
     }
@@ -538,6 +610,8 @@ impl Display for Mnemonic {
             Mnemonic::Push => "push",
             Mnemonic::Pop => "pop",
             Mnemonic::Ret => "ret",
+            Mnemonic::Call => "call",
+            Mnemonic::Jmp => "jmp",
         })
     }
 }
