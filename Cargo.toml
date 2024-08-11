@@ -1,7 +1,8 @@
 [workspace]
 members = [
     "tools/ygen-mc",
-    "src/proc",
+    "tools/simplelang",
+    "src/proc", 
 ]
 
 [workspace.dependencies]
