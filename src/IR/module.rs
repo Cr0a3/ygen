@@ -86,7 +86,7 @@ impl Module {
         let mut obj = ObjectBuilder::new(triple);
 
         for (name, func) in &self.funcs {
-            obj.decl( (&name, Decl::Function, Linkage::External));
+            obj.decl( (&name, Decl::Function, func.linkage));
 
             let mut comp = vec![];
 

@@ -2,3 +2,5 @@
 *.asm
 *.o
 *.c
+*.exe
+*.out

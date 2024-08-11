@@ -89,7 +89,7 @@ impl<'a> TargetRegistry<'a> {
                     let mut link = link.clone();
 
                     link.from = funct.name.to_string();
-                    link.at = res.len() - 1;
+                    link.at = res.len();
 
                     links.push(link);
                 }
