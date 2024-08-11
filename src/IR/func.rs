@@ -59,7 +59,6 @@ pub struct Function {
 
     pub(crate) name: String,
     
-    pub(crate) inline: bool,
     pub(crate) linkage: Linkage,
     pub(crate) blocks: VecDeque<Block>,
 }
@@ -73,15 +72,9 @@ impl Function {
             blocks: VecDeque::new(),
 
             name: name,
-            inline: false,
 
             linkage: Linkage::Internal,
         }
-    }
-
-    /// Makes the function inline
-    pub fn inline(&mut self) {
-        self.inline = true;
     }
 
     /// Sets that the function is externally visible (same as: `extern "C"`)
