@@ -310,15 +310,10 @@ impl Instr {
                 } else if let Some(Operand::Imm(imm)) = self.op1 {
                     op.push(i);
                     let bytes = imm.to_be_bytes();
-                    if imm < i16::MAX as i64 && imm > i16::MIN as i64 {
-                        op.push(bytes[7]);
-                        op.push(bytes[6]);
-                    } else {
-                        op.push(bytes[7]);
-                        op.push(bytes[6]);
-                        op.push(bytes[5]);
-                        op.push(bytes[4]);
-                    }
+                    op.push(bytes[7]);
+                    op.push(bytes[6]);
+                    op.push(bytes[5]);
+                    op.push(bytes[4]);
                 } else { todo!() }
 
                 buildOpcode(None, None, op)
@@ -339,9 +334,6 @@ impl Instr {
                     if imm < i8::MAX as i64 && imm > i8::MIN as i64 {
                         op.pop(); op.push(0xEB);
                         op.push(bytes[7]);
-                    } else if imm < i16::MAX as i64 && imm > i16::MIN as i64 {
-                        op.push(bytes[7]);
-                        op.push(bytes[6]);
                     } else {
                         op.push(bytes[7]);
                         op.push(bytes[6]);
@@ -784,7 +776,7 @@ impl Display for MemOp {
         } else if self.displ != 0 {
             if self.displ > 0 { string.push_str("+ ") }
             else { string.push_str("- ") }
-            string.push_str(&format!("{}", self.displ))
+            string.push_str(&format!("{}", self.displ.abs()))
         }
 
         

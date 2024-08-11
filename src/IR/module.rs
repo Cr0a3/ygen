@@ -8,6 +8,7 @@ use std::{collections::HashMap, error::Error, fs::OpenOptions, io::Write, path::
 #[derive(Debug, Clone)]
 pub struct Module {
     pub(crate) funcs: HashMap<String, Function>,
+    magic: u32,
 }
 
 impl Module {
@@ -15,13 +16,15 @@ impl Module {
     pub fn new() -> Self {
         Self {
             funcs: HashMap::new(),
+            magic: 4,
         }
     }
 
     /// Adds a new function to the module
     pub fn add(&mut self, name: &str, ty: &FunctionType) -> &mut Function {
         self.funcs
-            .insert(name.to_string(), Function::new(name.to_string(), ty.to_owned()));
+            .insert(name.to_string(), Function::new(name.to_string(), ty.to_owned(), self.magic));
+        self.magic += 1;
         self.funcs.get_mut(name).unwrap()
     }
 
@@ -119,7 +122,12 @@ impl Module {
         for (name, func) in &self.funcs {
             if func.linkage == Linkage::Extern {
                 lines += &format!("global {}\n", name);
+                continue;
             }
+
+            if func.linkage == Linkage::External {
+                lines += &format!("global {}\n", name);
+            } 
 
             lines += &format!("{}:\n", name);
 

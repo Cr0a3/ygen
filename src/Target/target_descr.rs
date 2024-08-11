@@ -16,6 +16,7 @@ pub(crate) struct BackendInfos {
     pub(crate) tmpReg: Box<dyn Reg>,
     pub(crate) saveRegister: Vec<Box<dyn Reg>>,
     pub(crate) savedRegisters: Vec<Box<dyn Reg>>,
+    pub(crate) stackSafe: bool,
 }
 
 impl BackendInfos {
@@ -32,35 +33,17 @@ impl BackendInfos {
 
             saveRegister: vec![],
             savedRegisters: vec![],
+
+            stackSafe: false,
         }
     }
 
     /// Delets the variable of the varsStorage (giving out it's resources)
     pub(crate) fn drop(&mut self, var: &Var) {
-        if let Some(loc) = self.varsStorage.get(var) {
-            if let VarStorage::Register(reg) = loc {
-                match var.ty {
-                    TypeMetadata::u16 | TypeMetadata::i16 => {
-                        self.openUsableRegisters16.push_front(reg.boxed());
-                        self.openUsableRegisters64.push_front(reg.from(reg.sub64()));
-                        self.openUsableRegisters32.push_front(reg.from(reg.sub32()));
-                        self.openUsableRegisters8.push_front(reg.from(reg.sub8()));
-                    },
-                    TypeMetadata::u32 | TypeMetadata::i32 => {
-                        self.openUsableRegisters32.push_front(reg.boxed());
-                        self.openUsableRegisters64.push_front(reg.from(reg.sub64()));
-                        self.openUsableRegisters16.push_front(reg.from(reg.sub16()));
-                        self.openUsableRegisters8.push_front(reg.from(reg.sub8()));
-                    },
-                    TypeMetadata::u64 | TypeMetadata::i64 => {
-                        self.openUsableRegisters64.push_front(reg.boxed());
-                        self.openUsableRegisters32.push_front(reg.from(reg.sub32()));
-                        self.openUsableRegisters16.push_front(reg.from(reg.sub16()));
-                        self.openUsableRegisters8.push_front(reg.from(reg.sub8()));
-                    },
-                    TypeMetadata::Void => todo!(),
-                }
-            }
+        if let Some(loc) = &self.varsStorage.get(var) {
+            if let VarStorage::Register(reg) = &loc {
+               self.dropReg(reg.clone());
+            } // don't decrease the stack offset because if it isn't at the bottom other variables will may be overriden
         }
     }
 
@@ -70,6 +53,21 @@ impl BackendInfos {
         self.openUsableRegisters32.push_front(reg.from(reg.sub32()));
         self.openUsableRegisters16.push_front(reg.from(reg.sub16()));
         self.openUsableRegisters8.push_front(reg.from(reg.sub8()));
+    }
+
+    /// Returns a variable which uses the given reg
+    pub(crate) fn getVarByReg(&self, reg: Box<dyn Reg>) -> Option<&Var> {
+        let mut out = None;
+
+        for (var, store) in &self.varsStorage {
+            if let VarStorage::Register(var_reg) = store {
+                if var_reg == &reg {
+                    out = Some(var);
+                }
+            }
+        }
+
+        out
     }
 
     pub(crate) fn insertVar(&mut self, var: Var, store: VarStorage) {

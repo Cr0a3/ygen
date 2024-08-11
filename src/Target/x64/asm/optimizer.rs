@@ -43,10 +43,7 @@ impl Optimize<Instr> for Vec<Instr> {
                 else if instr.op1 == instr.op2 {
                     optimized = true;
                 }
-                else if instr.uses_mut(&last.op1) {
-                    out.pop();
-                    optimized = true;
-                }
+                
                 else if instr.mnemonic == Mnemonic::Ret && last.mnemonic == Mnemonic::Call {
                     out.pop();
                     out.push(Instr::with1(Mnemonic::Jmp, instr.op1.clone().expect("call needs to have only one op")));

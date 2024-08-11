@@ -195,7 +195,13 @@ impl ObjectBuilder {
             let sym = obj.add_symbol(Symbol {
                 name: name.clone().as_bytes().to_vec(),
                 value: 0,
-                size: (data.len() - 1) as u64,
+                size: {
+                    if data.len() > 1 {
+                        (data.len() - 1) as u64
+                    } else {
+                        0
+                    }
+                },
                 kind: {
                     match decl {
                         Decl::Function => SymbolKind::Text,
@@ -206,7 +212,7 @@ impl ObjectBuilder {
                 scope: {
                     match link {
                         Linkage::External => SymbolScope::Linkage,
-                        Linkage::Extern => SymbolScope::Linkage,
+                        Linkage::Extern => SymbolScope::Dynamic,
                         Linkage::Internal => SymbolScope::Compilation,
                     }
                 },

@@ -58,6 +58,8 @@ pub struct Function {
     pub ty: FunctionType,
 
     pub(crate) name: String,
+
+    pub(crate) magic: u32,
     
     pub(crate) inline: bool,
     pub(crate) linkage: Linkage,
@@ -66,11 +68,13 @@ pub struct Function {
 
 impl Function {
     /// Creates a new Function
-    pub fn new(name: String, ty: FunctionType) -> Self {
+    pub fn new(name: String, ty: FunctionType, magic: u32) -> Self {
         Self {
             ty: ty,
 
             blocks: VecDeque::new(),
+
+            magic: magic,
 
             name: name,
             inline: false,
@@ -86,7 +90,7 @@ impl Function {
 
     /// Sets that the function is externally visible (same as: `extern "C"`)
     pub fn extrn(&mut self) {
-        self.linkage = Linkage::Extern;
+        self.linkage = Linkage::External;
     }
 
     /// Sets that the function is imported from another object file (same as: `extern "C" fn abc(i32, i32) -> i32;`)
@@ -227,6 +231,6 @@ pub fn FnTy(args: Vec<TypeMetadata>, ret: TypeMetadata) -> FunctionType {
 }
 
 /// Creates a new Function
-pub fn Func(name: String, ty: FunctionType) -> Function {
-    Function::new(name, ty)
+pub fn Func(name: String, ty: FunctionType, magic: u32) -> Function {
+    Function::new(name, ty, magic)
 }

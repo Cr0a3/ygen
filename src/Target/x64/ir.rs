@@ -377,13 +377,130 @@ pub(crate) fn CompileCast(cast: &Cast<Var, TypeMetadata, Var>, registry: &mut Ta
 }
 
 pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-    vec![]
+    registry.backend.stackSafe = true;
+    
+    let boxed: Box<dyn Ir> = Box::new(call.clone());
+
+    let mut asm = vec![];
+
+    if registry.call == CallConv::SystemV {
+        asm.push(Instr::with2(Mnemonic::Xor, Operand::Reg(x64Reg::Eax.boxed()), Operand::Reg(x64Reg::Eax.boxed())))
+    }
+
+    for reg in vec![x64Reg::Rcx, x64Reg::Rdx, x64Reg::Rsi, x64Reg::Rdi, x64Reg::Rsi] { // save mutable registers
+        if !registry.backend.openUsableRegisters64.contains(&reg.boxed()) {
+            let var = registry.backend.getVarByReg(reg.boxed()).cloned();
+            
+            if let Some(var) = var {
+                if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &var) {
+                    registry.backend.drop(&var);
+                } else {
+                    asm.push(Instr::with1(Mnemonic::Push, Operand::Reg(reg.boxed())));
+                }
+            }
+        }
+    }
+
+    let func = &call.inner1;
+
+    let mut reg_args = 0;
+
+    for arg in &call.inner2 {
+        let loc = registry.backend.varsStorage.get_key_value(arg).expect("expected valid variable as arg input");
+
+        match loc.1 {
+            VarStorage::Register(reg) => {
+                if reg_args < registry.call.regArgs() {
+                    if arg.ty == TypeMetadata::i64 || arg.ty == TypeMetadata::u64 {
+                        asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(registry.call.args64()[reg_args].boxed()), Operand::Reg(reg.clone())));
+                    } else if arg.ty == TypeMetadata::i32 || arg.ty == TypeMetadata::u32 {
+                        asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(registry.call.args32()[reg_args].boxed()), Operand::Reg(reg.clone())));
+                    } else if arg.ty == TypeMetadata::i16 || arg.ty == TypeMetadata::u16 {
+                        asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(registry.call.args16()[reg_args].boxed()), Operand::Reg(reg.clone())));
+                    }
+                    reg_args += 1;
+                } else {
+                    asm.push( Instr::with1(Mnemonic::Push, Operand::Reg(reg.clone())));
+                }
+            },
+            VarStorage::Memory(mem) => {
+                if reg_args < registry.call.regArgs() {
+                    if arg.ty == TypeMetadata::i64 || arg.ty == TypeMetadata::u64 {
+                        asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(registry.call.args64()[reg_args].boxed()), Operand::Mem(mem.clone())));
+                    } else if arg.ty == TypeMetadata::i32 || arg.ty == TypeMetadata::u32 {
+                        asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(registry.call.args32()[reg_args].boxed()), Operand::Mem(mem.clone())));
+                    } else if arg.ty == TypeMetadata::i16 || arg.ty == TypeMetadata::u16 {
+                        asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(registry.call.args16()[reg_args].boxed()), Operand::Mem(mem.clone())));
+                    }
+                    reg_args += 1;
+                } else {
+                    asm.push( Instr::with1(Mnemonic::Push, Operand::Mem(mem.clone())));
+                }
+            },
+        }
+ 
+        if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, arg) {
+            registry.backend.drop(arg);
+        }
+    }
+
+    asm.push( Instr::with1(Mnemonic::Call, Operand::Imm(func.magic.to_le() as i64)));
+
+    if func.ty.ret != TypeMetadata::Void {  
+        let store = if let Some(reg) = registry.backend.getOpenRegBasedOnTy(call.inner3.ty) {
+            match func.ty.ret {
+                TypeMetadata::u16 | TypeMetadata::i16 => asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(reg.clone()), Operand::Reg(registry.call.ret16().boxed())) ),
+                TypeMetadata::u32 | TypeMetadata::i32 => asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(reg.clone()), Operand::Reg(registry.call.ret32().boxed())) ),
+                TypeMetadata::u64 | TypeMetadata::i64 => asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(reg.clone()), Operand::Reg(registry.call.ret64().boxed())) ),
+                _ => unreachable!(),
+            };
+            VarStorage::Register(reg)
+        } else {
+            let addend = match call.inner3.ty {
+                TypeMetadata::u16 | TypeMetadata::i16=> 2,
+                TypeMetadata::u32 | TypeMetadata::i32=> 4,
+                TypeMetadata::u64 | TypeMetadata::i64=> 8,
+                TypeMetadata::Void => unreachable!(),
+            };
+
+            registry.backend.currStackOffsetForLocalVars += addend;
+            let mem = x64Reg::Rbp - (registry.backend.currStackOffsetForLocalVars - addend) as u32;
+
+            match func.ty.ret {
+                TypeMetadata::u16 | TypeMetadata::i16 => asm.push( Instr::with2(Mnemonic::Mov, Operand::Mem(mem.clone()), Operand::Reg(registry.call.ret16().boxed())) ),
+                TypeMetadata::u32 | TypeMetadata::i32 => asm.push( Instr::with2(Mnemonic::Mov, Operand::Mem(mem.clone()), Operand::Reg(registry.call.ret32().boxed())) ),
+                TypeMetadata::u64 | TypeMetadata::i64 => asm.push( Instr::with2(Mnemonic::Mov, Operand::Mem(mem.clone()), Operand::Reg(registry.call.ret64().boxed())) ),
+                _ => unreachable!(),
+            };
+
+            VarStorage::Memory(mem)
+        };
+
+        registry.backend.insertVar(call.inner3.clone(), store);
+    }
+
+    
+    for reg in vec![x64Reg::Rcx, x64Reg::Rdx, x64Reg::Rsi, x64Reg::Rdi, x64Reg::Rsi] { // save mutable registers
+        if !registry.backend.openUsableRegisters64.contains(&reg.boxed()) {
+            let var = registry.backend.getVarByReg(reg.boxed()).cloned();
+            
+            if let Some(var) = var {
+                if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &var) {
+                    registry.backend.drop(&var);
+                } else {
+                    asm.push(Instr::with1(Mnemonic::Pop, Operand::Reg(reg.boxed())));
+                }
+            }
+        }
+    }
+
+    asm
 }
 
 pub(crate) fn x64BuildProlog(_: &Block, registry: &mut TargetBackendDescr) -> Vec<Instr> {
     let mut res = vec![];
 
-    if registry.backend.currStackOffsetForLocalVars != 0 {
+    if registry.backend.currStackOffsetForLocalVars != 8 || registry.backend.stackSafe {
         res.push( Instr::with1(Mnemonic::Push, Operand::Reg(x64Reg::Rbp.boxed())) );
         res.push( Instr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rbp.boxed()), Operand::Reg(x64Reg::Rsp.boxed())) );
         res.push( Instr::with2(Mnemonic::Sub, Operand::Reg(x64Reg::Rsp.boxed()), Operand::Imm(16)) );
@@ -392,6 +509,8 @@ pub(crate) fn x64BuildProlog(_: &Block, registry: &mut TargetBackendDescr) -> Ve
     for backuped in &registry.backend.saveRegister {
         res.push( Instr::with1(Mnemonic::Push, Operand::Reg(backuped.boxed())) )
     }
+
+    res.reverse();
 
     res
 }
@@ -403,7 +522,7 @@ pub(crate) fn x64BuildEpilog(_: &Block, registry: &mut TargetBackendDescr) -> Ve
         res.push( Instr::with1(Mnemonic::Pop, Operand::Reg(backuped.boxed())) )
     }
 
-    if registry.backend.currStackOffsetForLocalVars != 0 {
+    if registry.backend.currStackOffsetForLocalVars != 8 || registry.backend.stackSafe {
         res.push( Instr::with2(Mnemonic::Add, Operand::Reg(x64Reg::Rsp.boxed()), Operand::Imm(16)) );
         res.push( Instr::with1(Mnemonic::Pop, Operand::Reg(x64Reg::Rbp.boxed())) );
     }
@@ -419,7 +538,7 @@ pub(crate) fn buildAsmX86<'a>(block: &'a Block, func: &Function, call: &CallConv
     let info = &mut registry.backend;
 
     let mut reg_vars = 0;
-    let mut stack_off = 0;
+    let mut stack_off = 8; // because in an call the return adress gets pushed which is 8 bytes long
     let mut var_index = 0;
 
     for (_, meta) in &func.ty.args {
@@ -451,7 +570,7 @@ pub(crate) fn buildAsmX86<'a>(block: &'a Block, func: &Function, call: &CallConv
         var_index += 1;
     }
 
-    if reg_vars <= call.regArgs() {
+    if reg_vars < call.regArgs() {
         info.dropReg(call.args64()[reg_vars].boxed());        
     }
 
@@ -459,24 +578,16 @@ pub(crate) fn buildAsmX86<'a>(block: &'a Block, func: &Function, call: &CallConv
 
     for node in &block.nodes {
         let compiled = node.compile(registry);
-        println!("{:?}", node);
-        println!("{:?}", compiled);
-
         out.extend(compiled);
     }
 
-
-
     registry.block = None;
 
-    let mut prolog = x64BuildProlog(&block, registry);
-    prolog.reverse(); // cuz: push_front
+    out.extend(x64BuildEpilog(&block, registry));
 
-    for epAsm in prolog {
+    for epAsm in  x64BuildProlog(&block, registry) {
         out.push_front(epAsm);
     }
-
-    out.extend(x64BuildEpilog(&block, registry));
 
     Vec::from(out).optimize()
 }

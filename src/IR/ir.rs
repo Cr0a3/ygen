@@ -563,17 +563,20 @@ impl Ir for Call<Function, Vec<Var>, Var> {
     }
 
     fn uses(&self, var: &Var) -> bool {
+        let mut uses = false;
+
         if self.inner3 == *var {
-            return true;
+            uses = true;
         }
+
 
         for arg in &self.inner2 {
             if *arg == *var {
-                return true;
+                uses = true;
             }
         }
 
-        false
+        uses
     }
 }
 
