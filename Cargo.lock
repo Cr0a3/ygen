@@ -219,6 +219,7 @@ name = "simplelang"
 version = "0.1.0"
 dependencies = [
  "Ygen",
+ "logos",
 ]
 
 [[package]]

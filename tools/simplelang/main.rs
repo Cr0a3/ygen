@@ -1,6 +1,9 @@
-use std::{error::Error, fs::OpenOptions, process::exit};
-
+use std::{error::Error, fs::{File, OpenOptions}, io::Read, process::exit};
+use logos::Logos;
 use Ygen::{prelude::*, Support::Cli, Target::initializeAllTargets};
+
+mod lexer;
+mod parser;
 
 pub fn main() -> Result<(), Box<dyn Error>> {
     let mut cli = Cli::new("simplelang", "Simple language example for ygen", "1.0", "Cr0a3");
@@ -34,6 +37,26 @@ pub fn main() -> Result<(), Box<dyn Error>> {
             exit(-1);
         },
     };
+
+    let mut infile = match File::open(infile) {
+        Ok(file) => file,
+        Err(e) => {
+            println!("{}", e); 
+            exit(-1);
+        },
+    };
+
+    let mut input = String::new();
+    infile.read_to_string(&mut input)?;
+
+    let mut tokens = vec![];
+
+    for token in lexer::Token::lexer(&input) {
+        tokens.push( token? );
+    }
+
+
+    let parser = parser::Parser::new(tokens);
 
     let mut module = Module();
 
