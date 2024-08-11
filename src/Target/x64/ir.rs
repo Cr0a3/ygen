@@ -444,7 +444,9 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
         }
     }
 
-    asm.push( Instr::with1(Mnemonic::Call, Operand::Imm(func.magic.to_le() as i64)));
+    asm.push( Instr::with1(Mnemonic::Call, Operand::Imm(0)));
+
+    asm.push( Instr::with1(Mnemonic::Link, Operand::LinkDestination(call.inner1.name.to_string())));
 
     if func.ty.ret != TypeMetadata::Void {  
         let store = if let Some(reg) = registry.backend.getOpenRegBasedOnTy(call.inner3.ty) {

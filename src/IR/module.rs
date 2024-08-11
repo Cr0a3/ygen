@@ -1,6 +1,6 @@
 use crate::{prelude::Triple, Obj::{Decl, Linkage, ObjectBuilder}, Optimizations::PassManager, Support::ColorProfile, Target::TargetRegistry};
 
-use super::{func::FunctionType, Block, Function, VerifyError};
+use super::{func::FunctionType, Function, VerifyError};
 use std::{collections::HashMap, error::Error, fs::OpenOptions, io::Write, path::Path};
 
 /// ## The Module
@@ -8,7 +8,6 @@ use std::{collections::HashMap, error::Error, fs::OpenOptions, io::Write, path::
 #[derive(Debug, Clone)]
 pub struct Module {
     pub(crate) funcs: HashMap<String, Function>,
-    magic: u32,
 }
 
 impl Module {
@@ -16,15 +15,13 @@ impl Module {
     pub fn new() -> Self {
         Self {
             funcs: HashMap::new(),
-            magic: 4,
         }
     }
 
     /// Adds a new function to the module
     pub fn add(&mut self, name: &str, ty: &FunctionType) -> &mut Function {
         self.funcs
-            .insert(name.to_string(), Function::new(name.to_string(), ty.to_owned(), self.magic));
-        self.magic += 1;
+            .insert(name.to_string(), Function::new(name.to_string(), ty.to_owned()));
         self.funcs.get_mut(name).unwrap()
     }
 
@@ -93,14 +90,14 @@ impl Module {
 
             let mut comp = vec![];
 
-            let mut positions: Vec<(Block, /*offset from 0*/ usize)> = vec![];
-
             for block in &func.blocks {
-                let compiled = &registry.buildMachineCodeForTarget(triple, block, &func)?;
-
-                positions.push((block.clone(), comp.len()));
+                let (compiled, links) = &registry.buildMachineCodeForTarget(triple, block, &func)?;
 
                 comp.extend_from_slice(&compiled);
+
+                for link in links {
+                    obj.link(link.to_owned())
+                }
             }
 
             obj.define(&name, comp);

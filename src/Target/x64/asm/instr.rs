@@ -1,6 +1,6 @@
 use std::{fmt::Display, ops::{Add, Sub}, str::FromStr};
 
-use crate::{Support::{ColorClass, ColorProfile}, Target::{isa::{buildOpcode, MandatoryPrefix, RexPrefix}, x64Reg, Reg}};
+use crate::{Obj::Link, Support::{ColorClass, ColorProfile}, Target::{isa::{buildOpcode, MandatoryPrefix, RexPrefix}, x64Reg, Reg}};
 
 use super::isa::ModRm;
 
@@ -44,7 +44,7 @@ impl Instr {
     }
 
     /// Encodes the instruction (some will say compiles)
-    pub fn encode(&self) -> Result<Vec<u8>, InstrEncodingError> {
+    pub fn encode(&self) -> Result<(Vec<u8>, Option<Link>), InstrEncodingError> {
         self.verify()?;
         
         Ok(match self.mnemonic {
@@ -74,7 +74,7 @@ impl Instr {
                     if reg.is_gr8() { r -= 1; m -= 1; i -= 1; }
                 }
 
-                match self.op2.as_ref().expect("verifycation failed") {
+                (match self.op2.as_ref().expect("verifycation failed") {
                     Operand::Reg(reg) => {
                         let reg = reg.as_any().downcast_ref::<x64Reg>().expect("expected x64 registers and not the ones from other archs");
 
@@ -210,7 +210,8 @@ impl Instr {
 
                         buildOpcode(mandatory, rex, op)
                     }
-                }
+                    _ => todo!(),
+                }, None)
             },
             Mnemonic::Lea => {
                 let op0 =  if let Operand::Reg(reg) = &self.op1.clone().expect("verify faild") {
@@ -239,7 +240,7 @@ impl Instr {
                     op.extend_from_slice(&ModRm::regM(op0, mem.clone()));
                 } else { todo!() }
 
-                buildOpcode(mandatory, rex, op)
+                (buildOpcode(mandatory, rex, op), None)
             },
             Mnemonic::Push | Mnemonic::Pop => {
                 let mut mandatory = None;
@@ -293,9 +294,9 @@ impl Instr {
                     } else { todo!()}
                 } else { todo!() }
 
-                buildOpcode(mandatory, rex, op)
+                (buildOpcode(mandatory, rex, op), None)
             },
-            Mnemonic::Ret => vec![0xC3],
+            Mnemonic::Ret => (vec![0xC3], None),
             Mnemonic::Movzx => todo!(),
             Mnemonic::Call => {
                 let (i, m, r) = (0xE8, 0xFF, 2);
@@ -316,7 +317,7 @@ impl Instr {
                     op.push(bytes[4]);
                 } else { todo!() }
 
-                buildOpcode(None, None, op)
+                (buildOpcode(None, None, op), None)
             }
             Mnemonic::Jmp => {
                 let (m, r) = (0xFF, 4);
@@ -342,9 +343,15 @@ impl Instr {
                     }
                 } else { todo!() }
 
-                buildOpcode(None, None, op)
+                (buildOpcode(None, None, op), None)
             }
-            
+            Mnemonic::Link => {
+                if let Some(Operand::LinkDestination(dst)) = &self.op1 {
+                    (vec![], Some(Link { from: "".into(), to: dst.to_string(), at: 0, addend: -4 }))
+                } else {
+                    (vec![], None)
+                }
+            }
         })
     }
 
@@ -424,6 +431,7 @@ impl Instr {
                     }
                 }
             }
+            Mnemonic::Link => {},
         };
 
         Ok(())
@@ -431,7 +439,7 @@ impl Instr {
 
     /// Does the same as the encode function just for naming pourpuses
     pub fn compile(&self) -> Result<Vec<u8>, InstrEncodingError> {
-        self.encode()
+        Ok(self.encode()?.0)
     }
 
     /// Returns the instruction as assembly representation
@@ -448,12 +456,14 @@ impl Instr {
                 Operand::Imm(num) => profile.markup(&num.to_string(), ColorClass::Value),
                 Operand::Reg(reg) => profile.markup(&reg.to_string(), ColorClass::Var),
                 Operand::Mem(mem) => profile.markup(&format!("{}", mem), ColorClass::Var),
+                Operand::LinkDestination(_) => "".to_string(),
             }));
             if let Some(op2) = &self.op2 {
                 string.push_str(&format!(", {}", match op2 {
                     Operand::Imm(num) => profile.markup(&format!("{}", num.to_string()), ColorClass::Value),
                     Operand::Reg(reg) => profile.markup(&format!(", {}", reg.to_string()), ColorClass::Var),
                     Operand::Mem(mem) => profile.markup(&format!("{}", mem), ColorClass::Var),
+                    Operand::LinkDestination(_) => "".to_string(),
                 }));
             }
         }
@@ -561,6 +571,9 @@ pub enum Mnemonic {
 
     Call,
     Jmp,
+
+    /// here's a link placed
+    Link,
 }
 
 impl FromStr for Mnemonic {
@@ -604,6 +617,7 @@ impl Display for Mnemonic {
             Mnemonic::Ret => "ret",
             Mnemonic::Call => "call",
             Mnemonic::Jmp => "jmp",
+            Mnemonic::Link => "",
         })
     }
 }
@@ -617,6 +631,8 @@ pub enum Operand {
     Reg(Box<dyn Reg>),
     /// A memory displacement
     Mem(MemOp),
+    /// The link destination
+    LinkDestination(String),
 }
 
 impl PartialEq for Operand {
@@ -625,6 +641,7 @@ impl PartialEq for Operand {
             (Self::Imm(l0), Self::Imm(r0)) => l0 == r0,
             (Self::Reg(l0), Self::Reg(r0)) => l0 == r0,
             (Self::Mem(l0), Self::Mem(r0)) => l0 == r0,
+            (Self::LinkDestination(l0), Self::LinkDestination(r0)) => l0 == r0,
             _ => false,
         }
     }
@@ -636,6 +653,7 @@ impl Display for Operand {
             Operand::Imm(num) => num.to_string(),
             Operand::Reg(reg) => reg.to_string(),
             Operand::Mem(mem) => format!("{}", mem),
+            Operand::LinkDestination(_) => "".to_string(),
         })
     }
 }

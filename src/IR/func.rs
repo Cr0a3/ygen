@@ -58,8 +58,6 @@ pub struct Function {
     pub ty: FunctionType,
 
     pub(crate) name: String,
-
-    pub(crate) magic: u32,
     
     pub(crate) inline: bool,
     pub(crate) linkage: Linkage,
@@ -68,13 +66,11 @@ pub struct Function {
 
 impl Function {
     /// Creates a new Function
-    pub fn new(name: String, ty: FunctionType, magic: u32) -> Self {
+    pub fn new(name: String, ty: FunctionType) -> Self {
         Self {
             ty: ty,
 
             blocks: VecDeque::new(),
-
-            magic: magic,
 
             name: name,
             inline: false,
@@ -231,6 +227,6 @@ pub fn FnTy(args: Vec<TypeMetadata>, ret: TypeMetadata) -> FunctionType {
 }
 
 /// Creates a new Function
-pub fn Func(name: String, ty: FunctionType, magic: u32) -> Function {
-    Function::new(name, ty, magic)
+pub fn Func(name: String, ty: FunctionType) -> Function {
+    Function::new(name, ty)
 }

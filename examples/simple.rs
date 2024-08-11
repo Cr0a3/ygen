@@ -7,7 +7,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
     let mut builder = IRBuilder();
 
-    let other = module.add("extern", &FnTy(vec![TypeMetadata::i32, TypeMetadata::i32], TypeMetadata::i32));
+    let other = module.add("cfunc", &FnTy(vec![TypeMetadata::i32, TypeMetadata::i32], TypeMetadata::i32));
     other.import();
     let other = other.clone();
 
