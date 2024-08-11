@@ -22,7 +22,7 @@ impl Error for LexingError {}
 #[logos(error = LexingError)]
 #[logos(skip r"[ \t\n\f]+")]
 pub enum Token {
-    #[regex("[a-zA-Z_]+", |lex| lex.slice().to_string())]
+    #[regex("[a-zA-Z0-9]+", |lex| lex.slice().to_string())]
     Ident(String),
 
     #[token("with")]
@@ -36,6 +36,9 @@ pub enum Token {
 
     #[token(",")]
     Comma,
+
+    #[token("extern")]
+    Extern,
 
     #[token(":")]
     DoubleDot,

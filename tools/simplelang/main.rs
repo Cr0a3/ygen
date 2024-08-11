@@ -5,6 +5,8 @@ use Ygen::{prelude::*, Support::Cli, Target::initializeAllTargets};
 mod lexer;
 mod parser;
 
+/// syntax: with (a: i32, b: i32) func: a + b 
+/// or: with() main: print("Hello World!")
 pub fn main() -> Result<(), Box<dyn Error>> {
     let mut cli = Cli::new("simplelang", "Simple language example for ygen", "1.0", "Cr0a3");
     
@@ -55,8 +57,10 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         tokens.push( token? );
     }
 
+    let mut parser = parser::Parser::new(tokens);
+    parser.parse();
 
-    let parser = parser::Parser::new(tokens);
+    println!("{:?}", parser.out);
 
     let mut module = Module();
 
