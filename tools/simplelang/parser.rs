@@ -280,6 +280,16 @@ impl Parser {
             res = match front {
                 Token::Ident(x) => Some(Expr::Var((x.to_string(), None))),
                 Token::Number(n) => Some(Expr::LiteralInt(*n)),
+                Token::LParam => {
+                    self.tokens.pop_front();
+                    let out = self.parse_expr();
+
+                    if self.tokens.front() != Some(&Token::RParam) {
+                        None
+                    } else {
+                        out
+                    }
+                }
                 _ => None,
             };
         }

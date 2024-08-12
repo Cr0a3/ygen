@@ -1,3 +1,3 @@
 with (a: i32, b: i32) func: {
-    return a + b;
+    return (a + 2) * b;
 }
