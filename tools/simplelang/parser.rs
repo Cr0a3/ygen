@@ -35,6 +35,7 @@ pub struct FnStmt {
     args: Vec<Expr>,
 
     extrn: bool,
+    import: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -72,7 +73,7 @@ impl Parser {
     fn parse_stmt(&mut self) -> Option<Statement> {
         match self.tokens.front()? {
             Token::Ident(_) => self.parse_ident(),
-            Token::With | Token::Extern => self.parse_func(),
+            Token::With | Token::Extern | Token::Import => self.parse_func(),
             Token::Return => self.parse_return(),
             any => todo!("{:?}", any),
         }
@@ -85,6 +86,11 @@ impl Parser {
             extrn = true;
             self.tokens.pop_front();
         };
+
+        let import = if let Some(Token::Import) = self.tokens.front() {
+            self.tokens.pop_front();
+            true
+        } else { false};
 
         if let Some(Token::With) = self.tokens.front() {} else { return None; }
 
@@ -116,7 +122,16 @@ impl Parser {
             self.tokens.pop_front();
         } else { return None; }    
         
-        
+        if import {
+            return Some(Statement::Fn(FnStmt {
+                name: name,
+                body: vec![],
+                args: args,
+                extrn: false,
+                import: import,
+            }))
+        }
+
         if let Some(Token::DoubleDot) = self.tokens.front() {} else { return None; }
 
         self.tokens.pop_front();  
@@ -142,6 +157,7 @@ impl Parser {
             body: body,
             args: args,
             extrn: extrn,
+            import: false, // we handled imported functions earlier
         }))
 
     }

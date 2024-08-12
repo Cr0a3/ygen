@@ -67,6 +67,9 @@ pub enum Token {
     #[token("extern")]
     Extern,
 
+    #[token("import")]
+    Import,
+
     #[token(":")]
     DoubleDot,
 
