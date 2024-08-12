@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use Ygen::IR::TypeMetadata;
+use Ygen::{prelude::Call, IR::TypeMetadata};
 
 use crate::lexer::Token;
 
@@ -9,6 +9,7 @@ pub enum Expr {
     Var((String, Option<TypeMetadata>)), // (name, type)
     Binary((Operator, Option<Box<Expr>>, Option<Box<Expr>>)), // (op, left, right)
     LiteralInt(i64),
+    Call(CallStmt),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -24,7 +25,6 @@ pub enum Statement {
     Fn(FnStmt),
     Expr(Expr),
     Ret(RetStmt),
-    Call(CallStmt),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -45,7 +45,7 @@ pub struct RetStmt {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CallStmt {
     name: String,
-    args: String,
+    args: Vec<Expr>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -183,7 +183,7 @@ impl Parser {
         if let Some(expr) = self.parse_expr() {
             Some(Statement::Expr(expr))
         } else if let Some(call) = self.parse_call() {
-            Some(Statement::Call(call))
+            Some(Statement::Expr(call))
         } else {
             None
         }
@@ -199,6 +199,9 @@ impl Parser {
         } else if let Some(var) = self.parse_var() {
             to_return = Some(Expr::Var(var));
         }
+
+
+        println!("{:?}", self.tokens.front());
 
         if let Some(Token::Semicolon) = self.tokens.front() {} else { return None; }
 
@@ -265,6 +268,7 @@ impl Parser {
                 } else { None };
 
                 left = Some(Expr::Binary((op, box_left, box_right)));
+                
             } else {
                 break;
             }
@@ -275,10 +279,23 @@ impl Parser {
 
     fn parse_factor(&mut self) -> Option<Expr> {
         let mut res = None;
+        let mut pop = true;
 
         if let Some(front) = self.tokens.front() {
             res = match front {
-                Token::Ident(x) => Some(Expr::Var((x.to_string(), None))),
+                Token::Ident(x) => {
+                    let x = x.to_string();
+
+                    let mut out = Some(Expr::Var((x.clone(), None)));
+
+                    if let Some(call) = self.parse_call() {
+                        out = Some(call);
+                    }
+                    pop = false;
+
+                    out
+
+                },
                 Token::Number(n) => Some(Expr::LiteralInt(*n)),
                 Token::LParam => {
                     self.tokens.pop_front();
@@ -294,14 +311,39 @@ impl Parser {
             };
         }
 
-        if res != None {
+        if res != None && pop {
             self.tokens.pop_front();
         }
 
         res
     }
 
-    fn parse_call(&mut self) -> Option<CallStmt> {
-        todo!()
+    fn parse_call(&mut self) -> Option<Expr> {
+        let name = if let Some(Token::Ident(x)) = self.tokens.front() {
+            x.to_string()
+        } else { return None; };
+
+
+        self.tokens.pop_front();
+
+        if let Some(Token::LParam) = self.tokens.front() {} else { return None };
+        self.tokens.pop_front();
+
+        let mut args = vec![];
+
+        loop {
+            if Some(&Token::RParam) == self.tokens.front() {
+                break;
+            }
+
+            args.push( self.parse_expr()? );
+        }
+
+        self.tokens.pop_front();
+
+        Some(Expr::Call(CallStmt {
+            name: name,
+            args: args,
+        }))
     }
 }
