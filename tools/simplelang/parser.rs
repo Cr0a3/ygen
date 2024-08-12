@@ -6,23 +6,29 @@ use crate::lexer::Token;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Expr {
-    Var((String, TypeMetadata)), // (name, type)
+    Var((String, Option<TypeMetadata>)), // (name, type)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Statement {
-    Fn(FnStatement),
+    Fn(FnStmt),
     Expr(Expr),
+    Ret(RetStmt),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FnStatement {
+pub struct FnStmt {
     name: String,
     body: Vec<Statement>,
 
     args: Vec<Expr>,
 
     extrn: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RetStmt {
+    var: Option<Expr>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -48,9 +54,9 @@ impl Parser {
 
     fn parse_stmt(&mut self) -> Option<Statement> {
         match self.tokens.front()? {
-            Token::Ident(_) => todo!(),
-            Token::With => self.parse_func(),
-            Token::Extern => self.parse_func(),
+            Token::Ident(_) => self.parse_ident(),
+            Token::With | Token::Extern => self.parse_func(),
+            Token::Return => self.parse_return(),
             _ => None,
         }
     }
@@ -98,43 +104,89 @@ impl Parser {
 
         self.tokens.pop_front();  
 
-        Some(Statement::Fn(FnStatement {
+        if let Some(Token::LCurly) = self.tokens.front() {} else { return None; }
+
+        self.tokens.pop_front();  
+
+        let mut body = vec![];
+
+        loop {
+            if let Some(Token::RCurly) = self.tokens.front() {
+                break;
+            } else {
+                body.push(self.parse_stmt()?)
+            }
+        }
+
+        self.tokens.pop_front(); // the }
+
+        Some(Statement::Fn(FnStmt {
             name: name,
-            body: vec![],
+            body: body,
             args: args,
             extrn: extrn,
         }))
 
     }
 
-    fn parse_var(&mut self) -> Option<(String, TypeMetadata)> {
+    fn parse_var(&mut self) -> Option<(String, Option<TypeMetadata>)> {
         let name;
         if let Some(Token::Ident(var)) = self.tokens.front() {
             name = var.to_string();
             self.tokens.pop_front();
         } else { return None; }
 
-        if let Some(Token::DoubleDot) = self.tokens.front() {} else { return None; }
+        let mut ty = None;
+
+        if let Some(Token::DoubleDot) = self.tokens.front() {
+            self.tokens.pop_front();
+
+            let tystring;
+    
+            if let Some(Token::Ident(ty)) = self.tokens.front() {
+                tystring = ty.to_string();
+                self.tokens.pop_front();
+            } else { return None; }
+    
+            ty = Some(match tystring.as_str() {
+                "u16" => Some(TypeMetadata::u16),
+                "u32" => Some(TypeMetadata::u32),
+                "u64" => Some(TypeMetadata::u64),
+                "i16" => Some(TypeMetadata::i16),
+                "i32" => Some(TypeMetadata::i32),
+                "i64" => Some(TypeMetadata::i64),
+                _ => None,
+            }?);
+        }
+
+        Some((name, ty))
+    }
+
+    fn parse_ident(&mut self) -> Option<Statement> {
+        let ident = if let Some(ident) = self.tokens.front() {
+            ident 
+        } else { None? };
 
         self.tokens.pop_front();
 
-        let tystring;
+        None
+    }
 
-        if let Some(Token::Ident(ty)) = self.tokens.front() {
-            tystring = ty.to_string();
-            self.tokens.pop_front();
-        } else { return None; }
+    fn parse_return(&mut self) -> Option<Statement> {
+        let mut to_return = None;
 
-        let ty = match tystring.as_str() {
-            "u16" => Some(TypeMetadata::u16),
-            "u32" => Some(TypeMetadata::u32),
-            "u64" => Some(TypeMetadata::u64),
-            "i16" => Some(TypeMetadata::i16),
-            "i32" => Some(TypeMetadata::i32),
-            "i64" => Some(TypeMetadata::i64),
-            _ => None,
-        }?;
+        self.tokens.pop_front(); // the return
 
-        Some((name, ty))
+        if let Some(var) = self.parse_var() {
+            to_return = Some(Expr::Var(var));
+        }
+
+        if let Some(Token::Semicolon) = self.tokens.front() {} else { return None; }
+
+        self.tokens.pop_front();
+
+        Some(Statement::Ret(RetStmt {
+            var: to_return,
+        }))
     }
 }

@@ -6,13 +6,15 @@ use logos::Logos;
 pub enum LexingError {
     #[default]
     NonAsciiCharacter,
+    UnexpectedCharacter(char),
 }
 
 impl Display for LexingError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", match self {
-            _ => "",
-        })
+        match self {
+            LexingError::UnexpectedCharacter(ch) => write!(f, "Error: Unexpected character '{}'", ch),
+            _ => write!(f, ""),
+        }
     }
 }
 
@@ -20,7 +22,7 @@ impl Error for LexingError {}
 
 #[derive(Logos, Debug, Clone, PartialEq, Eq)]
 #[logos(error = LexingError)]
-#[logos(skip r"[ \t\n\f]+")]
+#[logos(skip r"[ \t\n\r\f]+")]
 pub enum Token {
     #[regex("[a-zA-Z0-9]+", |lex| lex.slice().to_string())]
     Ident(String),
@@ -34,12 +36,30 @@ pub enum Token {
     #[token(")")]
     RParam,
 
+    #[token("{")]
+    LCurly,
+
+    #[token("}")]
+    RCurly,
+
     #[token(",")]
     Comma,
+
+    #[token("+")]
+    Add,
+
+    #[token("-")]
+    Sub,
+
+    #[token(";")]
+    Semicolon,
 
     #[token("extern")]
     Extern,
 
     #[token(":")]
     DoubleDot,
+
+    #[token("return")]
+    Return,
 }

@@ -53,8 +53,26 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
     let mut tokens = vec![];
 
-    for token in lexer::Token::lexer(&input) {
-        tokens.push( token? );
+    let mut lexer = lexer::Token::lexer(&input);
+
+    while let Some(token) = lexer.next() {
+        tokens.push( match token {
+                Ok(token) => token,
+                Err(_) => {
+                    let remainder = lexer.slice();
+                    let first_char = remainder.chars().next().unwrap();
+                    
+                    let error = if !first_char.is_ascii() {
+                        lexer::LexingError::NonAsciiCharacter
+                    } else {
+                        lexer::LexingError::UnexpectedCharacter(first_char)
+                    };
+                    
+                    println!("error: {:?}", error);
+                    exit(-1);
+                }
+            }
+        );
     }
 
     let mut parser = parser::Parser::new(tokens);
