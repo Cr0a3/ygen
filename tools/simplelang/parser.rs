@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use Ygen::{prelude::Call, IR::TypeMetadata};
+use Ygen::IR::TypeMetadata;
 
 use crate::lexer::Token;
 
@@ -74,7 +74,7 @@ impl Parser {
             Token::Ident(_) => self.parse_ident(),
             Token::With | Token::Extern => self.parse_func(),
             Token::Return => self.parse_return(),
-            _ => todo!(),
+            any => todo!("{:?}", any),
         }
     }
 
@@ -337,6 +337,10 @@ impl Parser {
             }
 
             args.push( self.parse_expr()? );
+
+            if Some(&Token::Comma) == self.tokens.front() {
+                self.tokens.pop_front();
+            }
         }
 
         self.tokens.pop_front();
