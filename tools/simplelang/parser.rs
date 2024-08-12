@@ -7,6 +7,16 @@ use crate::lexer::Token;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Expr {
     Var((String, Option<TypeMetadata>)), // (name, type)
+    Binary((Operator, Option<Box<Expr>>, Option<Box<Expr>>)), // (op, left, right)
+    LiteralInt(i64),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Operator {
+    Add,
+    Sub,
+    Mul,
+    Div,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -14,6 +24,7 @@ pub enum Statement {
     Fn(FnStmt),
     Expr(Expr),
     Ret(RetStmt),
+    Call(CallStmt),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -29,6 +40,12 @@ pub struct FnStmt {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RetStmt {
     var: Option<Expr>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CallStmt {
+    name: String,
+    args: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -57,7 +74,7 @@ impl Parser {
             Token::Ident(_) => self.parse_ident(),
             Token::With | Token::Extern => self.parse_func(),
             Token::Return => self.parse_return(),
-            _ => None,
+            _ => todo!(),
         }
     }
 
@@ -163,13 +180,13 @@ impl Parser {
     }
 
     fn parse_ident(&mut self) -> Option<Statement> {
-        let ident = if let Some(ident) = self.tokens.front() {
-            ident 
-        } else { None? };
-
-        self.tokens.pop_front();
-
-        None
+        if let Some(expr) = self.parse_expr() {
+            Some(Statement::Expr(expr))
+        } else if let Some(call) = self.parse_call() {
+            Some(Statement::Call(call))
+        } else {
+            None
+        }
     }
 
     fn parse_return(&mut self) -> Option<Statement> {
@@ -177,7 +194,9 @@ impl Parser {
 
         self.tokens.pop_front(); // the return
 
-        if let Some(var) = self.parse_var() {
+        if let Some(expr) = self.parse_expr() {
+            to_return = Some(expr);
+        } else if let Some(var) = self.parse_var() {
             to_return = Some(Expr::Var(var));
         }
 
@@ -188,5 +207,91 @@ impl Parser {
         Some(Statement::Ret(RetStmt {
             var: to_return,
         }))
+    }
+
+    fn parse_expr(&mut self) -> Option<Expr> {
+        let mut left = self.parse_term();
+
+        loop {
+            if self.tokens.front() == Some(&Token::Add) || self.tokens.front() == Some(&Token::Sub) {
+                let op = match self.tokens.front()? {
+                    Token::Add => Operator::Add,
+                    Token::Sub => Operator::Sub,
+                    _ => unreachable!(),
+                };
+
+                self.tokens.pop_front();
+
+                let right = self.parse_term();
+
+                let box_left = if let Some(kleft) = left {
+                    Some(Box::from(kleft))
+                } else { None };
+
+                let box_right = if let Some(kright) = right {
+                    Some(Box::from(kright))
+                } else { None };
+
+                left = Some(Expr::Binary((op, box_left, box_right)));
+            } else {
+                break;
+            }
+        }
+
+        left
+    }
+
+    fn parse_term(&mut self) -> Option<Expr> {
+        let mut left = self.parse_factor();
+        
+        loop {
+            if self.tokens.front() == Some(&Token::Mul) || self.tokens.front() == Some(&Token::Div) {
+                let op = match self.tokens.front()? {
+                    Token::Mul => Operator::Mul,
+                    Token::Div => Operator::Div,
+                    _ => unreachable!(),
+                };
+
+                self.tokens.pop_front();
+
+                let right = self.parse_factor();
+
+                let box_left = if let Some(kleft) = left {
+                    Some(Box::from(kleft))
+                } else { None };
+
+                let box_right = if let Some(kright) = right {
+                    Some(Box::from(kright))
+                } else { None };
+
+                left = Some(Expr::Binary((op, box_left, box_right)));
+            } else {
+                break;
+            }
+        }
+
+        left
+    }
+
+    fn parse_factor(&mut self) -> Option<Expr> {
+        let mut res = None;
+
+        if let Some(front) = self.tokens.front() {
+            res = match front {
+                Token::Ident(x) => Some(Expr::Var((x.to_string(), None))),
+                Token::Number(n) => Some(Expr::LiteralInt(*n)),
+                _ => None,
+            };
+        }
+
+        if res != None {
+            self.tokens.pop_front();
+        }
+
+        res
+    }
+
+    fn parse_call(&mut self) -> Option<CallStmt> {
+        todo!()
     }
 }

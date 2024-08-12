@@ -1,4 +1,4 @@
-use std::{error::Error, fmt::Display};
+use std::{error::Error, fmt::Display, num::ParseIntError};
 
 use logos::Logos;
 
@@ -7,6 +7,7 @@ pub enum LexingError {
     #[default]
     NonAsciiCharacter,
     UnexpectedCharacter(char),
+    NumberError(String),
 }
 
 impl Display for LexingError {
@@ -18,14 +19,23 @@ impl Display for LexingError {
     }
 }
 
+impl From<ParseIntError> for LexingError {
+    fn from(value: ParseIntError) -> Self {
+        Self::NumberError(format!("{}", value))
+    }
+}
+
 impl Error for LexingError {}
 
 #[derive(Logos, Debug, Clone, PartialEq, Eq)]
 #[logos(error = LexingError)]
 #[logos(skip r"[ \t\n\r\f]+")]
 pub enum Token {
-    #[regex("[a-zA-Z0-9]+", |lex| lex.slice().to_string())]
+    #[regex("[a-zA-Z0-9_]+", |lex| lex.slice().to_string())]
     Ident(String),
+
+    #[regex("0-9_]+", |lex| lex.slice().parse())]
+    Number(i64),
 
     #[token("with")]
     With,
@@ -59,6 +69,12 @@ pub enum Token {
 
     #[token(":")]
     DoubleDot,
+
+    #[token("*")]
+    Mul,
+
+    #[token("/")]
+    Div,
 
     #[token("return")]
     Return,

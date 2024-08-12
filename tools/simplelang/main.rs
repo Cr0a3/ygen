@@ -78,9 +78,9 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     let mut parser = parser::Parser::new(tokens);
     parser.parse();
 
-    println!("{:?}", parser.out);
+    println!("{:#?}", parser.out);
 
-    let mut module = Module();
+    let module = Module();
 
     if cli.opt("ir") {
         println!("{}", module.dump());
