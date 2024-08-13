@@ -12,7 +12,8 @@ macro_rules! expect {
 
 #[macro_export]
 macro_rules! err {
-    ($($arg:tt)+) => {
+    ($err_var:expr, $($arg:tt)+) => {
+        $err_var = true;
         use Ygen::Support::Colorize;
         eprintln!("{}: {}", "Error".red().bold(), format_args!($($arg)+))
     };

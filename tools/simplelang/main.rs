@@ -6,6 +6,7 @@ mod lexer;
 mod parser;
 mod ast;
 mod macros;
+mod semnatic;
 
 /// syntax: with (a: i32, b: i32) func: { 
 ///     return a + b;
@@ -81,7 +82,16 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     let mut parser = parser::Parser::new(tokens);
     parser.parse();
 
-    println!("{:?}", parser.out);
+    if parser.had_errors() {
+        exit(-1);
+    }
+
+    let mut sem = semnatic::Semnatic::new(parser.out);
+    sem.analyze();
+
+    if sem.had_errors() {
+        exit(-1);
+    }
 
     let module = Module();
 

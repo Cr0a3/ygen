@@ -9,13 +9,17 @@ pub struct Parser {
     tokens: VecDeque<Token>,
 
     pub out: Vec<Statement>,
+
+    error: bool,
 }
 
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
         Self { 
             tokens: tokens.into(), 
-            out: vec![] 
+            out: vec![],
+
+            error: false,
         }
     }
 
@@ -31,7 +35,7 @@ impl Parser {
             Token::With | Token::Extern | Token::Import => self.parse_func(),
             Token::Return => self.parse_return(),
             any => {
-                err!("unexpected token: {:?}", any);
+                err!(self.error, "unexpected token: {:?}", any);
                 None
             },
         }
@@ -79,7 +83,7 @@ impl Parser {
             name = ident.to_string();
             self.tokens.pop_front();
         } else { 
-            err!("expected identifer as the function name found {:?}", self.tokens.front());
+            err!(self.error, "expected identifer as the function name found {:?}", self.tokens.front());
             return None; 
         }    
         
@@ -94,7 +98,7 @@ impl Parser {
         }
 
         if !expect!(self.tokens.front(), Some(&Token::DoubleDot), |tok| {
-            err!("expected ':' found: {:?}", tok);
+            err!(self.error, "expected ':' found: {:?}", tok);
         }) {
             return None;
         }
@@ -102,7 +106,7 @@ impl Parser {
         self.tokens.pop_front();  
 
         if !expect!(self.tokens.front(), Some(&Token::LCurly), |tok| {
-            err!("expected '{{' found: {:?}", tok);
+            err!(self.error, "expected '{{' found: {:?}", tok);
         }) {
             return None;
         }
@@ -158,7 +162,7 @@ impl Parser {
                 "i32" => Some(TypeMetadata::i32),
                 "i64" => Some(TypeMetadata::i64),
                 any => {
-                    err!("unknown type: {}", any);
+                    err!(self.error, "unknown type: {}", any);
                     None
                 },
             }?);
@@ -173,7 +177,7 @@ impl Parser {
         } else if let Some(call) = self.parse_call() {
             Some(Statement::Expr(call))
         } else {
-            err!("unexpected ident {:?}", self.tokens.front());
+            err!(self.error, "unexpected ident {:?}", self.tokens.front());
             None
         }
     }
@@ -218,14 +222,14 @@ impl Parser {
                 let box_left = if let Some(kleft) = left {
                     Some(Box::from(kleft))
                 } else { 
-                    err!("expected left side expression before +, -, * or / found nothing");
+                    err!(self.error, "expected left side expression before +, -, * or / found nothing");
                     return None;
                  };
 
                 let box_right = if let Some(kright) = right {
                     Some(Box::from(kright))
                 } else { 
-                    err!("expected right side expression after +, -, * or / found nothing");
+                    err!(self.error, "expected right side expression after +, -, * or / found nothing");
                     return None;
                  };
 
@@ -329,7 +333,7 @@ impl Parser {
         self.tokens.pop_front();
 
         if !expect!(self.tokens.front(), Some(&Token::LParam), |tok| {
-            err!("expected '(' found: {:?}", tok);
+            err!(self.error, "expected '(' found: {:?}", tok);
         }) {
             return None;
         }
@@ -356,5 +360,9 @@ impl Parser {
             name: name,
             args: args,
         }))
+    }
+
+    pub fn had_errors(&self) -> bool {
+        self.error
     }
 }
