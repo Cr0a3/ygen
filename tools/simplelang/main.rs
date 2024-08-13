@@ -4,9 +4,12 @@ use Ygen::{prelude::*, Support::Cli, Target::initializeAllTargets};
 
 mod lexer;
 mod parser;
+mod ast;
+mod macros;
 
-/// syntax: with (a: i32, b: i32) func: a + b 
-/// or: with() main: print("Hello World!")
+/// syntax: with (a: i32, b: i32) func: { 
+///     return a + b;
+/// } 
 pub fn main() -> Result<(), Box<dyn Error>> {
     let mut cli = Cli::new("simplelang", "Simple language example for ygen", "1.0", "Cr0a3");
     

@@ -1,53 +1,8 @@
 use std::collections::VecDeque;
 
 use Ygen::IR::TypeMetadata;
-
 use crate::lexer::Token;
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Expr {
-    Var((String, Option<TypeMetadata>)), // (name, type)
-    Binary((Operator, Option<Box<Expr>>, Option<Box<Expr>>)), // (op, left, right)
-    LiteralInt(i64),
-    Call(CallStmt),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Operator {
-    Add,
-    Sub,
-    Mul,
-    Div,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Statement {
-    Fn(FnStmt),
-    Expr(Expr),
-    Ret(RetStmt),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FnStmt {
-    name: String,
-    body: Vec<Statement>,
-
-    args: Vec<Expr>,
-
-    extrn: bool,
-    import: bool,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RetStmt {
-    var: Option<Expr>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CallStmt {
-    name: String,
-    args: Vec<Expr>,
-}
+use crate::{ast::*, err, expect, warn};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Parser { 
@@ -75,7 +30,10 @@ impl Parser {
             Token::Ident(_) => self.parse_ident(),
             Token::With | Token::Extern | Token::Import => self.parse_func(),
             Token::Return => self.parse_return(),
-            any => todo!("{:?}", any),
+            any => {
+                err!("unexpected token: {:?}", any);
+                None
+            },
         }
     }
 
@@ -120,7 +78,10 @@ impl Parser {
         if let Some(Token::Ident(ident)) = self.tokens.front() {
             name = ident.to_string();
             self.tokens.pop_front();
-        } else { return None; }    
+        } else { 
+            err!("expected identifer as the function name found {:?}", self.tokens.front());
+            return None; 
+        }    
         
         if import {
             return Some(Statement::Fn(FnStmt {
@@ -132,11 +93,19 @@ impl Parser {
             }))
         }
 
-        if let Some(Token::DoubleDot) = self.tokens.front() {} else { return None; }
+        if !expect!(self.tokens.front(), Some(&Token::DoubleDot), |tok| {
+            err!("expected ':' found: {:?}", tok);
+        }) {
+            return None;
+        }
 
         self.tokens.pop_front();  
 
-        if let Some(Token::LCurly) = self.tokens.front() {} else { return None; }
+        if !expect!(self.tokens.front(), Some(&Token::LCurly), |tok| {
+            err!("expected '{{' found: {:?}", tok);
+        }) {
+            return None;
+        }
 
         self.tokens.pop_front();  
 
@@ -188,7 +157,10 @@ impl Parser {
                 "i16" => Some(TypeMetadata::i16),
                 "i32" => Some(TypeMetadata::i32),
                 "i64" => Some(TypeMetadata::i64),
-                _ => None,
+                any => {
+                    err!("unknown type: {}", any);
+                    None
+                },
             }?);
         }
 
@@ -201,6 +173,7 @@ impl Parser {
         } else if let Some(call) = self.parse_call() {
             Some(Statement::Expr(call))
         } else {
+            err!("unexpected ident {:?}", self.tokens.front());
             None
         }
     }
@@ -216,10 +189,9 @@ impl Parser {
             to_return = Some(Expr::Var(var));
         }
 
-
-        println!("{:?}", self.tokens.front());
-
-        if let Some(Token::Semicolon) = self.tokens.front() {} else { return None; }
+        if !expect!(self.tokens.front(), Some(&Token::Semicolon), |tok| {
+            warn!("expected ';' found: {:?}", tok);
+        }) { return None; }
 
         self.tokens.pop_front();
 
@@ -245,11 +217,17 @@ impl Parser {
 
                 let box_left = if let Some(kleft) = left {
                     Some(Box::from(kleft))
-                } else { None };
+                } else { 
+                    err!("expected left side expression before +, -, * or / found nothing");
+                    return None;
+                 };
 
                 let box_right = if let Some(kright) = right {
                     Some(Box::from(kright))
-                } else { None };
+                } else { 
+                    err!("expected right side expression after +, -, * or / found nothing");
+                    return None;
+                 };
 
                 left = Some(Expr::Binary((op, box_left, box_right)));
             } else {
@@ -304,10 +282,19 @@ impl Parser {
 
                     let mut out = Some(Expr::Var((x.clone(), None)));
 
-                    if let Some(call) = self.parse_call() {
-                        out = Some(call);
+                    self.tokens.pop_front();
+                    let call;
+                    if Some(&Token::LParam) == self.tokens.front() {
+                        call = true;
+                    } else { call = false; }
+                    self.tokens.push_front(Token::Ident(x.clone()));
+
+                    if call {
+                        if let Some(call) = self.parse_call() {
+                            out = Some(call);
+                            pop = false;
+                        }
                     }
-                    pop = false;
 
                     out
 
@@ -339,11 +326,15 @@ impl Parser {
             x.to_string()
         } else { return None; };
 
-
         self.tokens.pop_front();
 
-        if let Some(Token::LParam) = self.tokens.front() {} else { return None };
-        self.tokens.pop_front();
+        if !expect!(self.tokens.front(), Some(&Token::LParam), |tok| {
+            err!("expected '(' found: {:?}", tok);
+        }) {
+            return None;
+        }
+
+        self.tokens.pop_front(); // the (
 
         let mut args = vec![];
 
@@ -352,11 +343,11 @@ impl Parser {
                 break;
             }
 
-            args.push( self.parse_expr()? );
-
             if Some(&Token::Comma) == self.tokens.front() {
                 self.tokens.pop_front();
             }
+
+            args.push( self.parse_expr()? );
         }
 
         self.tokens.pop_front();

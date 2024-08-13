@@ -1,0 +1,27 @@
+#[macro_export]
+macro_rules! expect {
+    ($tok:expr,$pat:pat,$fail:expr) => {{
+        if !matches!($tok, $pat) {
+            $fail($tok);
+            false
+        } else {
+            true
+        }
+    }}; 
+}
+
+#[macro_export]
+macro_rules! err {
+    ($($arg:tt)+) => {
+        use Ygen::Support::Colorize;
+        eprintln!("{}: {}", "Error".red().bold(), format_args!($($arg)+))
+    };
+}
+
+#[macro_export]
+macro_rules! warn {
+    ($($arg:tt)+) => {
+        use Ygen::Support::Colorize;
+        eprintln!("{}: {}", "Warning".yellow().bold(), format_args!($($arg)+))
+    };
+}
