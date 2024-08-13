@@ -86,12 +86,14 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         exit(-1);
     }
 
-    let mut sem = semnatic::Semnatic::new(parser.out);
+    let mut sem = semnatic::Semnatic::new(&parser.out);
     sem.analyze();
 
     if sem.had_errors() {
         exit(-1);
     }
+
+    println!("{:?}", parser.out);
 
     let module = Module();
 

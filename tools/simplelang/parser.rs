@@ -356,10 +356,18 @@ impl Parser {
 
         self.tokens.pop_front();
 
+        self.remove_maybe_semicolon();
+
         Some(Expr::Call(CallStmt {
             name: name,
             args: args,
         }))
+    }
+
+    fn remove_maybe_semicolon(&mut self) {
+        if Some(&Token::Semicolon) == self.tokens.front() {
+            self.tokens.pop_front();
+        }
     }
 
     pub fn had_errors(&self) -> bool {

@@ -1,53 +1,155 @@
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 
-use crate::ast::*;
+use Ygen::IR::TypeMetadata;
+
+use crate::{ast::*, err, warn};
 //use crate::macros::*;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Semnatic {
     stmts: VecDeque<Statement>,
 
-    funcs: Vec<FnStmt>,
-    vars: Vec<Expr>,
+    funcs: HashMap<String, (/*args*/Vec<Expr>, /*body*/Vec<Expr>)>,
 
     error: bool,
 }
 
 impl Semnatic {
-    pub fn new(stmts: Vec<Statement>) -> Self {
+    pub fn new(stmts: &Vec<Statement>) -> Self {
         Self {
-            stmts: stmts.into(),
+            stmts: VecDeque::from(stmts.clone()),
 
-            funcs: vec![],
-            vars: vec![],
+            funcs: HashMap::new(),
             error: false,
         }
     }
 
     pub fn analyze(&mut self) {
         while let Some(stmt) = self.stmts.pop_front() {
-            self.analyze_stmt(&stmt);
+            if let Statement::Fn(func) = stmt {
+                self.analyze_func(&func);
+            } else {
+                err!(self.error, "expected function statement found {:?}", stmt);
+            }
         }
     }
 
-    fn analyze_stmt(&mut self, stmt: &Statement) {
+    fn analyze_stmt(&mut self, stmt: &Statement, vars: &mut HashMap<String, Option<TypeMetadata>>) {
         match stmt {
-            Statement::Fn(func) => self.analyze_func(func),
-            Statement::Expr(expr) => self.analyze_expr(expr),
-            Statement::Ret(ret) => self.analyze_ret(ret),
+            Statement::Expr(expr) => self.analyze_expr(expr, vars),
+            Statement::Ret(ret) => self.analyze_ret(ret, vars),
+            _ => {
+                err!(self.error, "inner functions aren't allowed ");
+            }
         }
     }
 
     fn analyze_func(&mut self, func: &FnStmt) {
-        todo!("anaylizing: {:?}", func)
+        if self.funcs.contains_key(&func.name) {
+            err!(self.error, "func {:?} defined twice", func.name);
+            return;
+        }
+
+        let mut vars = HashMap::new();
+        let mut args = vec![];
+
+        for arg in &func.args {
+            match arg {
+                Expr::Var(var) => {
+                    vars.insert(var.0.to_string(), var.1);     
+                    args.push(Expr::Var(var.clone()));
+                },
+                _ => {
+                    err!(self.error, "expected variables as function args not terms/calls");
+                    return;
+                }
+            }
+        }
+
+        if func.import {
+            self.funcs.insert(func.name.to_string(), (args, vec![]));
+            return;
+        }
+
+        let mut returned = false; // if encountered return node
+
+        for stmt in &func.body {
+            if returned {
+                warn!("unreachable code after return statemant");
+            };
+
+            if let Statement::Ret(_) = stmt {
+                returned = true;
+            }
+
+            self.analyze_stmt(stmt, &mut vars);
+        }
+
+        if !(returned) {
+            err!(self.error, "function {:?} needs to return {:?} but found nothing", func.name, "to be implemented");//func.ret);
+        }
+        
     }
 
-    fn analyze_expr(&mut self, expr: &Expr) {
-        todo!("anaylizing: {:?}", expr)
+    fn analyze_expr(&mut self, expr: &Expr, vars: &mut HashMap<String, Option<TypeMetadata>>) {
+        match expr {
+            Expr::Var((var, _)) => {
+                if !vars.contains_key(var) {
+                    err!(self.error, "unknown variable: {}", var);
+                }
+            },
+            Expr::LiteralInt(_) => {},
+            Expr::Binary(bin) => self.analyze_bin(bin, vars),
+            Expr::Call(call) => self.analyze_call(call, vars),
+        }
     }
 
-    fn analyze_ret(&mut self, ret: &RetStmt) {
-        todo!("anaylizing: {:?}", ret)
+    fn analyze_ret(&mut self, ret: &RetStmt, vars: &mut HashMap<String, Option<TypeMetadata>>) {
+        if let Some(expr) = &ret.var {
+            self.analyze_expr(&expr, vars);
+        } else {
+            err!(self.error, "expected return value");
+        }
+    }
+
+    fn analyze_bin(&mut self, bin: &(Operator, Option<Box<Expr>>, Option<Box<Expr>>), vars: &mut HashMap<String, Option<TypeMetadata>>) {
+        let left = if let Some(left) = &bin.1 {
+            left.clone()
+        } else {
+            err!(self.error, "expected lhs found nothing");
+            return;
+        };
+
+        let right = if let Some(right) = &bin.2 {
+            right.clone()
+        } else {
+            err!(self.error, "expected rhs found nothing");
+            return;
+        };
+
+        self.analyze_expr(&left, vars);
+        self.analyze_expr(&right, vars);
+    }
+
+    fn analyze_call(&mut self, call: &CallStmt, vars: &mut HashMap<String, Option<TypeMetadata>>) {
+        if !self.funcs.contains_key(&call.name) {
+            err!(self.error, "unknown function {:?}", call.name);
+            return;
+        }
+
+        let (args, _) = self.funcs.get(&call.name).unwrap();
+
+        let args = args.len();
+        let given = call.args.len();
+
+        if args != given {
+            err!(self.error, "expected {} arguments found {}", args, given);
+            return;
+        }
+
+        for arg in &call.args {
+            self.analyze_expr(arg, vars);
+        }
     }
 
     pub fn had_errors(&self) -> bool {
