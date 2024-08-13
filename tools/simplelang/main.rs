@@ -1,12 +1,13 @@
 use std::{error::Error, fs::{File, OpenOptions}, io::Read, process::exit};
 use logos::Logos;
-use Ygen::{prelude::*, Support::Cli, Target::initializeAllTargets};
+use Ygen::{prelude::*, Support::{Cli, ColorProfile}, Target::initializeAllTargets};
 
 mod lexer;
 mod parser;
 mod ast;
 mod macros;
 mod semnatic;
+mod codegen;
 
 /// syntax: with (a: i32, b: i32) func: { 
 ///     return a + b;
@@ -93,12 +94,13 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         exit(-1);
     }
 
-    println!("{:?}", parser.out);
+    let mut code = codegen::CodeGenerator::new(parser.out);
+    code.gen();
 
-    let module = Module();
+    let module = code.module();
 
     if cli.opt("ir") {
-        println!("{}", module.dump());
+        eprintln!("{}", module.dumpColored(ColorProfile::default()));
     }
 
     module.emitMachineCode(

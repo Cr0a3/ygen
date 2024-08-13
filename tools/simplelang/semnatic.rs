@@ -67,6 +67,11 @@ impl Semnatic {
         }
 
         if func.import {
+            if func.body.len() > 0 {
+                err!(self.error, "imported functions can't have an body");
+                return;
+            }
+
             self.funcs.insert(func.name.to_string(), (args, vec![]));
             return;
         }
@@ -108,7 +113,7 @@ impl Semnatic {
         if let Some(expr) = &ret.var {
             self.analyze_expr(&expr, vars);
         } else {
-            err!(self.error, "expected return value");
+            //err!(self.error, "expected return value");
         }
     }
 
