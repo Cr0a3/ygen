@@ -269,6 +269,65 @@ pub(crate) fn CompileConstAssign(assign: &ConstAssign<Var, Type>, registry: &mut
     } else { todo!() }
 }
 
+pub(crate) fn CompileConstAssignVar(assign: &ConstAssign<Var, Var>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
+    let infos = &mut registry.backend;
+
+    let loc = if let Some(loc) = infos.varsStorage.get_key_value(&assign.inner2) {
+        loc.1.clone()
+    } else {
+        panic!("unknown variable: {:?}", assign.inner2)
+    };
+
+    let ty = &assign.inner1.ty;
+
+    let boxed: Box<dyn Ir> = Box::new(assign.clone());
+    
+    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &assign.inner2) {
+        infos.drop(&assign.inner2);
+    }
+    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &assign.inner1) {
+        return vec![]; // all of these calculations don't need to be done: dead code removal
+    }
+    
+    let store = {
+        if let Some(reg) = infos.getOpenRegBasedOnTy(*ty) {
+            VarStorage::Register(reg)
+        } else {
+            let addend = match ty {
+                TypeMetadata::u16 | TypeMetadata::i16=> 2,
+                TypeMetadata::u32 | TypeMetadata::i32=> 4,
+                TypeMetadata::u64 | TypeMetadata::i64=> 8,
+                TypeMetadata::Void => todo!("cant output an assing somthing to void"),
+            };
+
+            infos.currStackOffsetForLocalVars += addend;
+            VarStorage::Memory(x64Reg::Rbp - (infos.currStackOffsetForLocalVars - addend) as u32)
+        }
+    };
+
+    infos.insertVar(
+        assign.inner1.clone(), 
+        store.clone()
+    );
+
+    if let VarStorage::Register(reg) = &store {
+        if let VarStorage::Register(reg2) = &loc {
+            vec![ Instr::with2(Mnemonic::Mov, Operand::Reg(reg.boxed()), Operand::Reg(reg2.boxed())) ]
+        } else if let VarStorage::Memory(mem2) = &loc {
+            vec![ Instr::with2(Mnemonic::Mov, Operand::Reg(reg.boxed()), Operand::Mem(mem2.clone())) ]
+        } else { unreachable!() }
+    } else if let VarStorage::Memory(mem) = &store {
+        if let VarStorage::Register(reg2) = &loc {
+            vec![ Instr::with2(Mnemonic::Mov, Operand::Mem(mem.clone()), Operand::Reg(reg2.boxed())) ]
+        } else if let VarStorage::Memory(mem2) = &loc {
+            vec![ 
+                Instr::with2(Mnemonic::Mov, Operand::Reg(infos.getTmpBasedOnTy(*ty)), Operand::Mem(mem2.clone())),
+                Instr::with2(Mnemonic::Mov, Operand::Mem(mem2.clone()), Operand::Reg(infos.getTmpBasedOnTy(*ty)))
+            ]
+        } else { unreachable!() }
+    } else { todo!() }
+}
+
 pub(crate) fn CompileRetType(ret: &Return<Type>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
     if ret.inner1 != Type::Void {
         vec![Instr::with2(Mnemonic::Mov, match ret.inner1.into() {
@@ -583,13 +642,18 @@ pub(crate) fn buildAsmX86<'a>(block: &'a Block, func: &Function, call: &CallConv
 
     registry.block = None;
 
+    let mut out = VecDeque::from(Vec::from(out)
+        .optimize()
+    );
+
     out.extend(x64BuildEpilog(&block, registry));
 
     for epAsm in  x64BuildProlog(&block, registry) {
         out.push_front(epAsm);
     }
 
-    Vec::from(out).optimize()
+    Vec::from(out)
+
 }
 
 pub(crate) fn BlockX86FuncisVarUsedAfterNode(block: &Block, startingNode: &Box<dyn Ir>, var: &Var) -> bool {

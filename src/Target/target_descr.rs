@@ -192,6 +192,7 @@ pub struct TargetBackendDescr<'a> {
     funcForRetType: Option<CompileFunc<Return<Type>>>,
     funcForRetVar: Option<CompileFunc<Return<Var>>>,
     funcForConstAssign: Option<CompileFunc<ConstAssign<Var, Type>>>,
+    funcForConstAssignVar: Option<CompileFunc<ConstAssign<Var, Var>>>,
     funcForCastTyVar: Option<CompileFunc<Cast<Var, TypeMetadata, Var>>>,
 
     funcForAddVarVar: Option<CompileFunc<Add<Var, Var, Var>>>,
@@ -250,6 +251,7 @@ impl<'a> TargetBackendDescr<'a> {
             funcForRetType: None,
             funcForRetVar: None,
             funcForConstAssign: None,
+            funcForConstAssignVar: None,
             funcForCastTyVar: None,
 
             funcForAddVarVar: None,
@@ -290,6 +292,7 @@ impl<'a> TargetBackendDescr<'a> {
     get_set_compile_func!(getCompileFuncForRetType, setCompileFuncForRetType, funcForRetType, CompileFunc<Return<Type>>);
     get_set_compile_func!(getCompileFuncForRetVar, setCompileFuncForRetVar, funcForRetVar, CompileFunc<Return<Var>>);
     get_set_compile_func!(getCompileFuncForConstAssign, setCompileFuncForConstAssign, funcForConstAssign, CompileFunc<ConstAssign<Var, Type>>);
+    get_set_compile_func!(getCompileFuncForConstAssignVar, setCompileFuncForConstAssignVar, funcForConstAssignVar, CompileFunc<ConstAssign<Var, Var>>);
     get_set_compile_func!(getCompileFuncForCastTyVar, setCompileFuncForCastTyVar,  funcForCastTyVar, CompileFunc<Cast<Var, TypeMetadata, Var>>);
     
     get_set_compile_func!(getCompileFuncForAddVarVar, setCompileFuncForAddVarVar,  funcForAddVarVar, CompileFunc<Add<Var, Var, Var>>);
