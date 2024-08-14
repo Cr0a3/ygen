@@ -116,6 +116,15 @@ impl Module {
         let mut file = OpenOptions::new().create(true).write(true)
                                 .open(path)?;
 
+        let lines = self.emitAsm(triple, registry)?;
+
+        file.write_all(lines.as_bytes())?;
+
+        Ok(())
+    }
+
+    /// emits all function into one asm file
+    pub fn emitAsm(&self, triple: Triple, registry: &mut TargetRegistry) -> Result<String, Box<dyn Error>> {
         let mut lines = String::new();
         lines.push_str(&format!("// made using {} v{}\n", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION")));
         lines.push_str(&format!("// by {}\n\n", env!("CARGO_PKG_AUTHORS").replace(";", " ")));
@@ -146,9 +155,7 @@ impl Module {
             }
         }
 
-        file.write_all(lines.as_bytes())?;
-
-        Ok(())
+        Ok(lines)
     }
 }
 

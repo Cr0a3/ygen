@@ -16,6 +16,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     let mut cli = Cli::new("simplelang", "Simple language example for ygen", "1.0", "Cr0a3");
     
     cli.add_opt("ir", "emit-ir", "Emits the ir");
+    cli.add_opt("asm", "emit-asm", "Emits assembly");
     cli.add_arg("in", "input", "The input file", true);
     cli.add_arg("o", "out", "The output file", false);
     cli.add_arg("triple", "triple", "The target triple", false);
@@ -103,10 +104,13 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         eprintln!("{}", module.dumpColored(ColorProfile::default()));
     }
 
-    module.emitMachineCode(
-        triple, 
-        &mut initializeAllTargets()
-    )?.emit(outfile)?;
+    let registry = &mut initializeAllTargets();
+
+    if cli.opt("asm") {
+        eprintln!("{}", module.emitAsm(triple, registry)?);
+    }
+
+    module.emitMachineCode(triple, registry)?.emit(outfile)?;
 
     Ok(())
 

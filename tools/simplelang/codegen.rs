@@ -96,7 +96,7 @@ impl CodeGenerator {
         match expr {
             Expr::Var((name, _)) => vars.get(name).unwrap().clone(),
             Expr::Binary(bin) => self.gen_bin(bin, builder, vars),
-            Expr::LiteralInt(int) => todo!("implement assign for {}", *int),//builder.BuildAssign(*int),
+            Expr::LiteralInt(int) => builder.BuildAssign(Type::i64(*int)),
             Expr::Call(call) => self.gen_call(call, builder, vars),
         }
     }

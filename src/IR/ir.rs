@@ -638,6 +638,23 @@ impl BuildCall<&Function, Vec<Var>> for IRBuilder<'_> {
     }
 }
 
+/// Trait used for overloading the BuildAssign function
+pub trait BuildAssign<T> {
+    /// builds an assignment
+    fn BuildAssign(&mut self, value: T) -> Var;
+}
+impl BuildAssign<Type> for IRBuilder<'_> {
+    fn BuildAssign(&mut self, value: Type) -> Var {
+        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+        
+        let out = Var::new(block, value.into());
+
+        block.push_ir(ConstAssign::new(out.clone(), value));
+
+        out
+    }
+}
+
 /// The ir trait
 pub(crate) trait Ir: Debug + Any {
     /// Returns the ir node as his textual representation
