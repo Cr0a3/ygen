@@ -17,7 +17,7 @@ impl CallConv {
     pub fn args16(&self) -> Vec<x64Reg> {
         match self {
             CallConv::SystemV => vec![x64Reg::Si, x64Reg::Di, x64Reg::Dx, x64Reg::Cx, x64Reg::R8w, x64Reg::R9w],
-            CallConv::WindowsFastCall => vec![x64Reg::Dx, x64Reg::Cx, x64Reg::R8w, x64Reg::R9w],
+            CallConv::WindowsFastCall => vec![x64Reg::Cx, x64Reg::Dx, x64Reg::R8w, x64Reg::R9w],
             CallConv::AppleAarch64 => todo!(),
             CallConv::WasmBasicCAbi => todo!(),
         }
@@ -27,7 +27,7 @@ impl CallConv {
     pub fn args32(&self) -> Vec<x64Reg> {
         match self {
             CallConv::SystemV => vec![x64Reg::Esi, x64Reg::Edi, x64Reg::Edx, x64Reg::Ecx, x64Reg::R8d, x64Reg::R9d],
-            CallConv::WindowsFastCall => vec![x64Reg::Edx, x64Reg::Ecx, x64Reg::R8d, x64Reg::R9d],
+            CallConv::WindowsFastCall => vec![x64Reg::Ecx, x64Reg::Edx, x64Reg::R8d, x64Reg::R9d],
             CallConv::AppleAarch64 => todo!(),
             CallConv::WasmBasicCAbi => todo!(),
         }
@@ -37,7 +37,7 @@ impl CallConv {
     pub fn args64(&self) -> Vec<x64Reg> {
         match self {
             CallConv::SystemV => vec![x64Reg::Rsi, x64Reg::Rdi, x64Reg::Rdx, x64Reg::Rcx, x64Reg::R8, x64Reg::R9],
-            CallConv::WindowsFastCall => vec![x64Reg::Rdx, x64Reg::Rcx, x64Reg::R8, x64Reg::R9],
+            CallConv::WindowsFastCall => vec![x64Reg::Rcx, x64Reg::Rdx, x64Reg::R8, x64Reg::R9],
             CallConv::AppleAarch64 => todo!(),
             CallConv::WasmBasicCAbi => todo!(),
         }

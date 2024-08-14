@@ -1,6 +1,6 @@
 use std::{collections::{HashMap, VecDeque}, error::Error, fmt::Display};
 
-use crate::{prelude::{Block, Function}, Target::instr::Instr};
+use crate::{prelude::{Block, Function}, Obj::Link, Target::instr::Instr};
 
 use super::{Arch, CallConv, TargetBackendDescr, Triple};
 
@@ -68,7 +68,7 @@ impl<'a> TargetRegistry<'a> {
     }
 
     /// Builds the ir of the given triple into machine code
-    pub fn buildMachineCodeForTarget(&mut self, triple: Triple, block: &Block, funct: &Function) -> Result<Vec<u8>, Box<dyn Error>> {
+    pub fn buildMachineCodeForTarget(&mut self, triple: Triple, block: &Block, funct: &Function) -> Result<(Vec<u8>, Vec<Link>), Box<dyn Error>> {
         if let Some(org) = self.targets.get_mut(&triple.arch) {
 
             let call = (org.init.unwrap()(triple.getCallConv()?)).call;
@@ -79,14 +79,23 @@ impl<'a> TargetRegistry<'a> {
                 &mut org.init.unwrap()(triple.getCallConv()?)).into();
 
             let mut res = vec![];
+            let mut links = vec![];
 
             for instr in &asm {
-                res.extend_from_slice(
-                    &instr.encode()?
-                );
+                let (encoded, link) = &instr.encode()?;
+                res.extend_from_slice(&encoded);
+
+                if let Some(link) = link {
+                    let mut link = link.clone();
+
+                    link.from = funct.name.to_string();
+                    link.at = res.len();
+
+                    links.push(link);
+                }
             }
 
-            Ok(res)
+            Ok((res, links))
         } else {
             Err(Box::from( 
                 RegistryError::UnsuportedArch(triple.arch) 

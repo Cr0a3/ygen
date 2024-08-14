@@ -1,6 +1,6 @@
 use crate::{prelude::Triple, Obj::{Decl, Linkage, ObjectBuilder}, Optimizations::PassManager, Support::ColorProfile, Target::TargetRegistry};
 
-use super::{func::FunctionType, Block, Function, VerifyError};
+use super::{func::FunctionType, Function, VerifyError};
 use std::{collections::HashMap, error::Error, fs::OpenOptions, io::Write, path::Path};
 
 /// ## The Module
@@ -23,6 +23,11 @@ impl Module {
         self.funcs
             .insert(name.to_string(), Function::new(name.to_string(), ty.to_owned()));
         self.funcs.get_mut(name).unwrap()
+    }
+
+    /// Adds an already defined function to the module
+    pub fn add_raw(&mut self, func: Function) {
+        self.funcs.insert(func.name.to_string(), func);
     }
 
     #[allow(dead_code)]
@@ -86,18 +91,18 @@ impl Module {
         let mut obj = ObjectBuilder::new(triple);
 
         for (name, func) in &self.funcs {
-            obj.decl( (&name, Decl::Function, Linkage::External));
+            obj.decl( (&name, Decl::Function, func.linkage));
 
             let mut comp = vec![];
 
-            let mut positions: Vec<(Block, /*offset from 0*/ usize)> = vec![];
-
             for block in &func.blocks {
-                let compiled = &registry.buildMachineCodeForTarget(triple, block, &func)?;
-
-                positions.push((block.clone(), comp.len()));
+                let (compiled, links) = &registry.buildMachineCodeForTarget(triple, block, &func)?;
 
                 comp.extend_from_slice(&compiled);
+
+                for link in links {
+                    obj.link(link.to_owned())
+                }
             }
 
             obj.define(&name, comp);
@@ -111,6 +116,15 @@ impl Module {
         let mut file = OpenOptions::new().create(true).write(true)
                                 .open(path)?;
 
+        let lines = self.emitAsm(triple, registry)?;
+
+        file.write_all(lines.as_bytes())?;
+
+        Ok(())
+    }
+
+    /// emits all function into one asm file
+    pub fn emitAsm(&self, triple: Triple, registry: &mut TargetRegistry) -> Result<String, Box<dyn Error>> {
         let mut lines = String::new();
         lines.push_str(&format!("// made using {} v{}\n", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION")));
         lines.push_str(&format!("// by {}\n\n", env!("CARGO_PKG_AUTHORS").replace(";", " ")));
@@ -119,7 +133,12 @@ impl Module {
         for (name, func) in &self.funcs {
             if func.linkage == Linkage::Extern {
                 lines += &format!("global {}\n", name);
+                continue;
             }
+
+            if func.linkage == Linkage::External {
+                lines += &format!("global {}\n", name);
+            } 
 
             lines += &format!("{}:\n", name);
 
@@ -136,9 +155,7 @@ impl Module {
             }
         }
 
-        file.write_all(lines.as_bytes())?;
-
-        Ok(())
+        Ok(lines)
     }
 }
 

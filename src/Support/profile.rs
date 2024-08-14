@@ -57,9 +57,9 @@ impl ColorProfile {
     pub fn markup(&self, string: &str, class: ColorClass) -> String {
         match class {
             ColorClass::Instr => string.color(self.instr.r as i16, self.instr.g as i16, self.instr.b as i16),
-            ColorClass::Ty => string.color(self.ty.r as i16, self.instr.g as i16, self.instr.b as i16),
-            ColorClass::Var => string.color(self.var.r as i16, self.instr.g as i16, self.instr.b as i16),
-            ColorClass::Name => string.color(self.name.r as i16, self.instr.g as i16, self.instr.b as i16),
+            ColorClass::Ty => string.color(self.ty.r as i16, self.ty.g as i16, self.ty.b as i16),
+            ColorClass::Var => string.color(self.var.r as i16, self.var.g as i16, self.var.b as i16),
+            ColorClass::Name => string.color(self.name.r as i16, self.name.g as i16, self.name.b as i16).bold(),
             ColorClass::Value => string.color(self.value.r as i16, self.value.g as i16, self.value.b as i16),
         }
     }

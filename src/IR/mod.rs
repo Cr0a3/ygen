@@ -25,6 +25,8 @@ pub enum VerifyError {
     RetTyNotFnTy(TypeMetadata, TypeMetadata),
     /// The type of op0 operand doesn't match the type of the op1 operand
     Op0Op1TyNoMatch(TypeMetadata, TypeMetadata),
+    /// I am to lazy to add an error message here
+    IDontWantToAddAnErrorMessageHereButItsAnError,
 }
 
 impl Display for VerifyError {
@@ -43,6 +45,9 @@ impl Display for VerifyError {
                 )
                 
             },
+            VerifyError::IDontWantToAddAnErrorMessageHereButItsAnError => {
+                "i am to lazy to add an useful error message here. go ahed and create an github issue".to_string()
+            }
         })
     }
 }

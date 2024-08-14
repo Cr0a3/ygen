@@ -195,7 +195,13 @@ impl ObjectBuilder {
             let sym = obj.add_symbol(Symbol {
                 name: name.clone().as_bytes().to_vec(),
                 value: 0,
-                size: (data.len() - 1) as u64,
+                size: {
+                    if data.len() > 1 {
+                        (data.len() - 1) as u64
+                    } else {
+                        0
+                    }
+                },
                 kind: {
                     match decl {
                         Decl::Function => SymbolKind::Text,
@@ -205,8 +211,8 @@ impl ObjectBuilder {
                 },
                 scope: {
                     match link {
+                        Linkage::Extern => SymbolScope::Dynamic,
                         Linkage::External => SymbolScope::Linkage,
-                        Linkage::Extern => SymbolScope::Linkage,
                         Linkage::Internal => SymbolScope::Compilation,
                     }
                 },
@@ -221,33 +227,15 @@ impl ObjectBuilder {
                 Decl::Constant => obj.add_subsection(StandardSection::ReadOnlyData, name.as_bytes()),
             };*/
 
-            let def_offset = match decl {
-                Decl::Function => obj.add_symbol_data(sym, secText, &data, 16),
-                Decl::Data => obj.add_symbol_data(sym, secData, &data, 16),
-                Decl::Constant => obj.add_symbol_data(sym, secConsts, &data, 16),
-            };
-
-            syms.insert(name.clone(), (None, Some(def_offset), sym));
-        }
-
-        for (name, decl, linkage) in &self.decls { // for extern symbols
-            if *linkage == Linkage::Extern {
-                let sym = obj.add_symbol(Symbol {
-                    name: name.as_bytes().to_vec(),
-                    value: 0,
-                    size: 0,
-                    kind: {
-                        match decl {
-                            Decl::Function => SymbolKind::Text,
-                            Decl::Data => SymbolKind::Data,
-                            Decl::Constant => SymbolKind::Data,
-                        }
-                    },
-                    scope: SymbolScope::Unknown,
-                    weak: false,
-                    section: SymbolSection::Undefined,
-                    flags: SymbolFlags::None,
-                });
+            if *link != Linkage::Extern {
+                let def_offset = match decl {
+                    Decl::Function => obj.add_symbol_data(sym, secText, &data, 16),
+                    Decl::Data => obj.add_symbol_data(sym, secData, &data, 16),
+                    Decl::Constant => obj.add_symbol_data(sym, secConsts, &data, 16),
+                };
+    
+                syms.insert(name.clone(), (None, Some(def_offset), sym));
+            } else {
                 syms.insert(name.clone(), (None, None, sym));
             }
         }
@@ -257,7 +245,7 @@ impl ObjectBuilder {
             let (_, _, to_sym) = syms.get(&link.to).unwrap();
 
             obj.add_relocation(secText, Relocation {
-                offset: link.at as u64,
+                offset: (link.at as i64 - 4) as u64,
                 symbol: to_sym.to_owned(),
                 addend: link.addend + {if let Some(off) = off { *off as i64} else { 0 }},
                 flags: RelocationFlags::Generic { 

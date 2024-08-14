@@ -15,10 +15,7 @@ impl Optimize<Instr> for Vec<Instr> {
         for instr in self.iter() {
             let mut optimized = false;
 
-            if instr.mnemonic == Mnemonic::Ret {
-                out.push(instr.clone());
-                break;
-            }
+            
 
             let last = out.last().cloned();
             if let Some(last) = &last {
@@ -42,12 +39,21 @@ impl Optimize<Instr> for Vec<Instr> {
                             }
                         }
                     }
-                } else if last.mnemonic == Mnemonic::Mov  && last.op1 == instr.op1 {
-                    if let Some(Operand::Reg(_)) = instr.op1 {
-                        out.pop();
-                        optimized = true;
-                    }
                 } 
+                else if instr.op1 == instr.op2 {
+                    optimized = true;
+                }
+                
+                else if instr.mnemonic == Mnemonic::Ret && last.mnemonic == Mnemonic::Call {
+                    out.pop();
+                    out.push(Instr::with1(Mnemonic::Jmp, instr.op1.clone().expect("call needs to have only one op")));
+                    optimized = true;
+                } 
+
+                if instr.mnemonic == Mnemonic::Ret {
+                    out.push(instr.clone());
+                }
+
                 if !optimized {
                     if instr.invert_of(last) {
                         out.pop();

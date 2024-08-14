@@ -1,5 +1,5 @@
 use std::{any::Any, fmt::Debug, hash::Hash};
-use super::{FunctionType, IRBuilder, Type, TypeMetadata, Var, VerifyError};
+use super::{Function, FunctionType, IRBuilder, Type, TypeMetadata, Var, VerifyError};
 use crate::Target::{instr::Instr, TargetBackendDescr};
 
 macro_rules! IrTypeWith3 {
@@ -82,6 +82,7 @@ macro_rules! IrTypeWith1 {
 }
 
 IrTypeWith1!(Return, T);
+IrTypeWith3!(Call, T, U, Z);
 IrTypeWith2!(ConstAssign, T, U);
 IrTypeWith3!(Cast, T, U, Z);
 IrTypeWith3!(Add, T, U, Z);
@@ -358,7 +359,7 @@ impl Ir for Return<Type> {
     }
 
     fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-        registry.getCompileFuncRetType()(self, registry)
+        registry.getCompileFuncForRetType()(self, registry)
     }
 }
 
@@ -454,6 +455,54 @@ impl Ir for ConstAssign<Var, Type> {
     }
 }
 
+impl Ir for ConstAssign<Var, Var> {
+    fn dump(&self) -> String {
+        let meta: TypeMetadata = self.inner2.ty;
+        format!("{} = {} {}", self.inner1.name, meta, self.inner2.name)
+    }
+
+    fn dumpColored(&self, profile: ColorProfile) -> String {
+        let meta: TypeMetadata = self.inner2.ty;
+        format!("{} = {} {}", 
+            profile.markup(&self.inner1.name, ColorClass::Var), 
+            profile.markup(&meta.to_string(), ColorClass::Instr), 
+            profile.markup(&self.inner2.name.to_string(), ColorClass::Value),
+        )
+    }
+
+    fn name(&self) -> String {
+        "AssignVarVar".into()
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn verify(&self, _: FunctionType) -> Result<(), VerifyError> {
+        let op0Ty = self.inner1.ty;
+        let op1Ty = self.inner2.ty;
+        if op0Ty != op1Ty {
+            Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op1Ty))?
+        }
+
+        Ok(())
+    }
+
+    fn clone_box(&self) -> Box<dyn Ir> {
+        Box::new(self.clone())
+    }
+
+    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
+        registry.getCompileFuncForConstAssignVar()(self, registry)
+    }
+
+    fn uses(&self, var: &Var) -> bool {
+        if *var == self.inner1 { true }
+        else if *var == self.inner2 { true }
+        else { false }
+    }
+}
+
 impl Ir for Cast<Var, TypeMetadata, Var> {
     fn dump(&self) -> String {
         format!("{} = cast {} to {}", self.inner3.name, self.inner1.name, self.inner2)
@@ -501,6 +550,84 @@ impl Ir for Cast<Var, TypeMetadata, Var> {
     }
 }
 
+impl Ir for Call<Function, Vec<Var>, Var> {
+    fn dump(&self) -> String {
+        let mut fmt = String::new();
+        
+        for arg in &self.inner2 {
+            fmt.push_str(&format!("{}", arg))
+        }
+
+        format!("{} = call {} {} {}", self.inner3.name, self.inner1.ty.ret, self.inner1.name, fmt)
+    }
+
+    fn dumpColored(&self, profile: ColorProfile) -> String {
+        let mut fmt = String::new();
+        
+        for arg in &self.inner2 {
+            fmt.push_str(&arg.to_colored_string(profile));
+            fmt.push(' ');
+        }
+
+        format!("{} = {} {} {} {}", 
+            profile.markup(&self.inner3.name, ColorClass::Var),
+            profile.markup("call", ColorClass::Instr),
+            profile.markup(&self.inner1.ty.ret.to_string(), ColorClass::Ty),
+            profile.markup(&self.inner1.name, ColorClass::Name),
+            fmt
+        )
+    }
+
+    fn name(&self) -> String {
+        "Call".to_string()
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn verify(&self, _: FunctionType) -> Result<(), VerifyError> {
+        if self.inner3.ty != self.inner1.ty.ret {
+            Err(VerifyError::Op0Op1TyNoMatch(self.inner3.ty, self.inner1.ty.ret))?
+        }
+
+        let mut index = 0;
+        for arg in &self.inner2 {
+            if matches!(self.inner1.ty.args.get(index), Some((_, argty)) if *argty != (*arg).ty.into()) {
+                Err(VerifyError::IDontWantToAddAnErrorMessageHereButItsAnError)?
+            }
+            index += 1;
+        }
+
+        Ok(())
+    }
+
+    fn clone_box(&self) -> Box<dyn Ir> {
+        Box::from( self.clone() )
+    }
+
+    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
+        registry.getCompileFuncForCall()(self, registry)
+    }
+
+    fn uses(&self, var: &Var) -> bool {
+        let mut uses = false;
+
+        if self.inner3 == *var {
+            uses = true;
+        }
+
+
+        for arg in &self.inner2 {
+            if *arg == *var {
+                uses = true;
+            }
+        }
+
+        uses
+    }
+}
+
 /// Trait for the return instruction
 /// Used for overloading the BuildRet function
 pub trait BuildReturn<T> {
@@ -540,6 +667,54 @@ impl BuildCast<Var, TypeMetadata> for IRBuilder<'_> {
         out
     }
 }
+
+/// Trait for the call instruction
+/// Used for overloading the BuildCall function
+pub trait BuildCall<T, U> {
+    /// builds a function call
+    fn BuildCall(&mut self, func: T, args: U) -> Var;
+}
+impl BuildCall<&Function, Vec<Var>> for IRBuilder<'_> {
+    fn BuildCall(&mut self, func: &Function, args: Vec<Var>) -> Var {
+        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+        
+        let out = Var::new(block, func.ty.ret);
+
+        block.push_ir(Call::new(func.clone(), args, out.clone()));
+
+        out 
+    }
+}
+
+/// Trait used for overloading the BuildAssign function
+pub trait BuildAssign<T> {
+    /// builds an assignment
+    fn BuildAssign(&mut self, value: T) -> Var;
+}
+impl BuildAssign<Type> for IRBuilder<'_> {
+    fn BuildAssign(&mut self, value: Type) -> Var {
+        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+        
+        let out = Var::new(block, value.into());
+
+        block.push_ir(ConstAssign::new(out.clone(), value));
+
+        out
+    }
+}
+
+impl BuildAssign<Var> for IRBuilder<'_> {
+    fn BuildAssign(&mut self, value: Var) -> Var {
+        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+        
+        let out = Var::new(block, value.ty);
+
+        block.push_ir(ConstAssign::new(out.clone(), value));
+
+        out
+    }
+}
+
 /// The ir trait
 pub(crate) trait Ir: Debug + Any {
     /// Returns the ir node as his textual representation

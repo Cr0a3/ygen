@@ -92,4 +92,10 @@ impl ModRm {
     pub fn regWimm(i: u8, reg: x64Reg) -> Vec<u8> {
         vec![0b11 << 6 | i << 3 | reg.enc()]
     }
+
+    pub fn imMem(i: u8, mem: MemOp) -> Vec<u8> {
+        let mut out = vec![mem.encode(None).0 << 6 | i << 3 | 0b100];
+        out.extend_from_slice(&mem.encode(None).1);
+        out
+    }
 }
