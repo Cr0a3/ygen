@@ -68,7 +68,7 @@ pub struct ModRm {}
 
 impl ModRm {
     pub fn regRipImm(reg: x64Reg, imm: i32) -> Vec<u8> {
-        let mut out = vec![0 << 6 | reg.enc() | 0b101];
+        let mut out = vec![0 | reg.enc() | 0b101];
 
         let bytes = imm.to_be_bytes();
 

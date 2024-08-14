@@ -301,6 +301,7 @@ impl Instr {
                 (buildOpcode(mandatory, rex, op), None)
             },
             Mnemonic::Ret => (vec![0xC3], None),
+            Mnemonic::Endbr64 => (vec![0xF3, 0x0F, 0x1E, 0xFA], None),
             Mnemonic::Movzx => todo!(),
             Mnemonic::Call => {
                 let (i, m, r) = (0xE8, 0xFF, 2);
@@ -436,6 +437,11 @@ impl Instr {
                 }
             }
             Mnemonic::Link => {},
+            Mnemonic::Endbr64 => {
+                if self.op1.is_some() || self.op2.is_some() {
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "endbr64 can't have operands".to_string()))?
+                }
+            }
         };
 
         Ok(())
@@ -576,6 +582,8 @@ pub enum Mnemonic {
     Call,
     Jmp,
 
+    Endbr64,
+
     /// here's a link placed
     Link,
 }
@@ -599,6 +607,7 @@ impl FromStr for Mnemonic {
             "ret" => Ok(Mnemonic::Ret),
             "call" => Ok(Mnemonic::Call),
             "jmp" => Ok(Mnemonic::Jmp),
+            "endbr64" => Ok(Mnemonic::Endbr64),
             _ => Err(()),
         }
     }
@@ -621,6 +630,7 @@ impl Display for Mnemonic {
             Mnemonic::Ret => "ret",
             Mnemonic::Call => "call",
             Mnemonic::Jmp => "jmp",
+            Mnemonic::Endbr64 => "endbr64",
             Mnemonic::Link => "",
         })
     }
@@ -808,6 +818,10 @@ impl Display for MemOp {
         if let Some(index) = &self.index {
             string.push_str(&format!("+ {}", index))
         } else if self.displ != 0 {
+            if self.rip {
+                string.push_str("rip")
+            }
+
             if self.displ > 0 { string.push_str("+ ") }
             else { string.push_str("- ") }
             string.push_str(&format!("{}", self.displ.abs()))

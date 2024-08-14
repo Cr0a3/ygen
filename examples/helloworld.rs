@@ -11,8 +11,9 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     other.import();
     let other = other.clone();
     
-    let mut string = module.addConst("str").clone();
-    string.set("Hello World!".as_bytes().to_vec());
+    let string = module.addConst("str");
+    string.set("Hello World!\0".as_bytes().to_vec());
+    let string = string.clone();
 
     let ty = FnTy(vec![TypeMetadata::i64], TypeMetadata::i32);
     

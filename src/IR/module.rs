@@ -1,4 +1,4 @@
-use crate::{prelude::Triple, Obj::{Decl, Linkage, ObjectBuilder}, Optimizations::PassManager, Support::ColorProfile, Target::TargetRegistry};
+use crate::{prelude::Triple, Obj::{Decl, Linkage, ObjectBuilder}, Optimizations::PassManager, Support::{ColorClass, ColorProfile}, Target::TargetRegistry};
 
 use super::{func::FunctionType, Const, Function, VerifyError};
 use std::{collections::HashMap, error::Error, fs::OpenOptions, io::Write, path::Path};
@@ -63,6 +63,23 @@ impl Module {
     pub fn dump(&self) -> String {
         let mut string = String::new();
 
+        for (_, consta) in &self.consts {
+            let mut bytes = String::from("[ ");
+
+            for byte in &consta.data { 
+                bytes.push_str(&format!("{}, ", *byte));
+            }
+
+            if consta.data.len() > 0 {
+                bytes.remove(bytes.chars().count() - 1);
+                bytes.remove(bytes.chars().count() - 2);
+            }
+
+            bytes.push(']');
+
+            string += &format!("const {} = {}\n", consta.name,  bytes);
+        }
+
         for (_, func) in &self.funcs {
             string += &format!("{}\n", func.dump());
         }
@@ -74,6 +91,27 @@ impl Module {
     /// Maybe output to stdout
     pub fn dumpColored(&self, profile: ColorProfile) -> String {
         let mut string = String::new();
+
+        for (_, consta) in &self.consts {
+            let mut bytes = String::from("[ ");
+
+            for byte in &consta.data { 
+                bytes.push_str(&format!("{}, ", *byte));
+            }
+
+            if consta.data.len() > 0 {
+                bytes.remove(bytes.chars().count() - 1);
+                bytes.remove(bytes.chars().count() - 2);
+            }
+
+            bytes.push(']');
+
+            string += &format!("{} {} = {}\n", 
+                profile.markup("const", ColorClass::Instr), 
+                profile.markup(&consta.name, ColorClass::Name), 
+                profile.markup(&bytes, ColorClass::Value)
+            );
+        }
 
         for (_, func) in &self.funcs {
             string += &format!("{}\n", func.dumpColored(profile));
@@ -103,6 +141,11 @@ impl Module {
     /// emits the machine code of the module into an object file (in the form of an object builder)
     pub fn emitMachineCode(&self, triple: Triple, registry: &mut TargetRegistry) -> Result<ObjectBuilder, Box<dyn Error>> {
         let mut obj = ObjectBuilder::new(triple);
+
+        for (_, consta) in &self.consts {
+            obj.decl((consta.name.as_str(), Decl::Constant, consta.linkage));
+            obj.define(&consta.name, consta.data.clone());
+        }
 
         for (name, func) in &self.funcs {
             obj.decl( (&name, Decl::Function, func.linkage));
@@ -142,6 +185,11 @@ impl Module {
         let mut lines = String::new();
         lines.push_str(&format!("// made using {} v{}\n", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION")));
         lines.push_str(&format!("// by {}\n\n", env!("CARGO_PKG_AUTHORS").replace(";", " ")));
+        lines.push_str("section .rodata\n\n");
+
+        for (_, consta) in &self.consts {
+            lines.push_str(&format!("{}: {:?}\n", consta.name, consta.data));
+        }
         lines.push_str("section .text\n\n");
 
         for (name, func) in &self.funcs {
