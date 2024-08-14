@@ -9,6 +9,8 @@ pub struct CodeGenerator {
     input: VecDeque<Statement>,
 
     module: Module,
+
+    functions: HashMap<String, Function>,
 }
 
 impl CodeGenerator {
@@ -16,6 +18,7 @@ impl CodeGenerator {
         Self {
             input: stmts.into(),
             module: Module(),
+            functions: HashMap::new(),
         }
     }
     
@@ -24,6 +27,10 @@ impl CodeGenerator {
             if let Statement::Fn(func) = stmt {
                 self.gen_func(&func);
             } else { unreachable!() }
+        }
+
+        for (_, fun) in self.functions {
+            self.module.add_raw(fun)
         }
     }
 
@@ -55,7 +62,7 @@ impl CodeGenerator {
         
         let mut builder = IRBuilder();
 
-        let fun = self.module.add(&func.name, &func_ty);
+        let mut fun = Func(func.name.to_string(), func_ty);
 
         if func.extrn {
             fun.extrn();
@@ -63,15 +70,18 @@ impl CodeGenerator {
 
         if func.import {
             fun.import();
+            self.functions.insert(func.name.to_string(), fun.clone());
             return;
         }
 
-        let mut block = Block("entry", &fun);
-        builder.positionAtStart(&mut block);
+        let block = fun.addBlock("entry");
+        builder.positionAtStart(block);
 
         for stmt in &func.body {
             self.gen_stmt(stmt, &mut builder, &mut vars);
         }
+
+        self.functions.insert(func.name.to_string(), fun);
     }
 
     fn gen_stmt(&mut self, stmt: &Statement, builder: &mut IRBuilder, vars: &mut HashMap<String, Var>) {
@@ -83,12 +93,18 @@ impl CodeGenerator {
     }
 
     fn gen_expr(&mut self, expr: &Expr, builder: &mut IRBuilder, vars: &mut HashMap<String, Var>) -> Var {
-        todo!()
+        match expr {
+            Expr::Var((name, _)) => vars.get(name).unwrap().clone(),
+            Expr::Binary(bin) => self.gen_bin(bin, builder, vars),
+            Expr::LiteralInt(int) => todo!("implement assign for {}", *int),//builder.BuildAssign(*int),
+            Expr::Call(call) => self.gen_call(call, builder, vars),
+        }
     }
 
     fn gen_ret(&mut self, ret: &RetStmt, builder: &mut IRBuilder, vars: &mut HashMap<String, Var>) {
-        
-        let ret = if let Some(ret) = &ret.var { ret} else {
+        let ret = if let Some(ret) = &ret.var { 
+            ret
+        } else {
             builder.BuildRet(Type::Void);
             return;
         };
@@ -97,6 +113,34 @@ impl CodeGenerator {
 
         builder.BuildRet(out);
 
+    }
+
+    fn gen_bin(&mut self, bin: &(Operator, Option<Box<Expr>>, Option<Box<Expr>>), builder: &mut IRBuilder, vars: &mut HashMap<String, Var>) -> Var {
+        let left = bin.1.as_ref().unwrap();
+        let right = bin.2.as_ref().unwrap();
+
+        let left = self.gen_expr(&left, builder, vars);
+        let right = self.gen_expr(&right, builder, vars);
+
+        match bin.0 {
+            Operator::Sub => builder.BuildSub(left, right),
+            Operator::Add => builder.BuildAdd(left, right),
+            Operator::Mul => todo!("add mul support to ygen"),
+            Operator::Div => todo!("add div support to ygen"),
+        }
+    }
+
+    fn gen_call(&mut self, call: &CallStmt, builder: &mut IRBuilder, vars: &mut HashMap<String, Var>) -> Var {
+        let fun = &self.functions.get(&call.name).unwrap().clone();
+
+        let mut args = vec![];
+
+        for arg in &call.args {
+            let var = self.gen_expr(arg, builder, vars);
+            args.push(var);
+        }
+
+        builder.BuildCall(&fun, args)
     }
 
     pub fn module(&mut self) -> &mut Module {
