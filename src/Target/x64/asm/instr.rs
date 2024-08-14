@@ -237,7 +237,11 @@ impl Instr {
                     }
 
                     op.push(0x8D);
-                    op.extend_from_slice(&ModRm::regM(op0, mem.clone()));
+                    if !mem.rip {
+                        op.extend_from_slice(&ModRm::regM(op0, mem.clone()));
+                    } else {
+                        op.extend_from_slice(&mem.rip(op0));
+                    }
                 } else { todo!() }
 
                 (buildOpcode(mandatory, rex, op), None)
@@ -669,6 +673,8 @@ pub struct MemOp {
     pub scale: isize,
     /// The displacement
     pub displ: isize,
+    /// rip relativ
+    pub rip: bool,
 }
 
 impl MemOp {
@@ -745,6 +751,15 @@ impl MemOp {
 
         rex
     }
+
+    #[doc(hidden)]
+    pub fn rip(&self, basis: x64Reg) -> Vec<u8> {
+        if !self.rip {
+            todo!()
+        }
+
+        ModRm::regRipImm(basis, self.displ as i32)
+    }
 }
 
 impl PartialEq for MemOp {
@@ -776,7 +791,8 @@ impl Clone for MemOp {
                 else { None }
             },
             scale: self.scale.clone(), 
-            displ: self.displ.clone(), 
+            displ: self.displ.clone(),
+            rip: self.rip, 
         }
     }
 }
@@ -814,6 +830,7 @@ impl Add<u32> for x64Reg {
             index: None,
             scale: 2,
             displ: rhs as isize,
+            rip: false,
         }
     }
 }
@@ -827,6 +844,7 @@ impl Add<x64Reg> for x64Reg {
             index: Some(rhs.boxed()),
             scale: 1,
             displ: 0,
+            rip: false,
         }
     }
 }
@@ -840,6 +858,7 @@ impl Sub<u32> for x64Reg {
             index: None,
             scale: 2,
             displ: -(rhs as isize),
+            rip: false,
         }
     }
 }

@@ -1,7 +1,7 @@
 use std::{collections::{HashMap, VecDeque}, fmt::Display};
 use core::fmt::Debug;
 
-use crate::prelude::{ir::*, Block, Function, Type, TypeMetadata, Var};
+use crate::{prelude::{ir::*, Block, Function, Type, TypeMetadata, Var}, IR::Const};
 
 use super::{x64Reg, CallConv, Compiler, instr::Instr, Lexer, instr::MemOp, Reg};
 
@@ -193,6 +193,7 @@ pub struct TargetBackendDescr<'a> {
     funcForRetVar: Option<CompileFunc<Return<Var>>>,
     funcForConstAssign: Option<CompileFunc<ConstAssign<Var, Type>>>,
     funcForConstAssignVar: Option<CompileFunc<ConstAssign<Var, Var>>>,
+    funcForConstAssignConst: Option<CompileFunc<ConstAssign<Var, Const>>>,
     funcForCastTyVar: Option<CompileFunc<Cast<Var, TypeMetadata, Var>>>,
 
     funcForAddVarVar: Option<CompileFunc<Add<Var, Var, Var>>>,
@@ -252,6 +253,7 @@ impl<'a> TargetBackendDescr<'a> {
             funcForRetVar: None,
             funcForConstAssign: None,
             funcForConstAssignVar: None,
+            funcForConstAssignConst: None,
             funcForCastTyVar: None,
 
             funcForAddVarVar: None,
@@ -293,6 +295,7 @@ impl<'a> TargetBackendDescr<'a> {
     get_set_compile_func!(getCompileFuncForRetVar, setCompileFuncForRetVar, funcForRetVar, CompileFunc<Return<Var>>);
     get_set_compile_func!(getCompileFuncForConstAssign, setCompileFuncForConstAssign, funcForConstAssign, CompileFunc<ConstAssign<Var, Type>>);
     get_set_compile_func!(getCompileFuncForConstAssignVar, setCompileFuncForConstAssignVar, funcForConstAssignVar, CompileFunc<ConstAssign<Var, Var>>);
+    get_set_compile_func!(getCompileFuncForConstAssignConst, setCompileFuncForConstAssignConst, funcForConstAssignConst, CompileFunc<ConstAssign<Var, Const>>);
     get_set_compile_func!(getCompileFuncForCastTyVar, setCompileFuncForCastTyVar,  funcForCastTyVar, CompileFunc<Cast<Var, TypeMetadata, Var>>);
     
     get_set_compile_func!(getCompileFuncForAddVarVar, setCompileFuncForAddVarVar,  funcForAddVarVar, CompileFunc<Add<Var, Var, Var>>);

@@ -1,6 +1,6 @@
 use crate::{prelude::Triple, Obj::{Decl, Linkage, ObjectBuilder}, Optimizations::PassManager, Support::ColorProfile, Target::TargetRegistry};
 
-use super::{func::FunctionType, Function, VerifyError};
+use super::{func::FunctionType, Const, Function, VerifyError};
 use std::{collections::HashMap, error::Error, fs::OpenOptions, io::Write, path::Path};
 
 /// ## The Module
@@ -8,6 +8,7 @@ use std::{collections::HashMap, error::Error, fs::OpenOptions, io::Write, path::
 #[derive(Debug, Clone)]
 pub struct Module {
     pub(crate) funcs: HashMap<String, Function>,
+    pub(crate) consts: HashMap<String, Const>,
 }
 
 impl Module {
@@ -15,6 +16,7 @@ impl Module {
     pub fn new() -> Self {
         Self {
             funcs: HashMap::new(),
+            consts: HashMap::new(),
         }
     }
 
@@ -28,6 +30,18 @@ impl Module {
     /// Adds an already defined function to the module
     pub fn add_raw(&mut self, func: Function) {
         self.funcs.insert(func.name.to_string(), func);
+    }
+
+    /// Adds a new constant to the module
+    pub fn addConst(&mut self, name: &str) -> &mut Const {
+        self.consts
+            .insert(name.to_string(), Const::new(name.to_string()));
+        self.consts.get_mut(name).unwrap()
+    }
+
+    /// Adds an already defined const to the module
+    pub fn add_raw_const(&mut self, constant: Const) {
+        self.consts.insert(constant.name.to_string(), constant);
     }
 
     #[allow(dead_code)]

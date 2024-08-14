@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use crate::prelude::{Block, Function, Type, TypeMetadata, Var};
 use crate::Target::target_descr::{TargetBackendDescr, VarStorage};
 use crate::Target::Reg;
-use crate::IR::ir::*;
+use crate::IR::{ir::*, Const};
 use super::Optimize;
 
 use crate::Target::CallConv;
@@ -325,6 +325,52 @@ pub(crate) fn CompileConstAssignVar(assign: &ConstAssign<Var, Var>, registry: &m
                 Instr::with2(Mnemonic::Mov, Operand::Mem(mem2.clone()), Operand::Reg(infos.getTmpBasedOnTy(*ty)))
             ]
         } else { unreachable!() }
+    } else { todo!() }
+}
+
+pub(crate) fn CompileConstAssignConst(assign: &ConstAssign<Var, Const>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
+    let infos = &mut registry.backend;
+
+    let ty = &assign.inner1.ty;
+
+    let boxed: Box<dyn Ir> = Box::new(assign.clone());
+
+    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &assign.inner1) {
+        return vec![]; // all of these calculations don't need to be done: dead code removal
+    }
+    
+    let store = {
+        if let Some(reg) = infos.getOpenRegBasedOnTy(*ty) {
+            VarStorage::Register(reg)
+        } else {
+            let addend = match ty {
+                TypeMetadata::u16 | TypeMetadata::i16=> 2,
+                TypeMetadata::u32 | TypeMetadata::i32=> 4,
+                TypeMetadata::u64 | TypeMetadata::i64=> 8,
+                TypeMetadata::Void => todo!("cant output an assing somthing to void"),
+            };
+
+            infos.currStackOffsetForLocalVars += addend;
+            VarStorage::Memory(x64Reg::Rbp - (infos.currStackOffsetForLocalVars - addend) as u32)
+        }
+    };
+
+    infos.insertVar(
+        assign.inner1.clone(), 
+        store.clone()
+    );
+
+    if let VarStorage::Register(reg) = &store {
+        vec![ 
+            Instr::with2(Mnemonic::Lea, Operand::Reg(reg.boxed()), Operand::Mem(MemOp { base: None, index: None, scale: 0, displ: 0, rip: true })),
+            Instr::with1(Mnemonic::Link, Operand::LinkDestination(assign.inner2.name.to_string()))
+            ]
+    } else if let VarStorage::Memory(mem) = &store {
+        vec![ 
+            Instr::with2(Mnemonic::Lea, Operand::Reg(infos.getTmpBasedOnTy(*ty)), Operand::Mem(MemOp { base: None, index: None, scale: 0, displ: 0, rip: true })),
+            Instr::with1(Mnemonic::Link, Operand::LinkDestination(assign.inner2.name.to_string())),
+            Instr::with2(Mnemonic::Mov, Operand::Mem(mem.clone()), Operand::Reg(infos.getTmpBasedOnTy(*ty)))
+        ]
     } else { todo!() }
 }
 

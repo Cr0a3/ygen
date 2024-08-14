@@ -4,6 +4,7 @@ mod typ;
 mod builder;
 mod block;
 mod var;
+mod constant;
 /// Stores all ir nodes and the ir trait
 pub mod ir;
 
@@ -12,6 +13,7 @@ use std::fmt::Display;
 
 pub use module::Module;
 pub use func::{Function, FunctionType, FnTy, Func};
+pub use constant::Const;
 pub use typ::Type;
 pub use typ::TypeMetadata;
 pub use builder::IRBuilder;

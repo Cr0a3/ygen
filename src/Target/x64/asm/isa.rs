@@ -67,6 +67,18 @@ pub(crate) fn buildOpcode(mandatory: Option<MandatoryPrefix>, rex: Option<RexPre
 pub struct ModRm {}
 
 impl ModRm {
+    pub fn regRipImm(reg: x64Reg, imm: i32) -> Vec<u8> {
+        let mut out = vec![0 << 6 | reg.enc() | 0b101];
+
+        let bytes = imm.to_be_bytes();
+
+        out.push( bytes[3] );
+        out.push( bytes[2] );
+        out.push( bytes[1] );
+        out.push( bytes[0] );
+
+        out
+    }
     pub fn reg2(reg1: x64Reg, reg2: x64Reg) -> Vec<u8> {
         vec![0b11 << 6 | reg2.enc() << 3 | reg1.enc()]
     }

@@ -105,6 +105,7 @@ impl x64Parser {
             index: None,
             scale: 1,
             displ: 0,
+            rip: false,
         };
 
         self.tokens.pop_front();
@@ -115,6 +116,8 @@ impl x64Parser {
         } else if let Some(Token::Ident(reg)) = self.tokens.front() {
             if let Some(reg) = x64Reg::parse(reg.to_string()) {
                 mem.base = Some(reg.boxed());
+            } else if "rip" == reg.as_str() {
+                mem.rip = true;
             } else {
                 Err(ParsingError::UnknownRegOrUnexpectedIdent(reg.to_string()))?
             }
