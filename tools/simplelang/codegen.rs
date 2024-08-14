@@ -119,6 +119,16 @@ impl CodeGenerator {
         let left = bin.1.as_ref().unwrap();
         let right = bin.2.as_ref().unwrap();
 
+        if bin.0 == Operator::Assign {
+            let right = self.gen_expr(&right, builder, vars);
+            let out = builder.BuildAssign(right);
+            vars.insert(match *bin.1.as_ref().unwrap().clone() {
+                Expr::Var((name, _)) => name.to_string(),
+                _ => unreachable!(),
+            }, out.clone());
+            return out;
+        }
+
         let left = self.gen_expr(&left, builder, vars);
         let right = self.gen_expr(&right, builder, vars);
 
@@ -127,6 +137,7 @@ impl CodeGenerator {
             Operator::Add => builder.BuildAdd(left, right),
             Operator::Mul => todo!("add mul support to ygen"),
             Operator::Div => todo!("add div support to ygen"),
+            _ => todo!(),
         }
     }
 

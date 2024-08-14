@@ -67,6 +67,12 @@ pub enum Token {
     #[token("extern")]
     Extern,
 
+    #[token("var")]
+    Var,
+
+    #[token("=")]
+    Assign,
+
     #[token("import")]
     Import,
 

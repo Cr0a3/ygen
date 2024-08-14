@@ -15,6 +15,8 @@ pub enum Operator {
     Sub,
     Mul,
     Div,
+
+    Assign,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -1,5 +1,7 @@
 import with (a: i32, b: i32) cfunc
 
 extern with (a: i32, b: i32) func: {
-    return cfunc(a, b) + 4;
+    var tmp: i32 = cfunc(a, b);
+
+    return tmp + 4;
 }

@@ -132,6 +132,22 @@ impl Semnatic {
             return;
         };
 
+        if bin.0 == Operator::Assign {
+            match *left.clone() {
+                Expr::Var((name, ty)) => {
+                    if ty.is_none() {
+                        err!(self.error, "variable assignments need types");
+                        return;
+                    }
+                    vars.insert(name, ty)
+                },
+                _ => unreachable!(),
+            };
+
+            self.analyze_expr(&right, vars);
+            return;
+        }
+
         self.analyze_expr(&left, vars);
         self.analyze_expr(&right, vars);
     }

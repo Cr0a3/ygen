@@ -34,6 +34,7 @@ impl Parser {
             Token::Ident(_) => self.parse_ident(),
             Token::With | Token::Extern | Token::Import => self.parse_func(),
             Token::Return => self.parse_return(),
+            Token::Var => self.parse_assign(),
             any => {
                 err!(self.error, "unexpected token: {:?}", any);
                 None
@@ -174,8 +175,6 @@ impl Parser {
     fn parse_ident(&mut self) -> Option<Statement> {
         if let Some(expr) = self.parse_expr() {
             Some(Statement::Expr(expr))
-        } else if let Some(call) = self.parse_call() {
-            Some(Statement::Expr(call))
         } else {
             err!(self.error, "unexpected ident {:?}", self.tokens.front());
             None
@@ -368,6 +367,34 @@ impl Parser {
         if Some(&Token::Semicolon) == self.tokens.front() {
             self.tokens.pop_front();
         }
+    }
+
+    fn parse_assign(&mut self) -> Option<Statement> {
+        self.tokens.pop_front(); // var
+
+        let var = if let Some(var) = self.parse_var() {
+            var
+        } else {
+            err!(self.error, "expected variable after var keyword");
+            return None;
+        };
+
+        if !expect!(self.tokens.front(), Some(&Token::Assign), |tok| {
+            err!(self.error, "expected = found {:?}", tok);
+        }) {
+            return None;
+        }
+
+        self.tokens.pop_front();
+
+        let rhs = if let Some(expr) = self.parse_expr() {
+            expr
+        } else {
+            err!(self.error, "expected right expression after var");
+            return None;
+        };
+
+        Some(Statement::Expr(Expr::Binary((Operator::Assign, Some(Box::from(Expr::Var(var))), Some(Box::from(rhs))))))
     }
 
     pub fn had_errors(&self) -> bool {
