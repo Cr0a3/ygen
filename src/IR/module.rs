@@ -25,6 +25,11 @@ impl Module {
         self.funcs.get_mut(name).unwrap()
     }
 
+    /// Adds an already defined function to the module
+    pub fn add_raw(&mut self, func: Function) {
+        self.funcs.insert(func.name.to_string(), func);
+    }
+
     #[allow(dead_code)]
     /// Returns a read only reference to the given function name
     /// ### Used for passes

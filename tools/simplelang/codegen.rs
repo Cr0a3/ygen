@@ -29,8 +29,8 @@ impl CodeGenerator {
             } else { unreachable!() }
         }
 
-        for (_, fun) in self.functions {
-            self.module.add_raw(fun)
+        for (_, fun) in &self.functions {
+            self.module.add_raw(fun.clone())
         }
     }
 
