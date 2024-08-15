@@ -24,6 +24,7 @@ impl Pass for PreComputeValue {
                         TypeMetadata::i16 => Type::i16(res as i16),
                         TypeMetadata::i32 => Type::i32(res as i32),
                         TypeMetadata::i64 => Type::i64(res as i64),
+                        TypeMetadata::ptr => Type::ptr(res as i64),
                         TypeMetadata::Void => Type::Void,
                     }
                 }))
@@ -39,6 +40,7 @@ impl Pass for PreComputeValue {
                         TypeMetadata::i16 => Type::i16(res as i16),
                         TypeMetadata::i32 => Type::i32(res as i32),
                         TypeMetadata::i64 => Type::i64(res as i64),
+                        TypeMetadata::ptr => Type::ptr(res as i64),
                         TypeMetadata::Void => Type::Void,
                     }
                 }))
@@ -54,6 +56,7 @@ impl Pass for PreComputeValue {
                         TypeMetadata::i16 => Type::i16(res as i16),
                         TypeMetadata::i32 => Type::i32(res as i32),
                         TypeMetadata::i64 => Type::i64(res as i64),
+                        TypeMetadata::ptr => Type::ptr(res as i64),
                         TypeMetadata::Void => Type::Void,
                     }
                 }))
@@ -69,6 +72,7 @@ impl Pass for PreComputeValue {
                         TypeMetadata::i16 => Type::i16(res as i16),
                         TypeMetadata::i32 => Type::i32(res as i32),
                         TypeMetadata::i64 => Type::i64(res as i64),
+                        TypeMetadata::ptr => Type::ptr(res as i64),
                         TypeMetadata::Void => Type::Void,
                     }
                 }))
@@ -84,6 +88,7 @@ impl Pass for PreComputeValue {
                         TypeMetadata::i16 => Type::i16(res as i16),
                         TypeMetadata::i32 => Type::i32(res as i32),
                         TypeMetadata::i64 => Type::i64(res as i64),
+                        TypeMetadata::ptr => Type::ptr(res as i64),
                         TypeMetadata::Void => Type::Void,
                     }
                 }))

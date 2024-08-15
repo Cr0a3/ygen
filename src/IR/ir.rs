@@ -504,7 +504,6 @@ impl Ir for ConstAssign<Var, Var> {
 }
 
 impl Ir for ConstAssign<Var, Const> {
-    
     fn dump(&self) -> String {
         format!("{} = ptr {}", self.inner1.name, self.inner2.name)
     }
@@ -759,7 +758,7 @@ impl BuildAssign<&Const> for IRBuilder<'_> {
     fn BuildAssign(&mut self, value: &Const) -> Var {
         let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
         
-        let out = Var::new(block, TypeMetadata::u64);
+        let out = Var::new(block, TypeMetadata::ptr);
 
         block.push_ir(ConstAssign::new(out.clone(), value.clone()));
 

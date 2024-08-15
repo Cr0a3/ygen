@@ -351,8 +351,8 @@ impl Instr {
                 (buildOpcode(None, None, op), None)
             }
             Mnemonic::Link => {
-                if let Some(Operand::LinkDestination(dst)) = &self.op1 {
-                    (vec![], Some(Link { from: "".into(), to: dst.to_string(), at: 0, addend: -4 }))
+                if let Some(Operand::LinkDestination(dst, addend)) = &self.op1 {
+                    (vec![], Some(Link { from: "".into(), to: dst.to_string(), at: 0, addend: *addend }))
                 } else {
                     (vec![], None)
                 }
@@ -466,14 +466,14 @@ impl Instr {
                 Operand::Imm(num) => profile.markup(&num.to_string(), ColorClass::Value),
                 Operand::Reg(reg) => profile.markup(&reg.to_string(), ColorClass::Var),
                 Operand::Mem(mem) => profile.markup(&format!("{}", mem), ColorClass::Var),
-                Operand::LinkDestination(_) => "".to_string(),
+                Operand::LinkDestination(_, _) => "".to_string(),
             }));
             if let Some(op2) = &self.op2 {
                 string.push_str(&format!(", {}", match op2 {
                     Operand::Imm(num) => profile.markup(&format!("{}", num.to_string()), ColorClass::Value),
                     Operand::Reg(reg) => profile.markup(&format!(", {}", reg.to_string()), ColorClass::Var),
                     Operand::Mem(mem) => profile.markup(&format!("{}", mem), ColorClass::Var),
-                    Operand::LinkDestination(_) => "".to_string(),
+                    Operand::LinkDestination(_, _) => "".to_string(),
                 }));
             }
         }
@@ -646,7 +646,7 @@ pub enum Operand {
     /// A memory displacement
     Mem(MemOp),
     /// The link destination
-    LinkDestination(String),
+    LinkDestination(String, i64),
 }
 
 impl PartialEq for Operand {
@@ -655,7 +655,7 @@ impl PartialEq for Operand {
             (Self::Imm(l0), Self::Imm(r0)) => l0 == r0,
             (Self::Reg(l0), Self::Reg(r0)) => l0 == r0,
             (Self::Mem(l0), Self::Mem(r0)) => l0 == r0,
-            (Self::LinkDestination(l0), Self::LinkDestination(r0)) => l0 == r0,
+            (Self::LinkDestination(l0, l1), Self::LinkDestination(r0, r1)) => l0 == r0 && l1 == r1,
             _ => false,
         }
     }
@@ -667,7 +667,7 @@ impl Display for Operand {
             Operand::Imm(num) => num.to_string(),
             Operand::Reg(reg) => reg.to_string(),
             Operand::Mem(mem) => format!("{}", mem),
-            Operand::LinkDestination(_) => "".to_string(),
+            Operand::LinkDestination(_, _) => "".to_string(),
         })
     }
 }

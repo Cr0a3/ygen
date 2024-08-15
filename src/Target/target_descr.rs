@@ -134,7 +134,7 @@ impl BackendInfos {
         match ty {
             TypeMetadata::u16 | TypeMetadata::i16 => self.getOpenReg16(),
             TypeMetadata::u32 | TypeMetadata::i32 => self.getOpenReg32(),
-            TypeMetadata::u64 | TypeMetadata::i64 => self.getOpenReg64(),
+            TypeMetadata::u64 | TypeMetadata::i64 | TypeMetadata::ptr => self.getOpenReg64(),
             TypeMetadata::Void => todo!("cannot use void as a register variable type. consider removing it"),
         }
     }
@@ -155,7 +155,7 @@ impl BackendInfos {
         match ty {
             TypeMetadata::u16 | TypeMetadata::i16 => self.getTmpReg16(),
             TypeMetadata::u32 | TypeMetadata::i32 => self.getTmpReg32(),
-            TypeMetadata::u64 | TypeMetadata::i64 => self.getTmpReg64(),
+            TypeMetadata::u64 | TypeMetadata::i64 | TypeMetadata::ptr => self.getTmpReg64(),
             TypeMetadata::Void => todo!("cannot use void as a register variable type. consider removing it"),
         }
     }

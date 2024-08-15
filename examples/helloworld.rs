@@ -7,15 +7,15 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
     let mut builder = IRBuilder();
 
-    let other = module.add("printf", &FnTy(vec![TypeMetadata::u64], TypeMetadata::Void));
+    let other = module.add("printf", &FnTy(vec![TypeMetadata::ptr], TypeMetadata::Void));
     other.import();
     let other = other.clone();
     
     let string = module.addConst("str");
-    string.set("Hello World!\0".as_bytes().to_vec());
+    string.set("Hello World!\n".as_bytes().to_vec());
     let string = string.clone();
 
-    let ty = FnTy(vec![TypeMetadata::i64], TypeMetadata::i32);
+    let ty = FnTy(vec![], TypeMetadata::Void);
     
     let func = module.add(
         "main", &ty
@@ -28,9 +28,11 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
     let string = builder.BuildAssign(&string);
 
+    println!("{:?}", string);
+
     builder.BuildCall( &other, vec![string] );
 
-    builder.BuildRet( Type::i32(0) );
+    builder.BuildRet( Type::Void );
 
     module.verify()?;
 

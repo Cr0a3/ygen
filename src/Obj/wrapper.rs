@@ -2,7 +2,7 @@ use object::write::{Relocation, SectionId, Symbol, SymbolId, SymbolSection};
 use object::{Architecture, BinaryFormat, Endianness, RelocationEncoding, RelocationFlags, RelocationKind, SectionKind, SymbolFlags, SymbolKind, SymbolScope};
 
 use crate::prelude::Triple;
-use crate::Target::{self, Arch};
+use crate::Target::{self, Arch, CallConv};
 use std::collections::HashMap;
 use std::fs::File;
 use std::error::Error;
@@ -244,10 +244,16 @@ impl ObjectBuilder {
             let (_, off, _) = syms.get(&link.from).unwrap();
             let (_, _, to_sym) = syms.get(&link.to).unwrap();
 
+            let mut addend = 0;
+
+            if self.triple.getCallConv() == Ok(CallConv::WindowsFastCall) {
+                addend -= 1;
+            }
+
             obj.add_relocation(secText, Relocation {
-                offset: (link.at as i64 - 4) as u64,
+                offset: (link.at as i64 -4) as u64,
                 symbol: to_sym.to_owned(),
-                addend: link.addend + {if let Some(off) = off { *off as i64} else { 0 }},
+                addend: link.addend + addend + {if let Some(off) = off { *off as i64} else { 0 }},
                 flags: RelocationFlags::Generic { 
                     kind: RelocationKind::PltRelative, 
                     encoding: {

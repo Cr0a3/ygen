@@ -13,6 +13,16 @@ impl CallConv {
         }
     }
 
+    /// used for system v call conv
+    pub fn reset_eax(&self) -> bool {
+        match self {
+            CallConv::SystemV => true,
+            CallConv::WindowsFastCall => false,
+            CallConv::AppleAarch64 => todo!(),
+            CallConv::WasmBasicCAbi => todo!(),
+        }
+    }
+
     /// Returns the 16Bit intenger argument registers as a vec
     pub fn args16(&self) -> Vec<x64Reg> {
         match self {

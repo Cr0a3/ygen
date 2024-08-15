@@ -18,6 +18,8 @@ pub enum Type {
     i32(i32),
     /// Just an i64 with a value
     i64(i64),
+    /// 64Bit pointer
+    ptr(i64),
 
     /// Notype
     Void,
@@ -39,6 +41,8 @@ pub enum TypeMetadata {
     i32,
     /// i64
     i64,
+    /// ptr
+    ptr,
 
     /// Notype
     Void,
@@ -54,6 +58,7 @@ impl Type {
             Type::i16(val) => *val as u64,
             Type::i32(val) => *val as u64,
             Type::i64(val) => *val as u64,
+            Type::ptr(adr) => *adr as u64,
             Type::Void => 0,
         }
     }
@@ -69,6 +74,7 @@ impl TypeMetadata {
             TypeMetadata::i16 => 2,
             TypeMetadata::i32 => 4,
             TypeMetadata::i64 => 8,
+            TypeMetadata::ptr => 8,
             TypeMetadata::Void => 0,
         }
     }
@@ -92,6 +98,7 @@ impl Display for Type {
             Type::i16(i) => format!("i16 {}", i),
             Type::i32(i) => format!("i32 {}", i),
             Type::i64(i) => format!("i64 {}", i),
+            Type::ptr(adr) => format!("ptr {:#04x}", adr),
             Type::Void => format!("void"),
         })
     }
@@ -106,6 +113,7 @@ impl Display for TypeMetadata {
             TypeMetadata::i16 => "i16",
             TypeMetadata::i32 => "i32",
             TypeMetadata::i64 => "i64",
+            TypeMetadata::ptr => "ptr",
             TypeMetadata::Void => "void",
         })
     }
@@ -120,6 +128,7 @@ impl From<Type> for TypeMetadata {
             Type::i16(_) => TypeMetadata::i16,
             Type::i32(_) => TypeMetadata::i32,
             Type::i64(_) => TypeMetadata::i64,
+            Type::ptr(_) => TypeMetadata::ptr,
             Type::Void => TypeMetadata::Void,
         }
     }
@@ -134,6 +143,7 @@ impl From<TypeMetadata> for Type {
             TypeMetadata::i16 => Type::i16(0),
             TypeMetadata::i32 => Type::i32(0),
             TypeMetadata::i64 => Type::i64(0),
+            TypeMetadata::ptr => Type::ptr(0),
             TypeMetadata::Void => Type::Void,
         }
     }

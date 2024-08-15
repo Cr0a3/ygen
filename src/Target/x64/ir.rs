@@ -47,9 +47,9 @@ macro_rules! CompileMathVarVar {
                     VarStorage::Register(reg)
                 } else {
                     let addend = match ty {
-                        TypeMetadata::u16 | TypeMetadata::i16=> 2,
-                        TypeMetadata::u32 | TypeMetadata::i32=> 4,
-                        TypeMetadata::u64 | TypeMetadata::i64=> 8,
+                        TypeMetadata::u16 | TypeMetadata::i16 => 2,
+                        TypeMetadata::u32 | TypeMetadata::i32 => 4,
+                        TypeMetadata::u64 | TypeMetadata::i64 | TypeMetadata::ptr => 8,
                         TypeMetadata::Void => todo!("cant output an addition into an void"),
                     };
 
@@ -134,7 +134,7 @@ macro_rules! CompileMathVarType {
                     let addend = match ty {
                         TypeMetadata::u16 | TypeMetadata::i16=> 2,
                         TypeMetadata::u32 | TypeMetadata::i32=> 4,
-                        TypeMetadata::u64 | TypeMetadata::i64=> 8,
+                        TypeMetadata::u64 | TypeMetadata::i64 | TypeMetadata::ptr => 8,
                         TypeMetadata::Void => todo!("cant output an addition into an void"),
                     };
 
@@ -205,6 +205,7 @@ macro_rules! CompileMathTyTy {
                     TypeMetadata::i16 => Type::i16(val as i16),
                     TypeMetadata::i32 => Type::i32(val as i32),
                     TypeMetadata::i64 => Type::i64(val as i64),
+                    TypeMetadata::ptr => Type::ptr(val as i64),
                     TypeMetadata::Void =>Type::Void,
                 }
             }), registry)
@@ -246,9 +247,9 @@ pub(crate) fn CompileConstAssign(assign: &ConstAssign<Var, Type>, registry: &mut
             VarStorage::Register(reg)
         } else {
             let addend = match ty {
-                TypeMetadata::u16 | TypeMetadata::i16=> 2,
-                TypeMetadata::u32 | TypeMetadata::i32=> 4,
-                TypeMetadata::u64 | TypeMetadata::i64=> 8,
+                TypeMetadata::u16 | TypeMetadata::i16 => 2,
+                TypeMetadata::u32 | TypeMetadata::i32 => 4,
+                TypeMetadata::u64 | TypeMetadata::i64 | TypeMetadata::ptr => 8,
                 TypeMetadata::Void => todo!("cant output an assing somthing to void"),
             };
 
@@ -294,9 +295,9 @@ pub(crate) fn CompileConstAssignVar(assign: &ConstAssign<Var, Var>, registry: &m
             VarStorage::Register(reg)
         } else {
             let addend = match ty {
-                TypeMetadata::u16 | TypeMetadata::i16=> 2,
-                TypeMetadata::u32 | TypeMetadata::i32=> 4,
-                TypeMetadata::u64 | TypeMetadata::i64=> 8,
+                TypeMetadata::u16 | TypeMetadata::i16 => 2,
+                TypeMetadata::u32 | TypeMetadata::i32 => 4,
+                TypeMetadata::u64 | TypeMetadata::i64 | TypeMetadata::ptr => 8,
                 TypeMetadata::Void => todo!("cant output an assing somthing to void"),
             };
 
@@ -346,9 +347,9 @@ pub(crate) fn CompileConstAssignConst(assign: &ConstAssign<Var, Const>, registry
             VarStorage::Register(reg)
         } else {
             let addend = match ty {
-                TypeMetadata::u16 | TypeMetadata::i16=> 2,
-                TypeMetadata::u32 | TypeMetadata::i32=> 4,
-                TypeMetadata::u64 | TypeMetadata::i64=> 8,
+                TypeMetadata::u16 | TypeMetadata::i16 => 2,
+                TypeMetadata::u32 | TypeMetadata::i32 => 4,
+                TypeMetadata::u64 | TypeMetadata::i64 | TypeMetadata::ptr => 8,
                 TypeMetadata::Void => todo!("cant output an assing somthing to void"),
             };
 
@@ -365,13 +366,13 @@ pub(crate) fn CompileConstAssignConst(assign: &ConstAssign<Var, Const>, registry
     if let VarStorage::Register(reg) = &store {
         vec![ 
             Instr::with2(Mnemonic::Lea, Operand::Reg(infos.getTmpBasedOnTy(*ty)), Operand::Mem(MemOp { base: None, index: None, scale: 0, displ: 1, rip: true })),
-            Instr::with1(Mnemonic::Link, Operand::LinkDestination(assign.inner2.name.to_string())),
+            Instr::with1(Mnemonic::Link, Operand::LinkDestination(assign.inner2.name.to_string(), -4)),
             Instr::with2(Mnemonic::Mov, Operand::Reg(reg.clone()), Operand::Reg(infos.getTmpBasedOnTy(*ty)))
         ]
     } else if let VarStorage::Memory(mem) = &store {
         vec![ 
             Instr::with2(Mnemonic::Lea, Operand::Reg(infos.getTmpBasedOnTy(*ty)), Operand::Mem(MemOp { base: None, index: None, scale: 0, displ: 1, rip: true })),
-            Instr::with1(Mnemonic::Link, Operand::LinkDestination(assign.inner2.name.to_string())),
+            Instr::with1(Mnemonic::Link, Operand::LinkDestination(assign.inner2.name.to_string(), -4)),
             Instr::with2(Mnemonic::Mov, Operand::Mem(mem.clone()), Operand::Reg(infos.getTmpBasedOnTy(*ty)))
         ]
     } else { todo!() }
@@ -382,7 +383,7 @@ pub(crate) fn CompileRetType(ret: &Return<Type>, registry: &mut TargetBackendDes
         vec![Instr::with2(Mnemonic::Mov, match ret.inner1.into() {
             TypeMetadata::u16 | TypeMetadata::i16 => Operand::Reg(registry.call.ret16().boxed()),
             TypeMetadata::u32 | TypeMetadata::i32 => Operand::Reg(registry.call.ret32().boxed()),
-            TypeMetadata::u64 | TypeMetadata::i64=> Operand::Reg(registry.call.ret64().boxed()),
+            TypeMetadata::u64 | TypeMetadata::i64 | TypeMetadata::ptr => Operand::Reg(registry.call.ret64().boxed()),
             _ => unreachable!(),
         }, Operand::Imm(ret.inner1.val() as i64))]
     } else {
@@ -404,7 +405,7 @@ pub(crate) fn CompileRetVar(ret: &Return<Var>, registry: &mut TargetBackendDescr
     vec![Instr::with2(Mnemonic::Mov, match var.ty {
         TypeMetadata::u16 | TypeMetadata::i16 => Operand::Reg(registry.call.ret16().boxed()),
         TypeMetadata::u32 | TypeMetadata::i32 => Operand::Reg(registry.call.ret32().boxed()),
-        TypeMetadata::u64 | TypeMetadata::i64=> Operand::Reg(registry.call.ret64().boxed()),
+        TypeMetadata::u64 | TypeMetadata::i64 | TypeMetadata::ptr => Operand::Reg(registry.call.ret64().boxed()),
         _ => unreachable!(),
     }, {
         if let VarStorage::Memory(mem) = loc { Operand::Mem(mem.clone()) }
@@ -438,6 +439,7 @@ pub(crate) fn CompileCast(cast: &Cast<Var, TypeMetadata, Var>, registry: &mut Ta
                 TypeMetadata::u32 | TypeMetadata::i32 => 4,
                 TypeMetadata::u64 | TypeMetadata::i64 => 8,
                 TypeMetadata::Void => todo!("cant cast into void"),
+                TypeMetadata::ptr => todo!("cant cast into ptr"),
             };
 
             registry.backend.currStackOffsetForLocalVars += addend;
@@ -488,10 +490,6 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
     let boxed: Box<dyn Ir> = Box::new(call.clone());
 
     let mut asm = vec![];
-
-    if registry.call == CallConv::SystemV {
-        asm.push(Instr::with2(Mnemonic::Xor, Operand::Reg(x64Reg::Eax.boxed()), Operand::Reg(x64Reg::Eax.boxed())))
-    }
 
     for reg in vec![x64Reg::Rcx, x64Reg::Rdx, x64Reg::Rsi, x64Reg::Rdi, x64Reg::Rsi] { // save mutable registers
         if !registry.backend.openUsableRegisters64.contains(&reg.boxed()) {
@@ -550,9 +548,13 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
         }
     }
 
+    if registry.call.reset_eax() {
+        asm.push(Instr::with2(Mnemonic::Xor, Operand::Reg(x64Reg::Eax.boxed()), Operand::Reg(x64Reg::Eax.boxed())));
+    }
+
     asm.push( Instr::with1(Mnemonic::Call, Operand::Imm(0)));
 
-    asm.push( Instr::with1(Mnemonic::Link, Operand::LinkDestination(call.inner1.name.to_string())));
+    asm.push( Instr::with1(Mnemonic::Link, Operand::LinkDestination(call.inner1.name.to_string(), -4)));
 
     if func.ty.ret != TypeMetadata::Void {  
         let store = if let Some(reg) = registry.backend.getOpenRegBasedOnTy(call.inner3.ty) {
@@ -565,9 +567,9 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
             VarStorage::Register(reg)
         } else {
             let addend = match call.inner3.ty {
-                TypeMetadata::u16 | TypeMetadata::i16=> 2,
-                TypeMetadata::u32 | TypeMetadata::i32=> 4,
-                TypeMetadata::u64 | TypeMetadata::i64=> 8,
+                TypeMetadata::u16 | TypeMetadata::i16 => 2,
+                TypeMetadata::u32 | TypeMetadata::i32 => 4,
+                TypeMetadata::u64 | TypeMetadata::i64 | TypeMetadata::ptr => 8,
                 TypeMetadata::Void => unreachable!(),
             };
 
@@ -656,9 +658,9 @@ pub(crate) fn buildAsmX86<'a>(block: &'a Block, func: &Function, call: &CallConv
         info.insertVar(var, {
             if reg_vars >= call.regArgs() {
                 let addend = match meta {
-                    TypeMetadata::u16 | TypeMetadata::i16=> 2,
-                    TypeMetadata::u32 | TypeMetadata::i32=> 4,
-                    TypeMetadata::u64 | TypeMetadata::i64=> 8,
+                    TypeMetadata::u16 | TypeMetadata::i16 => 2,
+                    TypeMetadata::u32 | TypeMetadata::i32 => 4,
+                    TypeMetadata::u64 | TypeMetadata::i64 | TypeMetadata::ptr => 8,
                     TypeMetadata::Void => continue,
                 };
 
@@ -669,7 +671,7 @@ pub(crate) fn buildAsmX86<'a>(block: &'a Block, func: &Function, call: &CallConv
                 VarStorage::Register( match meta {
                     TypeMetadata::u16 | TypeMetadata::i16 => call.args16()[reg_vars - 1].boxed(),
                     TypeMetadata::u32 | TypeMetadata::i32 => call.args32()[reg_vars - 1].boxed(),
-                    TypeMetadata::u64 | TypeMetadata::i64 => call.args64()[reg_vars - 1].boxed(),
+                    TypeMetadata::u64 | TypeMetadata::i64 | TypeMetadata::ptr => call.args64()[reg_vars - 1].boxed(),
                     TypeMetadata::Void => continue,
                 })
             }
