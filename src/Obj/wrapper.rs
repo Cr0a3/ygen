@@ -109,7 +109,6 @@ impl ObjectBuilder {
 
     /// Writes the object file into the the specified file
     pub fn emit(&self, file: File) -> Result<(), Box<dyn Error>> {
-
         let mut obj = object::write::Object::new({
             match self.triple.bin {
                 Target::ObjFormat::Unknown => BinaryFormat::native_object(),
@@ -245,13 +244,18 @@ impl ObjectBuilder {
             let (_, _, to_sym) = syms.get(&link.to).unwrap();
 
             let mut addend = 0;
+            let mut offset = 0;
 
             if self.triple.getCallConv() == Ok(CallConv::WindowsFastCall) {
-                addend -= 1;
+                addend = -1;
+                offset = -4;
+            } else if self.triple.getCallConv() == Ok(CallConv::SystemV) {
+                addend = 0;
+                offset = -4;
             }
 
             obj.add_relocation(secText, Relocation {
-                offset: (link.at as i64 -4) as u64,
+                offset: (link.at as i64 + offset) as u64,
                 symbol: to_sym.to_owned(),
                 addend: link.addend + addend + {if let Some(off) = off { *off as i64} else { 0 }},
                 flags: RelocationFlags::Generic { 

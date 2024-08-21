@@ -34,6 +34,7 @@ pub fn initializeX64Target<'a>(call_conv: CallConv) -> TargetBackendDescr<'a> {
 
     match call_conv {
         CallConv::WindowsFastCall => {
+            target.backend.shadow = 32;
             target.backend.openUsableRegisters64 = VecDeque::from(
                 vec![x64Reg::Rsi.boxed(), x64Reg::Rdi.boxed(), 
                 x64Reg::R10.boxed(), x64Reg::R11.boxed(), x64Reg::R12.boxed(), x64Reg::R13.boxed(), x64Reg::R14.boxed(), x64Reg::R15.boxed()]
@@ -52,6 +53,7 @@ pub fn initializeX64Target<'a>(call_conv: CallConv) -> TargetBackendDescr<'a> {
             );
         },
         CallConv::SystemV => {
+            target.backend.shadow = 8;
             target.backend.openUsableRegisters64 = VecDeque::from(
                 vec![x64Reg::R10.boxed(), x64Reg::R11.boxed(), x64Reg::R12.boxed(), x64Reg::R13.boxed(), x64Reg::R14.boxed(), x64Reg::R15.boxed()]
             );

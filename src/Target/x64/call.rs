@@ -26,7 +26,7 @@ impl CallConv {
     /// Returns the 16Bit intenger argument registers as a vec
     pub fn args16(&self) -> Vec<x64Reg> {
         match self {
-            CallConv::SystemV => vec![x64Reg::Si, x64Reg::Di, x64Reg::Dx, x64Reg::Cx, x64Reg::R8w, x64Reg::R9w],
+            CallConv::SystemV => vec![x64Reg::Di, x64Reg::Si, x64Reg::Dx, x64Reg::Cx, x64Reg::R8w, x64Reg::R9w],
             CallConv::WindowsFastCall => vec![x64Reg::Cx, x64Reg::Dx, x64Reg::R8w, x64Reg::R9w],
             CallConv::AppleAarch64 => todo!(),
             CallConv::WasmBasicCAbi => todo!(),
@@ -36,7 +36,7 @@ impl CallConv {
     /// Returns the 32Bit intenger argument registers as a vec
     pub fn args32(&self) -> Vec<x64Reg> {
         match self {
-            CallConv::SystemV => vec![x64Reg::Esi, x64Reg::Edi, x64Reg::Edx, x64Reg::Ecx, x64Reg::R8d, x64Reg::R9d],
+            CallConv::SystemV => vec![x64Reg::Edi, x64Reg::Esi, x64Reg::Edx, x64Reg::Ecx, x64Reg::R8d, x64Reg::R9d],
             CallConv::WindowsFastCall => vec![x64Reg::Ecx, x64Reg::Edx, x64Reg::R8d, x64Reg::R9d],
             CallConv::AppleAarch64 => todo!(),
             CallConv::WasmBasicCAbi => todo!(),
@@ -46,7 +46,7 @@ impl CallConv {
     /// Returns the 16Bit intenger argument registers as a vec
     pub fn args64(&self) -> Vec<x64Reg> {
         match self {
-            CallConv::SystemV => vec![x64Reg::Rsi, x64Reg::Rdi, x64Reg::Rdx, x64Reg::Rcx, x64Reg::R8, x64Reg::R9],
+            CallConv::SystemV => vec![x64Reg::Rdi, x64Reg::Rsi, x64Reg::Rdx, x64Reg::Rcx, x64Reg::R8, x64Reg::R9],
             CallConv::WindowsFastCall => vec![x64Reg::Rcx, x64Reg::Rdx, x64Reg::R8, x64Reg::R9],
             CallConv::AppleAarch64 => todo!(),
             CallConv::WasmBasicCAbi => todo!(),

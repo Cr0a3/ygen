@@ -17,6 +17,8 @@ pub(crate) struct BackendInfos {
     pub(crate) saveRegister: Vec<Box<dyn Reg>>,
     pub(crate) savedRegisters: Vec<Box<dyn Reg>>,
     pub(crate) stackSafe: bool,
+
+    pub(crate) shadow: i64,
 }
 
 impl BackendInfos {
@@ -35,6 +37,7 @@ impl BackendInfos {
             savedRegisters: vec![],
 
             stackSafe: false,
+            shadow: 0,
         }
     }
 

@@ -12,7 +12,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     let other = other.clone();
     
     let string = module.addConst("str");
-    string.set("Hello World!\n".as_bytes().to_vec());
+    string.set("Hello World!\n\0".as_bytes().to_vec());
     let string = string.clone();
 
     let ty = FnTy(vec![], TypeMetadata::Void);
@@ -27,9 +27,6 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     builder.positionAtEnd(entry); 
 
     let string = builder.BuildAssign(&string);
-
-    println!("{:?}", string);
-
     builder.BuildCall( &other, vec![string] );
 
     builder.BuildRet( Type::Void );

@@ -41,7 +41,9 @@ impl Optimize<Instr> for Vec<Instr> {
                     }
                 } 
                 else if instr.op1 == instr.op2 {
-                    optimized = true;
+                    if instr.mnemonic == Mnemonic::Mov {
+                        optimized = true;
+                    }
                 }
                 
                 else if instr.mnemonic == Mnemonic::Ret && last.mnemonic == Mnemonic::Call {
