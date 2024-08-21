@@ -1,6 +1,6 @@
 use std::{error::Error, fmt::Display, num::ParseIntError};
-
 use logos::Logos;
+use unescaper::unescape;
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum LexingError {
@@ -34,7 +34,7 @@ pub enum Token {
     #[regex("[a-zA-Z0-9_]+", |lex| lex.slice().to_string())]
     Ident(String),
 
-    #[regex(r#""[^"]*""#, |lex| lex.slice().to_string().replace("\"", ""))]
+    #[regex(r#""[^"]*""#, |lex| unescape(&lex.slice().to_string().replace("\"", "")).unwrap())]
     String(String),
 
     #[regex("[0-9_]+", priority = 3, callback = |lex| lex.slice().parse())]

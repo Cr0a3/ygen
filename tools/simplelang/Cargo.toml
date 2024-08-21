@@ -10,3 +10,4 @@ path = "main.rs"
 [dependencies]
 Ygen = { workspace = true }
 logos = "0.14.0"
+unescaper = "0.1.5"
