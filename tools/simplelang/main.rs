@@ -58,7 +58,6 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     infile.read_to_string(&mut input)?;
 
     let mut tokens = vec![];
-
     let mut lexer = lexer::Token::lexer(&input);
 
     while let Some(token) = lexer.next() {
@@ -73,8 +72,9 @@ pub fn main() -> Result<(), Box<dyn Error>> {
                     } else {
                         lexer::LexingError::UnexpectedCharacter(first_char)
                     };
-                    
-                    println!("error: {:?}", error);
+
+                    let _tmp;
+                    err!(_tmp, "{:?}", error);
                     exit(-1);
                 }
             }

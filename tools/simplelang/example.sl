@@ -1,7 +1,6 @@
-import with (a: i32, b: i32) cfunc
+import with (str: string) printf 
 
-extern with (a: i32, b: i32) func: {
-    var tmp: i32 = cfunc(a, b);
-
-    return tmp + 4;
+extern with () main: {
+    printf("Hello World!\n");
+    return 0;
 }

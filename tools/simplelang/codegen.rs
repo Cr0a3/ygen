@@ -11,6 +11,8 @@ pub struct CodeGenerator {
     module: Module,
 
     functions: HashMap<String, Function>,
+
+    const_index: usize,
 }
 
 impl CodeGenerator {
@@ -19,6 +21,7 @@ impl CodeGenerator {
             input: stmts.into(),
             module: Module(),
             functions: HashMap::new(),
+            const_index: 0,
         }
     }
     
@@ -98,6 +101,7 @@ impl CodeGenerator {
             Expr::Binary(bin) => self.gen_bin(bin, builder, vars),
             Expr::LiteralInt(int) => builder.BuildAssign(Type::i64(*int)),
             Expr::Call(call) => self.gen_call(call, builder, vars),
+            Expr::LiteralString(str) => self.gen_string(builder, str),
         }
     }
 
@@ -152,6 +156,17 @@ impl CodeGenerator {
         }
 
         builder.BuildCall(&fun, args)
+    }
+
+    fn gen_string(&mut self, builder: &mut IRBuilder, string: &String) -> Var {
+        let constant = self.module.addConst(&format!(".const{}", self.const_index));
+
+        let mut string = string.clone();
+        string.push('\0');
+
+        constant.set(string.as_bytes().to_vec());
+
+        builder.BuildAssign(&constant.clone())
     }
 
     pub fn module(&mut self) -> &mut Module {

@@ -162,6 +162,7 @@ impl Parser {
                 "i16" => Some(TypeMetadata::i16),
                 "i32" => Some(TypeMetadata::i32),
                 "i64" => Some(TypeMetadata::i64),
+                "string" => Some(TypeMetadata::ptr),
                 any => {
                     err!(self.error, "unknown type: {}", any);
                     None
@@ -313,6 +314,7 @@ impl Parser {
                         out
                     }
                 }
+                Token::String(string) => Some(Expr::LiteralString(string.to_string())),
                 _ => None,
             };
         }

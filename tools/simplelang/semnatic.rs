@@ -11,6 +11,8 @@ pub struct Semnatic {
 
     funcs: HashMap<String, (/*args*/Vec<Expr>, /*body*/Vec<Expr>)>,
 
+    in_binary: bool,
+
     error: bool,
 }
 
@@ -21,6 +23,8 @@ impl Semnatic {
 
             funcs: HashMap::new(),
             error: false,
+
+            in_binary: false,
         }
     }
 
@@ -106,6 +110,11 @@ impl Semnatic {
             Expr::LiteralInt(_) => {},
             Expr::Binary(bin) => self.analyze_bin(bin, vars),
             Expr::Call(call) => self.analyze_call(call, vars),
+            Expr::LiteralString(str) => {
+                if self.in_binary {
+                    err!(self.error, "unexpected string: \"{}\"", str);
+                }
+            }
         }
     }
 
@@ -118,6 +127,8 @@ impl Semnatic {
     }
 
     fn analyze_bin(&mut self, bin: &(Operator, Option<Box<Expr>>, Option<Box<Expr>>), vars: &mut HashMap<String, Option<TypeMetadata>>) {
+        self.in_binary = true;
+        
         let left = if let Some(left) = &bin.1 {
             left.clone()
         } else {

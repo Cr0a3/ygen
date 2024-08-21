@@ -6,6 +6,7 @@ pub enum Expr {
     Var((String, Option<TypeMetadata>)), // (name, type)
     Binary((Operator, Option<Box<Expr>>, Option<Box<Expr>>)), // (op, left, right)
     LiteralInt(i64),
+    LiteralString(String),
     Call(CallStmt),
 }
 
