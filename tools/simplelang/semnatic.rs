@@ -144,11 +144,14 @@ impl Semnatic {
         };
 
         if bin.0 == Operator::Assign {
+            self.in_binary = false;
             match *left.clone() {
                 Expr::Var((name, ty)) => {
-                    if ty.is_none() {
-                        err!(self.error, "variable assignments need types");
-                        return;
+                    if !vars.contains_key(&name) {
+                        if ty.is_none() {
+                            err!(self.error, "you can't declare a variable without a type");
+                            return;
+                        }
                     }
                     vars.insert(name, ty)
                 },

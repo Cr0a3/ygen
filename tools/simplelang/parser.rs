@@ -24,8 +24,14 @@ impl Parser {
     }
 
     pub fn parse(&mut self) {
-        while let Some(stmt) = self.parse_stmt() {
-            self.out.push(stmt);
+        loop { 
+            self.remove_maybe_semicolon();
+
+            if let Some(stmt) = self.parse_stmt() {
+                self.out.push(stmt);
+            } else {
+                break;
+            }
         }
     }
 
@@ -34,7 +40,7 @@ impl Parser {
             Token::Ident(_) => self.parse_ident(),
             Token::With | Token::Extern | Token::Import => self.parse_func(),
             Token::Return => self.parse_return(),
-            Token::Var => self.parse_assign(),
+            Token::Var => Some(Statement::Expr(self.parse_assign()?)),
             any => {
                 err!(self.error, "unexpected token: {:?}", any);
                 None
@@ -287,12 +293,26 @@ impl Parser {
                     let mut out = Some(Expr::Var((x.clone(), None)));
 
                     self.tokens.pop_front();
-                    let call;
+                    let mut assign = false;
+                    let mut call = false;
                     if Some(&Token::LParam) == self.tokens.front() {
                         call = true;
-                    } else { call = false; }
+                    } else if   Some(&Token::Assign) == self.tokens.front() ||
+                                Some(&Token::AddEqual) == self.tokens.front() ||
+                                Some(&Token::SubEqual) == self.tokens.front() || 
+                                Some(&Token::MulEqual) == self.tokens.front() || 
+                                Some(&Token::DivEqual) == self.tokens.front() {
+                        assign = true;
+                    }
+
                     self.tokens.push_front(Token::Ident(x.clone()));
 
+                    if assign {
+                        if let Some(assign) = self.parse_assign() {
+                            out = Some(assign);
+                            pop = false;
+                        }
+                    }
                     if call {
                         if let Some(call) = self.parse_call() {
                             out = Some(call);
@@ -366,13 +386,19 @@ impl Parser {
     }
 
     fn remove_maybe_semicolon(&mut self) {
-        if Some(&Token::Semicolon) == self.tokens.front() {
-            self.tokens.pop_front();
+        loop {
+            if Some(&Token::Semicolon) == self.tokens.front() {
+                self.tokens.pop_front();
+            } else {
+                break;
+            }
         }
     }
 
-    fn parse_assign(&mut self) -> Option<Statement> {
-        self.tokens.pop_front(); // var
+    fn parse_assign(&mut self) -> Option<Expr> {
+        if self.tokens.front() == Some(&Token::Var) { // variable assignment
+            self.tokens.pop_front(); // var
+        }
 
         let var = if let Some(var) = self.parse_var() {
             var
@@ -381,14 +407,12 @@ impl Parser {
             return None;
         };
 
-        if !expect!(self.tokens.front(), Some(&Token::Assign), |tok| {
-            err!(self.error, "expected = found {:?}", tok);
-        }) {
-            return None;
-        }
+        let mut out = (Operator::Assign, Some(Box::from(Expr::Var(var.clone()))), None);
+        
 
+        let op = self.tokens.front()?.clone();
         self.tokens.pop_front();
-
+        
         let rhs = if let Some(expr) = self.parse_expr() {
             expr
         } else {
@@ -396,7 +420,34 @@ impl Parser {
             return None;
         };
 
-        Some(Statement::Expr(Expr::Binary((Operator::Assign, Some(Box::from(Expr::Var(var))), Some(Box::from(rhs))))))
+        let rhs = Some(Box::from(rhs));
+
+        match op {
+            Token::SubEqual => {
+                out.2 = Some(Box::from(Expr::Binary((Operator::Sub, Some(Box::from(Expr::Var(var))), rhs))));
+            },
+            Token::AddEqual => {
+                out.2 = Some(Box::from(Expr::Binary((Operator::Add, Some(Box::from(Expr::Var(var))), rhs))));
+            },
+            Token::MulEqual => {
+                out.2 = Some(Box::from(Expr::Binary((Operator::Mul, Some(Box::from(Expr::Var(var))), rhs))));
+            },
+            Token::DivEqual => {
+                out.2 = Some(Box::from(Expr::Binary((Operator::Div, Some(Box::from(Expr::Var(var))), rhs))));
+            },
+            Token::Assign => {
+                out.2 = rhs;
+            },
+            _ => {
+                err!(self.error, "expected either =, +=, -=, *= or /= found {:?}", self.tokens.front());
+                return None;
+            }
+        }
+
+        self.remove_maybe_semicolon();
+
+        Some(Expr::Binary(out))
+
     }
 
     pub fn had_errors(&self) -> bool {

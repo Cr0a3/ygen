@@ -515,13 +515,16 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
         match loc.1 {
             VarStorage::Register(reg) => {
                 if reg_args < registry.call.regArgs() {
-                    if arg.ty == TypeMetadata::i64 || arg.ty == TypeMetadata::u64 {
-                        asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(registry.call.args64()[reg_args].boxed()), Operand::Reg(reg.clone())));
-                    } else if arg.ty == TypeMetadata::i32 || arg.ty == TypeMetadata::u32 {
-                        asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(registry.call.args32()[reg_args].boxed()), Operand::Reg(reg.clone())));
-                    } else if arg.ty == TypeMetadata::i16 || arg.ty == TypeMetadata::u16 {
-                        asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(registry.call.args16()[reg_args].boxed()), Operand::Reg(reg.clone())));
+                    match arg.ty {
+                        TypeMetadata::i64 | TypeMetadata::u64 | TypeMetadata::ptr => 
+                            asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(registry.call.args64()[reg_args].boxed()), Operand::Reg(reg.clone()))),
+                        TypeMetadata::i32 | TypeMetadata::u32 => 
+                            asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(registry.call.args32()[reg_args].boxed()), Operand::Reg(reg.clone()))),
+                        TypeMetadata::i16 | TypeMetadata::u16 => 
+                            asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(registry.call.args16()[reg_args].boxed()), Operand::Reg(reg.clone()))),
+                        TypeMetadata::Void => {},
                     }
+
                     reg_args += 1;
                 } else {
                     asm.push( Instr::with1(Mnemonic::Push, Operand::Reg(reg.clone())));
@@ -590,7 +593,7 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
     }
 
     
-    for reg in vec![x64Reg::Rcx, x64Reg::Rdx, x64Reg::Rsi, x64Reg::Rdi, x64Reg::Rsi] { // save mutable registers
+    for reg in vec![x64Reg::Rcx, x64Reg::Rdx, x64Reg::Rsi, x64Reg::Rdi, x64Reg::Rsi] { // getback mutable registers
         if !registry.backend.openUsableRegisters64.contains(&reg.boxed()) {
             let var = registry.backend.getVarByReg(reg.boxed()).cloned();
             

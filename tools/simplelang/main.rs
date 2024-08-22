@@ -1,6 +1,6 @@
 use std::{error::Error, fs::{File, OpenOptions}, io::Read, process::exit};
 use logos::Logos;
-use Ygen::{prelude::*, Support::{Cli, ColorProfile}, Target::initializeAllTargets};
+use Ygen::{prelude::*, Support::{Cli, ColorProfile, Colorize}, Target::initializeAllTargets};
 
 mod lexer;
 mod parser;
@@ -17,6 +17,10 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     
     cli.add_opt("ir", "emit-ir", "Emits the ir");
     cli.add_opt("asm", "emit-asm", "Emits assembly");
+
+    cli.add_opt("lex", "show-lexical-result", "Shows the tokens");
+    cli.add_opt("parse", "show-parser-result", "Shows the pared expressions");
+
     cli.add_arg("in", "input", "The input file", true);
     cli.add_arg("o", "out", "The output file", false);
     cli.add_arg("triple", "triple", "The target triple", false);
@@ -81,11 +85,19 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         );
     }
 
+    if cli.opt("lex") {
+        println!("{}: {:?}", "Tokens".bold().gray(), tokens);
+    }
+
     let mut parser = parser::Parser::new(tokens);
     parser.parse();
 
     if parser.had_errors() {
         exit(-1);
+    }
+
+    if cli.opt("parse") {
+        println!("{}: {:?}", "Expressions".bold().gray(), parser.out);
     }
 
     let mut sem = semnatic::Semnatic::new(&parser.out);

@@ -64,6 +64,24 @@ pub enum Token {
     #[token("-")]
     Sub,
 
+    #[token("*")]
+    Mul,
+
+    #[token("/")]
+    Div,
+
+    #[token("+=", priority=5)]
+    AddEqual,
+
+    #[token("-=", priority=5)]
+    SubEqual,
+
+    #[token("*=", priority=5)]
+    MulEqual,
+
+    #[token("/=", priority=5)]
+    DivEqual,
+
     #[token(";")]
     Semicolon,
 
@@ -81,12 +99,6 @@ pub enum Token {
 
     #[token(":")]
     DoubleDot,
-
-    #[token("*")]
-    Mul,
-
-    #[token("/")]
-    Div,
 
     #[token("return")]
     Return,
