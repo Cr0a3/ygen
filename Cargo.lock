@@ -3,15 +3,6 @@
 version = 3
 
 [[package]]
-name = "Ygen"
-version = "0.1.1"
-dependencies = [
- "logos",
- "object",
- "proc",
-]
-
-[[package]]
 name = "adler"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -218,9 +209,9 @@ dependencies = [
 name = "simplelang"
 version = "0.1.0"
 dependencies = [
- "Ygen",
  "logos",
  "unescaper",
+ "ygen",
 ]
 
 [[package]]
@@ -292,10 +283,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 
 [[package]]
+name = "ygen"
+version = "0.1.1"
+dependencies = [
+ "logos",
+ "object",
+ "proc",
+]
+
+[[package]]
 name = "ygen-mc"
 version = "0.1.0"
 dependencies = [
- "Ygen",
+ "ygen",
 ]
 
 [[package]]

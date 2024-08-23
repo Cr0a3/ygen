@@ -1,5 +1,5 @@
 use std::{error::Error, fs::OpenOptions, path::Path};
-use Ygen::{prelude::*, Support::ColorProfile, Target::initializeAllTargets};
+use ygen::{prelude::*, Support::ColorProfile, Target::initializeAllTargets};
 
 
 pub fn main() -> Result<(), Box<dyn Error>> {

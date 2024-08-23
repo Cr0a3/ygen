@@ -1,6 +1,6 @@
 use std::{error::Error, fs::{File, OpenOptions}, io::Read, process::exit};
 use logos::Logos;
-use Ygen::{prelude::*, Support::{Cli, ColorProfile, Colorize}, Target::initializeAllTargets};
+use ygen::{prelude::*, Support::{Cli, ColorProfile, Colorize}, Target::initializeAllTargets};
 
 mod lexer;
 mod parser;

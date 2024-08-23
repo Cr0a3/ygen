@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use Ygen::IR::TypeMetadata;
+use ygen::IR::TypeMetadata;
 use crate::lexer::Token;
 use crate::{ast::*, err, expect, warn};
 

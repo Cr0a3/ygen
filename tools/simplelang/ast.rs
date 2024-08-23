@@ -1,4 +1,4 @@
-use Ygen::IR::TypeMetadata;
+use ygen::IR::TypeMetadata;
 
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -14,7 +14,7 @@ macro_rules! expect {
 macro_rules! err {
     ($err_var:expr, $($arg:tt)+) => {
         $err_var = true;
-        use Ygen::Support::Colorize;
+        use ygen::Support::Colorize;
         eprintln!("{}: {}", "Error".red().bold(), format_args!($($arg)+))
     };
 }
@@ -22,7 +22,7 @@ macro_rules! err {
 #[macro_export]
 macro_rules! warn {
     ($($arg:tt)+) => {
-        use Ygen::Support::Colorize;
+        use ygen::Support::Colorize;
         eprintln!("{}: {}", "Warning".yellow().bold(), format_args!($($arg)+))
     };
 }

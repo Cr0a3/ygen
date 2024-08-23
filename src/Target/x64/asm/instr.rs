@@ -621,7 +621,7 @@ pub enum Operand {
     Mem(MemOp),
     /// The link destination
     LinkDestination(String, i64),
-    //// For debugging pourpusis
+    /// For debugging
     Debug(String),
 }
 

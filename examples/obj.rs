@@ -1,6 +1,6 @@
 use std::{error::Error, fs::OpenOptions};
 
-use Ygen::{Obj::*, Target::Triple};
+use ygen::{Obj::*, Target::Triple};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut obj = ObjectBuilder::new(

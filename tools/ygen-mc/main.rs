@@ -1,9 +1,9 @@
 #![allow(rustdoc::invalid_html_tags)]
 
-//! # `ygen-mc`: Ygen machine code code playground
+//! # `ygen-mc`: ygen machine code code playground
 //! With the ygen machine code playground you can play around with assembler instructions
 //! and see their opcodes. <br>
-//! It's suppused to being the Ygen variant of the `llvm-mc`
+//! It's suppused to being the ygen variant of the `llvm-mc`
 //! ### Usage
 //! **Options:** <br>
 //! 
@@ -19,10 +19,10 @@
 
 use std::error::Error;
 
-use Ygen::{self, Support::{ColorProfile, Colorize}, Target::{initializeAllTargets, Triple}};
+use ygen::{self, Support::{ColorProfile, Colorize}, Target::{initializeAllTargets, Triple}};
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut cli = Ygen::Support::Cli::new(
+    let mut cli = ygen::Support::Cli::new(
         "ygen-mc", "Ygens machine code playground", "1.0", "Cr0a3"
     );
 

@@ -6,11 +6,11 @@ members = [
 ]
 
 [workspace.dependencies]
-Ygen = { path = "." }
+ygen = { path = "." }
 proc = { path = "src/proc/."}
 
 [package]
-name = "Ygen"
+name = "ygen"
 version = "0.1.1"
 edition = "2021"
 authors = ["Cr0a3"]

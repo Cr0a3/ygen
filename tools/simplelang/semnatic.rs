@@ -1,6 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 
-use Ygen::IR::TypeMetadata;
+use ygen::IR::TypeMetadata;
 
 use crate::{ast::*, err, warn};
 //use crate::macros::*;

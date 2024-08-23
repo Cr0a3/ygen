@@ -8,4 +8,4 @@ name = "ygen-mc"
 path = "main.rs"
 
 [dependencies]
-Ygen = { workspace = true }
+ygen = { workspace = true }

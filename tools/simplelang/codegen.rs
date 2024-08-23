@@ -1,6 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 
-use Ygen::prelude::*;
+use ygen::prelude::*;
 
 use crate::ast::*;
 
