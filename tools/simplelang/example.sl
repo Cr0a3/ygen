@@ -15,12 +15,20 @@ HOW TO RUN:
 
 import with (fmt: string, ...) printf // printf from libc
 
+with (a: u64, b: u64) add: {
+    return a + b;
+}
+
 extern with () main: {
-    printf("Hello World!\n");
+    var x: string = "Hello World!";
 
-    var x: u32 = 5;
+    printf(x);
 
-    printf("%d = %d", x, 5);
+    var a: u64 = 1;
+    var b: u64 = 0xd; // 0xd -> 13
+    var expected: u64 = a + b; 
+
+    printf("add(%d, %d) = %d # expected: %d", a, b, add(a, b), expected);
 
     return 0;
 }

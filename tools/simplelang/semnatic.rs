@@ -29,6 +29,14 @@ impl Semnatic {
     }
 
     pub fn analyze(&mut self) {
+        for stmt in self.stmts.clone() {
+            if let Statement::Fn(func) = stmt {
+                self.add_func(&func);
+            } else {
+                err!(self.error, "expected function statement found {:?}", stmt);
+            }
+        }
+
         while let Some(stmt) = self.stmts.pop_front() {
             if let Statement::Fn(func) = stmt {
                 self.analyze_func(&func);
@@ -49,12 +57,46 @@ impl Semnatic {
     }
 
     fn analyze_func(&mut self, func: &FnStmt) {
+        let mut vars = HashMap::new();
+
+        for arg in &func.args {
+            match arg {
+                Expr::Var(var) => {
+                    vars.insert(var.0.to_string(), var.1);
+                },
+                _ => {
+                    err!(self.error, "expected variables as function args not terms/calls");
+                    return;
+                }
+            }
+        }
+
+        let mut returned = func.import;
+
+        for stmt in &func.body {
+            if returned {
+                warn!("unreachable code after return statemant");
+            };
+
+            if let Statement::Ret(_) = stmt {
+                returned = true;
+            }
+
+            self.analyze_stmt(stmt, &mut vars);
+        }
+
+        if !(returned) {
+            err!(self.error, "function {:?} needs to return {:?} but found nothing", func.name, "to be implemented");//func.ret);
+        }
+        
+    }
+
+    fn add_func(&mut self, func: &FnStmt) {
         if self.funcs.contains_key(&func.name) {
             err!(self.error, "func {} defined twice", func.name);
             return;
         }
 
-        let mut vars = HashMap::new();
         let mut args = vec![];
 
         if func.import && func.body.len() > 0 {
@@ -69,8 +111,7 @@ impl Semnatic {
 
         for arg in &func.args {
             match arg {
-                Expr::Var(var) => {
-                    vars.insert(var.0.to_string(), var.1);     
+                Expr::Var(var) => {    
                     args.push(Expr::Var(var.clone()));
                 },
                 _ => {
@@ -90,24 +131,7 @@ impl Semnatic {
             return;
         }
 
-        let mut returned = false; // if encountered return node
-
-        for stmt in &func.body {
-            if returned {
-                warn!("unreachable code after return statemant");
-            };
-
-            if let Statement::Ret(_) = stmt {
-                returned = true;
-            }
-
-            self.analyze_stmt(stmt, &mut vars);
-        }
-
-        if !(returned) {
-            err!(self.error, "function {:?} needs to return {:?} but found nothing", func.name, "to be implemented");//func.ret);
-        }
-        
+        self.funcs.insert(func.name.to_string(), (args, vec![], false));
     }
 
     fn analyze_expr(&mut self, expr: &Expr, vars: &mut HashMap<String, Option<TypeMetadata>>) {
@@ -174,6 +198,8 @@ impl Semnatic {
 
         self.analyze_expr(&left, vars);
         self.analyze_expr(&right, vars);
+
+        self.in_binary = false;
     }
 
     fn analyze_call(&mut self, call: &CallStmt, vars: &mut HashMap<String, Option<TypeMetadata>>) {
