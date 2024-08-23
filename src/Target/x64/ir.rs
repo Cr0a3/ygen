@@ -14,6 +14,7 @@ macro_rules! CompileMathVarVar {
     ($name:ident, $node:ident, $mnemonic:expr) => {
         pub(crate) fn $name(node: &$node<Var, Var, Var>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
             let infos = &mut registry.backend;
+            let block = registry.block.unwrap();
 
             let loc1 = if let Some(loc1) = infos.varsStorage.get(&node.inner1) {
                 loc1.clone()
@@ -30,13 +31,13 @@ macro_rules! CompileMathVarVar {
 
             let boxed: Box<dyn Ir> = Box::new(node.clone());
 
-            if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &node.inner1) {
+            if !block.isVarUsedAfterNode(&boxed, &node.inner1) {
                 infos.drop(&node.inner1);
             }
-            if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &node.inner2) {
+            if !block.isVarUsedAfterNode(&boxed, &node.inner2) {
                 infos.drop(&node.inner2);
             }
-            if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &node.inner3) {
+            if !block.isVarUsedAfterNode(&boxed, &node.inner3) {
                 return vec![]; // all of these calculations don't need to be done: dead code removal
             }
 
@@ -109,6 +110,7 @@ macro_rules! CompileMathVarType {
     ($name:ident, $node:ident, $mnemonic:expr) => {
         pub(crate) fn $name(node: &$node<Var, Type, Var>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
             let infos = &mut registry.backend;
+            let block = registry.block.unwrap();
 
             let loc1 = if let Some(loc1) = infos.varsStorage.get(&node.inner1) {
                 loc1.clone()
@@ -118,10 +120,10 @@ macro_rules! CompileMathVarType {
 
             let boxed: Box<dyn Ir> = Box::new(node.clone());
 
-            if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &node.inner1) {
+            if !block.isVarUsedAfterNode(&boxed, &node.inner1) {
                 infos.drop(&node.inner1);
             }
-            if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &node.inner3) {
+            if !block.isVarUsedAfterNode(&boxed, &node.inner3) {
                 return vec![]; // all of these calculations don't need to be done: dead code removal
             }
 
@@ -190,10 +192,11 @@ macro_rules! CompileMathTyTy {
     ($name:ident, $node:ident, $op:tt) => {
         pub(crate) fn $name(node: &$node<Type, Type, Var>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
             let val = node.inner1.val() $op node.inner2.val();
+            let block = registry.block.unwrap();
         
             let boxed: Box<dyn Ir> = Box::new(node.clone());
         
-            if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &node.inner3) {
+            if !block.isVarUsedAfterNode(&boxed, &node.inner3) {
                 return vec![]; // all of these calculations don't need to be done: dead code removal
             }
         
@@ -233,12 +236,13 @@ CompileMathTyTy!(CompileAndTyTy, And, &);
 
 pub(crate) fn CompileConstAssign(assign: &ConstAssign<Var, Type>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
     let infos = &mut registry.backend;
+    let block = registry.block.unwrap();
 
     let ty = &assign.inner1.ty;
 
     let boxed: Box<dyn Ir> = Box::new(assign.clone());
     
-    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &assign.inner1) {
+    if !block.isVarUsedAfterNode(&boxed, &assign.inner1) {
         return vec![]; // all of these calculations don't need to be done: dead code removal
     }
     
@@ -272,6 +276,7 @@ pub(crate) fn CompileConstAssign(assign: &ConstAssign<Var, Type>, registry: &mut
 
 pub(crate) fn CompileConstAssignVar(assign: &ConstAssign<Var, Var>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
     let infos = &mut registry.backend;
+    let block = registry.block.unwrap();
 
     let loc = if let Some(loc) = infos.varsStorage.get_key_value(&assign.inner2) {
         loc.1.clone()
@@ -282,11 +287,11 @@ pub(crate) fn CompileConstAssignVar(assign: &ConstAssign<Var, Var>, registry: &m
     let ty = &assign.inner1.ty;
 
     let boxed: Box<dyn Ir> = Box::new(assign.clone());
-    
-    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &assign.inner2) {
+
+    if !block.isVarUsedAfterNode(&boxed, &assign.inner2) {
         infos.drop(&assign.inner2);
     }
-    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &assign.inner1) {
+    if !block.isVarUsedAfterNode(&boxed, &assign.inner1) {
         return vec![]; // all of these calculations don't need to be done: dead code removal
     }
     
@@ -330,6 +335,8 @@ pub(crate) fn CompileConstAssignVar(assign: &ConstAssign<Var, Var>, registry: &m
 }
 
 pub(crate) fn CompileConstAssignConst(assign: &ConstAssign<Var, Const>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
+    let block = registry.block.unwrap();
+    
     registry.backend.stackSafe = true;
 
     let infos = &mut registry.backend;
@@ -338,7 +345,7 @@ pub(crate) fn CompileConstAssignConst(assign: &ConstAssign<Var, Const>, registry
 
     let boxed: Box<dyn Ir> = Box::new(assign.clone());
 
-    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &assign.inner1) {
+    if !block.isVarUsedAfterNode(&boxed, &assign.inner1) {
         return vec![]; // all of these calculations don't need to be done: dead code removal
     }
     
@@ -416,6 +423,7 @@ pub(crate) fn CompileRetVar(ret: &Return<Var>, registry: &mut TargetBackendDescr
 
 pub(crate) fn CompileCast(cast: &Cast<Var, TypeMetadata, Var>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
     let boxed: Box<dyn Ir> = Box::new(cast.clone());
+    let block = registry.block.unwrap();
 
     let loc = if let Some(loc) = registry.backend.varsStorage.get(&cast.inner1) {
         loc.clone()      
@@ -423,10 +431,10 @@ pub(crate) fn CompileCast(cast: &Cast<Var, TypeMetadata, Var>, registry: &mut Ta
         panic!("unknown variable: {:?}", cast.inner1)
     };
 
-    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &cast.inner1) {
+    if block.isVarUsedAfterNode(&boxed, &cast.inner1) {
         registry.backend.drop(&cast.inner1);
     } 
-    if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &cast.inner3) {
+    if block.isVarUsedAfterNode(&boxed, &cast.inner3) {
         return vec![];
     } 
 
@@ -488,6 +496,7 @@ pub(crate) fn CompileCast(cast: &Cast<Var, TypeMetadata, Var>, registry: &mut Ta
 
 pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
     let boxed: Box<dyn Ir> = Box::new(call.clone());
+    let block = registry.block.unwrap();
 
     let mut asm = vec![];
 
@@ -496,9 +505,7 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
             let var = registry.backend.getVarByReg(reg.boxed()).cloned();
             
             if let Some(var) = var {
-                if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &var) {
-                    registry.backend.drop(&var);
-                } else {
+                if block.isVarUsedAfterNode(&boxed, &var) {
                     asm.push(Instr::with1(Mnemonic::Push, Operand::Reg(reg.boxed())));
                 }
             }
@@ -545,8 +552,7 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
                 }
             },
         }
- 
-        if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, arg) {
+        if !block.isVarUsedAfterNode(&boxed, arg) {
             registry.backend.drop(arg);
         }
     }
@@ -591,16 +597,13 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
 
         registry.backend.insertVar(call.inner3.clone(), store);
     }
-
     
     for reg in vec![x64Reg::Rcx, x64Reg::Rdx, x64Reg::Rsi, x64Reg::Rdi, x64Reg::Rsi] { // getback mutable registers
         if !registry.backend.openUsableRegisters64.contains(&reg.boxed()) {
             let var = registry.backend.getVarByReg(reg.boxed()).cloned();
             
             if let Some(var) = var {
-                if !BlockX86FuncisVarUsedAfterNode(registry.block.unwrap(), &boxed, &var) {
-                    registry.backend.drop(&var);
-                } else {
+                if block.isVarUsedAfterNode(&boxed, &var) {
                     asm.push(Instr::with1(Mnemonic::Pop, Operand::Reg(reg.boxed())));
                 }
             }
@@ -710,21 +713,4 @@ pub(crate) fn buildAsmX86<'a>(block: &'a Block, func: &Function, call: &CallConv
 
     Vec::from(out)
 
-}
-
-pub(crate) fn BlockX86FuncisVarUsedAfterNode(block: &Block, startingNode: &Box<dyn Ir>, var: &Var) -> bool {
-    let mut used = false;
-    let mut started = false;
-
-    for node in &block.nodes {
-        if node.uses(var) && started {
-            used = true;
-        }
-
-        if node.is(startingNode) {
-            started = true;
-        }
-    }
-
-    used
 }

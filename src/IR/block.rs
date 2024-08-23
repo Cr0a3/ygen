@@ -1,6 +1,6 @@
 use crate::Support::{ColorProfile, Colorize};
 
-use super::{ir::Ir, Function, VerifyError};
+use super::{ir::Ir, Function, Var, VerifyError};
 
 /// A basic block: stores ir of a specific area of a function
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -69,6 +69,24 @@ impl Block {
         }
 
         Ok(())
+    }
+
+    /// Returns true if the variable is used after the ir node
+    pub(crate) fn isVarUsedAfterNode(&self, start: &Box<dyn Ir>, var: &Var) -> bool {
+        let mut used = false;
+        let mut started = false;
+    
+        for node in &self.nodes {
+            if node.uses(var) && started {
+                used = true;
+            }
+    
+            if node.is(start) {
+                started = true;
+            }
+        }
+    
+        used
     }
 }
 
