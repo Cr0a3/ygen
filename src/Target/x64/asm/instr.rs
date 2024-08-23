@@ -178,12 +178,10 @@ impl Instr {
                         if let Some(Operand::Reg(op0)) = &self.op1 {
                             let op0 = op0.as_any().downcast_ref::<x64Reg>().expect("expected x64 registers and not the ones from other archs");
 
-                            if op0.extended() { 
-                                rex = Some(RexPrefix { w: false, r: false, x: false, b: true });
-                            } 
-                            if op0.is_gr64() { 
-                                rex = Some(RexPrefix { w: true, r: false, x: false, b: false });  
+                            if op0.is_gr64() || op0.extended() {
+                                rex = Some(RexPrefix { w: op0.is_gr64(), r: false, x: false, b: op0.extended() });
                             }
+
                             if op0.is_gr16() {
                                 mandatory = Some(MandatoryPrefix::t16BitOps);
                             }
