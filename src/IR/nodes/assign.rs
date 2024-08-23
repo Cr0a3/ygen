@@ -1,0 +1,164 @@
+use super::*;
+
+impl Ir for ConstAssign<Var, Type> {
+    fn dump(&self) -> String {
+        let meta: TypeMetadata = self.inner2.into();
+        format!("{} = {} {}", self.inner1.name, meta, self.inner2.val())
+    }
+
+    fn dumpColored(&self, profile: ColorProfile) -> String {
+        let meta: TypeMetadata = self.inner2.into();
+        format!("{} = {} {}", 
+            profile.markup(&self.inner1.name, ColorClass::Var), 
+            profile.markup(&meta.to_string(), ColorClass::Instr), 
+            profile.markup(&self.inner2.val().to_string(), ColorClass::Value),
+        )
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn verify(&self, _: FunctionType) -> Result<(), VerifyError> {
+        let op0Ty = self.inner1.ty;
+        let op1Ty = self.inner2.into();
+        if op0Ty != op1Ty {
+            Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op1Ty))?
+        }
+
+        Ok(())
+    }
+
+    fn clone_box(&self) -> Box<dyn Ir> {
+        Box::new(self.clone())
+    }
+
+    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
+        registry.getCompileFuncForConstAssign()(self, registry)
+    }
+
+    fn uses(&self, var: &Var) -> bool {
+        if *var == self.inner1 { true }
+        else { false }
+    }
+}
+
+impl Ir for ConstAssign<Var, Var> {
+    fn dump(&self) -> String {
+        let meta: TypeMetadata = self.inner2.ty;
+        format!("{} = {} {}", self.inner1.name, meta, self.inner2.name)
+    }
+
+    fn dumpColored(&self, profile: ColorProfile) -> String {
+        let meta: TypeMetadata = self.inner2.ty;
+        format!("{} = {} {}", 
+            profile.markup(&self.inner1.name, ColorClass::Var), 
+            profile.markup(&meta.to_string(), ColorClass::Instr), 
+            profile.markup(&self.inner2.name.to_string(), ColorClass::Value),
+        )
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn verify(&self, _: FunctionType) -> Result<(), VerifyError> {
+        let op0Ty = self.inner1.ty;
+        let op1Ty = self.inner2.ty;
+        if op0Ty != op1Ty {
+            Err(VerifyError::Op0Op1TyNoMatch(op0Ty, op1Ty))?
+        }
+
+        Ok(())
+    }
+
+    fn clone_box(&self) -> Box<dyn Ir> {
+        Box::new(self.clone())
+    }
+
+    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
+        registry.getCompileFuncForConstAssignVar()(self, registry)
+    }
+
+    fn uses(&self, var: &Var) -> bool {
+        if *var == self.inner1 { true }
+        else if *var == self.inner2 { true }
+        else { false }
+    }
+}
+
+impl Ir for ConstAssign<Var, Const> {
+    fn dump(&self) -> String {
+        format!("{} = ptr {}", self.inner1.name, self.inner2.name)
+    }
+
+    fn dumpColored(&self, profile: ColorProfile) -> String {
+        format!("{} = {} {}", 
+            profile.markup(&self.inner1.name, ColorClass::Var), 
+            profile.markup("ptr", ColorClass::Ty), 
+            profile.markup(&self.inner2.name.to_string(), ColorClass::Value),
+        )
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn verify(&self, _: FunctionType) -> Result<(), VerifyError> {
+        Ok(())
+    }
+
+    fn clone_box(&self) -> Box<dyn Ir> {
+        Box::new(self.clone())
+    }
+
+    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
+        registry.getCompileFuncForConstAssignConst()(self, registry)
+    }
+
+    fn uses(&self, var: &Var) -> bool {
+        if *var == self.inner1 { true }
+        else { false }
+    }
+}
+
+/// Trait used for overloading the BuildAssign function
+pub trait BuildAssign<T> {
+    /// builds an assignment
+    fn BuildAssign(&mut self, value: T) -> Var;
+}
+impl BuildAssign<Type> for IRBuilder<'_> {
+    fn BuildAssign(&mut self, value: Type) -> Var {
+        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+        
+        let out = Var::new(block, value.into());
+
+        block.push_ir(ConstAssign::new(out.clone(), value));
+
+        out
+    }
+}
+
+impl BuildAssign<Var> for IRBuilder<'_> {
+    fn BuildAssign(&mut self, value: Var) -> Var {
+        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+        
+        let out = Var::new(block, value.ty);
+
+        block.push_ir(ConstAssign::new(out.clone(), value));
+
+        out
+    }
+}
+
+impl BuildAssign<&Const> for IRBuilder<'_> {
+    fn BuildAssign(&mut self, value: &Const) -> Var {
+        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+        
+        let out = Var::new(block, TypeMetadata::ptr);
+
+        block.push_ir(ConstAssign::new(out.clone(), value.clone()));
+
+        out
+    }
+}

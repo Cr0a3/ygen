@@ -5,8 +5,11 @@ mod builder;
 mod block;
 mod var;
 mod constant;
+mod nodes;
 /// Stores all ir nodes and the ir trait
-pub mod ir;
+pub mod ir {
+    pub use super::nodes::*;
+}
 
 use std::error::Error;
 use std::fmt::Display;

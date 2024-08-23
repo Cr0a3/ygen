@@ -2,13 +2,14 @@
 
 use std::collections::VecDeque;
 
-use ir::*;
+pub(crate) mod compilation;
+
+use compilation::*;
 
 use super::{CallConv, Lexer, Reg, TargetBackendDescr};
 mod reg;
 pub use reg::*;
 
-pub(crate) mod ir;
 pub(crate) mod call;
 mod asm;
 
