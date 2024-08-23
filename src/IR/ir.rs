@@ -558,7 +558,7 @@ impl Ir for Call<Function, Vec<Var>, Var> {
         let mut fmt = String::new();
         
         for arg in &self.inner2 {
-            fmt.push_str(&format!("{}", arg))
+            fmt.push_str(&format!("{} ", arg))
         }
 
         format!("{} = call {} {} {}", self.inner3.name, self.inner1.ty.ret, self.inner1.name, fmt)
