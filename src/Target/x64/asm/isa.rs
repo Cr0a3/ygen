@@ -29,6 +29,41 @@ impl RexPrefix {
         if self.w || self.r || self.x || self.b { false }
         else { true }
     }
+
+    pub fn option(&self) -> Option<Self> {
+        if self.empty() {
+            None
+        } else {
+            Some(*self)
+        }
+    }
+}
+
+#[allow(dead_code)]
+fn add_rex_to_option(option: &mut Option<RexPrefix>, w: bool, r: bool, x: bool, b: bool) {
+    let mut out = option.unwrap_or(RexPrefix::none());
+
+    if w {
+        out.w = true;
+    }
+
+    if r {
+        out.r = true;
+    }
+    
+    if b {
+        out.b = true;
+    }
+
+    if x {
+        out.x = true;
+    }
+
+    if out.empty() {
+        *option = None;
+    } else {
+        *option = Some(out);
+    }
 }
 
 #[doc(hidden)]

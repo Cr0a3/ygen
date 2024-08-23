@@ -54,11 +54,6 @@ impl Instr {
                     else { None }
                 } else { None };
 
-                let rex: Option<RexPrefix> = if let Some(Operand::Reg(reg)) = &self.op1 {
-                    if reg.is_gr64() { Some(RexPrefix { w: true, r: false, x: false, b: false })}
-                    else { None }
-                } else { None };
-
                 let (mut r, mut m, mut i, ibase, ibase8) = match self.mnemonic {
                     Mnemonic::Add => (0x01, 0x03, 0, 0x81, 0x80),
                     Mnemonic::Adc => (0x11, 0x03, 2, 0x81, 0x80),
@@ -78,40 +73,19 @@ impl Instr {
                     Operand::Reg(reg) => {
                         let reg = reg.as_any().downcast_ref::<x64Reg>().expect("expected x64 registers and not the ones from other archs");
 
-                        let mut rex = if reg.extended() {
-                            if let Some(mut rex) = rex {
-                                rex.r = true;
-                                Some(rex)
-                            }  else {
-                                Some(RexPrefix { w: false, r: true, x: false, b: false })
-                            }
-                        } else { rex };
+                        let mut rex = RexPrefix::none();
+                        rex.w = reg.is_gr64();
+                        rex.r = reg.extended();
 
-                        if reg.is_gr64() {
-                            if let Some(mut rex) = rex {
-                                rex.w = true;
-                            }  else {
-                                rex = Some(RexPrefix { w: true, r: false, x: false, b: false })
-                            }
-                        }
                         let mut op = vec![];
 
                         if let Some(Operand::Reg(op0)) = &self.op1 {
                             let op0 = op0.as_any().downcast_ref::<x64Reg>().expect("expected x64 registers and not the ones from other archs");
 
+                            println!("mov r, r");
+
                             if op0.extended() {
-                                if let Some(mut rex) = rex {
-                                    rex.b = true;
-                                }  else {
-                                    rex = Some(RexPrefix { w: false, r: false, x: false, b: true })
-                                };
-                            }
-                            if op0.is_gr64() {
-                                if let Some(mut rex) = rex {
-                                    rex.w = true;
-                                }  else {
-                                    rex = Some(RexPrefix { w: true, r: false, x: false, b: false })
-                                };
+                                rex.b = true;
                             }
 
                             if reg.extended() || op0.extended() { 
@@ -131,16 +105,14 @@ impl Instr {
 
                         } else if let Some(Operand::Mem(mem)) = &self.op1 {
                             op.push(r);
-                            if let Some(rex) = rex.as_mut() {
-                                rex.sync(mem.rex());
-                            }
+                            rex.sync(mem.rex());
                             op.extend_from_slice(&ModRm::memR(
                                 mem.clone(),
                                 *reg.as_any().downcast_ref::<x64Reg>().expect("expected x64 registers and not the ones from other archs")
                             ))
                         } else { todo!() }
 
-                        buildOpcode(mandatory, rex, op)
+                        buildOpcode(mandatory, rex.option(), op)
                     },
                     Operand::Mem(mem) => {
                         let mut op = vec![];
