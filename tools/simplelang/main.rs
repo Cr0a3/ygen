@@ -86,7 +86,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     }
 
     if cli.opt("lex") {
-        println!("{}: {:?}", "Tokens".bold().gray(), tokens);
+        eprintln!("{}: {:?}", "Tokens".bold().gray(), &tokens);
     }
 
     let mut parser = parser::Parser::new(tokens);
@@ -97,7 +97,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     }
 
     if cli.opt("parse") {
-        println!("{}: {:?}", "Expressions".bold().gray(), parser.out);
+        eprintln!("{}: {:?}", "Expressions".bold().gray(), parser.out);
     }
 
     let mut sem = semnatic::Semnatic::new(&parser.out);
@@ -119,7 +119,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     let registry = &mut initializeAllTargets();
 
     if cli.opt("asm") {
-        eprintln!("{}", module.emitAsm(triple, registry)?);
+        println!("{}", module.emitAsm(triple, registry)?);
     }
 
     module.emitMachineCode(triple, registry)?.emit(outfile)?;

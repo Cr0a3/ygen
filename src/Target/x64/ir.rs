@@ -68,14 +68,14 @@ macro_rules! CompileMathVarVar {
                 if let VarStorage::Register(loc2Reg) = &loc2 {
                     if let VarStorage::Register(reg) = &ret {
                         return vec![
-                            Instr::with2(Mnemonic::Mov, Operand::Reg(tmp.boxed()), Operand::Reg(loc2Reg.boxed())),
-                            Instr::with2($mnemonic, Operand::Reg(tmp.boxed()), Operand::Reg(loc1Reg.boxed())),
+                            Instr::with2(Mnemonic::Mov, Operand::Reg(tmp.boxed()), Operand::Reg(loc1Reg.boxed())),
+                            Instr::with2($mnemonic, Operand::Reg(tmp.boxed()), Operand::Reg(loc2Reg.boxed())),
                             Instr::with2(Mnemonic::Mov, Operand::Reg(reg.boxed()), Operand::Reg(tmp.boxed())),
                         ]
                     } else if let VarStorage::Memory(mem) = &ret {
                         return vec![
-                            Instr::with2(Mnemonic::Mov, Operand::Reg(tmp.boxed()), Operand::Reg(loc2Reg.boxed())),
-                            Instr::with2($mnemonic, Operand::Reg(tmp.boxed()), Operand::Reg(loc1Reg.boxed())),
+                            Instr::with2(Mnemonic::Mov, Operand::Reg(tmp.boxed()), Operand::Reg(loc1Reg.boxed())),
+                            Instr::with2($mnemonic, Operand::Reg(tmp.boxed()), Operand::Reg(loc2Reg.boxed())),
                             Instr::with2(Mnemonic::Mov, Operand::Mem(mem.clone()), Operand::Reg(tmp.boxed())),
                             ];
                     } else { todo!() }
@@ -367,7 +367,7 @@ pub(crate) fn CompileConstAssignConst(assign: &ConstAssign<Var, Const>, registry
         vec![ 
             Instr::with2(Mnemonic::Lea, Operand::Reg(infos.getTmpBasedOnTy(*ty)), Operand::Mem(MemOp { base: None, index: None, scale: 0, displ: 1, rip: true })),
             Instr::with1(Mnemonic::Link, Operand::LinkDestination(assign.inner2.name.to_string(), -4)),
-            Instr::with2(Mnemonic::Mov, Operand::Reg(reg.clone()), Operand::Reg(infos.getTmpBasedOnTy(*ty)))
+            Instr::with2(Mnemonic::Mov, Operand::Reg(reg.boxed()), Operand::Reg(infos.getTmpBasedOnTy(*ty)))
         ]
     } else if let VarStorage::Memory(mem) = &store {
         vec![ 
@@ -697,6 +697,7 @@ pub(crate) fn buildAsmX86<'a>(block: &'a Block, func: &Function, call: &CallConv
     registry.block = None;
 
     let mut out = VecDeque::from(Vec::from(out)
+        .optimize()
         .optimize()
     );
 

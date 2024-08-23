@@ -102,4 +102,10 @@ pub enum Token {
 
     #[token("return")]
     Return,
+    
+    #[regex(r"//[^\n]*", logos::skip)]
+    Comment,
+
+    #[regex(r"/\*([^*]|\*[^/])*\*/", logos::skip)]
+    MultiComment,
 }
