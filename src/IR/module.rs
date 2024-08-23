@@ -188,7 +188,14 @@ impl Module {
         lines.push_str("section .rodata\n\n");
 
         for (_, consta) in &self.consts {
-            lines.push_str(&format!("{}: {:?}\n", consta.name, consta.data));
+            lines.push_str(&format!("{}: {:?} # {}\n", consta.name, consta.data, consta.data.iter()                                      
+                                                                                                .filter_map(|&byte| {
+                                                                                                    if byte >= 32 && byte <= 126 {
+                                                                                                        Some(byte as char)
+                                                                                                    } else {
+                                                                                                        None
+                                                                                                    }
+                                                                                                }).collect::<String>()));
         }
         lines.push_str("section .text\n\n");
 
@@ -206,12 +213,16 @@ impl Module {
 
             for block in &func.blocks {
                 if block.name.to_lowercase() != "entry" {
-                    lines += &format!("  {}:\n", block.name)
+                    lines += &format!("\t.{}:\n", block.name)
                 }
 
                 let asm_lines = registry.buildAsmForTarget(triple, block, func)?;
 
                 for line in asm_lines {
+                    if line.starts_with("#") { // debug
+                        lines.pop(); // \n
+                    }
+
                     lines += &format!("\t{}\n", line);
                 }
             }

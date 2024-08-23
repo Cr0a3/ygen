@@ -71,14 +71,24 @@ impl Parser {
 
         let mut args = vec![];
 
+        let mut dynamic_args = false;
+
         loop {
             match self.tokens.front()? {
                 Token::Ident(_) => args.push(Expr::Var(self.parse_var()?)),
+                Token::TripleDot => {
+                    dynamic_args = true;
+                    self.tokens.pop_front();
+                },
                 Token::RParam => break,
                 _ => { return None; },
             }
 
             if let Some(Token::Comma) = self.tokens.front() {
+                if dynamic_args {
+                    err!(self.error, "after a any arg indicator (...) no arguments are allowed to be there");
+                    return None;
+                }
                 self.tokens.pop_front();
             }
         }
@@ -101,6 +111,7 @@ impl Parser {
                 args: args,
                 extrn: false,
                 import: import,
+                dynamic_args: dynamic_args,
             }))
         }
 
@@ -137,6 +148,7 @@ impl Parser {
             body: body,
             args: args,
             extrn: extrn,
+            dynamic_args: dynamic_args,
             import: false, // we handled imported functions earlier
         }))
 

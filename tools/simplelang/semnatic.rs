@@ -9,7 +9,7 @@ use crate::{ast::*, err, warn};
 pub struct Semnatic {
     stmts: VecDeque<Statement>,
 
-    funcs: HashMap<String, (/*args*/Vec<Expr>, /*body*/Vec<Expr>)>,
+    funcs: HashMap<String, (/*args*/Vec<Expr>, /*body*/Vec<Expr>, /*dynamic amount of args*/bool)>,
 
     in_binary: bool,
 
@@ -50,12 +50,22 @@ impl Semnatic {
 
     fn analyze_func(&mut self, func: &FnStmt) {
         if self.funcs.contains_key(&func.name) {
-            err!(self.error, "func {:?} defined twice", func.name);
+            err!(self.error, "func {} defined twice", func.name);
             return;
         }
 
         let mut vars = HashMap::new();
         let mut args = vec![];
+
+        if func.import && func.body.len() > 0 {
+            err!(self.error, "imported functions aren't allowed to have a body but {} has", func.name);
+            return;
+        }
+
+        if func.dynamic_args && !func.import {
+            err!(self.error, "only imported functions are allowed to have a variable amount of arguments. But func {} has", func.name);
+            return;
+        }
 
         for arg in &func.args {
             match arg {
@@ -76,7 +86,7 @@ impl Semnatic {
                 return;
             }
 
-            self.funcs.insert(func.name.to_string(), (args, vec![]));
+            self.funcs.insert(func.name.to_string(), (args, vec![], func.dynamic_args));
             return;
         }
 
@@ -172,13 +182,18 @@ impl Semnatic {
             return;
         }
 
-        let (args, _) = self.funcs.get(&call.name).unwrap();
+        let (args, _, dynamic) = self.funcs.get(&call.name).unwrap();
 
         let args = args.len();
         let given = call.args.len();
 
-        if args != given {
-            err!(self.error, "expected {} arguments found {}", args, given);
+        if args != given && !dynamic {
+            err!(self.error, "expected {} argument(s) found {}", args, given);
+            return;
+        }
+
+        if args > given {
+            err!(self.error, "too few arguments were supplyed (expected {} found {})", args, given);
             return;
         }
 

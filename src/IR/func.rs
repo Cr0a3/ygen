@@ -16,6 +16,8 @@ pub struct FunctionType {
     pub args: Vec<(/*num*/usize, TypeMetadata)>,
     /// The return type
     pub ret: TypeMetadata,
+    /// After the given arguments any argument type can be supplied (like the printf function - is in c ...)
+    pub any_args: bool,
 }
 
 impl FunctionType {
@@ -35,7 +37,14 @@ impl FunctionType {
                 ret
             },
             ret: ret,
+            any_args: false,
         }
+    }
+
+    /// Activates dynamic arguments
+    /// Makes that you can supply any argument after the fixed given arguments
+    pub fn activate_dynamic_arguments(&mut self) {
+        self.any_args = true;
     }
 
     /// Returns the argument as a var

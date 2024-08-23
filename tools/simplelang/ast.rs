@@ -36,6 +36,7 @@ pub struct FnStmt {
 
     pub extrn: bool,
     pub import: bool,
+    pub dynamic_args: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

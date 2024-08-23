@@ -65,6 +65,10 @@ impl CodeGenerator {
         
         let mut builder = IRBuilder();
 
+        if func.dynamic_args {
+            func_ty.activate_dynamic_arguments();
+        }
+
         let mut fun = Func(func.name.to_string(), func_ty);
 
         if func.extrn {
@@ -160,6 +164,8 @@ impl CodeGenerator {
 
     fn gen_string(&mut self, builder: &mut IRBuilder, string: &String) -> Var {
         let constant = self.module.addConst(&format!(".const{}", self.const_index));
+
+        self.const_index += 1;
 
         let mut string = string.clone();
         string.push('\0');

@@ -631,10 +631,18 @@ impl Ir for Call<Function, Vec<Var>, Var> {
         }
 
         let mut index = 0;
+        let args = &self.inner1.ty.args;
         for arg in &self.inner2 {
-            if matches!(self.inner1.ty.args.get(index), Some((_, argty)) if *argty != (*arg).ty.into()) {
-                Err(VerifyError::IDontWantToAddAnErrorMessageHereButItsAnError)?
+            if index < args.len() {
+                if matches!(args.get(index), Some((_, argty)) if *argty != (*arg).ty.into()) {
+                    Err(VerifyError::InvalidArgumentTypeFound)?
+                }
+            } else {
+                if !self.inner1.ty.any_args {
+                    Err(VerifyError::ToManyArgumentsWereSupplyed)?
+                }
             }
+            
             index += 1;
         }
 

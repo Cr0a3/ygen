@@ -692,6 +692,7 @@ pub(crate) fn buildAsmX86<'a>(block: &'a Block, func: &Function, call: &CallConv
     for node in &block.nodes {
         let compiled = node.compile(registry);
         out.extend(compiled);
+        out.push_back(Instr::with1(Mnemonic::Debug, Operand::Debug(format!("{}", node.dump()))));
     }
 
     registry.block = None;

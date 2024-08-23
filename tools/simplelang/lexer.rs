@@ -100,6 +100,9 @@ pub enum Token {
     #[token(":")]
     DoubleDot,
 
+    #[token("...")]
+    TripleDot,
+
     #[token("return")]
     Return,
     

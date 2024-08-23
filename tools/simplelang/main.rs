@@ -78,7 +78,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
                     };
 
                     let _tmp;
-                    err!(_tmp, "{:?}", error);
+                    err!(_tmp, "{}", error);
                     exit(-1);
                 }
             }

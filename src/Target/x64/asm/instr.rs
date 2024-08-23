@@ -81,9 +81,7 @@ impl Instr {
 
                         if let Some(Operand::Reg(op0)) = &self.op1 {
                             let op0 = op0.as_any().downcast_ref::<x64Reg>().expect("expected x64 registers and not the ones from other archs");
-
-                            println!("mov r, r");
-
+                            
                             if op0.extended() {
                                 rex.b = true;
                             }
@@ -327,6 +325,7 @@ impl Instr {
                     (vec![], None)
                 }
             }
+            Mnemonic::Debug => (vec![], None),
         })
     }
 
@@ -406,7 +405,7 @@ impl Instr {
                     }
                 }
             }
-            Mnemonic::Link => {},
+            Mnemonic::Link | Mnemonic::Debug => {},
             Mnemonic::Endbr64 => {
                 if self.op1.is_some() || self.op2.is_some() {
                     Err(InstrEncodingError::InvalidVariant(self.clone(), "endbr64 can't have operands".to_string()))?
@@ -437,6 +436,7 @@ impl Instr {
                 Operand::Reg(reg) => profile.markup(&reg.to_string(), ColorClass::Var),
                 Operand::Mem(mem) => profile.markup(&format!("{}", mem), ColorClass::Var),
                 Operand::LinkDestination(_, _) => "".to_string(),
+                Operand::Debug(s) => s.to_string(),
             }));
             if let Some(op2) = &self.op2 {
                 string.push_str(&format!(", {}", match op2 {
@@ -444,6 +444,7 @@ impl Instr {
                     Operand::Reg(reg) => profile.markup(&format!(", {}", reg.to_string()), ColorClass::Var),
                     Operand::Mem(mem) => profile.markup(&format!("{}", mem), ColorClass::Var),
                     Operand::LinkDestination(_, _) => "".to_string(),
+                    Operand::Debug(s) => s.to_string(),
                 }));
             }
         }
@@ -556,6 +557,8 @@ pub enum Mnemonic {
 
     /// here's a link placed
     Link,
+    /// for debugging pourpusis
+    Debug,
 }
 
 impl FromStr for Mnemonic {
@@ -602,6 +605,7 @@ impl Display for Mnemonic {
             Mnemonic::Jmp => "jmp",
             Mnemonic::Endbr64 => "endbr64",
             Mnemonic::Link => "",
+            Mnemonic::Debug => "#",
         })
     }
 }
@@ -617,6 +621,8 @@ pub enum Operand {
     Mem(MemOp),
     /// The link destination
     LinkDestination(String, i64),
+    //// For debugging pourpusis
+    Debug(String),
 }
 
 impl PartialEq for Operand {
@@ -626,6 +632,7 @@ impl PartialEq for Operand {
             (Self::Reg(l0), Self::Reg(r0)) => l0 == r0,
             (Self::Mem(l0), Self::Mem(r0)) => l0 == r0,
             (Self::LinkDestination(l0, l1), Self::LinkDestination(r0, r1)) => l0 == r0 && l1 == r1,
+            (Self::Debug(l0), Self::Debug(r0)) => l0 == r0,
             _ => false,
         }
     }
@@ -638,6 +645,7 @@ impl Display for Operand {
             Operand::Reg(reg) => reg.to_string(),
             Operand::Mem(mem) => format!("{}", mem),
             Operand::LinkDestination(_, _) => "".to_string(),
+            Operand::Debug(s) => s.to_string(),
         })
     }
 }

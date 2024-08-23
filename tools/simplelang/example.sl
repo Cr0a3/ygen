@@ -13,15 +13,14 @@ HOW TO RUN:
 
 */
 
-import with (fmt: string) printf // printf from libc
+import with (fmt: string, ...) printf // printf from libc
 
 extern with () main: {
-    var x: string = "Hello World!";
+    printf("Hello World!\n");
 
-    x += 6;
-    x -= 4;
+    var x: u32 = 5;
 
-    printf(x);
+    printf("%d = %d", x, 5);
 
     return 0;
 }
