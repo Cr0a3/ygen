@@ -94,7 +94,7 @@ IrTypeWith3!(And, T, U, Z);
 use crate::Support::{ColorClass, ColorProfile};
 
 macro_rules! MathIrNode {
-    ($name:ident, $compileFuncVarVar:ident, $compileFuncVarTy:ident, $compileFuncTyTy:ident, $buildTraitName:ident, $buildFuncName:ident, $dump:expr, $variantVarVar:expr, $variantVarType:expr, $variantTypeType:expr) => {
+    ($name:ident, $compileFuncVarVar:ident, $compileFuncVarTy:ident, $compileFuncTyTy:ident, $buildTraitName:ident, $buildFuncName:ident, $dump:expr) => {
         /// Used for overloading the build function
         pub trait $buildTraitName<T, U> {
             /// Xors values
@@ -151,10 +151,6 @@ macro_rules! MathIrNode {
                 Box::new(self.clone())
             }
         
-            fn name(&self) -> String {
-                $variantTypeType.into()
-            }
-        
             fn dump(&self) -> String {
                 format!("{} = {} {} {}, {}", $dump, self.inner3.name, self.inner3.ty, self.inner1.val(), self.inner2.val())
             }
@@ -205,11 +201,7 @@ macro_rules! MathIrNode {
             fn clone_box(&self) -> Box<dyn Ir> {
                 Box::new(self.clone())
             }
-        
-            fn name(&self) -> String {
-                $variantVarVar.into()
-            }
-        
+
             fn dump(&self) -> String {
                 format!("{} = {} {} {}, {}", $dump, self.inner3.name, self.inner3.ty, self.inner1.name, self.inner2.name)
             }
@@ -261,10 +253,6 @@ macro_rules! MathIrNode {
                 Box::new(self.clone())
             }
         
-            fn name(&self) -> String {
-                $variantVarType.into()
-            }
-        
             fn dump(&self) -> String {
                 format!("{} = {} {} {}, {}", $dump, self.inner3.name, self.inner1.ty, self.inner1.name, self.inner2.val())
             }
@@ -314,20 +302,16 @@ macro_rules! MathIrNode {
     };
 }
 
-MathIrNode!(Add, getCompileFuncForAddVarVar, getCompileFuncForAddVarType, getCompileFuncForAddTypeType, BuildAdd, BuildAdd, "add", "AddVarVar", "AddVarType", "AddTypeType");
-MathIrNode!(Sub, getCompileFuncForSubVarVar, getCompileFuncForSubVarType, getCompileFuncForSubTypeType, BuildSub, BuildSub, "sub", "SubVarVar", "SubVarType", "SubTypeType");
-MathIrNode!(Xor, getCompileFuncForXorVarVar, getCompileFuncForXorVarType, getCompileFuncForXorTypeType, BuildXor, BuildXor, "xor", "XorVarVar", "XorVarType", "XorTypeType");
-MathIrNode!(Or, getCompileFuncForOrVarVar, getCompileFuncForOrVarType, getCompileFuncForOrTypeType, BuildOr, BuildOr, "or", "OrVarVar", "OrVarType", "OrTypeType");
-MathIrNode!(And, getCompileFuncForAndVarVar, getCompileFuncForAndVarType, getCompileFuncForAndTypeType, BuildAnd, BuildAnd, "and", "AndVarVar", "AndVarType", "AndTypeType");
+MathIrNode!(Add, getCompileFuncForAddVarVar, getCompileFuncForAddVarType, getCompileFuncForAddTypeType, BuildAdd, BuildAdd, "add");
+MathIrNode!(Sub, getCompileFuncForSubVarVar, getCompileFuncForSubVarType, getCompileFuncForSubTypeType, BuildSub, BuildSub, "sub");
+MathIrNode!(Xor, getCompileFuncForXorVarVar, getCompileFuncForXorVarType, getCompileFuncForXorTypeType, BuildXor, BuildXor, "xor");
+MathIrNode!(Or, getCompileFuncForOrVarVar, getCompileFuncForOrVarType, getCompileFuncForOrTypeType, BuildOr, BuildOr, "or");
+MathIrNode!(And, getCompileFuncForAndVarVar, getCompileFuncForAndVarType, getCompileFuncForAndTypeType, BuildAnd, BuildAnd, "and");
 
 
 impl Ir for Return<Type> {
     fn clone_box(&self) -> Box<dyn Ir> {
         Box::new(self.clone())
-    }
-
-    fn name(&self) -> String {
-        "RetType".into()
     }
 
     fn dump(&self) -> String {
@@ -366,10 +350,6 @@ impl Ir for Return<Type> {
 impl Ir for Return<Var> {
     fn clone_box(&self) -> Box<dyn Ir> {
         Box::new(self.clone())
-    }
-
-    fn name(&self) -> String {
-        "RetVar".into()
     }
 
     fn dump(&self) -> String {
@@ -423,10 +403,6 @@ impl Ir for ConstAssign<Var, Type> {
         )
     }
 
-    fn name(&self) -> String {
-        "AssignVarType".into()
-    }
-
     fn as_any(&self) -> &dyn Any {
         self
     }
@@ -468,10 +444,6 @@ impl Ir for ConstAssign<Var, Var> {
             profile.markup(&meta.to_string(), ColorClass::Instr), 
             profile.markup(&self.inner2.name.to_string(), ColorClass::Value),
         )
-    }
-
-    fn name(&self) -> String {
-        "AssignVarVar".into()
     }
 
     fn as_any(&self) -> &dyn Any {
@@ -516,10 +488,6 @@ impl Ir for ConstAssign<Var, Const> {
         )
     }
 
-    fn name(&self) -> String {
-        "AssignVarConst".into()
-    }
-
     fn as_any(&self) -> &dyn Any {
         self
     }
@@ -555,10 +523,6 @@ impl Ir for Cast<Var, TypeMetadata, Var> {
             profile.markup(&"to", ColorClass::Instr),
             profile.markup(&self.inner2.to_string(), ColorClass::Ty),
         )
-    }
-
-    fn name(&self) -> String {
-        "CastTyVar".into()
     }
 
     fn as_any(&self) -> &dyn Any {
@@ -615,10 +579,6 @@ impl Ir for Call<Function, Vec<Var>, Var> {
             profile.markup(&self.inner1.name, ColorClass::Name),
             fmt
         )
-    }
-
-    fn name(&self) -> String {
-        "Call".to_string()
     }
 
     fn as_any(&self) -> &dyn Any {
@@ -780,9 +740,6 @@ pub(crate) trait Ir: Debug + Any {
     fn dump(&self) -> String;
     /// Returns the ir node as his textual representation with colors
     fn dumpColored(&self, profile: ColorProfile) -> String;
-
-    /// Returns the name of the ir expr
-    fn name(&self) -> String;
 
     /// Turns the ir node to an any
     fn as_any(&self) -> &dyn Any;
