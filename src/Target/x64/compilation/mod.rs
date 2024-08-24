@@ -16,10 +16,10 @@ pub(crate) use ret::*;
 use std::collections::VecDeque;
 
 use crate::prelude::{Block, Function, Type, TypeMetadata, Var};
+use crate::Optimizations::auto_max_optimize;
 use crate::Target::target_descr::{TargetBackendDescr, VarStorage};
 use crate::Target::Reg;
 use crate::IR::{ir::*, Const};
-use super::Optimize;
 
 use crate::Target::CallConv;
 
@@ -77,10 +77,11 @@ pub(crate) fn buildAsmX86<'a>(block: &'a Block, func: &Function, call: &CallConv
 
     registry.block = None;
 
-    let mut out = VecDeque::from(Vec::from(out)
-        .optimize()
-        .optimize()
-    );
+    let mut out = Vec::from(out);
+
+    auto_max_optimize(&mut out);
+
+    let mut out = VecDeque::from(out);
 
     out.extend(x64BuildEpilog(&block, registry));
 

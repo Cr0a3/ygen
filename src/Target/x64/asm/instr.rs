@@ -462,6 +462,12 @@ impl Instr {
                     out = true;
                 }
             }
+
+            if self.op2 == other.op1 {
+                if self.op1 == other.op2 {
+                    out = true;
+                }
+            }
         }
 
         if self.mnemonic == Mnemonic::Add && other.mnemonic == Mnemonic::Sub {

@@ -40,17 +40,20 @@ impl Optimize<Instr> for Vec<Instr> {
                         }
                     }
                 } 
-                else if instr.op1 == instr.op2 {
+                if instr.op1 == instr.op2 {
                     if instr.mnemonic == Mnemonic::Mov {
                         optimized = true;
                     }
                 }
-                else if instr.op1 == last.op1 && instr.mnemonic == Mnemonic::Mov && last.mnemonic == Mnemonic::Mov {
+                if instr.op1 == last.op1 && instr.mnemonic == Mnemonic::Mov && last.mnemonic == Mnemonic::Mov {
                     if let Some(Operand::Reg(_)) = instr.op1 {
                         out.pop();
                     }
                 }
-                else if instr.mnemonic == Mnemonic::Ret && last.mnemonic == Mnemonic::Call {
+                if instr.op2 == last.op1 && instr.mnemonic == Mnemonic::Mov && last.mnemonic == Mnemonic::Mov {
+                    optimized = true;
+                }
+                if instr.mnemonic == Mnemonic::Ret && last.mnemonic == Mnemonic::Call {
                     out.pop();
                     out.push(Instr::with1(Mnemonic::Jmp, instr.op1.clone().expect("call needs to have only one op")));
                     optimized = true;

@@ -71,7 +71,7 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
 
     asm.push( Instr::with1(Mnemonic::Link, Operand::LinkDestination(call.inner1.name.to_string(), -4)));
 
-    if func.ty.ret != TypeMetadata::Void {  
+    if func.ty.ret != TypeMetadata::Void && block.isVarUsedAfterNode(&boxed, &call.inner3){  
         let store = if let Some(reg) = registry.backend.getOpenRegBasedOnTy(call.inner3.ty) {
             match func.ty.ret {
                 TypeMetadata::u16 | TypeMetadata::i16 => asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(reg.clone()), Operand::Reg(registry.call.ret16().boxed())) ),
