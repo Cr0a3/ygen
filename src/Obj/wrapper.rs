@@ -3,7 +3,7 @@ use object::{Architecture, BinaryFormat, Endianness, RelocationEncoding, Relocat
 
 use crate::prelude::Triple;
 use crate::Target::{self, Arch, CallConv};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fs::File;
 use std::error::Error;
 
@@ -63,7 +63,7 @@ pub enum Linkage {
 /// It also supports debugging information
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ObjectBuilder {
-    defines: HashMap<String, Vec<u8>>,
+    defines: BTreeMap<String, Vec<u8>>,
     links: Vec<Link>,
 
     decls: Vec<(String, Decl, Linkage)>,
@@ -75,7 +75,7 @@ impl ObjectBuilder {
     /// Creates an new object builder
     pub fn new(triple: Triple) -> Self {
         Self {
-            defines: HashMap::new(),
+            defines: BTreeMap::new(),
 
             links: vec![],
 
@@ -109,6 +109,9 @@ impl ObjectBuilder {
 
     /// Writes the object file into the the specified file
     pub fn emit(&self, file: File) -> Result<(), Box<dyn Error>> {
+
+        let align = 1;
+
         let mut obj = object::write::Object::new({
             match self.triple.bin {
                 Target::ObjFormat::Unknown => BinaryFormat::native_object(),
@@ -169,7 +172,7 @@ impl ObjectBuilder {
         let secData = obj.add_section(vec![], ".data".as_bytes().to_vec(), SectionKind::Data);
         let secConsts = obj.add_section(vec![], ".rodata".as_bytes().to_vec(), SectionKind::ReadOnlyData);
 
-        let mut syms: HashMap<String, (Option<SectionId>, Option</*offsest*/u64>, SymbolId)> = HashMap::new();
+        let mut syms: BTreeMap<String, (Option<SectionId>, Option</*offsest*/u64>, SymbolId)> = BTreeMap::new();
 
         for (name, data) in &self.defines {
             let name = name.to_owned();
@@ -216,7 +219,17 @@ impl ObjectBuilder {
                     }
                 },
                 weak: false,
-                section: SymbolSection::Undefined,
+                section: {
+                    if *link != Linkage::Extern {
+                        match decl {
+                            Decl::Function => SymbolSection::Section(secText),
+                            Decl::Data => SymbolSection::Section(secData),
+                            Decl::Constant => SymbolSection::Section(secConsts),
+                        }
+                    } else {
+                        SymbolSection::Undefined
+                    }
+                },
                 flags: SymbolFlags::None,
             });
 
@@ -228,19 +241,10 @@ impl ObjectBuilder {
 
 
             if *link != Linkage::Extern {
-
-                if *decl == Decl::Function {
-                    eprint!("{}: 0x", name);
-                    for byte in &data {
-                        eprint!("{:02x?}", *byte);
-                    }
-                    eprintln!("");
-                }
-
                 let def_offset = match decl {
-                    Decl::Function => obj.add_symbol_data(sym, secText, &data, 1),
-                    Decl::Data => obj.add_symbol_data(sym, secData, &data, 1),
-                    Decl::Constant => obj.add_symbol_data(sym, secConsts, &data, 1),
+                    Decl::Function => obj.add_symbol_data(sym, secText, &data, align),
+                    Decl::Data => obj.add_symbol_data(sym, secData, &data, align),
+                    Decl::Constant => obj.add_symbol_data(sym, secConsts, &data, align),
                 };
     
                 syms.insert(name.clone(), (None, Some(def_offset), sym));
@@ -264,10 +268,12 @@ impl ObjectBuilder {
                 offset = -4;
             }
 
+            eprintln!("{:?}", link);
+
             obj.add_relocation(secText, Relocation {
-                offset: (link.at as i64 + offset) as u64,
+                offset: (link.at as i64 + offset) as u64 + {if let Some(off) = off { *off } else { 0 }},
                 symbol: to_sym.to_owned(),
-                addend: link.addend + addend + {if let Some(off) = off { *off as i64} else { 0 }},
+                addend: link.addend + addend,
                 flags: RelocationFlags::Generic { 
                     kind: RelocationKind::PltRelative, 
                     encoding: {

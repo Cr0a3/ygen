@@ -32,3 +32,7 @@ extern with () main: {
 
     return 0;
 }
+
+extern with() aaa: {
+    return 5;
+}

@@ -1,22 +1,22 @@
 use crate::{prelude::Triple, Obj::{Decl, Linkage, ObjectBuilder}, Optimizations::PassManager, Support::{ColorClass, ColorProfile}, Target::TargetRegistry};
 
 use super::{func::FunctionType, Const, Function, VerifyError};
-use std::{collections::HashMap, error::Error, fs::OpenOptions, io::Write, path::Path};
+use std::{collections::BTreeMap, error::Error, fs::OpenOptions, io::Write, path::Path};
 
 /// ## The Module
 /// The main class for handeling functions
 #[derive(Debug, Clone)]
 pub struct Module {
-    pub(crate) funcs: HashMap<String, Function>,
-    pub(crate) consts: HashMap<String, Const>,
+    pub(crate) funcs: BTreeMap<String, Function>,
+    pub(crate) consts: BTreeMap<String, Const>,
 }
 
 impl Module {
     /// Creates a new module
     pub fn new() -> Self {
         Self {
-            funcs: HashMap::new(),
-            consts: HashMap::new(),
+            funcs: BTreeMap::new(),
+            consts: BTreeMap::new(),
         }
     }
 
