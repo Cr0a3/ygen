@@ -33,7 +33,20 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     if let Some(out) = cli.arg_val("out") {
         outfile = out;
     } else {
-        outfile = format!("{}.o", infile.split('.').collect::<Vec<&str>>()[0]);
+        let file = infile.split("/").collect::<Vec<&str>>().last().unwrap_or(&&infile.as_str()).to_string();
+        let slices = file.split(".").collect::<Vec<&str>>();
+        
+        let mut name = String::new();
+
+        for slice in &slices {
+            if slices.last() == Some(slice) {
+                break;
+            }
+
+            name.push_str(slice);
+        }
+
+        outfile = format!("{}.o", name);
     }
 
     let mut triple = Triple::host();

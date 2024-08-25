@@ -268,8 +268,6 @@ impl ObjectBuilder {
                 offset = -4;
             }
 
-            eprintln!("{:?}", link);
-
             obj.add_relocation(secText, Relocation {
                 offset: (link.at as i64 + offset) as u64 + {if let Some(off) = off { *off } else { 0 }},
                 symbol: to_sym.to_owned(),
