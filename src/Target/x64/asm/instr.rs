@@ -219,30 +219,25 @@ impl Instr {
                 let mut rex = None;
                 let mut op = vec![];
 
-                let (opcode, i) = match self.mnemonic {
-                    Mnemonic::Push => (0xff, 6),
-                    Mnemonic::Pop => (0x8f, 0),
+                let (r, m, i) = match self.mnemonic {
+                    Mnemonic::Push => (0x50, 0xff, 6),
+                    Mnemonic::Pop => (0x58, 0xff, 0),
                     _ => unreachable!()
                 };
 
                 if let Some(Operand::Reg(op0)) = &self.op1 {
                     let op0 = op0.as_any().downcast_ref::<x64Reg>().expect("expected x64 registers and not the ones from other archs");
 
-                    if op0.extended() { 
-                        rex = Some(RexPrefix { w: false, r: false, x: false, b: true });
-                    } 
-                    if op0.is_gr64() { 
-                        rex = Some(RexPrefix { w: true, r: false, x: false, b: false });  
-                    }
+                    rex = RexPrefix { w: false, r: false, x: false, b: op0.extended() }.option();
+
                     if op0.is_gr16() {
                         mandatory = Some(MandatoryPrefix::t16BitOps);
                     }
                     
-                    op.push(opcode);
-                    op.push(0b11 << 6 | i << 3 | op0.enc());
+                    op.push(r + op0.enc());
 
                 } else if let Some(Operand::Mem(mem)) = &self.op1 {
-                    op.push(opcode);
+                    op.push(m);
                     let enc = mem.encode(None);
                     op.push(enc.0 | i << 3 | 0b100);
                     op.extend_from_slice(&enc.1);

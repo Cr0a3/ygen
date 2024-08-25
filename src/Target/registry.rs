@@ -2,7 +2,7 @@ use std::{collections::{HashMap, VecDeque}, error::Error, fmt::Display};
 
 use crate::{prelude::{Block, Function}, Obj::Link, Target::instr::Instr};
 
-use super::{Arch, CallConv, TargetBackendDescr, Triple};
+use super::{instr::Mnemonic, Arch, CallConv, TargetBackendDescr, Triple};
 
 /// The target registry: manages different targets
 pub struct TargetRegistry<'a> {
@@ -82,6 +82,10 @@ impl<'a> TargetRegistry<'a> {
             let mut links = vec![];
 
             for instr in &asm {
+                if instr.mnemonic == Mnemonic::Debug {
+                    continue;
+                };
+
                 let (encoded, link) = &instr.encode()?;
                 res.extend_from_slice(&encoded);
 

@@ -165,9 +165,9 @@ impl ObjectBuilder {
             }
         });
 
-        let secText = obj.add_section(vec![], "text".as_bytes().to_vec(), SectionKind::Text);
-        let secData = obj.add_section(vec![], "data".as_bytes().to_vec(), SectionKind::Data);
-        let secConsts = obj.add_section(vec![], "rodata".as_bytes().to_vec(), SectionKind::ReadOnlyData);
+        let secText = obj.add_section(vec![], ".text".as_bytes().to_vec(), SectionKind::Text);
+        let secData = obj.add_section(vec![], ".data".as_bytes().to_vec(), SectionKind::Data);
+        let secConsts = obj.add_section(vec![], ".rodata".as_bytes().to_vec(), SectionKind::ReadOnlyData);
 
         let mut syms: HashMap<String, (Option<SectionId>, Option</*offsest*/u64>, SymbolId)> = HashMap::new();
 
@@ -226,11 +226,21 @@ impl ObjectBuilder {
                 Decl::Constant => obj.add_subsection(StandardSection::ReadOnlyData, name.as_bytes()),
             };*/
 
+
             if *link != Linkage::Extern {
+
+                if *decl == Decl::Function {
+                    eprint!("{}: 0x", name);
+                    for byte in &data {
+                        eprint!("{:02x?}", *byte);
+                    }
+                    eprintln!("");
+                }
+
                 let def_offset = match decl {
-                    Decl::Function => obj.add_symbol_data(sym, secText, &data, 16),
-                    Decl::Data => obj.add_symbol_data(sym, secData, &data, 16),
-                    Decl::Constant => obj.add_symbol_data(sym, secConsts, &data, 16),
+                    Decl::Function => obj.add_symbol_data(sym, secText, &data, 1),
+                    Decl::Data => obj.add_symbol_data(sym, secData, &data, 1),
+                    Decl::Constant => obj.add_symbol_data(sym, secConsts, &data, 1),
                 };
     
                 syms.insert(name.clone(), (None, Some(def_offset), sym));
@@ -247,7 +257,7 @@ impl ObjectBuilder {
             let mut offset = 0;
 
             if self.triple.getCallConv() == Ok(CallConv::WindowsFastCall) {
-                addend = -1;
+                //addend = -1;
                 offset = -4;
             } else if self.triple.getCallConv() == Ok(CallConv::SystemV) {
                 addend = 0;
