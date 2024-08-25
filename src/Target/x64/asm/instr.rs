@@ -54,7 +54,7 @@ impl Instr {
                     else { None }
                 } else { None };
 
-                let (mut r, mut m, mut i, ibase, ibase8) = match self.mnemonic {
+                let (mut r, mut m, i, ibase, ibase8) = match self.mnemonic {
                     Mnemonic::Add => (0x01, 0x03, 0, 0x81, 0x80),
                     Mnemonic::Adc => (0x11, 0x03, 2, 0x81, 0x80),
                     Mnemonic::Sub => (0x29, 0x2B, 5, 0x81, 0x80),
@@ -66,7 +66,9 @@ impl Instr {
                 };
 
                 if let Some(Operand::Reg(reg)) = &self.op1 {
-                    if reg.is_gr8() { r -= 1; m -= 1; i -= 1; }
+                    if reg.is_gr8() { 
+                        r -= 1; m -= 1;
+                    }
                 }
 
                 (match self.op2.as_ref().expect("verifycation failed") {

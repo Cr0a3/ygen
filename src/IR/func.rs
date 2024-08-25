@@ -116,7 +116,12 @@ impl Function {
                     let mut fmt = String::new();
         
                     for (name, metadata) in &self.ty.args {
-                        fmt += &format!("{} %{},", metadata, name);
+                        fmt += &format!("{} %{}, ", metadata, name);
+                    }
+
+                    if self.ty.args.len() > 0 {
+                        fmt.remove(fmt.chars().count() - 1); // The last space
+                        fmt.remove(fmt.chars().count() - 1); // The last comma
                     }
         
                     fmt
@@ -130,11 +135,12 @@ impl Function {
             let mut fmt = String::new();
 
             for (name, metadata) in &self.ty.args {
-                fmt += &format!("{} %{},", metadata, name);
+                fmt += &format!("{} %{}, ", metadata, name);
             }
 
-            if self.ty.args.len() != 0 {
-                fmt.remove(fmt.len() - 2); // The last comma
+            if self.ty.args.len() > 0 {
+                fmt.remove(fmt.chars().count() - 1); // The last space
+                fmt.remove(fmt.chars().count() - 1); // The last comma
             }
 
             fmt

@@ -257,7 +257,7 @@ impl ObjectBuilder {
             let mut offset = 0;
 
             if self.triple.getCallConv() == Ok(CallConv::WindowsFastCall) {
-                //addend = -1;
+                addend = -1;
                 offset = -4;
             } else if self.triple.getCallConv() == Ok(CallConv::SystemV) {
                 addend = 0;

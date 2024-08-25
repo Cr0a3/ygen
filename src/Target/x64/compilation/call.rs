@@ -6,6 +6,8 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
 
     let mut asm = vec![];
 
+    let mut to_pop = vec![];
+    
     for reg in vec![x64Reg::Rcx, x64Reg::Rdx, x64Reg::Rsi, x64Reg::Rdi, x64Reg::Rsi] { // save mutable registers
         if !registry.backend.openUsableRegisters64.contains(&reg.boxed()) {
             let var = registry.backend.getVarByReg(reg.boxed()).cloned();
@@ -13,6 +15,7 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
             if let Some(var) = var {
                 if block.isVarUsedAfterNode(&boxed, &var) {
                     asm.push(Instr::with1(Mnemonic::Push, Operand::Reg(reg.boxed())));
+                    to_pop.push(reg);
                 }
             }
         }
@@ -104,16 +107,8 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
         registry.backend.insertVar(call.inner3.clone(), store);
     }
     
-    for reg in vec![x64Reg::Rcx, x64Reg::Rdx, x64Reg::Rsi, x64Reg::Rdi, x64Reg::Rsi] { // getback mutable registers
-        if !registry.backend.openUsableRegisters64.contains(&reg.boxed()) {
-            let var = registry.backend.getVarByReg(reg.boxed()).cloned();
-            
-            if let Some(var) = var {
-                if block.isVarUsedAfterNode(&boxed, &var) {
-                    asm.push(Instr::with1(Mnemonic::Pop, Operand::Reg(reg.boxed())));
-                }
-            }
-        }
+    for reg in to_pop {
+        asm.push(Instr::with1(Mnemonic::Pop, Operand::Reg(reg.boxed())));
     }
 
     asm
