@@ -263,8 +263,7 @@ impl ObjectBuilder {
             if self.triple.getCallConv() == Ok(CallConv::WindowsFastCall) {
                 addend = match ty {
                     Decl::Function => 0,
-                    Decl::Data => -1,
-                    Decl::Constant => -1,
+                    _ => -1,
                 };
                 offset = -4;
             } else if self.triple.getCallConv() == Ok(CallConv::SystemV) {

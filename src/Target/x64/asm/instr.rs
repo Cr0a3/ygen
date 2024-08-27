@@ -124,10 +124,10 @@ impl Instr {
                             }
                             op.push(m);
 
-                            if !mem.rex(true).empty() {
+                            if !mem.rex(false).empty() {
                                 if let Some(rext) = rex {
-                                    rex = Some(rext.sync(mem.rex(true)));
-                                } else {rex = Some(mem.rex(true))}
+                                    rex = Some(rext.sync(mem.rex(false)));
+                                } else {rex = Some(mem.rex(false))}
                             }
 
                             let enc = &mem.encode(Some(op0.boxed()));
