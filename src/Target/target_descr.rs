@@ -68,7 +68,7 @@ impl BackendInfos {
 
         for (var, store) in &self.varsStorage {
             if let VarStorage::Register(var_reg) = store {
-                if var_reg == &reg {
+                if var_reg.sub64() == reg.sub64() {
                     out = Some(var);
                 }
             }

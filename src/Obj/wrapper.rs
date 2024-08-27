@@ -172,7 +172,7 @@ impl ObjectBuilder {
         let secData = obj.add_section(vec![], ".data".as_bytes().to_vec(), SectionKind::Data);
         let secConsts = obj.add_section(vec![], ".rodata".as_bytes().to_vec(), SectionKind::ReadOnlyData);
 
-        let mut syms: BTreeMap<String, (Option<SectionId>, Option</*offsest*/u64>, SymbolId)> = BTreeMap::new();
+        let mut syms: BTreeMap<String, (Option<SectionId>, Option</*offsest*/u64>, SymbolId, Decl)> = BTreeMap::new();
 
         for (name, data) in &self.defines {
             let name = name.to_owned();
@@ -247,21 +247,25 @@ impl ObjectBuilder {
                     Decl::Constant => obj.add_symbol_data(sym, secConsts, &data, align),
                 };
     
-                syms.insert(name.clone(), (None, Some(def_offset), sym));
+                syms.insert(name.clone(), (None, Some(def_offset), sym, *decl));
             } else {
-                syms.insert(name.clone(), (None, None, sym));
+                syms.insert(name.clone(), (None, None, sym, *decl));
             }
         }
 
         for link in &self.links {
-            let (_, off, _) = syms.get(&link.from).unwrap();
-            let (_, _, to_sym) = syms.get(&link.to).unwrap();
+            let (_, off, _, _) = syms.get(&link.from).unwrap();
+            let (_, _, to_sym, ty) = syms.get(&link.to).unwrap();
 
             let mut addend = 0;
             let mut offset = 0;
 
             if self.triple.getCallConv() == Ok(CallConv::WindowsFastCall) {
-                addend = -1;
+                addend = match ty {
+                    Decl::Function => 0,
+                    Decl::Data => -1,
+                    Decl::Constant => -1,
+                };
                 offset = -4;
             } else if self.triple.getCallConv() == Ok(CallConv::SystemV) {
                 addend = 0;

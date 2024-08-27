@@ -29,12 +29,14 @@ pub fn test_ret() {
 #[test]
 pub fn test_optimization() {
     let mut instrs = vec![
+        Instr::with0(Mnemonic::StartOptimization),
         Instr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.boxed()), Operand::Reg(x64Reg::Rcx.boxed())),
         Instr::with2(Mnemonic::Add, Operand::Reg(x64Reg::Rax.boxed()), Operand::Reg(x64Reg::Rdx.boxed())),
         Instr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rcx.boxed()), Operand::Reg(x64Reg::Rax.boxed())),
     ];
 
     let expected_optimized = vec![
+        Instr::with0(Mnemonic::StartOptimization),
         Instr::with2(Mnemonic::Lea, Operand::Reg(x64Reg::Rax.boxed()), Operand::Mem(x64Reg::Rcx + x64Reg::Rdx)),
         Instr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rcx.boxed()), Operand::Reg(x64Reg::Rax.boxed())),
     ];
