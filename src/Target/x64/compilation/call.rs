@@ -125,6 +125,12 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
         asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(reg), Operand::Mem(x64Reg::Rbp - (off as u32))) );
     }
 
+    for arg in &call.inner2 {
+        if !block.isVarUsedAfterNode(&boxed, arg) {
+            registry.backend.drop(arg);
+        }
+    }
+
     asm.push(Instr::with0(Mnemonic::StartOptimization));
 
     asm
