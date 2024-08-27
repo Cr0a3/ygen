@@ -105,11 +105,9 @@ impl Instr {
 
                         } else if let Some(Operand::Mem(mem)) = &self.op1 {
                             op.push(r);
-                            rex.sync(mem.rex());
-                            op.extend_from_slice(&ModRm::memR(
-                                mem.clone(),
-                                *reg.as_any().downcast_ref::<x64Reg>().expect("expected x64 registers and not the ones from other archs")
-                            ))
+                            rex.sync(mem.rex(true));
+                            let enc = &mem.encode(Some(reg.boxed()));
+                            op.extend_from_slice(&enc.1);
                         } else { todo!() }
 
                         buildOpcode(mandatory, rex.option(), op)
@@ -121,20 +119,19 @@ impl Instr {
                         if let Some(Operand::Reg(op0)) = &self.op1 {
                             let op0 = op0.as_any().downcast_ref::<x64Reg>().expect("expected x64 registers and not the ones from other archs");
 
-                            if op0.extended() { 
-                                if op0.is_gr64() { rex = Some(RexPrefix { w: true, r: false, x: false, b: true });  }
-                                else { rex = Some(RexPrefix { w: false, r: false, x: false, b: true });  }
-                            } else if op0.is_gr64() { rex = Some(RexPrefix { w: true, r: false, x: false, b: false });  }
+                            if op0.extended() || op0.is_gr64() { 
+                                rex = RexPrefix { w: op0.is_gr64(), r: op0.extended(), x: false, b: false }.option();
+                            }
                             op.push(m);
 
-                            if !mem.rex().empty() {
+                            if !mem.rex(true).empty() {
                                 if let Some(rext) = rex {
-                                    rex = Some(rext.sync(mem.rex()));
-                                } else {rex = Some(mem.rex())}
+                                    rex = Some(rext.sync(mem.rex(true)));
+                                } else {rex = Some(mem.rex(true))}
                             }
 
-                            op.push(mem.encode(None).0 | op0.enc() << 3 | 0b100);
-                            op.extend_from_slice(&mem.encode(None).1);
+                            let enc = &mem.encode(Some(op0.boxed()));
+                            op.extend_from_slice(&enc.1);
 
                         } else { todo!() }
 
@@ -198,10 +195,10 @@ impl Instr {
                 let mut op = vec![];
 
                 if let Some(Operand::Mem(mem)) = &self.op2 {
-                    if !mem.rex().empty() {
+                    if !mem.rex(false).empty() {
                         if let Some(rext) = rex {
-                            rex = Some(rext.sync(mem.rex()));
-                        } else {rex = Some(mem.rex())}
+                            rex = Some(rext.sync(mem.rex(false)));
+                        } else {rex = Some(mem.rex(false))}
                     }
 
                     op.push(0x8D);
@@ -685,16 +682,12 @@ impl MemOp {
         };
 
         let mut displ = vec![];
-        let mut modrm = 0;
 
         if self.displ == 0 {
-            modrm |= 0b00 << 6;
         } else if self.displ >= -128 && self.displ <= 127 {
-            modrm |= 0b01 << 6;
-            scale = 0b01 << 6;
+            scale = 0b01;
             displ.push(self.displ as u8);
         } else {
-            modrm |= 0b10 << 6;
             scale = 0b10;
             displ.extend_from_slice(&(self.displ as i32).to_le_bytes());
         }
@@ -727,17 +720,23 @@ impl MemOp {
             }
         }
 
+        
         let mut encoding = vec![sib];
         encoding.extend_from_slice(&displ);
 
-        (modrm, encoding)
+        (0, encoding)
     }
 
     /// Returns the used rex prefix for the memory displacment
-    pub fn rex(&self) -> RexPrefix {
+    pub fn rex(&self, front: bool) -> RexPrefix {
         let mut rex = RexPrefix::none();
         if let Some(base) = &self.base {
-            rex.b = base.as_any().downcast_ref::<x64Reg>().unwrap().extended();
+            let base = base.as_any().downcast_ref::<x64Reg>().unwrap();
+            if front {
+                rex.r = base.extended();
+            } else {
+                rex.b = base.extended();
+            }
         }
         
         if let Some(index) = &self.index {
