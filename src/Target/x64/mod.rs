@@ -30,7 +30,13 @@ pub fn initializeX64Target<'a>(call_conv: CallConv) -> TargetBackendDescr<'a> {
     target.call = call_conv;
 
     target.backend.savedRegisters = vec![
-        x64Reg::R10.boxed(), x64Reg::R11.boxed(), x64Reg::R12.boxed(), x64Reg::R13.boxed(), x64Reg::R14.boxed(), x64Reg::R15.boxed(),
+        x64Reg::R12.boxed(), x64Reg::R13.boxed(), x64Reg::R14.boxed(), x64Reg::R15.boxed(),
+    ];
+
+    target.backend.mutable = vec![
+        x64Reg::Rax.boxed(), x64Reg::Rbx.boxed(), x64Reg::Rcx.boxed(), x64Reg::Rdx.boxed(), 
+        x64Reg::Rdi.boxed(), x64Reg::Rsi.boxed(), x64Reg::R8.boxed(), x64Reg::R9.boxed(), 
+        x64Reg::R10.boxed(), x64Reg::R11.boxed(),
     ];
 
     match call_conv {

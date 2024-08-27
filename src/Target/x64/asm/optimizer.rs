@@ -12,10 +12,23 @@ impl Optimize<Instr> for Vec<Instr> {
     fn optimize(&mut self) -> Vec<Instr> {
         let mut out: Vec<Instr> = vec![];
 
+        let mut optimize = false;
+
         for instr in self.iter() {
             let mut optimized = false;
 
-            
+            if instr.mnemonic == Mnemonic::StartOptimization {
+                optimize = true;
+            }
+
+            if instr.mnemonic == Mnemonic::EndOptimization {
+                optimize = false;
+            }
+
+            if !optimize {
+                out.push(instr.to_owned());
+                continue;
+            }
 
             let last = out.last().cloned();
             if let Some(last) = &last {
@@ -55,7 +68,7 @@ impl Optimize<Instr> for Vec<Instr> {
                 }
                 if instr.mnemonic == Mnemonic::Ret && last.mnemonic == Mnemonic::Call {
                     out.pop();
-                    out.push(Instr::with1(Mnemonic::Jmp, instr.op1.clone().expect("call needs to have only one op")));
+                    out.push(Instr::with1(Mnemonic::Jmp, instr.op1.clone().expect("call needs to have one op")));
                     optimized = true;
                 } 
                 if instr.mnemonic == Mnemonic::Ret {

@@ -1,44 +1,62 @@
+use std::collections::HashMap;
+
 use super::*;
 
 pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut TargetBackendDescr) -> Vec<Instr> {
     let boxed: Box<dyn Ir> = Box::new(call.clone());
     let block = registry.block.unwrap();
 
-    let mut asm = vec![];
+    let mut asm = vec![
+        Instr::with0(Mnemonic::EndOptimization),
+    ];
 
-    let mut to_pop = vec![];
-    
-    for reg in vec![x64Reg::Rcx, x64Reg::Rdx, x64Reg::Rsi, x64Reg::Rdi, x64Reg::Rsi] { // save mutable registers
-        if !registry.backend.openUsableRegisters64.contains(&reg.boxed()) {
-            let var = registry.backend.getVarByReg(reg.boxed()).cloned();
-            
-            if let Some(var) = var {
-                if block.isVarUsedAfterNode(&boxed, &var) {
-                    asm.push(Instr::with1(Mnemonic::Push, Operand::Reg(reg.boxed())));
-                    to_pop.push(reg);
-                }
+    registry.backend.stackSafe = true;
+
+    let mut saved_var_memory_locations = HashMap::new();
+
+    let mut offset = registry.backend.currStackOffsetForLocalVars + 8;
+
+    for reg in &registry.backend.mutable {
+        if !registry.backend.openUsableRegisters64.contains(reg) { // is a variable in the reg
+            let var = registry.backend.getVarByReg(reg.clone());
+
+            if let Some(var) = var { // get the var
+                asm.push( Instr::with2(Mnemonic::Mov, Operand::Mem(x64Reg::Rbp - (offset as u32)), Operand::Reg(reg.clone())) );
+                saved_var_memory_locations.insert(var.clone(), offset);
+                offset += 8;
             }
         }
     }
 
-    let func = &call.inner1;
-
     let mut reg_args = 0;
 
     for arg in &call.inner2 {
-        let loc = registry.backend.varsStorage.get_key_value(arg).expect("expected valid variable as arg input");
+        let loc = if let Some((x, y)) = registry.backend.varsStorage.get_key_value(arg) {
+            (x, y)
+        } else {
+            panic!("unknown variable {}", arg);
+        };
 
         match loc.1 {
             VarStorage::Register(reg) => {
                 if reg_args < registry.call.regArgs() {
-                    match arg.ty {
+
+                    let args = match arg.ty {
                         TypeMetadata::i64 | TypeMetadata::u64 | TypeMetadata::ptr => 
-                            asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(registry.call.args64()[reg_args].boxed()), Operand::Reg(reg.clone()))),
+                            registry.call.args64(),
                         TypeMetadata::i32 | TypeMetadata::u32 => 
-                            asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(registry.call.args32()[reg_args].boxed()), Operand::Reg(reg.clone()))),
+                            registry.call.args32(),
                         TypeMetadata::i16 | TypeMetadata::u16 => 
-                            asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(registry.call.args16()[reg_args].boxed()), Operand::Reg(reg.clone()))),
-                        TypeMetadata::Void => {},
+                            registry.call.args16(),
+                        TypeMetadata::Void => vec![],
+                    };
+
+                    if args.contains(reg.as_any().downcast_ref::<x64Reg>().unwrap()) {
+                        if let Some(offset) = saved_var_memory_locations.get(arg) {
+                            asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(args[reg_args].boxed()), Operand::Mem(x64Reg::Rbp - (*offset as u32))));
+                        }
+                    } else {
+                        asm.push(Instr::with2(Mnemonic::Mov, Operand::Reg(args[reg_args].boxed()), Operand::Reg(reg.clone())));
                     }
 
                     reg_args += 1;
@@ -61,22 +79,14 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
                 }
             },
         }
-        if !block.isVarUsedAfterNode(&boxed, arg) {
-            registry.backend.drop(arg);
-        }
     }
 
-    if registry.call.reset_eax() {
-        asm.push(Instr::with2(Mnemonic::Xor, Operand::Reg(x64Reg::Eax.boxed()), Operand::Reg(x64Reg::Eax.boxed())));
-    }
+    asm.push( Instr::with1(Mnemonic::Call, Operand::Imm(0)) );
+    asm.push( Instr::with1(Mnemonic::Link, Operand::LinkDestination(call.inner1.name.to_string(), -4)) );
 
-    asm.push( Instr::with1(Mnemonic::Call, Operand::Imm(0)));
-
-    asm.push( Instr::with1(Mnemonic::Link, Operand::LinkDestination(call.inner1.name.to_string(), -4)));
-
-    if func.ty.ret != TypeMetadata::Void && block.isVarUsedAfterNode(&boxed, &call.inner3){  
+    if call.inner1.ty.ret != TypeMetadata::Void && block.isVarUsedAfterNode(&boxed, &call.inner3){  
         let store = if let Some(reg) = registry.backend.getOpenRegBasedOnTy(call.inner3.ty) {
-            match func.ty.ret {
+            match call.inner1.ty.ret {
                 TypeMetadata::u16 | TypeMetadata::i16 => asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(reg.clone()), Operand::Reg(registry.call.ret16().boxed())) ),
                 TypeMetadata::u32 | TypeMetadata::i32 => asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(reg.clone()), Operand::Reg(registry.call.ret32().boxed())) ),
                 TypeMetadata::u64 | TypeMetadata::i64 => asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(reg.clone()), Operand::Reg(registry.call.ret64().boxed())) ),
@@ -94,7 +104,7 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
             registry.backend.currStackOffsetForLocalVars += addend;
             let mem = x64Reg::Rbp - (registry.backend.currStackOffsetForLocalVars - addend) as u32;
 
-            match func.ty.ret {
+            match call.inner1.ty.ret {
                 TypeMetadata::u16 | TypeMetadata::i16 => asm.push( Instr::with2(Mnemonic::Mov, Operand::Mem(mem.clone()), Operand::Reg(registry.call.ret16().boxed())) ),
                 TypeMetadata::u32 | TypeMetadata::i32 => asm.push( Instr::with2(Mnemonic::Mov, Operand::Mem(mem.clone()), Operand::Reg(registry.call.ret32().boxed())) ),
                 TypeMetadata::u64 | TypeMetadata::i64 => asm.push( Instr::with2(Mnemonic::Mov, Operand::Mem(mem.clone()), Operand::Reg(registry.call.ret64().boxed())) ),
@@ -106,10 +116,16 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
 
         registry.backend.insertVar(call.inner3.clone(), store);
     }
-    
-    for reg in to_pop {
-        asm.push(Instr::with1(Mnemonic::Pop, Operand::Reg(reg.boxed())));
+
+    for (var, off) in saved_var_memory_locations {
+        let reg = if let Some(VarStorage::Register(reg)) = registry.backend.varsStorage.get(&var) {
+            reg.to_owned()
+        } else { todo!() }; // shouldn't happen
+
+        asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(reg), Operand::Mem(x64Reg::Rbp - (off as u32))) );
     }
+
+    asm.push(Instr::with0(Mnemonic::StartOptimization));
 
     asm
 }

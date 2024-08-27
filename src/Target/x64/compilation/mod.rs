@@ -77,18 +77,16 @@ pub(crate) fn buildAsmX86<'a>(block: &'a Block, func: &Function, call: &CallConv
 
     registry.block = None;
 
-    let mut out = Vec::from(out);
-
-    auto_max_optimize(&mut out);
-
-    let mut out = VecDeque::from(out);
-
     out.extend(x64BuildEpilog(&block, registry));
 
     for epAsm in  x64BuildProlog(&block, registry) {
         out.push_front(epAsm);
     }
 
-    Vec::from(out)
+    let mut out = Vec::from(out);
+
+    auto_max_optimize(&mut out);
+
+    out
 
 }

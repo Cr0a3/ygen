@@ -128,7 +128,7 @@ impl x64Parser {
             Err(ParsingError::UnexpectedToken(token.clone()))? 
         } else { todo!() }
 
-        if let Some(Token::L_Bracket) = self.tokens.front() {} else {
+        if let Some(Token::R_Bracket) = self.tokens.front() {} else {
             let mut sub = false;
             if let Some(Token::Sub) = self.tokens.front() { sub = true; self.tokens.pop_front(); }
             if let Some(Token::Add) = self.tokens.front() { sub = false; self.tokens.pop_front(); }

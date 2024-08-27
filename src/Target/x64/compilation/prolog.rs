@@ -14,6 +14,8 @@ pub(crate) fn x64BuildProlog(_: &Block, registry: &mut TargetBackendDescr) -> Ve
         res.push( Instr::with1(Mnemonic::Push, Operand::Reg(backuped.boxed())) )
     }
 
+    res.push( Instr::with0(Mnemonic::StartOptimization) );
+
     res.reverse();
 
     res
@@ -21,6 +23,9 @@ pub(crate) fn x64BuildProlog(_: &Block, registry: &mut TargetBackendDescr) -> Ve
 
 pub(crate) fn x64BuildEpilog(_: &Block, registry: &mut TargetBackendDescr) -> Vec<Instr> {
     let mut res = vec![];
+
+    
+    res.push( Instr::with0(Mnemonic::EndOptimization) );
 
     for backuped in &registry.backend.saveRegister {
         res.push( Instr::with1(Mnemonic::Pop, Operand::Reg(backuped.boxed())) )

@@ -133,10 +133,8 @@ impl Instr {
                                 } else {rex = Some(mem.rex())}
                             }
 
-                            op.extend_from_slice(&ModRm::regM(
-                                *op0,
-                                mem.clone()
-                            ));
+                            op.push(mem.encode(None).0 | op0.enc() << 3 | 0b100);
+                            op.extend_from_slice(&mem.encode(None).1);
 
                         } else { todo!() }
 
@@ -322,7 +320,7 @@ impl Instr {
                     (vec![], None)
                 }
             }
-            Mnemonic::Debug => (vec![], None),
+            Mnemonic::Debug | Mnemonic::StartOptimization | Mnemonic::EndOptimization => (vec![], None),
         })
     }
 
@@ -402,7 +400,7 @@ impl Instr {
                     }
                 }
             }
-            Mnemonic::Link | Mnemonic::Debug => {},
+            Mnemonic::Link | Mnemonic::Debug | Mnemonic::StartOptimization | Mnemonic::EndOptimization => {},
             Mnemonic::Endbr64 => {
                 if self.op1.is_some() || self.op2.is_some() {
                     Err(InstrEncodingError::InvalidVariant(self.clone(), "endbr64 can't have operands".to_string()))?
@@ -562,6 +560,10 @@ pub enum Mnemonic {
     Link,
     /// for debugging pourpusis
     Debug,
+    /// start optimization again
+    StartOptimization,
+    /// stop optimization
+    EndOptimization,
 }
 
 impl FromStr for Mnemonic {
@@ -608,6 +610,8 @@ impl Display for Mnemonic {
             Mnemonic::Jmp => "jmp",
             Mnemonic::Endbr64 => "endbr64",
             Mnemonic::Link => "",
+            Mnemonic::StartOptimization => "",
+            Mnemonic::EndOptimization => "",
             Mnemonic::Debug => "#",
         })
     }
@@ -687,11 +691,11 @@ impl MemOp {
             modrm |= 0b00 << 6;
         } else if self.displ >= -128 && self.displ <= 127 {
             modrm |= 0b01 << 6;
-            scale = 1;
+            scale = 0b01 << 6;
             displ.push(self.displ as u8);
         } else {
             modrm |= 0b10 << 6;
-            scale = 4;
+            scale = 0b10;
             displ.extend_from_slice(&(self.displ as i32).to_le_bytes());
         }
 
@@ -823,7 +827,7 @@ impl Add<u32> for x64Reg {
         MemOp {
             base: Some(self.boxed()),
             index: None,
-            scale: 2,
+            scale: 1,
             displ: rhs as isize,
             rip: false,
         }
@@ -851,7 +855,7 @@ impl Sub<u32> for x64Reg {
         MemOp {
             base: Some(self.boxed()),
             index: None,
-            scale: 2,
+            scale: 1,
             displ: -(rhs as isize),
             rip: false,
         }

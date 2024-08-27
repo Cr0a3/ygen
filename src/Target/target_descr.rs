@@ -14,8 +14,11 @@ pub(crate) struct BackendInfos {
     pub(crate) openUsableRegisters16: VecDeque<Box<dyn Reg>>,
     pub(crate) openUsableRegisters8: VecDeque<Box<dyn Reg>>,
     pub(crate) tmpReg: Box<dyn Reg>,
+
     pub(crate) saveRegister: Vec<Box<dyn Reg>>,
     pub(crate) savedRegisters: Vec<Box<dyn Reg>>,
+    pub(crate) mutable: Vec<Box<dyn Reg>>,
+
     pub(crate) stackSafe: bool,
 
     pub(crate) shadow: i64,
@@ -30,6 +33,7 @@ impl BackendInfos {
             openUsableRegisters32: VecDeque::new(),
             openUsableRegisters16: VecDeque::new(),
             openUsableRegisters8: VecDeque::new(),
+            mutable: vec![],
 
             tmpReg: x64Reg::Rax.boxed(),
 
