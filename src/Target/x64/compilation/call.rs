@@ -21,14 +21,20 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
             let var = registry.backend.getVarByReg(reg.clone());
 
             if let Some(var) = var { // get the var
-                asm.push( Instr::with2(Mnemonic::Mov, Operand::Mem(x64Reg::Rbp - (offset as u32)), Operand::Reg(reg.clone())) );
-                saved_var_memory_locations.insert(var.clone(), offset);
-                offset += 8;
+                if block.isVarUsedAfterNode(&boxed, &var) || call.inner2.contains(var)/* && registry.call.args64().contains(reg.as_any().downcast_ref::<x64Reg>().unwrap())*/ {
+                    asm.push( Instr::with2(Mnemonic::Mov, Operand::Mem(x64Reg::Rbp - (offset as u32)), Operand::Reg(reg.clone())) );
+                    saved_var_memory_locations.insert(var.clone(), offset);
+                    offset += 8;
+                } /*else {
+                    eprintln!("don't save {} which has location {:?}", var, reg);
+                }*/
             }
         }
     }
 
     let mut reg_args = 0;
+
+    let mut to_pop = vec![];
 
     for arg in &call.inner2 {
         let loc = if let Some((x, y)) = registry.backend.varsStorage.get_key_value(arg) {
@@ -54,6 +60,9 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
                     if args.contains(reg.as_any().downcast_ref::<x64Reg>().unwrap()) {
                         if let Some(offset) = saved_var_memory_locations.get(arg) {
                             asm.push( Instr::with2(Mnemonic::Mov, Operand::Reg(args[reg_args].boxed()), Operand::Mem(x64Reg::Rbp - (*offset as u32))));
+                        } else {
+                            eprintln!("arg {:?} wasn't saved but it needs to be put into {:?}", reg, args[reg_args]);
+                            asm.push(Instr::with2(Mnemonic::Mov, Operand::Reg(args[reg_args].boxed()), Operand::Reg(reg.clone())));
                         }
                     } else {
                         asm.push(Instr::with2(Mnemonic::Mov, Operand::Reg(args[reg_args].boxed()), Operand::Reg(reg.clone())));
@@ -62,6 +71,7 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
                     reg_args += 1;
                 } else {
                     asm.push( Instr::with1(Mnemonic::Push, Operand::Reg(reg.clone())));
+                    to_pop.push(reg.clone());
                 }
             },
             VarStorage::Memory(mem) => {
@@ -81,8 +91,16 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
         }
     }
 
+    if registry.call.reset_eax() {
+        asm.push( Instr::with2(Mnemonic::Xor, Operand::Reg(x64Reg::Eax.boxed()), Operand::Reg(x64Reg::Eax.boxed())));
+    }
+
     asm.push( Instr::with1(Mnemonic::Call, Operand::Imm(0)) );
     asm.push( Instr::with1(Mnemonic::Link, Operand::LinkDestination(call.inner1.name.to_string(), -4)) );
+
+    for reg in to_pop {
+        asm.push( Instr::with1(Mnemonic::Pop, Operand::Reg(reg)) );
+    }
 
     if call.inner1.ty.ret != TypeMetadata::Void && block.isVarUsedAfterNode(&boxed, &call.inner3){  
         let store = if let Some(reg) = registry.backend.getOpenRegBasedOnTy(call.inner3.ty) {
@@ -118,6 +136,8 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
     }
 
     for (var, off) in saved_var_memory_locations {
+        registry.backend.increase_mem();
+
         let reg = if let Some(VarStorage::Register(reg)) = registry.backend.varsStorage.get(&var) {
             reg.to_owned()
         } else { todo!() }; // shouldn't happen

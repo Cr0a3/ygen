@@ -45,13 +45,19 @@ impl BackendInfos {
         }
     }
 
-    /// Delets the variable of the varsStorage (giving out it's resources)
+    /// Delets the variable of the varsStorage (freeing its resources)
     pub(crate) fn drop(&mut self, var: &Var) {
         if let Some(loc) = &self.varsStorage.get(var) {
             if let VarStorage::Register(reg) = &loc {
                self.dropReg(reg.clone());
             } // don't decrease the stack offset because if it isn't at the bottom other variables will may be overriden
+        } else {
+            panic!("variable {} has no location", var.name);
         }
+    }
+
+    pub(crate) fn increase_mem(&mut self) {
+        self.shadow += 8;
     }
 
     /// Adds the register back to the usable registers in the front

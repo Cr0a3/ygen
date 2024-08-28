@@ -19,9 +19,7 @@ impl Optimize<Instr> for Vec<Instr> {
 
             if instr.mnemonic == Mnemonic::StartOptimization {
                 optimize = true;
-            }
-
-            if instr.mnemonic == Mnemonic::EndOptimization {
+            } else if instr.mnemonic == Mnemonic::EndOptimization {
                 optimize = false;
             }
 
