@@ -57,7 +57,10 @@ pub enum MachineMnemonic {
     Sub,
     Xor,
 
-    Call,
+    Zext,
+    Downcast,
+
+    Call(String),
     Return,
 
     AdressLoad(String),

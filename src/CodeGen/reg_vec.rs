@@ -5,6 +5,7 @@ use super::reg::Reg;
 
 /// A register vector.
 /// Used for getting platform specific registers
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RegVec {
     regs: HashMap<Arch, Vec<Reg>>,
 }
@@ -21,6 +22,8 @@ impl RegVec {
     pub fn push(&mut self, arch: Arch, reg: Reg) {
         if let Some(entry) = self.regs.get_mut(&arch) {
             entry.push(reg);
+        } else {
+            self.regs.insert(arch, vec![reg]);
         }
     }
 

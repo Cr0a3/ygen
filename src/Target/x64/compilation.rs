@@ -23,5 +23,7 @@ pub(crate) fn construct_compilation_helper(call_conv: CallConv) -> CompilationHe
     helper.regs.push(Arch::X86_64, Reg::x64(x64Reg::R14));
     helper.regs.push(Arch::X86_64, Reg::x64(x64Reg::R15));
 
+    helper.regs.reverse(Arch::X86_64);
+
     helper
 }

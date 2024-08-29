@@ -44,7 +44,7 @@ impl CompilationHelper {
         let mut instr = MachineInstr::new(MachineMnemonic::Move);
 
         match location {
-            VarLocation::Reg(reg) => instr.add_operand(MachineOperand::Reg(reg)),
+            VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
         }
 
         match src1 {
@@ -69,7 +69,7 @@ impl CompilationHelper {
         );
 
         match location {
-            VarLocation::Reg(reg) => instr.add_operand(MachineOperand::Reg(reg)),
+            VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
         }
 
         mc_sink.push( instr );

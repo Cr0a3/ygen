@@ -46,7 +46,7 @@ impl CompilationHelper {
         let location = if let Some(reg) = self.regs.pop(self.arch) {
             VarLocation::Reg(reg)
         } else {
-            todo!()
+            todo!("Registers ran out. And memory variables are currently not implemented")
         };
 
         self.vars.insert(var.clone(), location);
