@@ -45,7 +45,7 @@ pub enum MachineOperand {
 
 /// The mnemonic to use
 #[allow(missing_docs)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MachineMnemonic {
     Move,
     
@@ -59,6 +59,8 @@ pub enum MachineMnemonic {
 
     Call,
     Return,
+
+    AdressLoad(String),
 }
 
 /// a platform specifc instruction

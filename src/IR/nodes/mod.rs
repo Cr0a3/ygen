@@ -95,7 +95,7 @@ macro_rules! IrTypeWith1 {
 
 IrTypeWith1!(Return, T);
 IrTypeWith3!(Call, T, U, Z);
-IrTypeWith2!(ConstAssign, T, U);
+IrTypeWith2!(Assign, T, U);
 IrTypeWith3!(Cast, T, U, Z);
 IrTypeWith3!(Add, T, U, Z);
 IrTypeWith3!(Sub, T, U, Z);

@@ -1,6 +1,6 @@
 use super::*;
 
-impl Ir for ConstAssign<Var, Type> {
+impl Ir for Assign<Var, Type> {
     fn dump(&self) -> String {
         let meta: TypeMetadata = self.inner2.into();
         format!("{} = {} {}", self.inner1.name, meta, self.inner2.val())
@@ -43,7 +43,7 @@ impl Ir for ConstAssign<Var, Type> {
     }
 }
 
-impl Ir for ConstAssign<Var, Var> {
+impl Ir for Assign<Var, Var> {
     fn dump(&self) -> String {
         let meta: TypeMetadata = self.inner2.ty;
         format!("{} = {} {}", self.inner1.name, meta, self.inner2.name)
@@ -87,7 +87,7 @@ impl Ir for ConstAssign<Var, Var> {
     }
 }
 
-impl Ir for ConstAssign<Var, Const> {
+impl Ir for Assign<Var, Const> {
     fn dump(&self) -> String {
         format!("{} = ptr {}", self.inner1.name, self.inner2.name)
     }
@@ -133,7 +133,7 @@ impl BuildAssign<Type> for IRBuilder<'_> {
         
         let out = Var::new(block, value.into());
 
-        block.push_ir(ConstAssign::new(out.clone(), value));
+        block.push_ir(Assign::new(out.clone(), value));
 
         out
     }
@@ -145,7 +145,7 @@ impl BuildAssign<Var> for IRBuilder<'_> {
         
         let out = Var::new(block, value.ty);
 
-        block.push_ir(ConstAssign::new(out.clone(), value));
+        block.push_ir(Assign::new(out.clone(), value));
 
         out
     }
@@ -157,7 +157,7 @@ impl BuildAssign<&Const> for IRBuilder<'_> {
         
         let out = Var::new(block, TypeMetadata::ptr);
 
-        block.push_ir(ConstAssign::new(out.clone(), value.clone()));
+        block.push_ir(Assign::new(out.clone(), value.clone()));
 
         out
     }

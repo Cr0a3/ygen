@@ -14,7 +14,7 @@ impl Pass for PreComputeValue {
         for node in block.nodes.iter_mut() {
             if let Some(or) = node.as_any().downcast_ref::<Add<Type, Type, Var>>() {
                 let res = or.inner1.val() + or.inner2.val();
-                node.replace(ConstAssign::new(or.inner3.clone(), {
+                node.replace(Assign::new(or.inner3.clone(), {
                     match or.inner3.ty {
                         TypeMetadata::u16 => Type::u16(res as u16),
                         TypeMetadata::u32 => Type::u32(res as u32),
@@ -29,7 +29,7 @@ impl Pass for PreComputeValue {
             }
             if let Some(or) = node.as_any().downcast_ref::<Sub<Type, Type, Var>>() {
                 let res = or.inner1.val() - or.inner2.val();
-                node.replace(ConstAssign::new(or.inner3.clone(), {
+                node.replace(Assign::new(or.inner3.clone(), {
                     match or.inner3.ty {
                         TypeMetadata::u16 => Type::u16(res as u16),
                         TypeMetadata::u32 => Type::u32(res as u32),
@@ -44,7 +44,7 @@ impl Pass for PreComputeValue {
             }
             if let Some(or) = node.as_any().downcast_ref::<And<Type, Type, Var>>() {
                 let res = or.inner1.val() & or.inner2.val();
-                node.replace(ConstAssign::new(or.inner3.clone(), {
+                node.replace(Assign::new(or.inner3.clone(), {
                     match or.inner3.ty {
                         TypeMetadata::u16 => Type::u16(res as u16),
                         TypeMetadata::u32 => Type::u32(res as u32),
@@ -59,7 +59,7 @@ impl Pass for PreComputeValue {
             }
             if let Some(or) = node.as_any().downcast_ref::<Xor<Type, Type, Var>>() {
                 let res = or.inner1.val() ^ or.inner2.val();
-                node.replace(ConstAssign::new(or.inner3.clone(), {
+                node.replace(Assign::new(or.inner3.clone(), {
                     match or.inner3.ty {
                         TypeMetadata::u16 => Type::u16(res as u16),
                         TypeMetadata::u32 => Type::u32(res as u32),
@@ -74,7 +74,7 @@ impl Pass for PreComputeValue {
             }
             if let Some(or) = node.as_any().downcast_ref::<Or<Type, Type, Var>>() {
                 let res = or.inner1.val() | or.inner2.val();
-                node.replace(ConstAssign::new(or.inner3.clone(), {
+                node.replace(Assign::new(or.inner3.clone(), {
                     match or.inner3.ty {
                         TypeMetadata::u16 => Type::u16(res as u16),
                         TypeMetadata::u32 => Type::u32(res as u32),
