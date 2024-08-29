@@ -86,7 +86,11 @@ impl TargetBackendDescr {
             node.compile(self);
         }
 
-        self.sink.clone()
+        let out = self.sink.clone();
+
+        self.sink.clear();
+
+        out
     }
 
     /// Used for lowering machine instructions into dyn MCInstr

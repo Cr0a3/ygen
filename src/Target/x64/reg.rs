@@ -176,9 +176,9 @@ impl x64Reg {
             8 => self.sub64(),
             4 => self.sub32(),
             2 => self.sub16(),
-            1 => self.sub8(),
-            
-            _ => todo!("the type is to big for a single register"),
+            1  | 0 => self.sub8(),
+
+            _ => todo!("the type {} is to big for a single register", ty),
         }
     }
 

@@ -1,7 +1,7 @@
-use crate::{prelude::Triple, Obj::{Decl, Linkage, ObjectBuilder}, Optimizations::PassManager, Support::{ColorClass, ColorProfile}, Target::TargetRegistry};
+use crate::{prelude::Triple, CodeGen::MachineInstr, Obj::{Decl, Linkage, ObjectBuilder}, Optimizations::PassManager, Support::{ColorClass, ColorProfile}, Target::TargetRegistry};
 
 use super::{func::FunctionType, Const, Function, VerifyError};
-use std::{collections::BTreeMap, error::Error, fs::OpenOptions, io::Write, path::Path};
+use std::{collections::{BTreeMap, HashMap}, error::Error, fs::OpenOptions, io::Write, path::Path};
 
 /// ## The Module
 /// The main class for handeling functions
@@ -178,6 +178,26 @@ impl Module {
         file.write_all(lines.as_bytes())?;
 
         Ok(())
+    }
+
+    /// emits machine instrs for target
+    /// note: machine instrs are portable over all platforms
+    pub fn emitMachineInstrs(&self, triple: Triple, registry: &mut TargetRegistry) -> Result<HashMap<String, Vec<MachineInstr>>, Box<dyn Error>> {
+        let mut out = HashMap::new();
+
+        for (name, func) in &self.funcs {
+            let mut instrs = vec![];
+
+            for block in &func.blocks {
+                instrs.extend_from_slice(&
+                    registry.buildMachineInstrsForTarget(triple, block, func)?
+                );
+            }
+
+            out.insert(name.to_string(), instrs);
+        }
+
+        Ok(out)
     }
 
     /// emits all function into one asm file

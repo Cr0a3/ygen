@@ -15,7 +15,7 @@ HOW TO RUN:
 
 import with (fmt: string, ...) printf // printf from libc
 
-with (a: u64, b: u64) add: {
+with (a: u32, b: u32) add: {
     return a + b;
 }
 
@@ -24,9 +24,9 @@ extern with () main: {
 
     printf(x);
 
-    var a: u64 = 1;
-    var b: u64 = 0xd; // 0xd -> 13
-    var expected: u64 = a + b; 
+    var a: u32 = 1;
+    var b: u32 = 0xd; // 0xd -> 13
+    var expected: u32 = a + b; 
 
     printf("add(%d, %d) = %d # expected: %d\n", a, b, add(a, b), expected);
 

@@ -34,6 +34,29 @@ impl MachineInstr {
     }
 }
 
+impl Display for MachineInstr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut ops = String::new();
+
+        let mut before = false;
+
+        for op in &self.operands {
+            let a = if before { ", " } else { "" };
+
+            ops.push_str(&format!("{}{}", a, op));
+            before = true
+        }
+
+        let mut out_fmt = String::new();
+
+        if let Some(out) = self.out {
+            out_fmt = format!(" => {}", out);
+        }
+
+        write!(f, "{} {}{}", self.mnemonic, ops, out_fmt)
+    }
+}
+
 /// a low level operand which is portable over platforms
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MachineOperand {
@@ -41,6 +64,15 @@ pub enum MachineOperand {
     Imm(i64),
     /// a register
     Reg(Reg),
+}
+
+impl Display for MachineOperand {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", match self {
+            MachineOperand::Imm(imm) => format!("{:#x?}", imm),
+            MachineOperand::Reg(reg) => format!("{:?}", reg),
+        })
+    }
 }
 
 /// The mnemonic to use
@@ -64,6 +96,26 @@ pub enum MachineMnemonic {
     Return,
 
     AdressLoad(String),
+}
+
+impl Display for MachineMnemonic {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", match self {
+            MachineMnemonic::Move =>            "move".to_string(),
+            MachineMnemonic::Add =>             "add".to_string(),
+            MachineMnemonic::And =>             "and".to_string(),
+            MachineMnemonic::Div =>             "div".to_string(),
+            MachineMnemonic::Mul =>             "mul".to_string(),
+            MachineMnemonic::Or =>              "or".to_string(),
+            MachineMnemonic::Sub =>             "sub".to_string(),
+            MachineMnemonic::Xor =>             "xor".to_string(),
+            MachineMnemonic::Zext =>            "zext".to_string(),
+            MachineMnemonic::Downcast =>        "dwcast".to_string(),
+            MachineMnemonic::Call(target) =>    format!("call {}", target),
+            MachineMnemonic::Return =>          "return".to_string(),
+            MachineMnemonic::AdressLoad(adr) => format!("load {}", adr),
+        })
+    }
 }
 
 /// a platform specifc instruction

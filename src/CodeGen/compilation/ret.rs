@@ -19,11 +19,13 @@ impl CompilationHelper {
         
         let mut instr = MachineInstr::new(MachineMnemonic::Move);
 
-        instr.add_operand(MachineOperand::Reg(self.call.return_reg(self.arch, node.inner1.ty)) );
+        instr.set_out(MachineOperand::Reg(self.call.return_reg(self.arch, node.inner1.ty)) );
         
         match src {
             super::VarLocation::Reg(reg) => instr.add_operand(MachineOperand::Reg(reg)),
         }
+
+        mc_sink.push(instr);
 
         mc_sink.push( MachineInstr::new(MachineMnemonic::Return) );
     }

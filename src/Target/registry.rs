@@ -1,6 +1,6 @@
 use std::{collections::HashMap, error::Error, fmt::Display};
 
-use crate::{prelude::{Block, Function}, Obj::Link};
+use crate::{prelude::{Block, Function}, CodeGen::MachineInstr, Obj::Link};
 
 use super::{Arch, CallConv, TargetBackendDescr, Triple};
 
@@ -36,6 +36,21 @@ impl TargetRegistry {
             *descr = descr.init.unwrap()(triple.getCallConv()?);
 
             Ok(descr)
+        } else {
+            Err(Box::from( 
+                RegistryError::UnsuportedArch(triple.arch) 
+            ))
+        }
+    }
+
+    /// emits machine instrs for target
+    /// note: machine instrs are portable over all platforms
+    pub fn buildMachineInstrsForTarget(&mut self, triple: Triple, block: &Block, funct: &Function) -> Result<Vec<MachineInstr>, Box<dyn Error>> {
+        if let Some(org) = self.targets.get_mut(&triple.arch) {
+            org.block = Some(block.clone());
+            let instrs = org.build_instrs(&funct, &triple);
+
+            Ok(instrs)
         } else {
             Err(Box::from( 
                 RegistryError::UnsuportedArch(triple.arch) 

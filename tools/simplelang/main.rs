@@ -19,7 +19,9 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     cli.add_opt("asm", "emit-asm", "Emits assembly");
 
     cli.add_opt("lex", "show-lexical-result", "Shows the tokens");
-    cli.add_opt("parse", "show-parser-result", "Shows the pared expressions");
+    cli.add_opt("parse", "show-parser-result", "Shows the parsed expressions");
+
+    cli.add_opt("mc", "show-machine-instrs", "Shows the generated portable machine instrs");
 
     cli.add_arg("in", "input", "The input file", true);
     cli.add_arg("o", "out", "The output file", false);
@@ -125,11 +127,27 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
     let module = code.module();
 
+    //module.verify()?;
+
     if cli.opt("ir") {
         eprintln!("{}", module.dumpColored(ColorProfile::default()));
     }
 
     let registry = &mut initializeAllTargets();
+
+    if cli.opt("mc") {
+        let mc_map = module.emitMachineInstrs(triple, registry)?;
+
+        for (func, instrs) in &mc_map {
+            println!("{}:", func);
+
+            for instr in instrs {
+                println!("\t{}", instr);
+            }
+
+            println!();
+        }
+    }
 
     if cli.opt("asm") {
         println!("{}", module.emitAsm(triple, registry)?);
