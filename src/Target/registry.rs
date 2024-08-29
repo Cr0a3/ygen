@@ -2,14 +2,14 @@ use std::{collections::HashMap, error::Error, fmt::Display};
 
 use crate::{prelude::{Block, Function}, Obj::Link};
 
-use super::{instr::Mnemonic, Arch, CallConv, TargetBackendDescr, Triple};
+use super::{Arch, CallConv, TargetBackendDescr, Triple};
 
 /// The target registry: manages different targets
-pub struct TargetRegistry<'a> {
-    targets: HashMap<Arch, TargetBackendDescr<'a>>
+pub struct TargetRegistry {
+    targets: HashMap<Arch, TargetBackendDescr>
 }
 
-impl<'a> TargetRegistry<'a> {
+impl TargetRegistry {
     /// Creates an new backend registry
     pub fn new() -> Self {
         Self {
@@ -18,7 +18,7 @@ impl<'a> TargetRegistry<'a> {
     }
 
     /// Adds an new target architecture
-    pub fn add(&mut self, arch: Arch, descr: TargetBackendDescr<'a>) {
+    pub fn add(&mut self, arch: Arch, descr: TargetBackendDescr) {
         self.targets.insert(arch, descr);
     }
 
@@ -31,7 +31,7 @@ impl<'a> TargetRegistry<'a> {
     }
 
     /// returns the `TargetBackendDescr` for the triple (also it adjusts it's calling convention ...)
-    pub fn getBasedOnTriple(&mut self, triple: Triple) -> Result<&mut TargetBackendDescr<'a>, Box<dyn Error>> {
+    pub fn getBasedOnTriple(&mut self, triple: Triple) -> Result<&mut TargetBackendDescr, Box<dyn Error>> {
         if let Some(descr) = self.targets.get_mut(&triple.arch) {
             *descr = descr.init.unwrap()(triple.getCallConv()?);
 
@@ -46,7 +46,8 @@ impl<'a> TargetRegistry<'a> {
     /// Builds the ir of the given triple into text assembly code
     pub fn buildAsmForTarget(&mut self, triple: Triple, block: &Block, funct: &Function) -> Result<Vec<String>, Box<dyn Error>> {
         if let Some(org) = self.targets.get_mut(&triple.arch) {
-            let instrs = org.build_instrs(&block, &funct, &triple);
+            org.block = Some(block.clone());
+            let instrs = org.build_instrs(&funct, &triple);
             let instrs = org.lower(instrs);
 
             let mut asm = vec![];
@@ -69,19 +70,17 @@ impl<'a> TargetRegistry<'a> {
     pub fn buildMachineCodeForTarget(&mut self, triple: Triple, block: &Block, funct: &Function) -> Result<(Vec<u8>, Vec<Link>), Box<dyn Error>> {
         if let Some(org) = self.targets.get_mut(&triple.arch) {
 
-            let call = (org.init.unwrap()(triple.getCallConv()?)).call;
+            //let call = (org.init.unwrap()(triple.getCallConv()?)).call;
 
-            let instrs = org.build_instrs(&block, &funct, &triple);
+            org.block = Some(block.clone());
+
+            let instrs = org.build_instrs(&funct, &triple);
             let instrs = org.lower(instrs);
 
             let mut res = vec![];
             let mut links = vec![];
 
             for instr in &instrs {
-                if instr.mnemonic == Mnemonic::Debug {
-                    continue;
-                };
-
                 let (encoded, link) = &instr.encode()?;
                 res.extend_from_slice(&encoded);
 

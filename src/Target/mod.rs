@@ -15,7 +15,7 @@ pub use lexer::Lexer;
 pub use compiler::Compiler;
 
 /// Initializes all targets
-pub fn initializeAllTargets<'a>() -> TargetRegistry<'a> {
+pub fn initializeAllTargets() -> TargetRegistry {
     let mut registry = TargetRegistry::new();
 
     registry.add( Arch::X86_64, initializeX64Target(CallConv::SystemV) );

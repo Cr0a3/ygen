@@ -1,22 +1,24 @@
 use crate::prelude::{ir::*, Block, Var};
+use crate::CodeGen::MCInstr;
 use crate::CodeGen::{compilation::CompilationHelper, MachineInstr};
-use crate::IR::Type;
+use crate::IR::{Const, Function, Type, TypeMetadata};
 
+use super::Triple;
 use super::{CallConv, Compiler, instr::Instr, Lexer};
 
 pub(crate) type CompileFunc<T> = fn(&T, &mut TargetBackendDescr) -> Vec<Instr>;
 
 /// The TargetBackendDescr is used to store all the functions/information to compile ir nodes into assembly
 #[allow(unused)]
-pub struct TargetBackendDescr<'a> {
-    pub(crate) init: Option<fn(CallConv)->TargetBackendDescr<'a>>,
+pub struct TargetBackendDescr {
+    pub(crate) init: Option<fn(CallConv)->TargetBackendDescr>,
 
     pub(crate) lexer: Option<Box<dyn Lexer>>,
     pub(crate) compile: Option<Box<dyn Compiler>>,
 
     pub(crate) helper: Option<CompilationHelper>,
 
-    pub(crate) block: Option<&'a Block>,
+    pub(crate) block: Option<Block>,
     pub(crate) call: CallConv,
 
     pub(crate) sink: Vec<MachineInstr>,
@@ -24,7 +26,7 @@ pub struct TargetBackendDescr<'a> {
 
 macro_rules! compile_func {
     ($name:ident, $func:ident, $($node:tt)*) => { 
-        impl<'a> TargetBackendDescr<'a> { 
+        impl TargetBackendDescr { 
             /// gets the callback for compiling the  ir node into asm
             #[allow(unused)]
             pub(crate) fn $name(&mut self, node: &$($node)*) {
@@ -42,7 +44,7 @@ macro_rules! compile_func {
     };
 }
 
-impl<'a> TargetBackendDescr<'a> {
+impl TargetBackendDescr {
     /// Creates a new instance
     pub fn new() -> Self {
         Self {
@@ -63,6 +65,32 @@ impl<'a> TargetBackendDescr<'a> {
     /// Returns the compiler to use with the TargetBackendDescr
     pub fn compiler(&self) -> Box<dyn Compiler> {
         self.compile.clone().unwrap()
+    }
+
+    pub fn build_instrs(&mut self, func: &Function, triple: &Triple) -> Vec<MachineInstr> {
+        let block = if let Some(block) = &self.block {
+            block.clone()
+        } else {
+            todo!("no current block");
+        };
+
+        for node in block.nodes {
+            node.compile(&mut self);
+        }
+
+        self.sink.clone()
+    }
+
+    pub fn lower(&self, instrs: Vec<MachineInstr>) -> Vec<Box<dyn MCInstr>> {
+        if let Some(helper) = &self.helper {
+            if let Some(lower) = helper.lower {
+                lower(instrs)
+            } else {
+                todo!("the target architecture {:?} doesn't support instruction lowering", helper.arch)
+            }
+        } else {
+            todo!("no helper was registered");
+        }
     }
 }
 
@@ -89,3 +117,14 @@ compile_func!(compile_mul_type_type, compile_mul_type_type, Mul<Type, Type, Var>
 compile_func!(compile_or_type_type,  compile_or_type_type,  Or<Type, Type, Var>);
 compile_func!(compile_sub_type_type, compile_sub_type_type, Sub<Type, Type, Var>);
 compile_func!(compile_xor_type_type, compile_xor_type_type, Xor<Type, Type, Var>);
+
+compile_func!(compile_ret_ty, compile_ret_ty, Return<Type>);
+compile_func!(compile_ret_var, compile_ret_var, Return<Var>);
+
+compile_func!(compile_cast_var, compile_cast, Cast<Var, TypeMetadata, Var>);
+
+compile_func!(compile_call, compile_call, Call<Function, Vec<Var>, Var>);
+
+compile_func!(compile_assign_var_type, compile_assign_var_type, ConstAssign<Var, Type>);
+compile_func!(compile_assign_var_var, compile_assign_var_var, ConstAssign<Var, Var>);
+compile_func!(compile_assign_var_const, compile_assign_var_const, ConstAssign<Var, Const>);

@@ -34,7 +34,7 @@ impl Ir for Return<Type> {
     }
 
     fn compile(&self, registry: &mut TargetBackendDescr) {
-        registry.compie_ret_ty(&self)
+        registry.compile_ret_ty(&self)
     }
 }
 

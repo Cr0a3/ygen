@@ -18,7 +18,7 @@ pub use asm::*;
 use crate::Target::Compiler;
 
 /// Initializes the x86-64 target
-pub fn initializeX64Target<'a>(call_conv: CallConv) -> TargetBackendDescr<'a> {
+pub fn initializeX64Target(call_conv: CallConv) -> TargetBackendDescr {
     let mut target = TargetBackendDescr::new();
 
     target.init = Some(initializeX64Target);
@@ -26,7 +26,7 @@ pub fn initializeX64Target<'a>(call_conv: CallConv) -> TargetBackendDescr<'a> {
     target.lexer = Some(x64Lexer {}.boxed());
     target.compile = Some(x64Parser { tokens: VecDeque::new(), out: None }.boxed());
 
-    target.helper = Some(construct_compilation_helper());
+    target.helper = Some(construct_compilation_helper(call_conv));
 
     target.call = call_conv;
 

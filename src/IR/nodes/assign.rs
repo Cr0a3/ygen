@@ -112,7 +112,7 @@ impl Ir for ConstAssign<Var, Const> {
         Box::new(self.clone())
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
+    fn compile(&self, registry: &mut TargetBackendDescr) {
         registry.compile_assign_var_const(&self)
     }
 

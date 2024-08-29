@@ -1,6 +1,6 @@
 use std::{any::Any, fmt::Debug, hash::Hash};
 use super::{Const, Function, FunctionType, IRBuilder, Type, TypeMetadata, Var, VerifyError};
-use crate::Target::{instr::Instr, TargetBackendDescr};
+use crate::Target::TargetBackendDescr;
 
 mod assign;
 mod call;

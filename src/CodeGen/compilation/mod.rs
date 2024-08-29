@@ -2,23 +2,29 @@ use std::collections::HashMap;
 
 use crate::{Target::Arch, IR::Var};
 
-use super::{reg::Reg, reg_vec::RegVec};
+use super::{calling_convention::MachineCallingConvention, reg::Reg, reg_vec::RegVec, MCInstr, MachineInstr};
 
 mod math;
+mod ret;
 
 pub(crate) struct CompilationHelper {
     pub(crate) regs: RegVec,
     pub(crate) arch: Arch,
+    pub(crate) lower: Option<fn(Vec<MachineInstr>) -> Vec<Box<dyn MCInstr>>>,
+
+    pub(crate) call: MachineCallingConvention,
 
     pub(crate) vars: HashMap<Var, VarLocation>,
 }
 
 impl CompilationHelper {
-    pub(crate) fn new(arch: Arch) -> Self {
+    pub(crate) fn new(arch: Arch, call: MachineCallingConvention) -> Self {
         Self {
             regs: RegVec::new(),
             arch: arch,
             vars: HashMap::new(),
+            call: call,
+            lower: None,
         }
     }
 
@@ -27,7 +33,6 @@ impl CompilationHelper {
         if let Some(location) = self.vars.get(var) {
             match location {
                 VarLocation::Reg(reg) => self.regs.push(reg.arch(), reg.clone()),
-                _ => todo!()
             }
         }
     }
