@@ -34,7 +34,7 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
 
     let mut reg_args = 0;
 
-    let mut to_pop = vec![];
+    let mut to_drop = vec![];
 
     for arg in &call.inner2 {
         let loc = if let Some((x, y)) = registry.backend.varsStorage.get_key_value(arg) {
@@ -71,7 +71,7 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
                     reg_args += 1;
                 } else {
                     asm.push( Instr::with1(Mnemonic::Push, Operand::Reg(reg.clone())));
-                    to_pop.push(reg.clone());
+                    to_drop.push(reg.clone());
                 }
             },
             VarStorage::Memory(mem) => {
@@ -98,7 +98,7 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
     asm.push( Instr::with1(Mnemonic::Call, Operand::Imm(0)) );
     asm.push( Instr::with1(Mnemonic::Link, Operand::LinkDestination(call.inner1.name.to_string(), -4)) );
 
-    for reg in to_pop {
+    for reg in to_drop {
         asm.push( Instr::with1(Mnemonic::Pop, Operand::Reg(reg)) );
     }
 
@@ -136,8 +136,6 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
     }
 
     for (var, off) in saved_var_memory_locations {
-        registry.backend.increase_mem();
-
         let reg = if let Some(VarStorage::Register(reg)) = registry.backend.varsStorage.get(&var) {
             reg.to_owned()
         } else { todo!() }; // shouldn't happen
@@ -146,6 +144,7 @@ pub(crate) fn CompileCall(call: &Call<Function, Vec<Var>, Var>, registry: &mut T
     }
 
     for arg in &call.inner2 {
+        registry.backend.increase_mem();
         if !block.isVarUsedAfterNode(&boxed, arg) {
             registry.backend.drop(arg);
         }
