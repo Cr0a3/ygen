@@ -46,10 +46,8 @@ impl<'a> TargetRegistry<'a> {
     /// Builds the ir of the given triple into text assembly code
     pub fn buildAsmForTarget(&mut self, triple: Triple, block: &Block, funct: &Function) -> Result<Vec<String>, Box<dyn Error>> {
         if let Some(org) = self.targets.get_mut(&triple.arch) {
-            let instrs = org.buildAsm.unwrap()(
-                &block, &funct, 
-                &org.init.unwrap()(triple.getCallConv()?).call, // Unnessecary (and slow) but prevents
-                &mut org.init.unwrap()(triple.getCallConv()?));  // lifetime issues 
+            let instrs = org.build_instrs(&block, &funct, &triple);
+            let instrs = org.lower(instrs);
 
             let mut asm = vec![];
 
@@ -73,15 +71,13 @@ impl<'a> TargetRegistry<'a> {
 
             let call = (org.init.unwrap()(triple.getCallConv()?)).call;
 
-            let asm: VecDeque<Instr> = org.buildAsm.unwrap()(
-                &block, &funct, 
-                &call,
-                &mut org.init.unwrap()(triple.getCallConv()?)).into();
+            let instrs = org.build_instrs(&block, &funct, &triple);
+            let instrs = org.lower(instrs);
 
             let mut res = vec![];
             let mut links = vec![];
 
-            for instr in &asm {
+            for instr in &instrs {
                 if instr.mnemonic == Mnemonic::Debug {
                     continue;
                 };

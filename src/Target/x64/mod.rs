@@ -2,11 +2,12 @@
 
 use std::collections::VecDeque;
 
-//pub(crate) mod compilation;
+mod compilation;
 //use compilation::*;
 
 use super::{CallConv, Lexer, Reg, TargetBackendDescr};
 mod reg;
+use compilation::construct_compilation_helper;
 pub use reg::*;
 
 pub(crate) mod call;
@@ -21,63 +22,14 @@ pub fn initializeX64Target<'a>(call_conv: CallConv) -> TargetBackendDescr<'a> {
     let mut target = TargetBackendDescr::new();
 
     target.init = Some(initializeX64Target);
-    target.buildAsm = None;//Some(todo!());
 
     target.lexer = Some(x64Lexer {}.boxed());
     target.compile = Some(x64Parser { tokens: VecDeque::new(), out: None }.boxed());
 
+    target.helper = Some(construct_compilation_helper());
+
     target.call = call_conv;
 
-    target.backend.savedRegisters = vec![
-        x64Reg::R12.boxed(), x64Reg::R13.boxed(), x64Reg::R14.boxed(), x64Reg::R15.boxed(),
-    ];
-
-    target.backend.mutable = vec![
-        x64Reg::Rax.boxed(), x64Reg::Rbx.boxed(), x64Reg::Rcx.boxed(), x64Reg::Rdx.boxed(), 
-        x64Reg::Rdi.boxed(), x64Reg::Rsi.boxed(), x64Reg::R8.boxed(), x64Reg::R9.boxed(), 
-        x64Reg::R10.boxed(), x64Reg::R11.boxed(),
-    ];
-
-    match call_conv {
-        CallConv::WindowsFastCall => {
-            target.backend.shadow = 32;
-            target.backend.openUsableRegisters64 = VecDeque::from(
-                vec![x64Reg::Rsi.boxed(), x64Reg::Rdi.boxed(), 
-                x64Reg::R10.boxed(), x64Reg::R11.boxed(), x64Reg::R12.boxed(), x64Reg::R13.boxed(), x64Reg::R14.boxed(), x64Reg::R15.boxed()]
-            );
-            target.backend.openUsableRegisters32 = VecDeque::from(
-                vec![x64Reg::Esi.boxed(), x64Reg::Edi.boxed(), 
-                x64Reg::R10d.boxed(), x64Reg::R11d.boxed(), x64Reg::R12d.boxed(), x64Reg::R13d.boxed(), x64Reg::R14d.boxed(), x64Reg::R15d.boxed()]
-            );
-            target.backend.openUsableRegisters16 = VecDeque::from(
-                vec![x64Reg::Si.boxed(), x64Reg::Di.boxed(), 
-                x64Reg::R10w.boxed(), x64Reg::R11w.boxed(), x64Reg::R12w.boxed(), x64Reg::R13w.boxed(), x64Reg::R14w.boxed(), x64Reg::R15w.boxed()]
-            );
-            target.backend.openUsableRegisters8 = VecDeque::from(
-                vec![x64Reg::Sil.boxed(), x64Reg::Dil.boxed(), 
-                x64Reg::R10b.boxed(), x64Reg::R11b.boxed(), x64Reg::R12b.boxed(), x64Reg::R13b.boxed(), x64Reg::R14b.boxed(), x64Reg::R15b.boxed()]
-            );
-        },
-        CallConv::SystemV => {
-            target.backend.shadow = 8;
-            target.backend.openUsableRegisters64 = VecDeque::from(
-                vec![x64Reg::R10.boxed(), x64Reg::R11.boxed(), x64Reg::R12.boxed(), x64Reg::R13.boxed(), x64Reg::R14.boxed(), x64Reg::R15.boxed()]
-            );
-            target.backend.openUsableRegisters32 = VecDeque::from(
-                vec![x64Reg::R10d.boxed(), x64Reg::R11d.boxed(), x64Reg::R12d.boxed(), x64Reg::R13d.boxed(), x64Reg::R14d.boxed(), x64Reg::R15d.boxed()]
-            );
-            target.backend.openUsableRegisters16 = VecDeque::from(
-                vec![x64Reg::R10w.boxed(), x64Reg::R11w.boxed(), x64Reg::R12w.boxed(), x64Reg::R13w.boxed(), x64Reg::R14w.boxed(), x64Reg::R15w.boxed()]
-            );
-            target.backend.openUsableRegisters8 = VecDeque::from(
-                vec![x64Reg::R10b.boxed(), x64Reg::R11b.boxed(), x64Reg::R12b.boxed(), x64Reg::R13b.boxed(), x64Reg::R14b.boxed(), x64Reg::R15b.boxed()]
-            );
-        },
-        CallConv::AppleAarch64 => todo!(),
-        CallConv::WasmBasicCAbi => todo!(),
-    }
-
-    //todo!();
 
     target
 }

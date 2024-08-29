@@ -94,8 +94,8 @@ macro_rules! MathIrNode {
                 self
             }
         
-            fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-                registry.$compileFuncTyTy()(self, registry)
+            fn compile(&self, registry: &mut TargetBackendDescr) {
+                registry.$compileFuncTyTy(&self)
             }
         
             fn uses(&self, var: &Var) -> bool {
@@ -145,8 +145,8 @@ macro_rules! MathIrNode {
                 self
             }
         
-            fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-                registry.$compileFuncVarVar()(self, registry)
+            fn compile(&self, registry: &mut TargetBackendDescr) {
+                registry.$compileFuncVarVar(&self)
             }
         
             fn uses(&self, var: &Var) -> bool {
@@ -196,8 +196,8 @@ macro_rules! MathIrNode {
                 self
             }
         
-            fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-                registry.$compileFuncVarTy()(self, registry)
+            fn compile(&self, registry: &mut TargetBackendDescr) {
+                registry.$compileFuncVarTy(&self)
             }
         
             fn uses(&self, var: &Var) -> bool {
@@ -209,9 +209,11 @@ macro_rules! MathIrNode {
     };
 }
 
-MathIrNode!(Add, getCompileFuncForAddVarVar, getCompileFuncForAddVarType, getCompileFuncForAddTypeType, BuildAdd, BuildAdd, "add");
-MathIrNode!(Sub, getCompileFuncForSubVarVar, getCompileFuncForSubVarType, getCompileFuncForSubTypeType, BuildSub, BuildSub, "sub");
-MathIrNode!(Xor, getCompileFuncForXorVarVar, getCompileFuncForXorVarType, getCompileFuncForXorTypeType, BuildXor, BuildXor, "xor");
-MathIrNode!(Or, getCompileFuncForOrVarVar, getCompileFuncForOrVarType, getCompileFuncForOrTypeType, BuildOr, BuildOr, "or");
-MathIrNode!(And, getCompileFuncForAndVarVar, getCompileFuncForAndVarType, getCompileFuncForAndTypeType, BuildAnd, BuildAnd, "and");
+MathIrNode!(Add,    compile_add_var_var,   compile_add_var_type, compile_add_type_type, BuildAdd, BuildAdd, "add");
+MathIrNode!(Sub,    compile_sub_var_var,   compile_sub_var_type, compile_sub_type_type, BuildSub, BuildSub, "sub");
+MathIrNode!(Xor,    compile_xor_var_var,   compile_xor_var_type, compile_xor_type_type, BuildXor, BuildXor, "xor");
+MathIrNode!(Or,     compile_or_var_var,    compile_or_var_type, compile_or_type_type, BuildOr, BuildOr, "or");
+MathIrNode!(And,    compile_and_var_var,   compile_and_var_type, compile_and_type_type, BuildAnd, BuildAnd, "and");
+MathIrNode!(Mul,    compile_mul_var_var,   compile_mul_var_type, compile_mul_type_type, BuildMul, BuildMul, "mul");
+MathIrNode!(Div,    compile_div_var_var,   compile_div_var_type, compile_div_type_type, BuildDiv, BuildDiv, "div");
 

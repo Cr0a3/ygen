@@ -33,8 +33,8 @@ impl Ir for Return<Type> {
         self
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-        registry.getCompileFuncForRetType()(self, registry)
+    fn compile(&self, registry: &mut TargetBackendDescr) {
+        registry.compie_ret_ty(&self)
     }
 }
 
@@ -69,8 +69,8 @@ impl Ir for Return<Var> {
         self
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-        registry.getCompileFuncForRetVar()(self, registry)
+    fn compile(&self, registry: &mut TargetBackendDescr) {
+        registry.compile_ret_var(&self)
     }
 
     fn uses(&self, var: &Var) -> bool {

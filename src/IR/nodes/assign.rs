@@ -33,8 +33,8 @@ impl Ir for ConstAssign<Var, Type> {
         Box::new(self.clone())
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-        registry.getCompileFuncForConstAssign()(self, registry)
+    fn compile(&self, registry: &mut TargetBackendDescr) {
+        registry.compile_assign_var_type(&self)
     }
 
     fn uses(&self, var: &Var) -> bool {
@@ -76,8 +76,8 @@ impl Ir for ConstAssign<Var, Var> {
         Box::new(self.clone())
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-        registry.getCompileFuncForConstAssignVar()(self, registry)
+    fn compile(&self, registry: &mut TargetBackendDescr) {
+        registry.compile_assign_var_var(&self)
     }
 
     fn uses(&self, var: &Var) -> bool {
@@ -113,7 +113,7 @@ impl Ir for ConstAssign<Var, Const> {
     }
 
     fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-        registry.getCompileFuncForConstAssignConst()(self, registry)
+        registry.compile_assign_var_const(&self)
     }
 
     fn uses(&self, var: &Var) -> bool {

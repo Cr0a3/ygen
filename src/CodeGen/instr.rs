@@ -10,6 +10,7 @@ pub struct MachineInstr {
 }
 
 impl MachineInstr {
+    /// Creates a new machine instr
     pub fn new(mne: MachineMnemonic) -> Self {
         Self {
             mnemonic: mne,
@@ -18,10 +19,12 @@ impl MachineInstr {
         }
     }
 
+    /// Adds an operand
     pub fn add_operand(&mut self, op: MachineOperand) {
         self.operands.push( op );
     }
 
+    /// Sets the output of the instr
     pub fn set_out(&mut self, out: MachineOperand) {
         self.out = Some(out);
     }
@@ -36,6 +39,7 @@ pub enum MachineOperand {
 }
 
 /// The mnemonic to use
+#[allow(missing_docs)]
 pub enum MachineMnemonic {
     Move,
     

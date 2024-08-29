@@ -102,6 +102,8 @@ IrTypeWith3!(Sub, T, U, Z);
 IrTypeWith3!(Xor, T, U, Z);
 IrTypeWith3!(Or, T, U, Z);
 IrTypeWith3!(And, T, U, Z);
+IrTypeWith3!(Mul, T, U, Z);
+IrTypeWith3!(Div, T, U, Z);
 
 use crate::Support::{ColorClass, ColorProfile};
 
@@ -122,7 +124,7 @@ pub(crate) trait Ir: Debug + Any {
     fn clone_box(&self) -> Box<dyn Ir>;
 
     /// Compiles the node based on the given target
-    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr>;
+    fn compile(&self, registry: &mut TargetBackendDescr);
 
     /// Returns if the node uses the variable
     fn uses(&self, _: &Var) -> bool {

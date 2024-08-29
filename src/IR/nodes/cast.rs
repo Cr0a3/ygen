@@ -38,8 +38,8 @@ impl Ir for Cast<Var, TypeMetadata, Var> {
         Box::from( self.clone() )
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-        registry.getCompileFuncForCastTyVar()(self, registry)
+    fn compile(&self, registry: &mut TargetBackendDescr) {
+        registry.compile_cast_var(&self)
     }
 }
 

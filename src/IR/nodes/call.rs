@@ -60,8 +60,8 @@ impl Ir for Call<Function, Vec<Var>, Var> {
         Box::from( self.clone() )
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr) -> Vec<Instr> {
-        registry.getCompileFuncForCall()(self, registry)
+    fn compile(&self, registry: &mut TargetBackendDescr) {
+        registry.compile_call(&self)
     }
 
     fn uses(&self, var: &Var) -> bool {
