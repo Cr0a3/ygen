@@ -59,7 +59,7 @@ macro_rules! MathIrNode {
             }
         
             fn dump(&self) -> String {
-                format!("{} = {} {} {}, {}", $dump, self.inner3.name, self.inner3.ty, self.inner1.val(), self.inner2.val())
+                format!("{} = {} {} {}, {}", self.inner3.name, $dump, self.inner3.ty, self.inner1.val(), self.inner2.val())
             }
         
             fn dumpColored(&self, profile: ColorProfile) -> String {
@@ -110,7 +110,7 @@ macro_rules! MathIrNode {
             }
 
             fn dump(&self) -> String {
-                format!("{} = {} {} {}, {}", $dump, self.inner3.name, self.inner3.ty, self.inner1.name, self.inner2.name)
+                format!("{} = {} {} {}, {}", self.inner3.name, $dump, self.inner3.ty, self.inner1.name, self.inner2.name)
             }
         
             fn dumpColored(&self, profile: ColorProfile) -> String {
@@ -161,7 +161,7 @@ macro_rules! MathIrNode {
             }
         
             fn dump(&self) -> String {
-                format!("{} = {} {} {}, {}", $dump, self.inner3.name, self.inner1.ty, self.inner1.name, self.inner2.val())
+                format!("{} = {} {} {}, {}", self.inner3.name, $dump, self.inner1.ty, self.inner1.name, self.inner2.val())
             }
         
             fn dumpColored(&self, profile: ColorProfile) -> String {
