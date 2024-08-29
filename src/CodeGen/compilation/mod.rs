@@ -1,13 +1,17 @@
 use std::collections::HashMap;
 
-use crate::{Target::Arch, IR::Var};
+use crate::{Target::Arch, IR::{Function, Var}};
 
 use super::{calling_convention::MachineCallingConvention, reg::Reg, reg_vec::RegVec, MCInstr, MachineInstr};
 
 mod math;
+mod cast;
+mod call;
 mod ret;
+mod assign;
 
-pub(crate) struct CompilationHelper {
+/// helps with compilation
+pub struct CompilationHelper {
     pub(crate) regs: RegVec,
     pub(crate) arch: Arch,
     pub(crate) lower: Option<fn(Vec<MachineInstr>) -> Vec<Box<dyn MCInstr>>>,
@@ -48,6 +52,27 @@ impl CompilationHelper {
         self.vars.insert(var.clone(), location);
 
         location
+    }
+
+    /// passes the arguments into the right register
+    pub(crate) fn build_argument_preprocessing(&mut self, func: &Function) {
+        let func = &func.ty;
+
+        for (num, ty) in &func.args {
+
+            let location = {
+                if let Some(reg) = self.call.args(self.arch).get(*num) {
+                    VarLocation::Reg(*reg)
+                } else {
+                    todo!("The new system currently doesn't support memory")
+                }
+            };
+
+            self.vars.insert(
+                Var { name: format!("%{}", num), ty: *ty }, 
+                location
+            );
+        }
     }
 }
 

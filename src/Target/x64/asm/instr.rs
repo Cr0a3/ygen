@@ -1,12 +1,12 @@
 use std::{fmt::Display, ops::{Add, Sub}, str::FromStr};
 
-use crate::{Obj::Link, Support::{ColorClass, ColorProfile}, Target::{isa::{buildOpcode, MandatoryPrefix, RexPrefix}, x64Reg, Reg}};
+use crate::{Obj::Link, Support::{ColorClass, ColorProfile}, Target::{isa::{buildOpcode, MandatoryPrefix, RexPrefix}, x64Reg}};
 
 use super::isa::ModRm;
 
 /// The target instruction
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Instr {
+pub struct X64MCInstr {
     /// The mnemonic to use
     pub mnemonic: Mnemonic,
     /// First operand
@@ -15,7 +15,7 @@ pub struct Instr {
     pub op2: Option<Operand>,
 }
 
-impl Instr {
+impl X64MCInstr {
     /// Creates the instruction with 0 operands
     pub fn with0(mne: Mnemonic) -> Self {
         Self {
@@ -106,7 +106,7 @@ impl Instr {
                         } else if let Some(Operand::Mem(mem)) = &self.op1 {
                             op.push(r);
                             rex.sync(mem.rex(true));
-                            let enc = &mem.encode(Some(reg.boxed()));
+                            let enc = &mem.encode(Some(*reg));
                             op.extend_from_slice(&enc.1);
                         } else { todo!() }
 
@@ -130,7 +130,7 @@ impl Instr {
                                 } else {rex = Some(mem.rex(false))}
                             }
 
-                            let enc = &mem.encode(Some(op0.boxed()));
+                            let enc = &mem.encode(Some(*op0));
                             op.extend_from_slice(&enc.1);
 
                         } else { todo!() }
@@ -445,7 +445,7 @@ impl Instr {
     }
 
     /// Returns if the current instruction is the other instruction but inverted
-    pub fn invert_of(&self, other: &Instr) -> bool {
+    pub fn invert_of(&self, other: &X64MCInstr) -> bool {
         let mut out = false;
 
         if self.mnemonic == Mnemonic::Mov && other.mnemonic == Mnemonic::Mov {
@@ -497,7 +497,7 @@ impl Instr {
     }
 }
 
-impl Display for Instr {
+impl Display for X64MCInstr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut string = format!("{}", self.mnemonic);
 
@@ -516,7 +516,7 @@ impl Display for Instr {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum InstrEncodingError {
     /// The given instruction has an invalid variant
-    InvalidVariant(Instr, String),
+    InvalidVariant(X64MCInstr, String),
 }
 
 impl Display for InstrEncodingError {
@@ -620,7 +620,7 @@ pub enum Operand {
     /// A number operand
     Imm(i64),
     /// A register operand
-    Reg(Box<dyn Reg>),
+    Reg(x64Reg),
     /// A memory displacement
     Mem(MemOp),
     /// The link destination
@@ -658,9 +658,9 @@ impl Display for Operand {
 #[derive(Eq)]
 pub struct MemOp {
     /// The base register
-    pub base: Option<Box<dyn Reg>>,
+    pub base: Option<x64Reg>,
     /// The index register
-    pub index: Option<Box<dyn Reg>>,
+    pub index: Option<x64Reg>,
     /// The scale
     pub scale: isize,
     /// The displacement
@@ -671,7 +671,7 @@ pub struct MemOp {
 
 impl MemOp {
     #[doc(hidden)]
-    pub fn encode(&self, basis: Option<Box<dyn Reg>>) -> (/*modrm mod*/u8, Vec<u8>) {
+    pub fn encode(&self, basis: Option<x64Reg>) -> (/*modrm mod*/u8, Vec<u8>) {
         let mut scale = match self.scale {
             0 => 0,
             1 => 0,
@@ -781,7 +781,7 @@ impl Clone for MemOp {
         Self { 
             base: self.base.clone(), 
             index: {
-                if let Some(index) = &self.index { Some(index.boxed()) }
+                if let Some(index) = &self.index { Some(*index) }
                 else { None }
             },
             scale: self.scale.clone(), 
@@ -824,7 +824,7 @@ impl Add<u32> for x64Reg {
 
     fn add(self, rhs: u32) -> Self::Output {
         MemOp {
-            base: Some(self.boxed()),
+            base: Some(self),
             index: None,
             scale: 1,
             displ: rhs as isize,
@@ -838,8 +838,8 @@ impl Add<x64Reg> for x64Reg {
 
     fn add(self, rhs: x64Reg) -> Self::Output {
         MemOp {
-            base: Some(self.boxed()),
-            index: Some(rhs.boxed()),
+            base: Some(self),
+            index: Some(rhs),
             scale: 1,
             displ: 0,
             rip: false,
@@ -852,7 +852,7 @@ impl Sub<u32> for x64Reg {
 
     fn sub(self, rhs: u32) -> Self::Output {
         MemOp {
-            base: Some(self.boxed()),
+            base: Some(self),
             index: None,
             scale: 1,
             displ: -(rhs as isize),

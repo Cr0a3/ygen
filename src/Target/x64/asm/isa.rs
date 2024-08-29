@@ -1,4 +1,4 @@
-use crate::Target::{x64Reg, Reg};
+use crate::Target::x64Reg;
 
 use super::instr::MemOp;
 
@@ -119,7 +119,7 @@ impl ModRm {
     }
 
     pub fn regM(reg: x64Reg, mem: MemOp) -> Vec<u8> {
-        let enc = mem.encode(Some(reg.boxed()));
+        let enc = mem.encode(Some(reg));
         let mut out = vec![];
 
         if let Some(_) = mem.index {
@@ -131,8 +131,8 @@ impl ModRm {
     }
 
     pub fn memR(mem: MemOp, reg: x64Reg) -> Vec<u8> {
-        let mut out = vec![mem.encode(Some(reg.boxed())).0 << 6 | reg.enc() << 3 | 0b100];
-        out.extend_from_slice(&mem.encode(Some(reg.boxed())).1);
+        let mut out = vec![mem.encode(Some(reg)).0 << 6 | reg.enc() << 3 | 0b100];
+        out.extend_from_slice(&mem.encode(Some(reg)).1);
         out
     }
 

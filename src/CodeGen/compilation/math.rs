@@ -59,7 +59,7 @@ macro_rules! MathVarType {
     ($func:ident, $node:ident, $mnemonic:expr) => {
         impl CompilationHelper {
             #[allow(missing_docs)]
-            pub(crate) fn $func(&mut self, node: &$node<Var, Type, Var>, mc_sink: &mut Vec<MachineInstr>, block: &Block) {
+            pub fn $func(&mut self, node: &$node<Var, Type, Var>, mc_sink: &mut Vec<MachineInstr>, block: &Block) {
                 let src1 = *self.vars.get(&node.inner1).expect("expected valid variable");
         
                 let boxed: Box<dyn Ir> = Box::new(node.clone());

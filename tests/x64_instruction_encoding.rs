@@ -1,18 +1,18 @@
-use ygen::{Optimizations::auto_max_optimize, Target::{instr::*, x64Reg, Reg}};
+use ygen::{Optimizations::auto_max_optimize, Target::{instr::*, x64Reg}};
 
 #[test]
 pub fn test_mov() {
-    let instr = Instr::with2(
+    let instr = X64MCInstr::with2(
         Mnemonic::Mov, 
-        Operand::Reg(x64Reg::Rcx.boxed()),
-        Operand::Mem(MemOp { base: Some(x64Reg::R15.boxed()), index: None, scale: 1, displ: 5, rip: false })
+        Operand::Reg(x64Reg::Rcx),
+        Operand::Mem(MemOp { base: Some(x64Reg::R15), index: None, scale: 1, displ: 5, rip: false })
     );
 
     assert_eq!(instr.encode(), Ok((vec![0x49, 0x8B, 0x4F, 0x05], None)));
 
-    let instr = Instr::with2(
+    let instr = X64MCInstr::with2(
         Mnemonic::Mov, 
-        Operand::Reg(x64Reg::R12b.boxed()),
+        Operand::Reg(x64Reg::R12b),
         Operand::Imm(12)
     );
 
@@ -21,7 +21,7 @@ pub fn test_mov() {
 
 #[test]
 pub fn test_ret() {
-    let instr = Instr::with0(Mnemonic::Ret);
+    let instr = X64MCInstr::with0(Mnemonic::Ret);
 
     assert_eq!(instr.encode(), Ok((vec![0xC3], None)));
 }
@@ -29,16 +29,16 @@ pub fn test_ret() {
 #[test]
 pub fn test_optimization() {
     let mut instrs = vec![
-        Instr::with0(Mnemonic::StartOptimization),
-        Instr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.boxed()), Operand::Reg(x64Reg::Rcx.boxed())),
-        Instr::with2(Mnemonic::Add, Operand::Reg(x64Reg::Rax.boxed()), Operand::Reg(x64Reg::Rdx.boxed())),
-        Instr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rcx.boxed()), Operand::Reg(x64Reg::Rax.boxed())),
+        X64MCInstr::with0(Mnemonic::StartOptimization),
+        X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), Operand::Reg(x64Reg::Rcx)),
+        X64MCInstr::with2(Mnemonic::Add, Operand::Reg(x64Reg::Rax), Operand::Reg(x64Reg::Rdx)),
+        X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rcx), Operand::Reg(x64Reg::Rax)),
     ];
 
     let expected_optimized = vec![
-        Instr::with0(Mnemonic::StartOptimization),
-        Instr::with2(Mnemonic::Lea, Operand::Reg(x64Reg::Rax.boxed()), Operand::Mem(x64Reg::Rcx + x64Reg::Rdx)),
-        Instr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rcx.boxed()), Operand::Reg(x64Reg::Rax.boxed())),
+        X64MCInstr::with0(Mnemonic::StartOptimization),
+        X64MCInstr::with2(Mnemonic::Lea, Operand::Reg(x64Reg::Rax), Operand::Mem(x64Reg::Rcx + x64Reg::Rdx)),
+        X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rcx), Operand::Reg(x64Reg::Rax)),
     ];
 
     auto_max_optimize(&mut instrs);

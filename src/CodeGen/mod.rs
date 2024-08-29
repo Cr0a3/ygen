@@ -9,3 +9,5 @@ pub use reg_vec::*;
 pub use reg::*;
 pub use settings::*;
 pub use instr::*;
+pub use calling_convention::*;
+pub use compilation::*;

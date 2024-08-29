@@ -1,6 +1,6 @@
 use crate::Target::x64Reg;
 
-use super::instr::{Instr, Mnemonic, Operand};
+use super::instr::{X64MCInstr, Mnemonic, Operand};
 
 /// used for optimizing
 pub trait Optimize<T> {
@@ -8,9 +8,9 @@ pub trait Optimize<T> {
     fn optimize(&mut self) -> Self;
 }
 
-impl Optimize<Instr> for Vec<Instr> {
-    fn optimize(&mut self) -> Vec<Instr> {
-        let mut out: Vec<Instr> = vec![];
+impl Optimize<X64MCInstr> for Vec<X64MCInstr> {
+    fn optimize(&mut self) -> Vec<X64MCInstr> {
+        let mut out: Vec<X64MCInstr> = vec![];
 
         let mut optimize = false;
 
@@ -37,7 +37,7 @@ impl Optimize<Instr> for Vec<Instr> {
                                 if let Some(Operand::Reg(reg)) = &instr.op1 {
                                     out.pop();
                                     out.push(
-                                        Instr::with2(
+                                        X64MCInstr::with2(
                                             Mnemonic::Lea, 
                                             Operand::Reg(reg.clone()), 
                                             Operand::Mem(*op0.as_any().downcast_ref::<x64Reg>().unwrap() 
@@ -66,7 +66,7 @@ impl Optimize<Instr> for Vec<Instr> {
                 }
                 if instr.mnemonic == Mnemonic::Ret && last.mnemonic == Mnemonic::Call {
                     out.pop();
-                    out.push(Instr::with1(Mnemonic::Jmp, instr.op1.clone().expect("call needs to have one op")));
+                    out.push(X64MCInstr::with1(Mnemonic::Jmp, instr.op1.clone().expect("call needs to have one op")));
                     optimized = true;
                 } 
                 if instr.mnemonic == Mnemonic::Ret {

@@ -30,4 +30,11 @@ impl RegVec {
             entry.pop()
         } else { None }
     }
+
+    /// reversees the registers of the arch
+    pub fn reverse(&mut self, arch: Arch) {
+        if let Some(entry) = self.regs.get_mut(&arch) {
+            entry.reverse();
+        }
+    }
 }

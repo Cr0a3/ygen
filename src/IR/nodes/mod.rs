@@ -73,7 +73,7 @@ macro_rules! IrTypeWith1 {
     ($name:tt, $param1:tt) => {
         /// An Ir node
         #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-        pub(crate) struct $name<$param1> {
+        pub struct $name<$param1> {
             /// inner value
             pub(crate) inner1: $param1,
         }

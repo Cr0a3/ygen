@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use super::Reg;
+use crate::IR::TypeMetadata;
 
 /// A x64 register
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -69,120 +69,121 @@ impl x64Reg {
             _ => false,
         }
     }
-}
 
-impl Display for x64Reg {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", format!("{:?}", self).to_lowercase())
-    }
-}
-
-impl Reg for x64Reg {
-    fn sub64(&self) -> String {
+    /// The sub 64 bit wide variant of the register
+    pub fn sub64(&self) -> x64Reg {
         use x64Reg::*;
         match self {
-            Rax | Eax | Ax | Al => "rax",
-            Rbx | Ebx | Bx | Bl => "rbx",
-            Rcx | Ecx | Cx | Cl => "rcx",
-            Rdx | Edx | Dx | Dl => "rdx",
-            Rsi | Esi | Si | Sil => "rsi",
-            Rdi | Edi | Di | Dil => "rdi",
+            Rax | Eax | Ax | Al => Rax,
+            Rbx | Ebx | Bx | Bl => Rbx,
+            Rcx | Ecx | Cx | Cl => Rcx,
+            Rdx | Edx | Dx | Dl => Rdx,
+            Rsi | Esi | Si | Sil => Rsi,
+            Rdi | Edi | Di | Dil => Rdi,
 
-            Rsp | Esp | Sp | Spl => "rsp",
-            Rbp | Ebp | Bp | Bpl => "rbp",
+            Rsp | Esp | Sp | Spl => Rsp,
+            Rbp | Ebp | Bp | Bpl => Rbp,
         
-            R8 | R8d | R8w | R8b => "r8",
-            R9 | R9d | R9w | R9b => "r9",
-            R10 | R10d | R10w | R10b => "r10",
-            R11 | R11d | R11w | R11b => "r11",
-            R12 | R12d | R12w | R12b => "r12",
-            R13 | R13d | R13w | R13b => "r13",
-            R14 | R14d | R14w | R14b => "r14",
-            R15 | R15d | R15w | R15b => "r15",
-        }.to_string()
+            R8 | R8d | R8w | R8b => R8,
+            R9 | R9d | R9w | R9b => R9,
+            R10 | R10d | R10w | R10b => R10,
+            R11 | R11d | R11w | R11b => R11,
+            R12 | R12d | R12w | R12b => R12,
+            R13 | R13d | R13w | R13b => R13,
+            R14 | R14d | R14w | R14b => R14,
+            R15 | R15d | R15w | R15b => R15,
+        }
     }
 
-    fn sub32(&self) -> String {
+    /// The sub 32 bit wide variant of the register
+    pub fn sub32(&self) -> x64Reg {
         use x64Reg::*;
         match self {
-            Rax | Eax | Ax | Al => "eax",
-            Rbx | Ebx | Bx | Bl => "ebx",
-            Rcx | Ecx | Cx | Cl => "ecx",
-            Rdx | Edx | Dx | Dl => "edx",
-            Rsi | Esi | Si | Sil => "esi",
-            Rdi | Edi | Di | Dil => "edi",
+            Rax | Eax | Ax | Al => Eax,
+            Rbx | Ebx | Bx | Bl => Ebx,
+            Rcx | Ecx | Cx | Cl => Ecx,
+            Rdx | Edx | Dx | Dl => Edx,
+            Rsi | Esi | Si | Sil => Esi,
+            Rdi | Edi | Di | Dil => Edi,
 
-            Rsp | Esp | Sp | Spl => "esp",
-            Rbp | Ebp | Bp | Bpl => "ebp",
+            Rsp | Esp | Sp | Spl => Esp,
+            Rbp | Ebp | Bp | Bpl => Ebp,
         
-            R8 | R8d | R8w | R8b => "r8d",
-            R9 | R9d | R9w | R9b => "r9d",
-            R10 | R10d | R10w | R10b => "r10d",
-            R11 | R11d | R11w | R11b => "r11d",
-            R12 | R12d | R12w | R12b => "r12d",
-            R13 | R13d | R13w | R13b => "r13d",
-            R14 | R14d | R14w | R14b => "r14d",
-            R15 | R15d | R15w | R15b => "r15d",
-        }.to_string()
+            R8 | R8d | R8w | R8b => R8d,
+            R9 | R9d | R9w | R9b => R9d,
+            R10 | R10d | R10w | R10b => R10d,
+            R11 | R11d | R11w | R11b => R11d,
+            R12 | R12d | R12w | R12b => R12d,
+            R13 | R13d | R13w | R13b => R13d,
+            R14 | R14d | R14w | R14b => R14d,
+            R15 | R15d | R15w | R15b => R15d,
+        }
     }
 
-    fn sub16(&self) -> String {
+    /// The sub 16 bit wide variant of the register
+    pub fn sub16(&self) -> x64Reg {
         use x64Reg::*;
         match self {
-            Rax | Eax | Ax | Al => "ax",
-            Rbx | Ebx | Bx | Bl => "bx",
-            Rcx | Ecx | Cx | Cl => "cx",
-            Rdx | Edx | Dx | Dl => "dx",
-            Rsi | Esi | Si | Sil => "si",
-            Rdi | Edi | Di | Dil => "di",
+            Rax | Eax | Ax | Al => Ax,
+            Rbx | Ebx | Bx | Bl => Bx,
+            Rcx | Ecx | Cx | Cl => Cx,
+            Rdx | Edx | Dx | Dl => Dx,
+            Rsi | Esi | Si | Sil => Si,
+            Rdi | Edi | Di | Dil => Di,
 
-            Rsp | Esp | Sp | Spl => "sp",
-            Rbp | Ebp | Bp | Bpl => "bp",
+            Rsp | Esp | Sp | Spl => Sp,
+            Rbp | Ebp | Bp | Bpl => Bp,
         
-            R8 | R8d | R8w | R8b => "r8w",
-            R9 | R9d | R9w | R9b => "r9w",
-            R10 | R10d | R10w | R10b => "r10w",
-            R11 | R11d | R11w | R11b => "r11w",
-            R12 | R12d | R12w | R12b => "r12w",
-            R13 | R13d | R13w | R13b => "r13w",
-            R14 | R14d | R14w | R14b => "r14w",
-            R15 | R15d | R15w | R15b => "r15w",
-        }.to_string()
+            R8 | R8d | R8w | R8b => R8w,
+            R9 | R9d | R9w | R9b => R9w,
+            R10 | R10d | R10w | R10b => R10w,
+            R11 | R11d | R11w | R11b => R11w,
+            R12 | R12d | R12w | R12b => R12w,
+            R13 | R13d | R13w | R13b => R13w,
+            R14 | R14d | R14w | R14b => R14w,
+            R15 | R15d | R15w | R15b => R15w,
+        }
     }
 
-    fn sub8(&self) -> String {
+    /// The sub8 bit wide variant of the register
+    pub fn sub8(&self) -> x64Reg {
         use x64Reg::*;
         match self {
-            Rax | Eax | Ax | Al => "ax",
-            Rbx | Ebx | Bx | Bl => "bx",
-            Rcx | Ecx | Cx | Cl => "cx",
-            Rdx | Edx | Dx | Dl => "dx",
-            Rsi | Esi | Si | Sil => "sil",
-            Rdi | Edi | Di | Dil => "dil",
+            Rax | Eax | Ax | Al => Ax,
+            Rbx | Ebx | Bx | Bl => Bx,
+            Rcx | Ecx | Cx | Cl => Cx,
+            Rdx | Edx | Dx | Dl => Dx,
+            Rsi | Esi | Si | Sil => Sil,
+            Rdi | Edi | Di | Dil => Dil,
 
-            Rsp | Esp | Sp | Spl => "spl",
-            Rbp | Ebp | Bp | Bpl => "bpl",
+            Rsp | Esp | Sp | Spl => Spl,
+            Rbp | Ebp | Bp | Bpl => Bpl,
         
-            R8 | R8d | R8w | R8b => "r8b",
-            R9 | R9d | R9w | R9b => "r9b",
-            R10 | R10d | R10w | R10b => "r10b",
-            R11 | R11d | R11w | R11b => "r11b",
-            R12 | R12d | R12w | R12b => "r12b",
-            R13 | R13d | R13w | R13b => "r13b",
-            R14 | R14d | R14w | R14b => "r14b",
-            R15 | R15d | R15w | R15b => "r15b",
-        }.to_string()
-    }
-
-    fn boxed(&self) -> Box<dyn Reg> {
-        Box::from(*self)
+            R8 | R8d | R8w | R8b => R8b,
+            R9 | R9d | R9w | R9b => R9b,
+            R10 | R10d | R10w | R10b => R10b,
+            R11 | R11d | R11w | R11b => R11b,
+            R12 | R12d | R12w | R12b => R12b,
+            R13 | R13d | R13w | R13b => R13b,
+            R14 | R14d | R14w | R14b => R14b,
+            R15 | R15d | R15w | R15b => R15b,
+        }
     }
     
-    fn from(&self, string: String) -> Box<dyn Reg> {
-        x64Reg::parse(string).expect("need valid register").boxed()
+    /// gets the subvariant based on the type
+    pub fn sub_ty(&self, ty: TypeMetadata) -> x64Reg {
+        match ty.byteSize() {
+            8 => self.sub64(),
+            4 => self.sub32(),
+            2 => self.sub16(),
+            1 => self.sub8(),
+            
+            _ => todo!("the type is to big for a single register"),
+        }
     }
-    
-    fn is_gr64(&self) -> bool {
+
+    /// Is the register (or better the subvariant) 64 bit wide?
+    pub fn is_gr64(&self) -> bool {
         use x64Reg::*;
         match self {
             Rax | Rbx | Rcx | Rdx | Rsi | Rdi |
@@ -193,7 +194,8 @@ impl Reg for x64Reg {
         }
     }
     
-    fn is_gr32(&self) -> bool {
+    /// Is the register (or better the subvariant) 32 bit wide?
+    pub fn is_gr32(&self) -> bool {
         use x64Reg::*;
         match self {
             Eax | Ebx | Ecx | Edx | Esi | Edi |
@@ -204,7 +206,8 @@ impl Reg for x64Reg {
         }
     }
     
-    fn is_gr16(&self) -> bool {
+    /// Is the register (or better the subvariant) 16 bit wide?
+    pub fn is_gr16(&self) -> bool {
         use x64Reg::*;
         match self {
             Ax | Bx | Cx | Dx | Si | Di |
@@ -215,7 +218,8 @@ impl Reg for x64Reg {
         }
     }
     
-    fn is_gr8(&self) -> bool {
+    /// Is the register (or better the subvariant) 8 bit wide?
+    pub fn is_gr8(&self) -> bool {
         use x64Reg::*;
         match self {
             Al | Bl | Cl | Dl | Sil | Dil |
@@ -226,7 +230,8 @@ impl Reg for x64Reg {
         }
     }
 
-    fn enc(&self) -> u8 {
+    #[doc(hidden)]
+    pub fn enc(&self) -> u8 {
         match self {
             x64Reg::Rax | x64Reg::Eax | x64Reg::Ax | x64Reg::Al => 0,
             x64Reg::Rcx | x64Reg::Ecx | x64Reg::Cx | x64Reg::Cl => 1,
@@ -249,7 +254,14 @@ impl Reg for x64Reg {
         }
     }
     
-    fn as_any(&self) -> &dyn std::any::Any {
+    #[doc(hidden)]
+    pub fn as_any(&self) -> &dyn std::any::Any {
         self
+    }
+}
+
+impl Display for x64Reg {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", format!("{:?}", self).to_lowercase())
     }
 }

@@ -5,7 +5,7 @@ use std::collections::VecDeque;
 mod compilation;
 //use compilation::*;
 
-use super::{CallConv, Lexer, Reg, TargetBackendDescr};
+use super::{CallConv, Lexer, TargetBackendDescr};
 mod reg;
 use compilation::construct_compilation_helper;
 pub use reg::*;

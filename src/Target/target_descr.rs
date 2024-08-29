@@ -4,9 +4,7 @@ use crate::CodeGen::{compilation::CompilationHelper, MachineInstr};
 use crate::IR::{Const, Function, Type, TypeMetadata};
 
 use super::Triple;
-use super::{CallConv, Compiler, instr::Instr, Lexer};
-
-pub(crate) type CompileFunc<T> = fn(&T, &mut TargetBackendDescr) -> Vec<Instr>;
+use super::{CallConv, Compiler, Lexer};
 
 /// The TargetBackendDescr is used to store all the functions/information to compile ir nodes into assembly
 #[allow(unused)]
@@ -67,20 +65,31 @@ impl TargetBackendDescr {
         self.compile.clone().unwrap()
     }
 
+    /// builds all ir nodes of the current block into a vector of MachineInstr
     pub fn build_instrs(&mut self, func: &Function, triple: &Triple) -> Vec<MachineInstr> {
+        let helper = if let Some(helper) = &mut self.helper { helper }
+        else { panic!("no current compilation helper"); };
+
+        if helper.arch != triple.arch {
+            panic!("the architecture of the triple {:?} isn't the same as the one of the compilation helper {:?}", triple.arch, helper.arch)
+        }
+
         let block = if let Some(block) = &self.block {
             block.clone()
         } else {
-            todo!("no current block");
+            panic!("no current block");
         };
 
+        helper.build_argument_preprocessing(func);
+
         for node in block.nodes {
-            node.compile(&mut self);
+            node.compile(self);
         }
 
         self.sink.clone()
     }
 
+    /// Used for lowering machine instructions into dyn MCInstr
     pub fn lower(&self, instrs: Vec<MachineInstr>) -> Vec<Box<dyn MCInstr>> {
         if let Some(helper) = &self.helper {
             if let Some(lower) = helper.lower {
