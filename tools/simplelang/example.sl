@@ -13,13 +13,13 @@ HOW TO RUN:
 
 */
 
-import with (fmt: string, ...) printf // printf from libc
+import func printf (fmt: string, ...) // printf from libc
 
-with (a: u32, b: u32) add: {
+func add (a: u32, b: u32) -> u32 {
     return a + b;
 }
 
-extern with () main: {
+extern func main () -> void {
     var x: string = "Hello World!\n";
 
     printf(x);
@@ -29,10 +29,8 @@ extern with () main: {
     var expected: u32 = a + b; 
 
     printf("add(%d, %d) = %d # expected: %d\n", a, b, add(a, b), expected);
-
-    return 0;
 }
 
-extern with() aaa: {
+extern func aaa () -> i32 {
     return 5;
 }

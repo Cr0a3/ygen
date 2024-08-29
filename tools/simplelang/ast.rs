@@ -34,6 +34,8 @@ pub struct FnStmt {
 
     pub args: Vec<Expr>,
 
+    pub ret: TypeMetadata,
+
     pub extrn: bool,
     pub import: bool,
     pub dynamic_args: bool,

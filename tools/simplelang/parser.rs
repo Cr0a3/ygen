@@ -38,7 +38,7 @@ impl Parser {
     fn parse_stmt(&mut self) -> Option<Statement> {
         match self.tokens.front()? {
             Token::Ident(_) => self.parse_ident(),
-            Token::With | Token::Extern | Token::Import => self.parse_func(),
+            Token::Func | Token::Extern | Token::Import => self.parse_func(),
             Token::Return => self.parse_return(),
             Token::Var => Some(Statement::Expr(self.parse_assign()?)),
             any => {
@@ -61,11 +61,28 @@ impl Parser {
             true
         } else { false};
 
-        if let Some(Token::With) = self.tokens.front() {} else { return None; }
+        if !expect!(self.tokens.front(), Some(&Token::Func), |tok| {
+            err!(self.error, "expected 'func' found: {:?}", tok);
+        }) {
+            return None;
+        }
 
-        self.tokens.pop_front(); // advance over with
+        self.tokens.pop_front(); // advance over func
 
-        if let Some(Token::LParam) = self.tokens.front() {} else { return None; }
+        let name;
+        if let Some(Token::Ident(ident)) = self.tokens.front() {
+            name = ident.to_string();
+            self.tokens.pop_front();
+        } else { 
+            err!(self.error, "expected identifer as the function name found {:?}", self.tokens.front());
+            return None; 
+        }    
+
+        if !expect!(self.tokens.front(), Some(&Token::LParam), |tok| {
+            err!(self.error, "expected '(' found: {:?}", tok);
+        }) {
+            return None;
+        }
 
         self.tokens.pop_front();
 
@@ -94,16 +111,42 @@ impl Parser {
         }
 
         self.tokens.pop_front(); // the )
-
-        let name;
-        if let Some(Token::Ident(ident)) = self.tokens.front() {
-            name = ident.to_string();
-            self.tokens.pop_front();
-        } else { 
-            err!(self.error, "expected identifer as the function name found {:?}", self.tokens.front());
-            return None; 
-        }    
         
+        let mut ret = TypeMetadata::Void;        
+
+        if let Some(Token::RightArrow) = self.tokens.front() {
+            self.tokens.pop_front();  
+
+            let tystring;
+
+            if expect!(self.tokens.front(), Some(&Token::Ident(_)), |tok| {
+                err!(self.error, "expected an identifier as the type found: {:?}", tok);
+            }) {
+                if let Some(Token::Ident(ty)) = self.tokens.front() {
+                    tystring = ty.to_string();
+                    self.tokens.pop_front();
+                } else { unreachable!() }
+            } else {
+                return None;
+            }
+
+            ret = match tystring.as_str() {
+                "u16" => Some(TypeMetadata::u16),
+                "u32" => Some(TypeMetadata::u32),
+                "u64" => Some(TypeMetadata::u64),
+                "i16" => Some(TypeMetadata::i16),
+                "i32" => Some(TypeMetadata::i32),
+                "i64" => Some(TypeMetadata::i64),
+                "string" => Some(TypeMetadata::ptr),
+                "void" => Some(TypeMetadata::Void),
+                any => {
+                    err!(self.error, "unknown type: {}", any);
+                    None?
+                },
+            }?; 
+        }
+
+
         if import {
             return Some(Statement::Fn(FnStmt {
                 name: name,
@@ -112,16 +155,9 @@ impl Parser {
                 extrn: false,
                 import: import,
                 dynamic_args: dynamic_args,
+                ret: ret,
             }))
         }
-
-        if !expect!(self.tokens.front(), Some(&Token::DoubleDot), |tok| {
-            err!(self.error, "expected ':' found: {:?}", tok);
-        }) {
-            return None;
-        }
-
-        self.tokens.pop_front();  
 
         if !expect!(self.tokens.front(), Some(&Token::LCurly), |tok| {
             err!(self.error, "expected '{{' found: {:?}", tok);
@@ -150,6 +186,7 @@ impl Parser {
             extrn: extrn,
             dynamic_args: dynamic_args,
             import: false, // we handled imported functions earlier
+            ret: ret,
         }))
 
     }

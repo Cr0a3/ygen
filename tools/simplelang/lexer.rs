@@ -51,8 +51,8 @@ pub enum Token {
 	})]
     Number(i64),
 
-    #[token("with")]
-    With,
+    #[token("func")]
+    Func,
 
     #[token("(")]
     LParam,
@@ -116,7 +116,10 @@ pub enum Token {
 
     #[token("return")]
     Return,
-    
+
+    #[token("->")]
+    RightArrow,
+
     #[regex(r"//[^\n]*", logos::skip)]
     Comment,
 

@@ -85,8 +85,8 @@ impl Semnatic {
             self.analyze_stmt(stmt, &mut vars);
         }
 
-        if !(returned) {
-            err!(self.error, "function {:?} needs to return {:?} but found nothing", func.name, "to be implemented");//func.ret);
+        if !(returned) && func.ret != TypeMetadata::Void {
+            err!(self.error, "function {:?} needs to return {:?} but found nothing", func.name, func.ret);
         }
         
     }

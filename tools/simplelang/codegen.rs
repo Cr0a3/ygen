@@ -44,7 +44,7 @@ impl CodeGenerator {
 
         let mut index = 0;
 
-        let ret = TypeMetadata::i32;//todo!();
+        let ret = func.ret;
 
         let mut func_ty = FnTy(vec![], ret);
 
@@ -87,6 +87,8 @@ impl CodeGenerator {
         for stmt in &func.body {
             self.gen_stmt(stmt, &mut builder, &mut vars);
         }
+
+        builder.BuildRet(Type::Void); // will automaticlly be removed but i added it here so that functions which don't return and are allowed to do that have an return instruction
 
         self.functions.insert(func.name.to_string(), fun);
     }
