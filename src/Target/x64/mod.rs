@@ -2,9 +2,8 @@
 
 use std::collections::VecDeque;
 
-pub(crate) mod compilation;
-
-use compilation::*;
+//pub(crate) mod compilation;
+//use compilation::*;
 
 use super::{CallConv, Lexer, Reg, TargetBackendDescr};
 mod reg;
@@ -22,7 +21,7 @@ pub fn initializeX64Target<'a>(call_conv: CallConv) -> TargetBackendDescr<'a> {
     let mut target = TargetBackendDescr::new();
 
     target.init = Some(initializeX64Target);
-    target.buildAsm = Some(buildAsmX86);
+    target.buildAsm = None;//Some(todo!());
 
     target.lexer = Some(x64Lexer {}.boxed());
     target.compile = Some(x64Parser { tokens: VecDeque::new(), out: None }.boxed());
@@ -78,34 +77,7 @@ pub fn initializeX64Target<'a>(call_conv: CallConv) -> TargetBackendDescr<'a> {
         CallConv::WasmBasicCAbi => todo!(),
     }
 
-    target.setCompileFuncForRetType(CompileRetType);
-    target.setCompileFuncForRetVar(CompileRetVar);
-    target.setCompileFuncForConstAssign(CompileConstAssign);
-    target.setCompileFuncForConstAssignVar(CompileConstAssignVar);
-    target.setCompileFuncForConstAssignConst(CompileConstAssignConst);
-    target.setCompileFuncForCastTyVar(CompileCast);
-
-    target.setCompileFuncForAddVarVar(CompileAddVarVar);
-    target.setCompileFuncForAddVarType(CompileAddVarTy);
-    target.setCompileFuncForAddTypeType(CompileAddTyTy);
-
-    target.setCompileFuncForSubVarVar(CompileSubVarVar);
-    target.setCompileFuncForSubVarType(CompileSubVarTy);
-    target.setCompileFuncForSubTypeType(CompileSubTyTy);
-
-    target.setCompileFuncForXorVarVar(CompileXorVarVar);
-    target.setCompileFuncForXorVarType(CompileXorVarTy);
-    target.setCompileFuncForXorTypeType(CompileXorTyTy);
-
-    target.setCompileFuncForAndVarVar(CompileAndVarVar);
-    target.setCompileFuncForAndVarType(CompileAndVarTy);
-    target.setCompileFuncForAndTypeType(CompileAndTyTy);
-
-    target.setCompileFuncForOrVarVar(CompileOrVarVar);
-    target.setCompileFuncForOrVarType(CompileOrVarTy);
-    target.setCompileFuncForOrTypeType(CompileOrTyTy);
-
-    target.setCompileFuncForCall(CompileCall);
+    //todo!();
 
     target
 }
