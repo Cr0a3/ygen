@@ -44,7 +44,9 @@ impl CompilationHelper {
     /// allocates resources for a new variable
     pub(crate) fn alloc(&mut self, var: &Var) -> VarLocation {
         let location = if let Some(reg) = self.regs.pop(self.arch) {
-            VarLocation::Reg(reg)
+            VarLocation::Reg(match reg {
+                Reg::x64(x64) => Reg::x64(x64.sub_ty(var.ty)),
+            })
         } else {
             todo!("Registers ran out. And memory variables are currently not implemented")
         };
@@ -62,7 +64,9 @@ impl CompilationHelper {
 
             let location = {
                 if let Some(reg) = self.call.args(self.arch).get(*num) {
-                    VarLocation::Reg(*reg)
+                    VarLocation::Reg(match reg {
+                        Reg::x64(x64) => Reg::x64(x64.sub_ty(*ty)),
+                    })
                 } else {
                     todo!("The new system currently doesn't support memory")
                 }

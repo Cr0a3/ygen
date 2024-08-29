@@ -68,13 +68,10 @@ impl TypeMetadata {
     /// Returns the size of the type in bits
     pub fn bitSize(&self) -> usize {
         match self {
-            TypeMetadata::u16 => 2,
-            TypeMetadata::u32 => 4,
-            TypeMetadata::u64 => 8,
-            TypeMetadata::i16 => 2,
-            TypeMetadata::i32 => 4,
-            TypeMetadata::i64 => 8,
-            TypeMetadata::ptr => 8,
+            TypeMetadata::u16 | TypeMetadata::i16 => 16,
+            TypeMetadata::u32 | TypeMetadata::i32 => 32,
+            TypeMetadata::u64 | TypeMetadata::i64 => 64,
+            TypeMetadata::ptr => 64,
             TypeMetadata::Void => 0,
         }
     }

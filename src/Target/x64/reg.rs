@@ -149,10 +149,10 @@ impl x64Reg {
     pub fn sub8(&self) -> x64Reg {
         use x64Reg::*;
         match self {
-            Rax | Eax | Ax | Al => Ax,
-            Rbx | Ebx | Bx | Bl => Bx,
-            Rcx | Ecx | Cx | Cl => Cx,
-            Rdx | Edx | Dx | Dl => Dx,
+            Rax | Eax | Ax | Al => Al,
+            Rbx | Ebx | Bx | Bl => Bl,
+            Rcx | Ecx | Cx | Cl => Cl,
+            Rdx | Edx | Dx | Dl => Dl,
             Rsi | Esi | Si | Sil => Sil,
             Rdi | Edi | Di | Dil => Dil,
 
@@ -178,7 +178,7 @@ impl x64Reg {
             2 => self.sub16(),
             1  | 0 => self.sub8(),
 
-            _ => todo!("the type {} is to big for a single register", ty),
+            _ => todo!("the type {} is to big/small for a single register", ty),
         }
     }
 
