@@ -63,6 +63,9 @@ pub mod Support;
 /// Writing/Reading object files
 pub mod Obj;
 
+/// Shared code generation classes (mainly used for register based architectures like x86_64, aarch64, ...)
+pub mod CodeGen;
+
 /// Most common used functions, classes, enums of this Libary
 pub mod prelude {
     pub use crate::IR::*;
