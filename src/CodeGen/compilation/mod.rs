@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{Target::Arch, IR::{Block, Var}};
+use crate::{Target::Arch, IR::Var};
 
 use super::{reg::Reg, reg_vec::RegVec};
 
