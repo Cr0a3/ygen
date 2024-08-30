@@ -22,7 +22,7 @@ jobs:
       run: rustup update --no-self-update stable
 
     - name: Build Documentation
-      run: | 
+      run: |
         cargo doc --all --no-deps
       
     - name: Doc Index Page Redirection

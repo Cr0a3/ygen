@@ -21,6 +21,9 @@ description = "Another code generation libary like LLVM"
 categories = ["development-tools::ffi"]
 keywords = ["compiler", "codegen", "llvm"]
 
+[package.metadata.docs.rs]
+rustdoc-args = ["--allow", "warnings"]
+
 [dependencies]
 logos = "0.14.0"
 object = { version = "0.36.1", features = ["write"] }
