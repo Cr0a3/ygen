@@ -17,7 +17,7 @@
 //! > **-as=<val>, --assemble-string=<val>** The assembly instruction to assemble <br>
 //! > **-triple=<val>, --triple=<val>**      The target triple <br>
 
-use std::error::Error;
+use std::{error::Error, process::exit};
 
 use ygen::{self, Support::{ColorProfile, Colorize}, Target::{initializeAllTargets, Triple}};
 
@@ -62,7 +62,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     let mut comp = backend.compiler().new(lexed);
-    comp.parse()?;
+    match comp.parse() {
+        Ok(_) => {},
+        Err(err) => {
+            eprintln!("{}: {}", "Error".red().bold(), err); 
+            exit(-1);
+        },
+    };
 
     if !cli.opt("no-color") {
         println!("{}: {}", "Asm string".gray(), comp.coloredOut(ColorProfile::default()));
@@ -70,11 +76,21 @@ fn main() -> Result<(), Box<dyn Error>> {
         println!("Asm string: {}", comp.printOut());
     }
 
+    let out = comp.out();
+
+    let out = match out {
+        Ok(out) => out,
+        Err(err) => {
+            eprintln!("{}: {}", "Error".red().bold(), err); 
+            exit(-1);
+        },
+    };
+
     if !cli.opt("no-color") {
         println!("{}: {}", "Compilation result".gray(), {
             let mut fmt = String::from("0x");
     
-            for byte in comp.out()? {
+            for byte in out {
                 fmt += &format!("{:#04X}", byte).replace("0x", "");
             }
     
@@ -84,7 +100,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         println!("Compilation result: 0x{}", {
             let mut fmt = String::new();
 
-            for byte in comp.out()? {
+            for byte in out {
                 fmt += &format!("{:#04X}", byte).replace("0x", "");
             }
 

@@ -2,6 +2,7 @@ use std::error::Error;
 use std::fmt::{Debug, Display};
 use std::any::Any;
 use crate::Obj::Link;
+use crate::IR::TypeMetadata;
 
 use super::reg::Reg;
 
@@ -11,6 +12,7 @@ pub struct MachineInstr {
     pub(crate) operands: Vec<MachineOperand>,
     pub(crate) out: Option<MachineOperand>,
     pub(crate) mnemonic: MachineMnemonic,
+    pub(crate) meta: TypeMetadata,
 }
 
 impl MachineInstr {
@@ -20,6 +22,7 @@ impl MachineInstr {
             mnemonic: mne,
             operands: vec![],
             out: None,
+            meta: TypeMetadata::Void,
         }
     }
 
@@ -98,22 +101,33 @@ pub enum MachineMnemonic {
     AdressLoad(String),
 }
 
+impl MachineMnemonic {
+    /// Returns the name of the mnemonic
+    pub fn name(&self) -> String {
+        match self {
+            MachineMnemonic::Move => "move",
+            MachineMnemonic::Add => "add",
+            MachineMnemonic::And => "and",
+            MachineMnemonic::Div => "div",
+            MachineMnemonic::Mul => "mul",
+            MachineMnemonic::Or => "or",
+            MachineMnemonic::Sub => "sub",
+            MachineMnemonic::Xor => "xor",
+            MachineMnemonic::Zext => "zext",
+            MachineMnemonic::Downcast => "dwcast",
+            MachineMnemonic::Call(_) => "call",
+            MachineMnemonic::Return => "return",
+            MachineMnemonic::AdressLoad(_) => "adrload",
+        }.to_string()
+    }
+}
+
 impl Display for MachineMnemonic {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", match self {
-            MachineMnemonic::Move =>            "move".to_string(),
-            MachineMnemonic::Add =>             "add".to_string(),
-            MachineMnemonic::And =>             "and".to_string(),
-            MachineMnemonic::Div =>             "div".to_string(),
-            MachineMnemonic::Mul =>             "mul".to_string(),
-            MachineMnemonic::Or =>              "or".to_string(),
-            MachineMnemonic::Sub =>             "sub".to_string(),
-            MachineMnemonic::Xor =>             "xor".to_string(),
-            MachineMnemonic::Zext =>            "zext".to_string(),
-            MachineMnemonic::Downcast =>        "dwcast".to_string(),
-            MachineMnemonic::Call(target) =>    format!("call {}", target),
-            MachineMnemonic::Return =>          "return".to_string(),
-            MachineMnemonic::AdressLoad(adr) => format!("load {}", adr),
+            MachineMnemonic::Call(target) => format!("{} {}", self.name(), target),
+            MachineMnemonic::AdressLoad(adr) => format!("{} {}", self.name(), adr),
+            _ => self.name()
         })
     }
 }

@@ -38,6 +38,8 @@ macro_rules! MathVarVar {
                 match out {
                     VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
                 }
+                
+                instr.meta = node.inner3.ty;
         
                 mc_sink.push(instr);
             }
@@ -84,6 +86,9 @@ macro_rules! MathVarType {
                 match out {
                     VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
                 }
+
+                
+                instr.meta = node.inner3.ty;
         
                 mc_sink.push(instr);
             }
@@ -124,6 +129,8 @@ macro_rules! MathTypeType {
                     VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
                 }
         
+                instr.meta = node.inner3.ty;
+
                 mc_sink.push(instr);
             }
         }

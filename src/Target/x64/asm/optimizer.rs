@@ -6,7 +6,7 @@ impl Optimize<X64MCInstr> for Vec<X64MCInstr> {
     fn optimize(&mut self) -> Vec<X64MCInstr> {
         let mut out: Vec<X64MCInstr> = vec![];
 
-        let mut optimize = false;
+        let mut optimize = true;
 
         for instr in self.iter() {
             let mut optimized = false;
@@ -65,16 +65,21 @@ impl Optimize<X64MCInstr> for Vec<X64MCInstr> {
                 } 
                 if instr.mnemonic == Mnemonic::Ret {
                     out.push(instr.clone());
+                    break;
                 }
 
                 if !optimized {
                     if instr.invert_of(last) {
                         out.pop();
-                    } else {
+                    } else if !instr.empty() {
                         out.push(instr.to_owned()) 
                     }
                 }
-            } else { out.push(instr.to_owned()) }
+            } else { 
+                if !instr.empty() {
+                    out.push(instr.to_owned()) 
+                }
+            }
         }
 
         out

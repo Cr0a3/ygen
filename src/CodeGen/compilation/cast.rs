@@ -41,6 +41,8 @@ impl CompilationHelper {
             VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
         }
 
+        instr.meta = node.inner3.ty;
+
         mc_sink.push(instr);
     }
 }

@@ -22,6 +22,8 @@ impl CompilationHelper {
 
         instr.add_operand(MachineOperand::Imm(node.inner2.val() as i64));
 
+        instr.meta = node.inner1.ty;
+
         mc_sink.push( instr );
         
     }
@@ -50,6 +52,8 @@ impl CompilationHelper {
         match src1 {
             VarLocation::Reg(reg) => instr.add_operand(MachineOperand::Reg(reg)),
         }
+        
+        instr.meta = node.inner1.ty;
 
         mc_sink.push( instr );
     }
@@ -71,6 +75,9 @@ impl CompilationHelper {
         match location {
             VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
         }
+
+        
+        instr.meta = node.inner1.ty; // is a pointer but i just wrote it here
 
         mc_sink.push( instr );
     }

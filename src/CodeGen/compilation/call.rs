@@ -50,6 +50,8 @@ impl CompilationHelper {
                 )
             );
 
+            instr.meta = node.inner1.ty.ret;
+
             match loc {
                 VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
             }

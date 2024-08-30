@@ -318,6 +318,42 @@ impl X64MCInstr {
                 }
             }
             Mnemonic::Debug | Mnemonic::StartOptimization | Mnemonic::EndOptimization => (vec![], None),
+            Mnemonic::Imul | Mnemonic::Mul => {
+                let i = match self.mnemonic {
+                    Mnemonic::Imul => 5,
+                    Mnemonic::Mul => 4,
+                    _ => unreachable!(),
+                };
+
+                let mut r = 0xF7;
+
+                let mut mandatory = None;
+
+                let mut rex = RexPrefix::none();
+
+                let mut op = vec![];
+
+                if let Some(Operand::Reg(reg)) = self.op1 {
+                    if reg.is_gr8() {
+                        r -= 1;
+                    }
+
+                    if reg.is_gr16() {
+                        mandatory = Some(MandatoryPrefix::t16BitOps);
+                    }
+
+                    if reg.is_gr64() || reg.extended() {
+                        rex.w = reg.is_gr64();
+                        rex.r = reg.is_gr8();
+                    }
+
+                    op.push(r);
+
+                    op.extend_from_slice(&ModRm::regWimm(i, reg));
+                } else { todo!() }
+
+                (buildOpcode(mandatory, rex.option(), op), None)
+            }
         })
     }
 
@@ -393,7 +429,7 @@ impl X64MCInstr {
 
                 if let Some(Operand::Imm(_)) = self.op1 {} else {
                     if let Some(Operand::Mem(_)) = self.op1 {} else {
-                        Err(InstrEncodingError::InvalidVariant(self.clone(), "call/jmp can only have num/mem operand".into()))?
+                        Err(InstrEncodingError::InvalidVariant(self.clone(), "call/jmp can needs to have num/mem operand".into()))?
                     }
                 }
             }
@@ -401,6 +437,17 @@ impl X64MCInstr {
             Mnemonic::Endbr64 => {
                 if self.op1.is_some() || self.op2.is_some() {
                     Err(InstrEncodingError::InvalidVariant(self.clone(), "endbr64 can't have operands".to_string()))?
+                }
+            }
+            Mnemonic::Mul | Mnemonic::Imul => {
+                if !(self.op1 != None && self.op2 == None) {
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "mul/imul need on operand of type register".into()))?
+                }
+
+                if let Some(Operand::Reg(_)) = self.op1 {} else {
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), 
+                        "mul/imul need one operand of type registry".into()
+                    ))?
                 }
             }
         };
@@ -495,6 +542,15 @@ impl X64MCInstr {
             _ => false,
         }
     }
+
+    /// returns if the instruction is empty like mov rsi, rsi
+    pub fn empty(&self) -> bool {
+        if self.op1 == self.op2 && self.mnemonic == Mnemonic::Mov {
+            true
+        } else {
+            false
+        }
+    }
 }
 
 impl From<X64MCInstr> for Box<dyn MCInstr> {
@@ -564,6 +620,9 @@ pub enum Mnemonic {
     Pop,
     Ret,
 
+    Imul,
+    Mul,
+
     Call,
     Jmp,
 
@@ -599,6 +658,8 @@ impl FromStr for Mnemonic {
             "call" => Ok(Mnemonic::Call),
             "jmp" => Ok(Mnemonic::Jmp),
             "endbr64" => Ok(Mnemonic::Endbr64),
+            "imul" => Ok(Mnemonic::Imul),
+            "mul" => Ok(Mnemonic::Mul),
             _ => Err(()),
         }
     }
@@ -622,6 +683,8 @@ impl Display for Mnemonic {
             Mnemonic::Call => "call",
             Mnemonic::Jmp => "jmp",
             Mnemonic::Endbr64 => "endbr64",
+            Mnemonic::Mul => "mul",
+            Mnemonic::Imul => "imul",
             Mnemonic::Link => "",
             Mnemonic::StartOptimization => "",
             Mnemonic::EndOptimization => "",

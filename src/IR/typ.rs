@@ -84,6 +84,17 @@ impl TypeMetadata {
             0
         }
     }
+
+    /// Returns if it is a signed type
+    pub fn signed(&self) -> bool {
+        match self {
+            TypeMetadata::i16 => true,
+            TypeMetadata::i32 => true,
+            TypeMetadata::i64 => true,
+
+            _ => false,
+        }
+    }
 }
 
 impl Display for Type {

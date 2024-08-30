@@ -5,7 +5,7 @@ use crate::CodeGen::{MachineInstr, MachineMnemonic};
 /// Stores allowed instructions
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WhiteList {
-    instrs: HashMap<MachineMnemonic, AllowmentOption>,
+    instrs: HashMap<String, AllowmentOption>,
 }
 
 impl WhiteList {
@@ -18,25 +18,25 @@ impl WhiteList {
 
     /// Allowes a specifc mnemonic
     pub fn allow(&mut self, mnemonic: MachineMnemonic) {
-        if let Some(option) = self.instrs.get_mut(&mnemonic) {
+        if let Some(option) = self.instrs.get_mut(&mnemonic.name()) {
             *option = AllowmentOption::Allowed;
         } else {
-            self.instrs.insert(mnemonic, AllowmentOption::Allowed);
+            self.instrs.insert(mnemonic.name(), AllowmentOption::Allowed);
         }
     }
 
     /// Forbids a specfic mnemonic
     pub fn forbid(&mut self, mnemonic: MachineMnemonic) {
-        if let Some(option) = self.instrs.get_mut(&mnemonic) {
+        if let Some(option) = self.instrs.get_mut(&mnemonic.name()) {
             *option = AllowmentOption::NotAllowed;
         } else {
-            self.instrs.insert(mnemonic, AllowmentOption::NotAllowed);
+            self.instrs.insert(mnemonic.name(), AllowmentOption::NotAllowed);
         }
     }
 
     /// Checks if the mnemonic is allowed
     pub fn is_allowed(&self, mnemonic: MachineMnemonic) -> AllowmentOption {
-        if let Some(option) = self.instrs.get(&mnemonic) {
+        if let Some(option) = self.instrs.get(&mnemonic.name()) {
             *option
         } else {
             AllowmentOption::Unknown
