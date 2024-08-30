@@ -1,6 +1,6 @@
 use std::{fmt::Display, ops::{Add, Sub}, str::FromStr};
 
-use crate::{Obj::Link, Support::{ColorClass, ColorProfile}, Target::{isa::{buildOpcode, MandatoryPrefix, RexPrefix}, x64Reg}};
+use crate::{CodeGen::MCInstr, Obj::Link, Support::{ColorClass, ColorProfile}, Target::{isa::{buildOpcode, MandatoryPrefix, RexPrefix}, x64Reg}};
 
 use super::isa::ModRm;
 
@@ -494,6 +494,22 @@ impl X64MCInstr {
             
             _ => false,
         }
+    }
+}
+
+impl From<X64MCInstr> for Box<dyn MCInstr> {
+    fn from(value: X64MCInstr) -> Self {
+        Box::new( value )
+    }
+}
+
+impl MCInstr for X64MCInstr {
+    fn dump(&self) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+        Ok(vec![format!("{}", self)])
+    }
+
+    fn encode(&self) -> Result<(Vec<u8>, Option<Link>), Box<dyn std::error::Error>> {
+        Ok(self.encode()?)
     }
 }
 

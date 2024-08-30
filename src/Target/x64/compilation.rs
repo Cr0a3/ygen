@@ -25,5 +25,7 @@ pub(crate) fn construct_compilation_helper(call_conv: CallConv) -> CompilationHe
 
     helper.regs.reverse(Arch::X86_64);
 
+    helper.lower = Some(super::lower::x64_lower);
+
     helper
 }

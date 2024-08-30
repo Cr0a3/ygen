@@ -12,6 +12,7 @@ pub use reg::*;
 
 pub(crate) mod call;
 mod asm;
+mod lower;
 
 pub use asm::*;
 

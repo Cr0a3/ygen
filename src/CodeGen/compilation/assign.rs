@@ -17,7 +17,7 @@ impl CompilationHelper {
         let mut instr = MachineInstr::new(MachineMnemonic::Move);
 
         match location {
-            VarLocation::Reg(reg) => instr.add_operand(MachineOperand::Reg(reg)),
+            VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
         }
 
         instr.add_operand(MachineOperand::Imm(node.inner2.val() as i64));
