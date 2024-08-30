@@ -1,7 +1,7 @@
 use crate::Target::{x64Reg, Arch};
 
 /// A shared enum for registers
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Reg {
     /// a register of the x64 platform
     x64(x64Reg),

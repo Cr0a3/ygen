@@ -1,12 +1,6 @@
-use crate::Target::x64Reg;
+use crate::{Optimizations::Optimize, Target::x64Reg};
 
 use super::instr::{X64MCInstr, Mnemonic, Operand};
-
-/// used for optimizing
-pub trait Optimize<T> {
-    /// optimizes self
-    fn optimize(&mut self) -> Self;
-}
 
 impl Optimize<X64MCInstr> for Vec<X64MCInstr> {
     fn optimize(&mut self) -> Vec<X64MCInstr> {

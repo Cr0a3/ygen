@@ -5,8 +5,11 @@ pub mod Passes;
 
 pub use mngr::PassManager;
 pub use template::Pass;
-
-use crate::Target::Optimize;
+/// used for optimizing
+pub trait Optimize<T> {
+    /// optimizes self
+    fn optimize(&mut self) -> Self;
+}
 
 /// Automaticlly optimizes the input till it doesn't change
 pub fn auto_max_optimize<T, U>(target: &mut T) where T: Optimize<U> + PartialEq + Clone {

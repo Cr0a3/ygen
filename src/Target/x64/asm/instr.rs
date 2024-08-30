@@ -1,6 +1,6 @@
 use std::{fmt::Display, ops::{Add, Sub}, str::FromStr};
 
-use crate::{CodeGen::MCInstr, Obj::Link, Support::{ColorClass, ColorProfile}, Target::{isa::{buildOpcode, MandatoryPrefix, RexPrefix}, x64Reg}};
+use crate::{CodeGen::MCInstr, Obj::Link, Support::{ColorClass, ColorProfile}, Target::{x64::isa::{buildOpcode, MandatoryPrefix, RexPrefix}, x64Reg}};
 
 use super::isa::ModRm;
 

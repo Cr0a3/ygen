@@ -1,4 +1,4 @@
-use ygen::{Optimizations::auto_max_optimize, Target::{instr::*, x64Reg}};
+use ygen::{Optimizations::auto_max_optimize, Target::{x64::instr::*, x64Reg}};
 
 #[test]
 pub fn test_mov() {

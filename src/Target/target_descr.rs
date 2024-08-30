@@ -1,9 +1,11 @@
+use std::error::Error;
+
 use crate::prelude::{ir::*, Block, Var};
 use crate::CodeGen::MCInstr;
 use crate::CodeGen::{compilation::CompilationHelper, MachineInstr};
 use crate::IR::{Const, Function, Type, TypeMetadata};
 
-use super::Triple;
+use super::{Triple, WhiteList};
 use super::{CallConv, Compiler, Lexer};
 
 /// The TargetBackendDescr is used to store all the functions/information to compile ir nodes into assembly
@@ -20,6 +22,8 @@ pub struct TargetBackendDescr {
     pub(crate) call: CallConv,
 
     pub(crate) sink: Vec<MachineInstr>,
+
+    pub(crate) whitelist: WhiteList,
 }
 
 macro_rules! compile_func {
@@ -52,6 +56,7 @@ impl TargetBackendDescr {
             block: None,
             call: CallConv::SystemV,
             helper: None,
+            whitelist: WhiteList::new(),
             sink: vec![],
         }
     }
@@ -94,10 +99,12 @@ impl TargetBackendDescr {
     }
 
     /// Used for lowering machine instructions into dyn MCInstr
-    pub fn lower(&self, instrs: Vec<MachineInstr>) -> Vec<Box<dyn MCInstr>> {
+    pub fn lower(&self, instrs: Vec<MachineInstr>) -> Result<Vec<Box<dyn MCInstr>>, Box<dyn Error>> {
         if let Some(helper) = &self.helper {
+            self.whitelist.check_for_forbidden_mnemonics(&instrs)?;
+
             if let Some(lower) = helper.lower {
-                lower(instrs)
+                Ok(lower(instrs))
             } else {
                 todo!("the target architecture {:?} doesn't support instruction lowering", helper.arch)
             }

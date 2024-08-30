@@ -8,4 +8,4 @@ mod optimizer;
 
 pub use lexer::*;
 pub use parser::*;
-pub use optimizer::*;
+//pub(crate) use optimizer::*;

@@ -63,7 +63,7 @@ impl TargetRegistry {
         if let Some(org) = self.targets.get_mut(&triple.arch) {
             org.block = Some(block.clone());
             let instrs = org.build_instrs(&funct, &triple);
-            let instrs = org.lower(instrs);
+            let instrs = org.lower(instrs)?;
 
             let mut asm = vec![];
 
@@ -90,7 +90,7 @@ impl TargetRegistry {
             org.block = Some(block.clone());
 
             let instrs = org.build_instrs(&funct, &triple);
-            let instrs = org.lower(instrs);
+            let instrs = org.lower(instrs)?;
 
             let mut res = vec![];
             let mut links = vec![];

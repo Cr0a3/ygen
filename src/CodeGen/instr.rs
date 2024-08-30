@@ -6,7 +6,7 @@ use crate::Obj::Link;
 use super::reg::Reg;
 
 /// a low level instruction which is portable over platforms
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct MachineInstr {
     pub(crate) operands: Vec<MachineOperand>,
     pub(crate) out: Option<MachineOperand>,
@@ -58,7 +58,7 @@ impl Display for MachineInstr {
 }
 
 /// a low level operand which is portable over platforms
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum MachineOperand {
     /// a number
     Imm(i64),
@@ -77,7 +77,7 @@ impl Display for MachineOperand {
 
 /// The mnemonic to use
 #[allow(missing_docs)]
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum MachineMnemonic {
     Move,
     

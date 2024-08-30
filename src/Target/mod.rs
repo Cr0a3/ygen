@@ -1,8 +1,10 @@
 mod triple;
 mod target_descr;
-mod x64;
+pub mod x64;
 mod registry;
-pub use x64::*;
+mod whitelist;
+pub use x64::{x64Reg, initializeX64Target, Token};
+pub use whitelist::*;
 pub use triple::Triple;
 pub use target_descr::TargetBackendDescr;
 pub use registry::TargetRegistry;
