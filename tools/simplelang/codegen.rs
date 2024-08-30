@@ -145,8 +145,8 @@ impl CodeGenerator {
         match bin.0 {
             Operator::Sub => builder.BuildSub(left, right),
             Operator::Add => builder.BuildAdd(left, right),
-            Operator::Mul => todo!("add mul support to ygen"),
-            Operator::Div => todo!("add div support to ygen"),
+            Operator::Mul => builder.BuildMul(left, right),
+            Operator::Div => builder.BuildDiv(left, right),
             _ => todo!(),
         }
     }

@@ -34,3 +34,7 @@ extern func main () -> void {
 extern func aaa () -> i32 {
     return 5;
 }
+
+extern func mul(a: i32, b: i32) -> i32 {
+    return a * b;
+}
