@@ -1,6 +1,11 @@
-use object::write::{Relocation, SectionId, Symbol, SymbolId, SymbolSection};
-use object::{Architecture, BinaryFormat, Endianness, RelocationEncoding, RelocationFlags, RelocationKind, SectionKind, SymbolFlags, SymbolKind, SymbolScope};
+use gimli::write::{Dwarf, DwarfUnit, EndianVec, RelocateWriter};
+use gimli::LittleEndian;
+use object::write::{Object, Relocation, SectionId, Symbol, SymbolId, SymbolSection};
+use object::{Architecture, BinaryFormat, Endianness, RelocationEncoding, 
+            RelocationFlags, RelocationKind, SectionKind, SymbolFlags, SymbolKind, 
+            SymbolScope};
 
+use crate::debug::DebugRegistry;
 use crate::prelude::Triple;
 use crate::Target::{self, Arch, CallConv};
 use std::collections::BTreeMap;
@@ -23,6 +28,39 @@ impl std::fmt::Display for ObjectError {
 }
 
 impl std::error::Error for ObjectError {}
+
+#[derive(Clone)]
+struct Section {
+    data: EndianVec<LittleEndian>,
+    relocations: Vec<gimli::write::Relocation>,
+    id: Option<object::write::SectionId>,
+}
+
+impl Section {
+    fn new() -> Self {
+        Self {
+            data: EndianVec::new(LittleEndian),
+            relocations: Vec::new(),
+            id: None,
+        }
+    }
+}
+
+impl RelocateWriter for Section {
+    type Writer = EndianVec<LittleEndian>;
+
+    fn writer(&self) -> &Self::Writer {
+        &self.data
+    }
+
+    fn writer_mut(&mut self) -> &mut Self::Writer {
+        &mut self.data
+    }
+
+    fn relocate(&mut self, relocation: gimli::write::Relocation) {
+        self.relocations.push(relocation);
+    }
+}
 
 /// A decl to say what's the label/func
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -68,7 +106,10 @@ pub struct ObjectBuilder {
 
     decls: Vec<(String, Decl, Linkage)>,
 
-    triple: Triple
+    triple: Triple,
+
+    /// include debugging information
+    debug: bool,
 }
 
 impl ObjectBuilder {
@@ -78,10 +119,11 @@ impl ObjectBuilder {
             defines: BTreeMap::new(),
 
             links: vec![],
-
             decls: vec![],
 
-            triple: triple
+            triple: triple,
+
+            debug: false,
         }
     }
 
@@ -108,8 +150,7 @@ impl ObjectBuilder {
     }
 
     /// Writes the object file into the the specified file
-    pub fn emit(&self, file: File) -> Result<(), Box<dyn Error>> {
-
+    pub fn emit(&self, file: File, debug: Option<DebugRegistry>) -> Result<(), Box<dyn Error>> {
         let align = 1;
 
         let mut obj = object::write::Object::new({
@@ -172,7 +213,7 @@ impl ObjectBuilder {
         let secData = obj.add_section(vec![], ".data".as_bytes().to_vec(), SectionKind::Data);
         let secConsts = obj.add_section(vec![], ".rodata".as_bytes().to_vec(), SectionKind::ReadOnlyData);
 
-        let mut syms: BTreeMap<String, (Option<SectionId>, Option</*offsest*/u64>, SymbolId, Decl)> = BTreeMap::new();
+        let mut syms: BTreeMap<String, (Option<SectionId>, Option</*offsest*/u64>, SymbolId, Decl, /*size*/u64)> = BTreeMap::new();
 
         for (name, data) in &self.defines {
             let name = name.to_owned();
@@ -247,15 +288,15 @@ impl ObjectBuilder {
                     Decl::Constant => obj.add_symbol_data(sym, secConsts, &data, align),
                 };
     
-                syms.insert(name.clone(), (None, Some(def_offset), sym, *decl));
+                syms.insert(name.clone(), (None, Some(def_offset), sym, *decl, data.len() as u64));
             } else {
-                syms.insert(name.clone(), (None, None, sym, *decl));
+                syms.insert(name.clone(), (None, None, sym, *decl, data.len() as u64));
             }
         }
 
         for link in &self.links {
-            let (_, off, _, _) = syms.get(&link.from).unwrap();
-            let (_, _, to_sym, ty) = syms.get(&link.to).unwrap();
+            let (_, off, _, _, _) = syms.get(&link.from).unwrap();
+            let (_, _, to_sym, ty, _) = syms.get(&link.to).unwrap();
 
             let mut addend = 0;
             let mut offset = 0;
@@ -291,7 +332,97 @@ impl ObjectBuilder {
             })?;
         }
 
+        if let Some(debug) = debug {
+            if self.debug {
+                self.emit_dwarf(&mut obj, &syms, debug)?;
+            }
+        }
+
         obj.write_stream(file)?;
+
+        Ok(())
+    }
+
+    fn emit_debug_info(&self, dwarf: &mut DwarfUnit, name: &String, id: &SymbolId, size: u64, debug: &DebugRegistry) {
+
+    }
+
+    fn emit_dwarf(&self, obj: &mut Object<'_>, syms: &BTreeMap<String, (Option<SectionId>, Option</*offsest*/u64>, SymbolId, Decl, u64)>, debug: DebugRegistry) -> Result<(), Box<dyn Error>> {
+        use gimli::write::*;
+        let encoding = gimli::Encoding {
+            address_size: 8,
+            format: gimli::Format::Dwarf32,
+            version: 5,
+        };
+
+        let mut dwarf = DwarfUnit::new(encoding);
+        let root = dwarf.unit.root();
+        let entry = dwarf.unit.get_mut(root);
+
+        entry.set(gimli::DW_AT_producer, 
+            AttributeValue::String(debug.producer.as_bytes().to_vec())
+        );
+
+        entry.set(gimli::DW_AT_language,
+            AttributeValue::Language(debug.lang)
+        );
+        entry.set(gimli::DW_AT_name, AttributeValue::String(debug.file.as_bytes().to_vec()));
+        entry.set(gimli::DW_AT_comp_dir, AttributeValue::String(debug.dir.as_bytes().to_vec()));
+        
+        let mut sections = Sections::new(self::Section::new());
+        dwarf.write(&mut sections)?;
+
+        for (name, (_, _, id, decl, size)) in syms {
+            if *decl == Decl::Function {
+                self.emit_debug_info(&mut dwarf, name, id, *size, &debug);
+            }
+        } 
+
+        sections.for_each_mut(|id, section| -> object::write::Result<()> {
+            if section.data.len() == 0 {
+                return Ok(());
+            }
+            let section_id = obj.add_section(Vec::new(), id.name().into(), object::SectionKind::Debug);
+            obj.set_section_data(section_id, section.data.take(), 1);
+    
+            section.id = Some(section_id);
+            Ok(())
+        })?;
+
+        sections.for_each(|_, section| -> object::write::Result<()> {
+            let Some(section_id) = section.id else {
+                debug_assert!(section.relocations.is_empty());
+                return Ok(());
+            };
+            for reloc in &section.relocations {
+                // The `eh_pe` field is not used in this example because we are not writing
+                // unwind information.
+                debug_assert!(reloc.eh_pe.is_none());
+                let symbol = match reloc.target {
+                    RelocationTarget::Section(id) => {
+                        obj.section_symbol(sections.get(id).unwrap().id.unwrap())
+                    }
+                    RelocationTarget::Symbol(_) => todo!(),
+                };
+                obj.add_relocation(
+                    section_id,
+                    object::write::Relocation {
+                        offset: reloc.offset as u64,
+                        symbol,
+                        addend: reloc.addend,
+                        flags: object::RelocationFlags::Generic {
+                            kind: match reloc.target {
+                                RelocationTarget::Section(_) => object::RelocationKind::SectionOffset,
+                                _ => object::RelocationKind::Absolute
+                            },
+                            encoding: object::RelocationEncoding::Generic,
+                            size: reloc.size * 8,
+                        },
+                    },
+                )?;
+            }
+            Ok(())
+        })?;
 
         Ok(())
     }
