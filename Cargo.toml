@@ -2,6 +2,7 @@
 members = [
     "tools/ygen-mc",
     "tools/simplelang",
+    "tools/ytest", 
     "src/proc", 
 ]
 
@@ -17,7 +18,7 @@ authors = ["Cr0a3"]
 documentation = "https://toni-graphics.github.io/ygen/Ygen/index.html"
 repository = "https://github.com/Toni-Graphics/ygen"
 license = "Apache-2.0"
-description = "Another code generation libary like LLVM"
+description = "Yet another code generation libary like LLVM"
 categories = ["development-tools::ffi"]
 keywords = ["compiler", "codegen", "llvm"]
 
