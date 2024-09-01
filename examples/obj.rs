@@ -1,8 +1,18 @@
-use std::{error::Error, fs::OpenOptions};
+use std::{error::Error, fs::OpenOptions, path::Path};
 
+use ygen::debug::{DebugLocation, DebugRegistry};
 use ygen::{Obj::*, Target::Triple};
+use ygen::Target::x64::{instr::*, x64Reg};
 
 fn main() -> Result<(), Box<dyn Error>> {
+    // test.c:
+    // 01 #include <stdio.h>
+    // 02
+    // 03 int main() {
+    // 04    printf("Hello World!");
+    // 05    return 0;
+    // 06 }
+
     let mut obj = ObjectBuilder::new(
         Triple::parse("x86_64-pc-windows")?
     );
@@ -10,34 +20,50 @@ fn main() -> Result<(), Box<dyn Error>> {
     obj.decls(vec![
         ("main", Decl::Function, Linkage::External),
         ("string", Decl::Constant, Linkage::Internal),
-        ("puts", Decl::Function, Linkage::Extern),
+        ("printf", Decl::Function, Linkage::Extern),
     ]);
 
-    let mut data = vec![0x55];
+    let mut debug = DebugRegistry::new("ygen example".to_string(), gimli::DW_LANG_C, Path::new("test.c"));
 
-    data.extend_from_slice(&[0x48, 0x83, 0xc4, 0x20]);
+    let mut data = vec![];
+    data.extend_from_slice(&X64MCInstr::with1(Mnemonic::Push, Operand::Reg(x64Reg::Rbp)).compile()?);
+    data.extend_from_slice(&X64MCInstr::with2(Mnemonic::Sub, Operand::Reg(x64Reg::Rsp), Operand::Imm(40)).compile()?);
 
+    debug.add_location(&"main".to_string(), DebugLocation { line: 3, col: 0, epilog: false, prolog: true, adr: data.len() as u64 });
+
+    let rip_relativ = Operand::Mem(MemOp { base: None, index: None, scale: 1, displ: 0, rip: true });
+    
+    data.extend_from_slice(&X64MCInstr::with2(Mnemonic::Lea, Operand::Reg(x64Reg::Rax), rip_relativ).compile()?);
+
+    obj.link( Link { from: "main".into(), to: "string".into(), at: data.len(), addend: -4 });
+    
     if cfg!(target_os = "windows") {
-        data.extend_from_slice(&[0x48, 0x8d, 0x0d, 0x00, 0x00, 0x00, 0x00])
+        data.extend_from_slice(&X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rcx), Operand::Reg(x64Reg::Rax)).compile()?);
     } else {
-        data.extend_from_slice(&[0x48, 0x8d, 0x3d, 0x00, 0x00, 0x00, 0x00])
+        data.extend_from_slice(&X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rsi), Operand::Reg(x64Reg::Rax)).compile()?);
     }
     
-    obj.link( Link { from: "main".into(), to: "string".into(), at: data.len() -4, addend: -4 });
 
-    data.extend_from_slice(&[0xE8, 0x00, 0x00, 0x00, 0x00]);
+    debug.add_location(&"main".to_string(), DebugLocation { line: 4, col: 4, epilog: false, prolog: false, adr: data.len() as u64 });
+    data.extend_from_slice(&X64MCInstr::with1(Mnemonic::Call, Operand::Imm(0)).compile()?); // call printf
 
-    obj.link( Link { from: "main".into(), to: "puts".into(), at: data.len() -4, addend: -4});
+    obj.link( Link { from: "main".into(), to: "printf".into(), at: data.len(), addend: -4});
 
-    data.extend_from_slice(&[0x31, 0xC0]);
-    data.extend_from_slice(&[0x48, 0x83, 0xEC, 0x20]);
-    data.extend_from_slice(&[0xC3]);
+    
+    debug.add_location(&"main".to_string(), DebugLocation { line: 5, col: 4, epilog: false, prolog: false, adr: data.len() as u64 });
+    data.extend_from_slice(&X64MCInstr::with2(Mnemonic::Xor, Operand::Reg(x64Reg::Eax), Operand::Reg(x64Reg::Eax)).compile()?);
+    
+    debug.add_location(&"main".to_string(), DebugLocation { line: 6, col: 0, epilog: true, prolog: false, adr: data.len() as u64 });
+    data.extend_from_slice(&X64MCInstr::with2(Mnemonic::Add, Operand::Reg(x64Reg::Rsp), Operand::Imm(40)).compile()?);
+    data.extend_from_slice(&X64MCInstr::with0(Mnemonic::Ret).compile()?); // ret
 
     obj.define("main", data);
-    obj.define("string", b"Hello World!\00".into());
+    obj.define("string", b"Hello World!\n\0".into());
+
+    obj.debug = true;
 
     obj.emit(
-        OpenOptions::new().create(true).write(true).open("output.o")?
+        OpenOptions::new().create(true).write(true).open("output.o")?, Some(debug)
     )?;
 
     Ok(())

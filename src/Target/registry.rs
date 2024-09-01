@@ -48,6 +48,7 @@ impl TargetRegistry {
     pub fn buildMachineInstrsForTarget(&mut self, triple: Triple, block: &Block, funct: &Function) -> Result<Vec<MachineInstr>, Box<dyn Error>> {
         if let Some(org) = self.targets.get_mut(&triple.arch) {
             org.block = Some(block.clone());
+            org.call = triple.getCallConv()?;
             let instrs = org.build_instrs(&funct, &triple);
 
             Ok(instrs)
@@ -62,6 +63,8 @@ impl TargetRegistry {
     pub fn buildAsmForTarget(&mut self, triple: Triple, block: &Block, funct: &Function) -> Result<Vec<String>, Box<dyn Error>> {
         if let Some(org) = self.targets.get_mut(&triple.arch) {
             org.block = Some(block.clone());
+            org.call = triple.getCallConv()?;
+
             let instrs = org.build_instrs(&funct, &triple);
             let instrs = org.lower(instrs)?;
 
@@ -88,6 +91,7 @@ impl TargetRegistry {
             //let call = (org.init.unwrap()(triple.getCallConv()?)).call;
 
             org.block = Some(block.clone());
+            org.call = triple.getCallConv()?;
 
             let instrs = org.build_instrs(&funct, &triple);
             let instrs = org.lower(instrs)?;

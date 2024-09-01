@@ -153,7 +153,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         println!("{}", module.emitAsm(triple, registry)?);
     }
 
-    module.emitMachineCode(triple, registry)?.emit(outfile)?;
+    module.emitMachineCode(triple, registry)?.emit(outfile, None)?;
 
     Ok(())
 

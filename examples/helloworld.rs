@@ -48,7 +48,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
             Triple::host(), 
             &mut initializeAllTargets()
         )?.emit(
-            OpenOptions::new().write(true).create(true).open("out.o")?
+            OpenOptions::new().write(true).create(true).open("out.o")?, None
     )?;
 
     Ok(())

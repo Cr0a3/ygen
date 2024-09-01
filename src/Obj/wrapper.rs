@@ -1,4 +1,4 @@
-use gimli::write::{Dwarf, DwarfUnit, EndianVec, RelocateWriter};
+use gimli::write::{Address, DwarfUnit, EndianVec, FileId, LineProgram, Range, RelocateWriter};
 use gimli::LittleEndian;
 use object::write::{Object, Relocation, SectionId, Symbol, SymbolId, SymbolSection};
 use object::{Architecture, BinaryFormat, Endianness, RelocationEncoding, 
@@ -109,7 +109,7 @@ pub struct ObjectBuilder {
     triple: Triple,
 
     /// include debugging information
-    debug: bool,
+    pub debug: bool,
 }
 
 impl ObjectBuilder {
@@ -213,7 +213,7 @@ impl ObjectBuilder {
         let secData = obj.add_section(vec![], ".data".as_bytes().to_vec(), SectionKind::Data);
         let secConsts = obj.add_section(vec![], ".rodata".as_bytes().to_vec(), SectionKind::ReadOnlyData);
 
-        let mut syms: BTreeMap<String, (Option<SectionId>, Option</*offsest*/u64>, SymbolId, Decl, /*size*/u64)> = BTreeMap::new();
+        let mut syms: BTreeMap<String, (Option<SectionId>, Option</*offsest*/u64>, SymbolId, Decl, /*size*/u64, /*link*/Linkage)> = BTreeMap::new();
 
         for (name, data) in &self.defines {
             let name = name.to_owned();
@@ -288,15 +288,44 @@ impl ObjectBuilder {
                     Decl::Constant => obj.add_symbol_data(sym, secConsts, &data, align),
                 };
     
-                syms.insert(name.clone(), (None, Some(def_offset), sym, *decl, data.len() as u64));
+                syms.insert(name.clone(), (None, Some(def_offset), sym, *decl, data.len() as u64, *link));
             } else {
-                syms.insert(name.clone(), (None, None, sym, *decl, data.len() as u64));
+                syms.insert(name.clone(), (None, None, sym, *decl, 0, *link));
             }
         }
 
+        for (name, decl, link) in &self.decls {
+            if syms.contains_key(name) {
+                continue;
+            }
+
+            if *link != Linkage::Extern {
+                panic!("symbols which aren't imported need their own data. consider defining one using 'obj.define(\"symbol\", vec![])'");
+            }
+
+            let sym = obj.add_symbol(Symbol {
+                name: name.clone().as_bytes().to_vec(),
+                value: 0,
+                size: 0,
+                kind: {
+                    match decl {
+                        Decl::Function => SymbolKind::Text,
+                        Decl::Data => SymbolKind::Data,
+                        Decl::Constant => SymbolKind::Label,
+                    }
+                },
+                scope: SymbolScope::Dynamic,
+                weak: false,
+                section: SymbolSection::Undefined,
+                flags: SymbolFlags::None,
+            });
+            
+            syms.insert(name.clone(), (None, None, sym, *decl, 0, *link));
+        }
+
         for link in &self.links {
-            let (_, off, _, _, _) = syms.get(&link.from).unwrap();
-            let (_, _, to_sym, ty, _) = syms.get(&link.to).unwrap();
+            let (_, off, _, _, _, _) = syms.get(&link.from).expect("expectd valid link source");
+            let (_, _, to_sym, ty, _, _) = syms.get(&link.to).expect("expected valid link destination");
 
             let mut addend = 0;
             let mut offset = 0;
@@ -343,11 +372,62 @@ impl ObjectBuilder {
         Ok(())
     }
 
-    fn emit_debug_info(&self, dwarf: &mut DwarfUnit, name: &String, id: &SymbolId, size: u64, debug: &DebugRegistry) {
+    fn emit_range(&self, id: &SymbolId, size: u64) -> Range {
+        let id: usize = unsafe {
+            std::mem::transmute(*id)
+        };
+
+        let adress = Address::Symbol { symbol: id, addend: 0 };
+
+        
+        Range::StartLength { begin: adress, length: size }
+    }
+
+    fn emit_debug_info(&self, dwarf: &mut DwarfUnit, name: &String, link: &Linkage, id: &SymbolId, size: u64, debug: &DebugRegistry, file_id: FileId) {
+        use gimli::write::*;
+
+        let id: usize = unsafe {
+            std::mem::transmute(*id)
+        };
+
+        let adress = Address::Symbol { symbol: id, addend: 0 };
+        
+        let subprogram = dwarf.unit.add(dwarf.unit.root(), gimli::DW_TAG_subprogram);
+        let entry = dwarf.unit.get_mut(subprogram);
+
+        if *link == Linkage::External {
+            entry.set(gimli::DW_AT_external, AttributeValue::Flag(true));
+        }
+
+        entry.set(gimli::DW_AT_name, AttributeValue::String(name.as_bytes().to_vec()));
+        entry.set(
+            gimli::DW_AT_decl_file,
+            AttributeValue::FileIndex(Some(file_id)),
+        );
+        entry.set(gimli::DW_AT_decl_line, AttributeValue::Udata(3));
+        entry.set(gimli::DW_AT_decl_column, AttributeValue::Udata(0));
+
+        entry.set(gimli::DW_AT_low_pc, AttributeValue::Address(adress));
+        entry.set(gimli::DW_AT_high_pc, AttributeValue::Udata(size));
+
+        dwarf.unit.line_program.begin_sequence(Some(adress));
+
+        if let Some(lines) = debug.locs.get(name) {
+            for loc in lines {
+                dwarf.unit.line_program.row().line = loc.line;
+                dwarf.unit.line_program.row().column = loc.col;
+                dwarf.unit.line_program.row().epilogue_begin = loc.epilog;
+                dwarf.unit.line_program.row().prologue_end = loc.prolog;
+                dwarf.unit.line_program.row().address_offset = loc.adr;
+                dwarf.unit.line_program.generate_row();
+            }
+        } else { todo!() }
+
+        dwarf.unit.line_program.end_sequence(size);
 
     }
 
-    fn emit_dwarf(&self, obj: &mut Object<'_>, syms: &BTreeMap<String, (Option<SectionId>, Option</*offsest*/u64>, SymbolId, Decl, u64)>, debug: DebugRegistry) -> Result<(), Box<dyn Error>> {
+    fn emit_dwarf(&self, obj: &mut Object<'_>, syms: &BTreeMap<String, (Option<SectionId>, Option</*offsest*/u64>, SymbolId, Decl, u64, Linkage)>, debug: DebugRegistry) -> Result<(), Box<dyn Error>> {
         use gimli::write::*;
         let encoding = gimli::Encoding {
             address_size: 8,
@@ -355,9 +435,25 @@ impl ObjectBuilder {
             version: 5,
         };
 
-        let mut dwarf = DwarfUnit::new(encoding);
+        let mut dwarf = DwarfUnit::new(encoding.clone());
+
+        let mut range_vec = vec![];
+
+        for (_, (_, _, id, decl, size, link)) in syms {
+            if *decl == Decl::Function && (*link == Linkage::External || *link == Linkage::Internal) {
+                range_vec.push( self.emit_range(id, *size) );
+            }
+        }
+
+        let range_list_id = dwarf.unit.ranges.add(RangeList(range_vec));
+
         let root = dwarf.unit.root();
         let entry = dwarf.unit.get_mut(root);
+
+        entry.set(
+            gimli::DW_AT_ranges,
+            AttributeValue::RangeListRef(range_list_id),
+        );
 
         entry.set(gimli::DW_AT_producer, 
             AttributeValue::String(debug.producer.as_bytes().to_vec())
@@ -368,20 +464,33 @@ impl ObjectBuilder {
         );
         entry.set(gimli::DW_AT_name, AttributeValue::String(debug.file.as_bytes().to_vec()));
         entry.set(gimli::DW_AT_comp_dir, AttributeValue::String(debug.dir.as_bytes().to_vec()));
-        
+
+        dwarf.unit.line_program = LineProgram::new(
+            encoding,
+            gimli::LineEncoding::default(),
+            LineString::new(debug.dir.to_string(), encoding, &mut dwarf.line_strings),
+            LineString::new(debug.file.to_string(), encoding, &mut dwarf.line_strings),
+            None,
+        );
+
+        let dir_id = dwarf.unit.line_program.default_directory();
+        let file_string = LineString::new(debug.file.as_bytes(), encoding, &mut dwarf.line_strings);
+        let file = dwarf.unit.line_program.add_file(file_string, dir_id, None);
+
+        for (name, (_, _, id, decl, size, link)) in syms {
+            if *decl == Decl::Function && (*link == Linkage::External || *link == Linkage::Internal) {
+                self.emit_debug_info(&mut dwarf, name, link, id, *size, &debug, file);
+            }
+        }
+
         let mut sections = Sections::new(self::Section::new());
         dwarf.write(&mut sections)?;
-
-        for (name, (_, _, id, decl, size)) in syms {
-            if *decl == Decl::Function {
-                self.emit_debug_info(&mut dwarf, name, id, *size, &debug);
-            }
-        } 
 
         sections.for_each_mut(|id, section| -> object::write::Result<()> {
             if section.data.len() == 0 {
                 return Ok(());
             }
+
             let section_id = obj.add_section(Vec::new(), id.name().into(), object::SectionKind::Debug);
             obj.set_section_data(section_id, section.data.take(), 1);
     
@@ -402,7 +511,13 @@ impl ObjectBuilder {
                     RelocationTarget::Section(id) => {
                         obj.section_symbol(sections.get(id).unwrap().id.unwrap())
                     }
-                    RelocationTarget::Symbol(_) => todo!(),
+                    RelocationTarget::Symbol(id) => {
+                        let sym: SymbolId = unsafe {
+                            std::mem::transmute(id)
+                        };
+
+                        sym
+                    },
                 };
                 obj.add_relocation(
                     section_id,
