@@ -74,7 +74,7 @@ fn x64_lower_add(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
 
 }
 
-fn x64_lower_div(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
+fn x64_lower_div(_sink: &mut Vec<X64MCInstr>, _instr: &MachineInstr) {
     todo!()
 }
 fn x64_lower_and(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
@@ -322,7 +322,7 @@ fn x64_lower_zext(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     }
 
 }
-fn x64_lower_downcast(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
+fn x64_lower_downcast(_sink: &mut Vec<X64MCInstr>, _instr: &MachineInstr) {
     todo!()
 }
 fn x64_lower_call(sink: &mut Vec<X64MCInstr>, _: &MachineInstr, target: &String) {   
