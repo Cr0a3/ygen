@@ -292,9 +292,12 @@ fn x64_lower_adr_load(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr, symbol: 
     };
 
     sink.push(
-        X64MCInstr::with2(Mnemonic::Lea, out, Operand::Mem(MemOp { base: None, index: None, scale: 1, displ: 1, rip: true })).into()
+        X64MCInstr::with2(Mnemonic::Lea, Operand::Reg(x64Reg::Rax), Operand::Mem(MemOp { base: None, index: None, scale: 1, displ: 1, rip: true })).into()
     );
     sink.push(
         X64MCInstr::with1(Mnemonic::Link, Operand::LinkDestination(symbol.to_string(), -4)).into()
+    );
+    sink.push(
+        X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(x64Reg::Rax)).into()
     );
 }

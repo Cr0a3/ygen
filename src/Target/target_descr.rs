@@ -93,9 +93,23 @@ impl TargetBackendDescr {
 
         let out = self.sink.clone();
 
-        self.sink.clear();
-
         out
+    }
+
+    /// Resets all values to "factory standart"
+    pub fn reset(&mut self) {
+        if let Some(init) = self.init {
+            let reference = init(self.call);
+            self.init = reference.init;
+            self.lexer = reference.lexer;
+            self.compile = reference.compile;
+            self.helper = reference.helper;
+            self.block = reference.block;
+            assert_eq!(self.call, reference.call);
+            self.call = reference.call;
+            self.sink = reference.sink;
+            self.whitelist = reference.whitelist;
+        }
     }
 
     /// Used for lowering machine instructions into dyn MCInstr

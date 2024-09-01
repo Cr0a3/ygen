@@ -33,7 +33,7 @@ impl TargetRegistry {
     /// returns the `TargetBackendDescr` for the triple (also it adjusts it's calling convention ...)
     pub fn getBasedOnTriple(&mut self, triple: Triple) -> Result<&mut TargetBackendDescr, Box<dyn Error>> {
         if let Some(descr) = self.targets.get_mut(&triple.arch) {
-            *descr = descr.init.unwrap()(triple.getCallConv()?);
+            descr.call = triple.getCallConv()?;
 
             Ok(descr)
         } else {
@@ -46,79 +46,66 @@ impl TargetRegistry {
     /// emits machine instrs for target
     /// note: machine instrs are portable over all platforms
     pub fn buildMachineInstrsForTarget(&mut self, triple: Triple, block: &Block, funct: &Function) -> Result<Vec<MachineInstr>, Box<dyn Error>> {
-        if let Some(org) = self.targets.get_mut(&triple.arch) {
-            org.block = Some(block.clone());
-            org.call = triple.getCallConv()?;
-            let instrs = org.build_instrs(&funct, &triple);
+        let org = self.getBasedOnTriple(triple)?;
 
-            Ok(instrs)
-        } else {
-            Err(Box::from( 
-                RegistryError::UnsuportedArch(triple.arch) 
-            ))
-        }
+        org.block = Some(block.clone());
+        let instrs = org.build_instrs(&funct, &triple);
+
+        org.reset();
+
+        Ok(instrs)
     }
 
     /// Builds the ir of the given triple into text assembly code
     pub fn buildAsmForTarget(&mut self, triple: Triple, block: &Block, funct: &Function) -> Result<Vec<String>, Box<dyn Error>> {
-        if let Some(org) = self.targets.get_mut(&triple.arch) {
-            org.block = Some(block.clone());
-            org.call = triple.getCallConv()?;
+        let org = self.getBasedOnTriple(triple)?;
+        org.block = Some(block.clone());
 
-            let instrs = org.build_instrs(&funct, &triple);
-            let instrs = org.lower(instrs)?;
+        let instrs = org.build_instrs(&funct, &triple);
+        let instrs = org.lower(instrs)?;
 
-            let mut asm = vec![];
+        let mut asm = vec![];
 
-            for instr in instrs {
-                asm.push(
-                    instr.to_string()
-                )
-            }
-
-            Ok(asm)
-        } else {
-            Err(Box::from( 
-                RegistryError::UnsuportedArch(triple.arch) 
-            ))
+        for instr in instrs {
+            asm.push(
+                instr.to_string()
+            )
         }
+        
+        org.reset();
+
+        Ok(asm)
     }
 
     /// Builds the ir of the given triple into machine code
     pub fn buildMachineCodeForTarget(&mut self, triple: Triple, block: &Block, funct: &Function) -> Result<(Vec<u8>, Vec<Link>), Box<dyn Error>> {
-        if let Some(org) = self.targets.get_mut(&triple.arch) {
+        let org = self.getBasedOnTriple(triple)?;
 
-            //let call = (org.init.unwrap()(triple.getCallConv()?)).call;
+        org.block = Some(block.clone());
 
-            org.block = Some(block.clone());
-            org.call = triple.getCallConv()?;
+        let instrs = org.build_instrs(&funct, &triple);
+        let instrs = org.lower(instrs)?;
 
-            let instrs = org.build_instrs(&funct, &triple);
-            let instrs = org.lower(instrs)?;
+        let mut res = vec![];
+        let mut links = vec![];
 
-            let mut res = vec![];
-            let mut links = vec![];
+        for instr in &instrs {
+            let (encoded, link) = &instr.encode()?;
+            res.extend_from_slice(&encoded);
 
-            for instr in &instrs {
-                let (encoded, link) = &instr.encode()?;
-                res.extend_from_slice(&encoded);
+            if let Some(link) = link {
+                let mut link = link.clone();
 
-                if let Some(link) = link {
-                    let mut link = link.clone();
+                link.from = funct.name.to_string();
+                link.at = res.len();
 
-                    link.from = funct.name.to_string();
-                    link.at = res.len();
-
-                    links.push(link);
-                }
+                links.push(link);
             }
-
-            Ok((res, links))
-        } else {
-            Err(Box::from( 
-                RegistryError::UnsuportedArch(triple.arch) 
-            ))
         }
+
+        org.reset();
+
+        Ok((res, links))
     }
 }
 

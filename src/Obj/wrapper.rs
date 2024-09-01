@@ -1,4 +1,4 @@
-use gimli::write::{Address, DwarfUnit, EndianVec, FileId, LineProgram, Range, RelocateWriter};
+use gimli::write::{Address, DwarfUnit, EndianVec, FileId, Range, RelocateWriter};
 use gimli::LittleEndian;
 use object::write::{Object, Relocation, SectionId, Symbol, SymbolId, SymbolSection};
 use object::{Architecture, BinaryFormat, Endianness, RelocationEncoding, 
