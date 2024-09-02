@@ -146,7 +146,6 @@ impl IrLexer {
 
     fn advance(&mut self) -> Result<char, IrError> {
         self.current += 1;
-
         let peek = self.peek();
 
         let mut out = ' ';
@@ -176,8 +175,6 @@ impl IrLexer {
 
     /// "lexes" the input
     pub fn lex(&mut self) -> Result<(), IrError> {
-        self.advance()?;
-
         self.update_line_string();
 
         while !self.is_at_end() {
@@ -191,7 +188,8 @@ impl IrLexer {
 
     fn lex_tok(&mut self) -> Result<(), IrError> {
         let mut ty = None;
-        match self.advance()? {
+        let char = self.advance()?;
+        match char {
             '\n' | '\r' | '\t' | ' ' => {},
 
             '(' => ty = Some(TokenType::LParam),
@@ -235,6 +233,8 @@ impl IrLexer {
     fn scan_var_name(&mut self) -> Result<TokenType, IrError> {
         let mut out = String::new();
 
+        out.push( self.peek().unwrap() );
+
         let mut looping = true;
 
         while looping {
@@ -248,17 +248,12 @@ impl IrLexer {
             let chr = self.advance()?;
 
             match chr {
-                '\n' | '\r' | ' ' => looping = false,
-
                 '0'..='9' => out.push(chr),
                 'a'..='z' => out.push(chr),
                 'A'..='Z' => out.push(chr),
                 '_' => out.push(chr),
 
-                any => Err(IrError::UnexpectedCharacter { 
-                    chr: any, 
-                    loc: self.loc.clone() 
-                })?
+                _ => looping = false,
             }
         }
 
@@ -303,20 +298,20 @@ impl IrLexer {
                 })?
             }
 
-            let chr = self.advance()?;
+            let chr = self.peek().unwrap();
 
             match chr {
-                '\n' | '\r' | ' ' => looping = false,
-
                 '0'..='9' => out.push(chr),
                 'a'..='z' => out.push(chr),
                 'A'..='Z' => out.push(chr),
                 '_' => out.push(chr),
 
-                any => Err(IrError::UnexpectedCharacter { 
-                    chr: any, 
-                    loc: self.loc.clone() 
-                })?
+                
+                _ => looping = false,
+            };
+
+            if looping {
+                self.advance()?;
             }
         }
 
@@ -327,6 +322,8 @@ impl IrLexer {
         let mut string = String::new();
 
         let mut looping = true;
+
+        string.push( self.peek().unwrap() );
 
         while looping {
             if self.is_at_end() {
@@ -339,16 +336,11 @@ impl IrLexer {
             let chr = self.advance()?;
 
             match chr {
-                '\n' | '\r' | ' ' => looping = false,
-
                 '0'..='9' => string.push(chr),
                 'x' => string.push('x'),
                 'b' => string.push('b'),
 
-                any => Err(IrError::UnexpectedCharacter { 
-                    chr: any, 
-                    loc: self.loc.clone() 
-                })?
+                _ => looping = false,
             }
         }
 
@@ -378,6 +370,8 @@ impl IrLexer {
     fn scan_func(&mut self) -> Result<TokenType, IrError> {
         let mut out = String::new();
 
+        out.push( self.peek().unwrap() );
+
         let mut looping = true;
 
         while looping {
@@ -391,17 +385,12 @@ impl IrLexer {
             let chr = self.advance()?;
 
             match chr {
-                '\n' | '\r' | ' ' => looping = false,
-
                 '0'..='9' => out.push(chr),
                 'a'..='z' => out.push(chr),
                 'A'..='Z' => out.push(chr),
                 '_' => out.push(chr),
 
-                any => Err(IrError::UnexpectedCharacter { 
-                    chr: any, 
-                    loc: self.loc.clone() 
-                })?
+                _ => looping = false,
             }
         }
 
