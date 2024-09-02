@@ -2,7 +2,7 @@
 members = [
     "tools/ygen-mc",
     "tools/simplelang",
-    "src/proc", 
+    "src/proc", "tools/ylc", 
 ]
 
 [workspace.dependencies]

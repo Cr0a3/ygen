@@ -19,6 +19,12 @@ pub struct Loc {
 /// The token type for parsing ir
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TokenType {
+    /// .
+    Dot,
+
+    /// ,
+    Comma,
+
     /// %name
     Var(String),
 
@@ -133,7 +139,7 @@ impl IrLexer {
     }
 
     fn update_line_string(&mut self) {
-        let lines = self.input_stream.split(' ').collect::<Vec<&str>>();
+        let lines = self.input_stream.split('\n').collect::<Vec<&str>>();
         let line = lines.get((self.line_no - 1) as usize);
         self.line = line.expect("ran out of lines").to_string();
     }
@@ -172,6 +178,8 @@ impl IrLexer {
     pub fn lex(&mut self) -> Result<(), IrError> {
         self.advance()?;
 
+        self.update_line_string();
+
         while !self.is_at_end() {
             self.start = self.current;
 
@@ -192,6 +200,9 @@ impl IrLexer {
             ')' => ty = Some(TokenType::RParam),
             '}' => ty = Some(TokenType::RBracket),
             ']' => ty = Some(TokenType::RSquare),
+
+            '.' => ty = Some(TokenType::Dot),
+            ',' => ty = Some(TokenType::Comma),
 
             '=' => ty = Some(TokenType::Equal),
 

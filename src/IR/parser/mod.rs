@@ -60,10 +60,11 @@ impl Display for IrError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", match self {
             IrError::UnexpectedToken(token) => {
-                let mut fab = Support::Error::new("unexpected token", "", token.loc.line.to_string(), token.loc.coloumn.to_string());
+                let mut fab = Support::Error::new("", "", token.loc.line.to_string(), token.loc.coloumn.to_string());
 
                 fab.deactivateLocationDisplay();
 
+                fab.setCodeLine(token.loc.line_string.to_string());
                 fab.addWhere("unexpected token", token.loc.coloumn, token.loc.length);
 
                 fab.to_string()
@@ -71,11 +72,14 @@ impl Display for IrError {
             
             IrError::UnexpectedCharacter {chr, loc} => {
                 let mut fab = Support::Error::new(
-                    format!("unexpected character: {}", chr), 
+                    "unexpected character", 
                     loc.line_string.to_string(), 
                     loc.line.to_string(), 
                     loc.coloumn.to_string()
                 );
+
+                fab.setCodeLine(loc.line_string.to_string());
+                fab.addWhere(format!("unexpected character: {}", chr), loc.coloumn, 1);
 
                 fab.deactivateLocationDisplay();
 
@@ -86,11 +90,14 @@ impl Display for IrError {
 
             IrError::UndeterminedTokenSequence {loc, expected} => {
                 let mut fab = Support::Error::new(
-                    format!("expected either one of these: {}, found nothing", expected), 
+                    "undetermined token sequence", 
                     loc.line_string.to_string(), 
                     loc.line.to_string(), 
                     loc.coloumn.to_string()
                 );
+
+                fab.setCodeLine(loc.line_string.to_string());
+                fab.addWhere(format!("expected either one of these: {}, found nothing", expected), loc.coloumn, 1);
 
                 fab.deactivateLocationDisplay();
 
@@ -104,6 +111,8 @@ impl Display for IrError {
                     loc.line.to_string(), 
                     loc.coloumn.to_string()
                 );
+
+                fab.setCodeLine(loc.line_string.to_string());
 
                 fab.deactivateLocationDisplay();
 
