@@ -4,7 +4,9 @@
 
 use std::collections::HashMap;
 use std::{error::Error, fmt::Display};
-use crate::Support;
+use lexer::Loc;
+
+use crate::Support::{self, Colorize};
 
 use super::Module;
 
@@ -21,10 +23,37 @@ pub mod semnatic;
 pub mod gen;
 
 /// An error which can occure during one of the ygen-ir lexing, parsing, gen steps
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug)]//, Clone, PartialEq, Eq)]
 pub enum IrError {
     /// Unexpected token
     UnexpectedToken(lexer::Token),
+
+    /// Unexpected character
+    UnexpectedCharacter{
+        /// The refering character
+        chr: char, 
+        /// The character location
+        loc: Loc
+    },
+
+    /// the lexer ran out of characters
+    OutOfChars,
+
+    /// expected an end to the sequence, but found no end
+    UndeterminedTokenSequence{
+        /// The character location
+        loc: Loc,
+        /// expected either one of these
+        expected: String,
+    },
+
+    /// An error of another type
+    Boxed{
+        /// The location
+        loc: Loc,
+        /// The box of the error
+        err: Box<dyn Error>,
+    }
 }
 
 impl Display for IrError {
@@ -36,6 +65,47 @@ impl Display for IrError {
                 fab.deactivateLocationDisplay();
 
                 fab.addWhere("unexpected token", token.loc.coloumn, token.loc.length);
+
+                fab.to_string()
+            },
+            
+            IrError::UnexpectedCharacter {chr, loc} => {
+                let mut fab = Support::Error::new(
+                    format!("unexpected character: {}", chr), 
+                    loc.line_string.to_string(), 
+                    loc.line.to_string(), 
+                    loc.coloumn.to_string()
+                );
+
+                fab.deactivateLocationDisplay();
+
+                fab.to_string()
+            },
+
+            IrError::OutOfChars => format!("{}: the lexer ran out of characters", "error".red().bold()),
+
+            IrError::UndeterminedTokenSequence {loc, expected} => {
+                let mut fab = Support::Error::new(
+                    format!("expected either one of these: {}, found nothing", expected), 
+                    loc.line_string.to_string(), 
+                    loc.line.to_string(), 
+                    loc.coloumn.to_string()
+                );
+
+                fab.deactivateLocationDisplay();
+
+                fab.to_string()
+            },
+
+            IrError::Boxed {loc, err} => {
+                let mut fab = Support::Error::new(
+                    format!("{}", err), 
+                    loc.line_string.to_string(), 
+                    loc.line.to_string(), 
+                    loc.coloumn.to_string()
+                );
+
+                fab.deactivateLocationDisplay();
 
                 fab.to_string()
             }
