@@ -22,6 +22,9 @@ pub enum TokenType {
     /// .
     Dot,
 
+    /// const
+    Const,
+
     /// ,
     Comma,
 
@@ -106,12 +109,13 @@ impl IrLexer {
 
         keys.insert("declare".into(), TokenType::Declare);
         keys.insert("define".into(), TokenType::Define);
+        keys.insert("const".into(), TokenType::Const);
 
         Self {
             input_stream: input,
             line: String::new(),
             line_no: 1,
-            coloumn: 0,
+            coloumn: 1,
             start: 0,
             current: 0,
 
@@ -152,7 +156,7 @@ impl IrLexer {
 
         if let Some(peek) = peek {
             if peek == '\n' {
-                self.coloumn = 0;
+                self.coloumn = 1;
                 self.line_no += 1;
 
                 self.update_line_string();
@@ -164,7 +168,7 @@ impl IrLexer {
             Err(IrError::OutOfChars)?
         }
 
-        self.update_loc();
+        self.loc.length = self.current - self.start - 1;
 
         Ok(out)
     }
@@ -178,6 +182,8 @@ impl IrLexer {
         self.update_line_string();
 
         while !self.is_at_end() {
+            self.update_loc();
+
             self.start = self.current;
 
             self.lex_tok()?;
@@ -315,7 +321,11 @@ impl IrLexer {
             }
         }
 
-        Ok(TokenType::Ident(out))
+        if let Some(keyword) = self.keywords.get(&out) {
+            Ok(keyword.clone())
+        } else {
+            Ok(TokenType::Ident(out))
+        }
     }
 
     fn scan_num(&mut self) -> Result<TokenType, IrError> {

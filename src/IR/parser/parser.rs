@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 
 use crate::prelude::Ir;
 
-use super::lexer::{Loc, Token};
+use super::lexer::{Loc, Token, TokenType};
 use super::IrError;
 
 /// An ir statement
@@ -36,8 +36,39 @@ impl IrParser {
 
     /// parses the input
     pub fn parse(&mut self) -> Result<(), IrError> {
-        todo!();
+        while self.input.len() != 0 {
+            let stmt = self.parse_stmt()?;
+            self.out.push( stmt );
+        }
 
-        //Ok(())
+        Ok(())
+    }
+
+    fn parse_stmt(&mut self) -> Result<IrStmt, IrError> {
+        let tok = if let Some(token) = self.input.front() {
+            token
+        } else {
+            Err(IrError::OutOfTokens)?
+        };
+
+        match &tok.typ {
+            TokenType::Declare => self.parse_declare(),
+            TokenType::Define => self.parse_define(),
+            TokenType::Const => self.parse_const(),
+
+            _ => Err(IrError::UnexpectedToken(tok.clone())),
+        }
+    }
+
+    fn parse_declare(&mut self) -> Result<IrStmt, IrError> {
+        todo!()
+    }
+
+    fn parse_define(&mut self) -> Result<IrStmt, IrError> {
+        todo!()
+    }
+
+    fn parse_const(&mut self) -> Result<IrStmt, IrError> {
+        todo!()
     }
 }

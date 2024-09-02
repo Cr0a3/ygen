@@ -39,6 +39,9 @@ pub enum IrError {
     /// the lexer ran out of characters
     OutOfChars,
 
+    /// the parser ran out of tokens
+    OutOfTokens,
+
     /// expected an end to the sequence, but found no end
     UndeterminedTokenSequence{
         /// The character location
@@ -87,6 +90,7 @@ impl Display for IrError {
             },
 
             IrError::OutOfChars => format!("{}: the lexer ran out of characters", "error".red().bold()),
+            IrError::OutOfTokens => format!("{}: the parser ran out of tokens", "error".red().bold()),
 
             IrError::UndeterminedTokenSequence {loc, expected} => {
                 let mut fab = Support::Error::new(
