@@ -67,7 +67,7 @@ module.emitToAsmFile(
 Ygen currently supports following architectures
 |Name    |Full ir |Full isa|
 |--------|--------|--------|
-|   x64  |         <b style="color:green">X</b>              | <b style="color:red">X</b>|
+|   x64  |         <b style="color:green">Yes</b>              | <b style="color:red">No</b>|
 
 ### Copyright
 This project is owned by Cr0a3 and licensed under the Apache2 License

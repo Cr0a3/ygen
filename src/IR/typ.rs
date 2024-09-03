@@ -95,6 +95,23 @@ impl TypeMetadata {
             _ => false,
         }
     }
+
+    /// returns the parsed typemetadata
+    pub fn parse(string: String) -> Option<Self> {
+        match string.as_str() {
+            "u16" => Some(TypeMetadata::u16),
+            "u32" => Some(TypeMetadata::u32),
+            "u64" => Some(TypeMetadata::u64),
+
+            "i16" => Some(TypeMetadata::i16),
+            "i32" => Some(TypeMetadata::i32),
+            "i64" => Some(TypeMetadata::i64),
+
+            "void" => Some(TypeMetadata::Void),
+
+            _ => None,
+        }
+    }
 }
 
 impl Display for Type {

@@ -323,7 +323,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ytest"
+name = "ylc"
 version = "0.1.0"
 dependencies = [
  "ygen",

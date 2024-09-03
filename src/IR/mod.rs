@@ -6,6 +6,8 @@ mod block;
 mod var;
 mod constant;
 mod nodes;
+pub mod parser;
+
 /// Stores all ir nodes and the ir trait
 pub mod ir {
     pub use super::nodes::*;
