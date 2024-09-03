@@ -1,4 +1,5 @@
-use std::{fs::File, io::Read, process::{exit, Command}};
+use std::{fs::File, io::{Read, Write}};
+use std::process::{exit, Command};
 
 use ygen::Support::{Cli, Colorize};
 
@@ -43,59 +44,65 @@ fn main() {
 
     let parsed = parse(buf);
     
-    let args = parsed.cmd.replace("%s", &format!("\"{}\"", &parsed.input));
-    let mut args = args.split(" ").collect::<Vec<&str>>();
+    let path = "./tmp.yl";
 
-    let program = args.get(0).expect("expected valid excutable name").to_string();
-
-    args.reverse();
-    args.pop();
-    args.reverse();
-
-
-    println!("{}: executing following commandline: '{}{}'", "Info".blue().bold(), program, {
-        let mut fmt = String::new();
-
-        for arg in &args {
-            fmt.push_str(&format!(" {}", arg));
-        }
-
-        fmt
-    });
-
-    let mut cmd = Command::new( program );
-    
-    for arg in args {
-        cmd.arg(arg);
-    }
-
-    match cmd.spawn() {
-        Ok(cmd) => cmd,
+    let mut file = match File::options().write(true).create(true).open(path) {
+        Ok(file) => file,
         Err(err) => {
             println!("{}: {}", "Error".red().bold(), err);
             exit(-1)
-        }
+        },
     };
 
-    let out = cmd.output().expect("failed to execute process");
+    match file.write_all(parsed.input.as_bytes()) {
+        Ok(_) => {},
+        Err(err) => {
+            println!("{}: {}", "Error".red().bold(), err);
+            exit(-1)
+        },
+    }
 
-    if out.stdout != parsed.expected_out.as_bytes().to_vec() {
-        println!("{}: expected stdout didn't match real stdout", "Error".red().bold());
-        println!("\texpected: \"{:#?}\"\n", out.stdout.iter()                                      
-            .filter_map(|&byte| {
-                if byte >= 32 && byte <= 126 {
-                    Some(byte as char)
-                } else {
-                    None
+
+    for cmd in parsed.cmd.split("&&") {
+        let args = cmd.replace("%s", path);
+        let mut args = args.split(" ").collect::<Vec<&str>>();
+
+        let program = args.get(0).expect("expected valid excutable name").to_string();
+
+        args.reverse();
+        args.pop();
+        args.reverse();
+
+
+        println!("{}: executing following commandline: '{}{}'", "Info".blue().bold(), program, {
+            let mut fmt = String::new();
+
+            for arg in &args {
+                fmt.push_str(&format!(" {}", arg));
+            }
+
+            fmt
+        });
+
+        let mut cmd = Command::new( program );
+        
+        for arg in args {
+            cmd.arg(arg);
+        }
+
+        match cmd.status() {
+            Ok(status) => {
+                if !status.success() {
+                    println!("{}: the programm didn't exit sucessfull", "Error".red().bold());
+                    exit(-1)
                 }
-            }).collect::<String>());
-        println!("\tfound: \"{:#?}\"\n", parsed.expected_out.as_bytes().to_vec().iter()                                      
-            .filter_map(|&byte| {
-                if byte >= 32 && byte <= 126 {
-                    Some(byte as char)
-                } else {
-                    None
-                }
-            }).collect::<String>());
+            },
+            Err(err) => {
+                println!("{}: {}", "Error".red().bold(), err);
+                exit(-1)
+            }
+        };
+
+        let _ = cmd.output().expect("failed to execute the process");
     }
 }

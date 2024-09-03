@@ -1,0 +1,1 @@
+const .const0 = "Hello World!\n"define void @main() { entry:    %0 = ptr .const0    %1 = call void printf ptr %0    ret void 0}declare void @printf( ptr %0, ... )Hello World!

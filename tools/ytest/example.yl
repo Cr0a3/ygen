@@ -1,4 +1,4 @@
-# RUN: cargo run -p ylc -- -in="%s" -input-is-str -o="out".o && gcc.o -o test.exe && ./a.exe
+# RUN: cargo run -p ylc -- -in="%s" -o="out".o && rm "%s" && gcc.o -o test.exe && ./a.exe 
 
 const .const0 = "Hello World!\n"
 
