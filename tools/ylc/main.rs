@@ -63,7 +63,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     if cli.opt("lex") {
-        println!("Tokens: {:#?}", lexer.out);
+        println!("Tokens: {:?}", lexer.out);
     }
 
 

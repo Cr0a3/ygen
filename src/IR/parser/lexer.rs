@@ -71,6 +71,30 @@ pub enum TokenType {
     Func(String),
 }
 
+impl TokenType {
+    pub(crate) fn name(&self) -> String {
+        match self {
+            TokenType::Dot => "dot",
+            TokenType::Const => "const",
+            TokenType::Comma => "comma",
+            TokenType::Var(_) => "var",
+            TokenType::Equal => "equal",
+            TokenType::LParam => "lparam",
+            TokenType::RParam => "rparam",
+            TokenType::LBracket => "lbracket",
+            TokenType::RBracket => "rbracket",
+            TokenType::LSquare => "lsquare",
+            TokenType::RSquare => "rsquare",
+            TokenType::Ident(_) => "ident",
+            TokenType::String(_) => "string",
+            TokenType::Int(_) => "int",
+            TokenType::Declare => "declare",
+            TokenType::Define => "define",
+            TokenType::Func(_) => "func",
+        }.to_string()
+    }
+}
+
 /// An ir token
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Token {
@@ -95,6 +119,8 @@ pub struct IrLexer {
     current: u64,
 
     loc: Loc,
+
+    no_pop: bool,
 
     keywords: HashMap<String, TokenType>,
 
@@ -129,11 +155,13 @@ impl IrLexer {
             },
 
             out: vec![],
+
+            no_pop: false,
         }
     }
 
     fn is_at_end(&self) -> bool {
-        self.current >= (self.input_stream.chars().count() - 1) as u64
+        self.current >= (self.input_stream.chars().count()) as u64
     }
 
     fn update_loc(&mut self) {
@@ -149,6 +177,9 @@ impl IrLexer {
     }
 
     fn advance(&mut self) -> Result<char, IrError> {
+        if !self.no_pop {
+            self.current += 1;
+        }
         self.current += 1;
         let peek = self.peek();
 
@@ -156,16 +187,22 @@ impl IrLexer {
 
         if let Some(peek) = peek {
             if peek == '\n' {
-                self.coloumn = 1;
+                self.coloumn = 0;
                 self.line_no += 1;
 
                 self.update_line_string();
             } else {
-                self.coloumn += 1;
+                if !self.no_pop {
+                    self.coloumn += 1;
+                }
                 out = peek;
             }
         } else {
             Err(IrError::OutOfChars)?
+        }
+
+        if self.no_pop {
+            self.no_pop = false;
         }
 
         self.loc.length = self.current - self.start - 1;
@@ -201,6 +238,7 @@ impl IrLexer {
             '(' => ty = Some(TokenType::LParam),
             '{' => ty = Some(TokenType::LBracket),
             '[' => ty = Some(TokenType::LSquare),
+
             ')' => ty = Some(TokenType::RParam),
             '}' => ty = Some(TokenType::RBracket),
             ']' => ty = Some(TokenType::RSquare),
@@ -261,6 +299,10 @@ impl IrLexer {
 
                 _ => looping = false,
             }
+
+            if looping {
+                self.advance()?;
+            }
         }
 
         Ok(TokenType::Var(out))
@@ -285,6 +327,10 @@ impl IrLexer {
                 '"' => looping = false,
 
                 _ => out.push(chr),
+            }
+
+            if looping {
+                self.advance()?;
             }
         }
 
@@ -343,7 +389,7 @@ impl IrLexer {
                 })?
             }
 
-            let chr = self.advance()?;
+            let chr = self.peek().unwrap();
 
             match chr {
                 '0'..='9' => string.push(chr),
@@ -351,6 +397,10 @@ impl IrLexer {
                 'b' => string.push('b'),
 
                 _ => looping = false,
+            }
+
+            if looping {
+                self.advance()?;
             }
         }
 
@@ -380,8 +430,6 @@ impl IrLexer {
     fn scan_func(&mut self) -> Result<TokenType, IrError> {
         let mut out = String::new();
 
-        out.push( self.peek().unwrap() );
-
         let mut looping = true;
 
         while looping {
@@ -392,17 +440,24 @@ impl IrLexer {
                 })?
             }
 
-            let chr = self.advance()?;
+            let chr = self.peek().unwrap();
 
             match chr {
-                '0'..='9' => out.push(chr),
-                'a'..='z' => out.push(chr),
-                'A'..='Z' => out.push(chr),
-                '_' => out.push(chr),
+                '0'..='9' => out.push( chr ),
+                'a'..='z' => out.push( chr ),
+                'A'..='Z' => out.push( chr ),
+                '@' => out.push('@'),
+                '_' => out.push( '_' ),
 
                 _ => looping = false,
             }
+
+            if looping {
+                self.advance()?;
+            }
         }
+
+        self.no_pop = true;
 
         Ok(TokenType::Func(out))
     }

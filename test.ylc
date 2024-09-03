@@ -1,7 +1,7 @@
-const .const0 = [ 72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33, ,]
+const const0 = [ 72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33, ,]
 define void @main() {
  entry:
-    %0 = ptr .const0
+    %0 = ptr const0
     %1 = call void printf ptr %0 
     ret void 0
 

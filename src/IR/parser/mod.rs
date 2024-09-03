@@ -56,19 +56,36 @@ pub enum IrError {
         loc: Loc,
         /// The box of the error
         err: Box<dyn Error>,
-    }
+    },
+
+    /// Expected token
+    ExpectedTokenButFoundAnUnexpectedOne{ 
+        /// the token which was found
+        found: lexer::Token, 
+        /// the token which was expected
+        expected: lexer::Token 
+    },
+
+    /// A unkown type
+    UnkownType(lexer::Token),
 }
 
 impl Display for IrError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", match self {
             IrError::UnexpectedToken(token) => {
-                let mut fab = Support::Error::new("", "", token.loc.line.to_string(), token.loc.coloumn.to_string());
+                let mut fab = Support::Error::new("unexpected token", "", token.loc.line.to_string(), token.loc.coloumn.to_string());
 
                 fab.deactivateLocationDisplay();
 
                 fab.setCodeLine(token.loc.line_string.to_string());
-                fab.addWhere("unexpected token", token.loc.coloumn, token.loc.length);
+                let mut length = token.loc.length;
+
+                if 0 == length {
+                    length = 1;
+                }
+
+                fab.addWhere("unexpected token", token.loc.coloumn, length);
 
                 fab.to_string()
             },
@@ -121,6 +138,36 @@ impl Display for IrError {
                 fab.deactivateLocationDisplay();
 
                 fab.to_string()
+            }
+            
+            IrError::ExpectedTokenButFoundAnUnexpectedOne{found, expected} => {
+                let mut fab = Support::Error::new("expected a specific token but found another one", "", found.loc.line.to_string(), found.loc.coloumn.to_string());
+
+                fab.deactivateLocationDisplay();
+
+                fab.setCodeLine(found.loc.line_string.to_string());
+
+                let mut length = found.loc.length;
+
+                if 0 == length {
+                    length = 1;
+                }
+
+                fab.addWhere(format!("expected following token: {:?} but found {:?}", expected.typ.name(), found.typ), found.loc.coloumn, length);
+
+                fab.to_string()                
+            }
+            
+            IrError::UnkownType(typ) => {
+                let mut fab = Support::Error::new("unknown type", "", typ.loc.line.to_string(), typ.loc.coloumn.to_string());
+
+                fab.deactivateLocationDisplay();
+
+                fab.setCodeLine(typ.loc.line_string.to_string());
+                fab.addWhere("unkown type", typ.loc.coloumn, typ.loc.length);
+
+                fab.to_string()
+
             }
         })
     }
