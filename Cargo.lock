@@ -325,6 +325,9 @@ dependencies = [
 [[package]]
 name = "ytest"
 version = "0.1.0"
+dependencies = [
+ "ygen",
+]
 
 [[package]]
 name = "zerocopy"
