@@ -1,12 +1,17 @@
 # Ygen - Yet another Code Generator
-Ygen is a libary to build backends for compilers.
+![GitHub branch check runs](https://img.shields.io/github/check-runs/Cr0a3/ygen/main?style=flat-square&label=build)
+![Crates.io Version](https://img.shields.io/crates/v/Ygen?style=flat-square)
+![GitHub Repo stars](https://img.shields.io/github/stars/cr0a3/ygen?style=flat-square)
 
-Its primary focus is having an really easy to use API like LLVMSwift (ygen is also implemented easily so everybody can add their own ir nodes and the compilation backends).
+Ygen is a libary for building compiler backends.
 
-It has some advantages over llvm like being more memory safe cuz it's written in rust.
-But it also lacks many ir nodes, usable optimization techniques, tools and contributours.
+It provides easy to use apis for generating ygen-ir, which is also lowerable to machine code using easy to use class method.
 
-The IR doesn't differ to much from LLVMs.
+The main focus is code generation but it also has support classes like for coloring.
+
+> [!WARNING]
+> This project is still early in its developement. Bugs and miscompilations are expected. DO NOT USE THE PROJECT FOR NOT TOY COMPILERS
+
 
 ### Contributions
 
