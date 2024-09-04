@@ -21,12 +21,17 @@ jobs:
           node-version: '18'  # Specify the Node.js version
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          cd web
+          npm install
 
       - name: Build Next.js app
-        run: npm run build
+        run: |
+          cd web
+          npm run build
 
       - name: Deploy to Vercel
         run: |
+          cd web
           npm install -g vercel
           vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
