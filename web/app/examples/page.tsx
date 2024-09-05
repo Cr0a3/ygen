@@ -1,6 +1,5 @@
 import { NavBar, PageHeader } from "@/components/nav";
 import { InfoBox } from "@/components/infoBox";
-import { CodeBlock } from "@/components/code";
 
 export default function Page() {
     return (

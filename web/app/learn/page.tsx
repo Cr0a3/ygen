@@ -5,7 +5,7 @@ import { CodeBlock } from "@/components/code";
 export default function Page() {
     return (
     <>
-    <div className="top-0 h-full w-full">
+    <div className="top-0 h-full w-full mb-16">
 
       <div className="max-w-full top-0 m-4 flex w-fit">
         <NavBar />
@@ -37,7 +37,7 @@ export default function Page() {
                 <p className="pb-5">
                 Every language has a ast which represents the <code>expressions</code> and <code>statements</code>.
                 For our language we will have following statements:
-                <p className="pb-5" />
+                </p>
 <CodeBlock lang={"Rust"}
 code={`#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Statement {  
@@ -53,7 +53,7 @@ pub enum Statement {
     RetStmt{
         to_return: Expr,
     },
-    
+
     ConstStmt{
         name: String,
         extern: bool,
@@ -61,7 +61,6 @@ pub enum Statement {
         data: Vec<Expr>,
     },
 }`}/>
-                </p>
             </span>
         </div>
       </main>
