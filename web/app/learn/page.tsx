@@ -41,7 +41,25 @@ export default function Page() {
 <CodeBlock lang={"Rust"}
 code={`#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Statement {  
-    FnStmt(FnStmt),
+    FnStmt{
+        name: String,
+        extern: bool,
+        import: bool,
+
+        args: Vec<Expr>,
+        body: Vec<Statement>,
+    },
+
+    RetStmt{
+        to_return: Expr,
+    },
+    
+    ConstStmt{
+        name: String,
+        extern: bool,
+        import: bool,
+        data: Vec<Expr>,
+    },
 }`}/>
                 </p>
             </span>
