@@ -1,3 +1,5 @@
+"use client";
+
 import {
     HoverCard,
     HoverCardContent,
@@ -22,107 +24,76 @@ import {
 import React from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-
-
-const components: { title: string; href: string; description: string }[] = [
-    {
-        title: "Alert Dialog",
-        href: "/docs/primitives/alert-dialog",
-        description:
-            "A modal dialog that interrupts the user with important content and expects a response.",
-    },
-]
+import { useState } from "react";
 
 export const NavBar = () => {
+    let [isOpen, setIsOpen] = useState(false);
+
+    const toggleMenu = () => {
+        setIsOpen(!isOpen);
+    };
+
     return (
-        <NavigationMenu>
-        <NavigationMenuList>
-          <NavigationMenuItem>
-            <NavigationMenuTrigger>Getting started</NavigationMenuTrigger>
-            <NavigationMenuContent>
-              <ul className="grid gap-3 p-6 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                <li className="row-span-3">
-                  <NavigationMenuLink asChild>
-                    <a
-                      className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                      href="/"
+        <div className="top-0 left-0 border-0">
+            <nav className="relative">
+                <div className="flex items-center justify-between p-4 md:p-6">
+                    <button
+                        onClick={toggleMenu}
+                        className="block md:hidden focus:outline-none"
                     >
-                      <div className="mb-2 mt-4 text-lg font-medium">
-                        ygen
-                      </div>
-                      <p className="text-sm leading-tight text-muted-foreground">
-                        The future code generation libary
-                      </p>
-                    </a>
-                  </NavigationMenuLink>
-                </li>
-                <ListItem href="/docs" title="Introduction">
-                  Re-usable components built using Radix UI and Tailwind CSS.
-                </ListItem>
-                <ListItem href="/docs/installation" title="Installation">
-                  How to install dependencies and structure your app.
-                </ListItem>
-                <ListItem href="/docs/primitives/typography" title="Typography">
-                  Styles for headings, paragraphs, lists...etc
-                </ListItem>
-              </ul>
-            </NavigationMenuContent>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <NavigationMenuTrigger>Components</NavigationMenuTrigger>
-            <NavigationMenuContent>
-              <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
-                {components.map((component) => (
-                  <ListItem
-                    key={component.title}
-                    title={component.title}
-                    href={component.href}
-                  >
-                    {component.description}
-                  </ListItem>
-                ))}
-              </ul>
-            </NavigationMenuContent>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <Link href="/docs" legacyBehavior passHref>
-              <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                Documentation
-              </NavigationMenuLink>
-            </Link>
-          </NavigationMenuItem>
-        </NavigationMenuList>
-      </NavigationMenu>
+                        <svg
+                            className="w-6 h-6"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M4 6h16M4 12h16m-7 6h7"
+                            />
+                        </svg>
+                    </button>
+
+                    <NavigationMenu
+                        className={`${isOpen ? "block" : "hidden"
+                            } absolute top-16 left-0 w-full bg-white shadow-md md:static md:block md:w-auto`}
+                    >
+                        <NavigationMenuList className="flex flex-col md:flex-row">
+                            <NavigationMenuItem>
+                                <Link href="/" legacyBehavior passHref>
+                                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                                        Home
+                                    </NavigationMenuLink>
+                                </Link>
+                            </NavigationMenuItem>
+
+                            <NavigationMenuItem>
+                                <Link href="/learn" legacyBehavior passHref>
+                                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                                        Learn
+                                    </NavigationMenuLink>
+                                </Link>
+                            </NavigationMenuItem>
+
+                            <NavigationMenuItem>
+                                <Link href="/docs" legacyBehavior passHref>
+                                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                                        Docs
+                                    </NavigationMenuLink>
+                                </Link>
+                            </NavigationMenuItem>
+                        </NavigationMenuList>
+                    </NavigationMenu>
+                </div>
+            </nav>
+        </div>
     );
-}
+};
 
-const ListItem = React.forwardRef<
-  React.ElementRef<"a">,
-  React.ComponentPropsWithoutRef<"a">
->(({ className, title, children, ...props }, ref) => {
-  return (
-    <li>
-      <NavigationMenuLink asChild>
-        <a
-          ref={ref}
-          className={cn(
-            "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-            className
-          )}
-          {...props}
-        >
-          <div className="text-sm font-medium leading-none">{title}</div>
-          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-            {children}
-          </p>
-        </a>
-      </NavigationMenuLink>
-    </li>
-  )
-})
-ListItem.displayName = "ListItem"
-
-export const PageHeader = ({ page }: { page: string }) => {
+export const PageHeader = ({ page, small }: { page: string, small: boolean }) => {
     return (
         <div>
             {/*<div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
@@ -156,7 +127,9 @@ export const PageHeader = ({ page }: { page: string }) => {
             </div>*/}
 
             <div className="p-16 lg:p-4 relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-                <p className="text-9xl font-bold">{page}</p>
+                <div className={`${small ? 'text-7xl' : 'text-9xl'} font-bold`}>
+                    {page}
+                </div>
             </div>
         </div>
     );

@@ -1,3 +1,4 @@
+'use client';
 import Link from "next/link";
 
 export const InfoBox = ({ name, descr, link }: { name: string, descr: string, link: string }) => {

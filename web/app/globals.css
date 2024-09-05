@@ -86,3 +86,11 @@
     @apply bg-background text-foreground;
   }
 }
+
+code {
+  @apply bg-gray-200  rounded px-1 font-mono border-2;
+}
+
+h3 {
+  @apply text-3xl font-bold text-blue-300;
+}
