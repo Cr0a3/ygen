@@ -89,9 +89,6 @@ impl IrParser {
 
         self.input.pop_front();
 
-        self.expect(TokenType::LBracket)?;
-        self.input.pop_front();
-
         loop {
             let current = self.current_token()?;
 
@@ -117,6 +114,12 @@ impl IrParser {
 
             args.insert(var_name, var_type );
         }
+
+        self.input.pop_front(); // the closing param )
+
+        
+        self.expect(TokenType::LBracket)?;
+        self.input.pop_front();
 
         loop {
             let current = self.current_token()?;
