@@ -1,6 +1,4 @@
-use std::collections::HashMap;
-
-use crate::IR::{Const, Function};
+use crate::IR::{Const, Function, Module};
 
 use super::parser::IrStmt;
 
@@ -9,6 +7,9 @@ use super::parser::IrStmt;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IrGen {
     input: Vec<IrStmt>,
+
+    funcs: Vec<Function>,
+    consts: Vec<Const>,
 }
 
 impl IrGen {
@@ -16,18 +17,34 @@ impl IrGen {
     pub fn new(input: Vec<IrStmt>) -> Self {
         Self {
             input: input,
+
+            funcs: vec![],
+            consts: vec![],
         }
     }
 
     /// generates the functions
-    #[allow(unused)]
-    pub fn gen_funcs(&mut self, list: &mut HashMap<String, Function>) {
-        
+    pub fn gen_funcs(&mut self) {
+        todo!()
     }
 
     /// generates the consts
-    #[allow(unused)]
-    pub fn gen_consts(&mut self, list: &mut HashMap<String, Const>) {
-        
+    pub fn gen_consts(&mut self) {
+        todo!()   
+    }
+
+    /// emits the generated functions, constants, .. into a usable module
+    pub fn module(&self) -> Module {
+        let mut module = Module();
+
+        for func in &self.funcs {
+            module.add_raw( func.to_owned() );
+        }
+
+        for constant in &self.consts {
+            module.add_raw_const( constant.to_owned() );
+        }
+
+        module
     }
 }

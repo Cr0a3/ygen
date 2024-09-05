@@ -333,6 +333,7 @@ dependencies = [
 name = "ytest"
 version = "0.1.0"
 dependencies = [
+ "unescaper",
  "ygen",
 ]
 

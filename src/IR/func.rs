@@ -61,7 +61,7 @@ impl FunctionType {
 }
 
 /// A ir function with a known variable and arg size and count
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Function {
     /// The function type
     pub ty: FunctionType,

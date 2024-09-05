@@ -4,6 +4,7 @@
 *.c
 *.exe
 *.out
+tmp.yl
 
 web/node_modules
 web/.pnp

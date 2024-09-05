@@ -23,12 +23,12 @@ pub fn parse(input: String) -> Parsed {
         }
         
         if line.trim_start().starts_with("# STDOUT:") {
-            out.cmd += &line.replace("# STDOUT:", "");
+            out.expected_out += &line.replace("# STDOUT:", "");
             append = false;
         }
 
         if append {
-            out.input.push_str(line);
+            out.input.push_str(&format!("{}\n", line));
         }
     }
 

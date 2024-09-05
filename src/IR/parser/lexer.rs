@@ -111,6 +111,7 @@ pub struct IrLexer {
     input_stream: String,
 
     line: String,
+    lines: Vec<String>,
     line_no: u64,
 
     coloumn: u64,
@@ -137,10 +138,19 @@ impl IrLexer {
         keys.insert("define".into(), TokenType::Define);
         keys.insert("const".into(), TokenType::Const);
 
+        
+        let lines = input
+            .split('\n')
+            .map(|x| x.to_string())
+            .collect::<Vec<String>>();
+
         Self {
             input_stream: input,
             line: String::new(),
             line_no: 1,
+
+            lines: lines,
+
             coloumn: 1,
             start: 0,
             current: 0,
@@ -171,8 +181,7 @@ impl IrLexer {
     }
 
     fn update_line_string(&mut self) {
-        let lines = self.input_stream.split('\n').collect::<Vec<&str>>();
-        let line = lines.get((self.line_no - 1) as usize);
+        let line = self.lines.get((self.line_no - 1) as usize);
         self.line = line.expect("ran out of lines").to_string();
     }
 
@@ -180,7 +189,7 @@ impl IrLexer {
         if !self.no_pop {
             self.current += 1;
         }
-        self.current += 1;
+        //self.current += 1;
         let peek = self.peek();
 
         let mut out = ' ';
@@ -205,7 +214,12 @@ impl IrLexer {
             self.no_pop = false;
         }
 
-        self.loc.length = self.current - self.start - 1;
+        if self.current != self.start {
+            self.loc.length = self.current - self.start - 1;
+        } else {
+            self.loc.length = 1;
+        }
+
 
         Ok(out)
     }
@@ -231,8 +245,7 @@ impl IrLexer {
 
     fn lex_tok(&mut self) -> Result<(), IrError> {
         let mut ty = None;
-        let char = self.advance()?;
-        match char {
+        match self.advance()? {
             '\n' | '\r' | '\t' | ' ' => {},
 
             '(' => ty = Some(TokenType::LParam),
@@ -317,7 +330,7 @@ impl IrLexer {
             if self.is_at_end() {
                 Err(IrError::UndeterminedTokenSequence { 
                     loc: self.loc.clone(), 
-                    expected: String::from(r#"", ' for one valid strings"#) 
+                    expected: String::from(r#"" or ' for valid strings"#) 
                 })?
             }
 

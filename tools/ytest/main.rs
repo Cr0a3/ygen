@@ -44,7 +44,13 @@ fn main() {
 
     let parsed = parse(buf);
     
-    let path = "./tmp.yl";
+    let path_str = "./tmp.yl";
+
+    let path = std::path::PathBuf::from(path_str);
+
+    if path.exists() {
+        let _ = std::fs::remove_file(&path);
+    }
 
     let mut file = match File::options().write(true).create(true).open(path) {
         Ok(file) => file,
@@ -62,9 +68,9 @@ fn main() {
         },
     }
 
-
     for cmd in parsed.cmd.split("&&") {
-        let args = cmd.replace("%s", path);
+        let args = cmd.replace("%s", path_str);
+        let args = unescaper::unescape(&args).unwrap();
         let mut args = args.split(" ").collect::<Vec<&str>>();
 
         let program = args.get(0).expect("expected valid excutable name").to_string();
@@ -87,8 +93,28 @@ fn main() {
         let mut cmd = Command::new( program );
         
         for arg in args {
-            cmd.arg(arg);
+            if arg == "" {
+                break;
+            }
+
+            if arg == " " {
+                continue;
+            }
+
+            cmd.arg( arg );
         }
+
+        /*
+        WOULD PRINT OUT STDOUT
+        let out = cmd.output().expect("failed to execute the process");
+        println!("{}", unescaper::unescape(
+            out.stdout.iter()                                      
+            .filter_map(|&byte| {
+                Some(byte as char)
+            })
+            .collect::<String>()
+            .as_str()
+        ).unwrap());*/
 
         match cmd.status() {
             Ok(status) => {
@@ -102,7 +128,5 @@ fn main() {
                 exit(-1)
             }
         };
-
-        let _ = cmd.output().expect("failed to execute the process");
     }
 }

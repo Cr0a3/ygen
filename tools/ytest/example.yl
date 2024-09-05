@@ -1,15 +1,14 @@
-# RUN: cargo run -p ylc -- -in="%s" -o="out".o && rm "%s" && gcc.o -o test.exe && ./a.exe 
+# RUN: cargo run -p ylc -- -in=%s -o=out.o && rm %s && gcc.o -o test.exe && ./a.exe 
 
-const .const0 = "Hello World!\n"
+const const0 = "Hello World!\n"
 
 define void @main() {
  entry:
-    %0 = ptr .const0
+    %0 = ptr const0
     %1 = call void printf ptr %0
     ret void 0
 
 }
 declare void @printf( ptr %0, ... )
 
-# STDOUT:
-Hello World!
+# STDOUT: Hello World!

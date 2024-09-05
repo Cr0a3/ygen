@@ -2,7 +2,6 @@
 //! It defines the Lexer and the Parser
 //! Additionaly it provides an easy to use function which is a wrapper around the lexing, parsing unit
 
-use std::collections::HashMap;
 use std::{error::Error, fmt::Display};
 use lexer::Loc;
 
@@ -180,9 +179,6 @@ impl Module {
     pub fn parse<T: Into<String>>(input: T) -> Result<Self, IrError> {
         let input = input.into();
 
-        let mut functions = HashMap::new();
-        let mut consts = HashMap::new();
-
         let mut lexer = lexer::IrLexer::new(input);
         lexer.lex()?;
 
@@ -193,12 +189,9 @@ impl Module {
 
         let mut gen = gen::IrGen::new(parser.out);
 
-        gen.gen_funcs(&mut functions);
-        gen.gen_consts(&mut consts);
+        gen.gen_funcs();
+        gen.gen_consts();
 
-        Ok(Module {
-            funcs: functions,
-            consts: consts,
-        })
+        Ok(gen.module())
     }
 }
