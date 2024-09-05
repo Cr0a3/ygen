@@ -65,6 +65,14 @@ pub enum IrError {
         expected: lexer::Token 
     },
 
+    /// unkown instruction
+    UnkownInstrinc{
+        /// the location
+        loc: Loc,
+        /// what was found
+        found: String,
+    },
+
     /// A unkown type
     UnkownType(lexer::Token),
 }
@@ -167,6 +175,17 @@ impl Display for IrError {
 
                 fab.to_string()
 
+            }
+            
+            IrError::UnkownInstrinc { loc, found } => {
+                let mut fab = Support::Error::new(format!("unknown instric: {}", found), "", loc.line.to_string(), loc.coloumn.to_string());
+
+                fab.deactivateLocationDisplay();
+
+                fab.setCodeLine(loc.line_string.to_string());
+                fab.addWhere("unkown ir instr", loc.coloumn, loc.length);
+
+                fab.to_string()
             }
         })
     }
