@@ -72,6 +72,9 @@ pub enum TokenType {
 
     /// @func_name
     Func(String),
+
+    /// block:
+    Block(String),
 }
 
 impl TokenType {
@@ -95,6 +98,7 @@ impl TokenType {
             TokenType::Define => "define",
             TokenType::Func(_) => "func",
             TokenType::TripleDot => "...",
+            TokenType::Block(_) => "block",
         }.to_string()
     }
 }
@@ -155,7 +159,7 @@ impl IrLexer {
 
             lines: lines,
 
-            coloumn: 1,
+            coloumn: 0,
             start: 0,
             current: 0,
 
@@ -221,7 +225,7 @@ impl IrLexer {
         }
 
         if self.current != self.start {
-            self.loc.length = self.current - self.start - 1;
+            self.loc.length = self.current - self.start;
         } else {
             self.loc.length = 1;
         }
@@ -341,8 +345,6 @@ impl IrLexer {
                 _ => looping = false,
             }
 
-            println!("{}", chr);
-
             if looping {
                 self.advance()?;
             }
@@ -386,6 +388,7 @@ impl IrLexer {
         let mut out = String::new();
 
         let mut looping = true;
+        let mut block = false;
 
         while looping {
             if self.is_at_end() {
@@ -403,6 +406,10 @@ impl IrLexer {
                 'A'..='Z' => out.push(chr),
                 '_' => out.push(chr),
 
+                ':' => {
+                    looping = false;
+                    block = true;
+                }
                 
                 _ => looping = false,
             };
@@ -412,7 +419,13 @@ impl IrLexer {
             }
         }
 
-        self.no_pop = true;
+        if !block {
+            self.no_pop = true;
+        }
+
+        if block {
+            return Ok(TokenType::Block(out));
+        }
 
         if let Some(keyword) = self.keywords.get(&out) {
             Ok(keyword.clone())

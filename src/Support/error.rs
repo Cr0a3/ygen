@@ -44,7 +44,7 @@ impl Error {
     pub fn addWhere<T: ToString + Clone + Display + Into<String>>(&mut self, msg: T, col: u64, size: u64) {
         let msg = msg.to_string();
         let offset = format!("  {} | ", self.line).chars().count() as u64;
-        self.fmtLines.push(format!("{}{} {}", String::new().pad_to_len((offset + col + 1) as isize), "^".repeat(size as usize).red(), msg.gray()));
+        self.fmtLines.push(format!("{}{} {}", String::new().pad_to_len((offset + col) as isize), "^".repeat(size as usize).red(), msg.gray()));
     }
 
     /// Prints the error to stderr

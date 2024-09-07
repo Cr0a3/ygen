@@ -2,7 +2,7 @@ use std::collections::{HashMap, VecDeque};
 
 use crate::prelude::Ir;
 use crate::Obj::Linkage;
-use crate::IR::{self, ir, Const, Type, TypeMetadata, Var};
+use crate::IR::{ir, Const, FnTy, Function, Type, TypeMetadata, Var};
 
 use super::lexer::{Loc, Token, TokenType};
 use super::IrError;
@@ -36,7 +36,7 @@ pub enum IrStmt {
     Func{
         name: String,
         ret: TypeMetadata, 
-        args: HashMap<String, TypeMetadata>, 
+        args: (HashMap<String, TypeMetadata>, /*unlim args*/bool), 
         body: HashMap<String, IrBlock>,
         scope: Linkage,
     },
@@ -115,10 +115,18 @@ impl IrParser {
 
         self.input.pop_front();
 
+        let mut unlim = false;
+
         loop {
             let current = self.current_token()?;
 
             if TokenType::RParam == current.typ {
+                break;
+            }
+
+            if TokenType::TripleDot == current.typ {
+                self.input.pop_front();
+                unlim = true;
                 break;
             }
 
@@ -139,15 +147,18 @@ impl IrParser {
             };
 
             args.insert(var_name, var_type );
+
+            self.input.pop_front();
         }
 
+        self.expect(TokenType::RParam)?;
         self.input.pop_front(); // the closing param )
 
         Ok(IrStmt::Func { 
             name: name, 
             body: HashMap::new(),
             scope: Linkage::Extern,
-            args: args,
+            args: (args, unlim),
             ret: ret,
         })
     }
@@ -220,10 +231,12 @@ impl IrParser {
             body.insert( name, block );
         }
 
+        self.input.pop_front(); // }
+
         Ok(IrStmt::Func { 
             name: name, 
             body: body,
-            args: args,
+            args: (args, false),
             scope: Linkage::Extern,
             ret: ret,
         })
@@ -289,22 +302,17 @@ impl IrParser {
     }
 
     fn parse_block(&mut self) -> Result<(String, IrBlock), IrError> {
-        self.expect(TokenType::Ident(String::new()))?;
+        self.expect(TokenType::Block(String::new()))?;
 
         let name;
         let loc;
         let curr_token = self.current_token()?;
-        if let TokenType::Ident(ident) = &curr_token.typ {
+        if let TokenType::Block(ident) = &curr_token.typ {
             name = ident.to_string();
             loc = curr_token.loc.clone();
         } else { unreachable!() }
 
         self.input.pop_front();
-
-        self.expect(TokenType::Dot)?;
-        self.input.pop_front();
-
-        println!("{:?}", self.input);
 
         let mut body = vec![];
 
@@ -312,11 +320,11 @@ impl IrParser {
         loop {
             let curr = self.current_token()?;
 
-            if TokenType::RParam == curr.typ {
+            if TokenType::RBracket == curr.typ {
                 break;
             }
 
-            if let TokenType::Ident(_) = curr.typ {
+            if let TokenType::Block(_) = curr.typ {
                 break;
             }
 
@@ -364,7 +372,9 @@ impl IrParser {
                     "ret" => self.parse_ret()?,
                     _ => Err(IrError::UnkownInstrinc{loc: curr.loc.clone(), found: instrinc })?,
                 }
-            } else { todo!("error handling") }
+            } else {
+                Err(IrError::UnexpectedToken(curr.clone()))?
+             }
         };
 
         let loc = curr.loc;
@@ -377,7 +387,30 @@ impl IrParser {
     }
 
     fn parse_ret(&mut self) -> Result<Box<dyn Ir>, IrError> {
-        todo!()
+        self.input.pop_front(); // ret
+
+        let out_ty = self.parse_type()?;
+        self.input.pop_front();
+
+        let curr = self.current_token()?;
+
+        let out:  Result<Box<dyn Ir>, IrError> = if let TokenType::Int(numeral) = &curr.typ {
+            Ok(ir::Return::new(Type::from_int(out_ty, *numeral)))
+        } else if let TokenType::Var(var) = &curr.typ {
+            Ok(ir::Return::new(Var {
+                name: var.to_owned(),
+                ty: out_ty,
+            }))
+        } else {
+            Err(IrError::UndeterminedTokenSequence { 
+                loc: curr.loc.clone(), 
+                expected: "ints, vars - for valid return nodes".to_owned(), 
+            })
+        };
+
+        self.input.pop_front();
+
+        out
     }
 
     fn parse_const_assing(&mut self, var: String, ty: TypeMetadata) -> Result<Box<dyn Ir>, IrError> {
@@ -410,7 +443,57 @@ impl IrParser {
     }
 
     fn parse_call(&mut self, var: String) -> Result<Box<dyn Ir>, IrError> {
-        todo!()
+        self.input.pop_front(); // call
+
+        let func_ty = self.parse_type()?;
+        self.input.pop_front();
+
+        self.expect(TokenType::Ident(String::from("func name")))?;
+
+        let target = &self.current_token()?;
+
+        let target = if let TokenType::Ident(ident) = &target.typ {
+            ident.to_owned()
+        } else { unreachable!() };
+
+        self.input.pop_front(); // function name
+
+        let out = Var {
+            name: format!("{var}"),
+            ty: func_ty
+        };
+
+        let mut args = vec![];
+
+        loop {
+            let ty = if let TokenType::Ident(ty) = &self.current_token()?.typ {
+                if let Some(ty) = TypeMetadata::parse(ty.to_owned()) {
+                    ty
+                } else {
+                    break
+                }
+            } else { break; };
+
+            self.input.pop_front();
+
+            let var = self.current_token()?;
+
+            if let TokenType::Var(name) = &var.typ {
+                args.push(Var {
+                    name: name.to_string(),
+                    ty: ty
+                });
+            }
+
+            self.input.pop_front();
+        }
+
+        Ok(ir::Call::new(Function { 
+            ty: FnTy(vec![], func_ty),
+            name: target, 
+            linkage: Linkage::External, 
+            blocks: VecDeque::new(), 
+        }, args, out))
     }
 
     fn parse_data_array(&mut self) -> Result<Vec<u8>, IrError> {
