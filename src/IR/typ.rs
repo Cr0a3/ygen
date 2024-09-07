@@ -62,6 +62,20 @@ impl Type {
             Type::Void => 0,
         }
     }
+
+    /// puts the intenger into a type respecting the type metadata
+    pub fn from_int(ty: TypeMetadata, value: i64) -> Self {
+        match ty {
+            TypeMetadata::u16 => Type::u16(value as u16),
+            TypeMetadata::u32 => Type::u32(value as u32),
+            TypeMetadata::u64 => Type::u64(value as u64),
+            TypeMetadata::i16 => Type::i16(value as i16),
+            TypeMetadata::i32 => Type::i32(value as i32),
+            TypeMetadata::i64 => Type::i64(value as i64),
+            TypeMetadata::ptr => Type::ptr(value as i64),
+            TypeMetadata::Void => Type::Void,
+        }
+    }
 }
 
 impl TypeMetadata {
@@ -106,6 +120,8 @@ impl TypeMetadata {
             "i16" => Some(TypeMetadata::i16),
             "i32" => Some(TypeMetadata::i32),
             "i64" => Some(TypeMetadata::i64),
+
+            "ptr" => Some(TypeMetadata::ptr),
 
             "void" => Some(TypeMetadata::Void),
 

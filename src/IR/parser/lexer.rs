@@ -19,8 +19,11 @@ pub struct Loc {
 /// The token type for parsing ir
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TokenType {
-    /// .
+    /// :
     Dot,
+
+    /// ...
+    TripleDot,
 
     /// const
     Const,
@@ -74,23 +77,24 @@ pub enum TokenType {
 impl TokenType {
     pub(crate) fn name(&self) -> String {
         match self {
-            TokenType::Dot => "dot",
+            TokenType::Dot => ":",
             TokenType::Const => "const",
-            TokenType::Comma => "comma",
+            TokenType::Comma => ",",
             TokenType::Var(_) => "var",
-            TokenType::Equal => "equal",
-            TokenType::LParam => "lparam",
-            TokenType::RParam => "rparam",
-            TokenType::LBracket => "lbracket",
-            TokenType::RBracket => "rbracket",
-            TokenType::LSquare => "lsquare",
-            TokenType::RSquare => "rsquare",
+            TokenType::Equal => "=",
+            TokenType::LParam => "(",
+            TokenType::RParam => ")",
+            TokenType::LBracket => "{",
+            TokenType::RBracket => "}",
+            TokenType::LSquare => "[",
+            TokenType::RSquare => "]",
             TokenType::Ident(_) => "ident",
             TokenType::String(_) => "string",
             TokenType::Int(_) => "int",
             TokenType::Declare => "declare",
             TokenType::Define => "define",
             TokenType::Func(_) => "func",
+            TokenType::TripleDot => "...",
         }.to_string()
     }
 }
@@ -188,18 +192,20 @@ impl IrLexer {
     fn advance(&mut self) -> Result<char, IrError> {
         if !self.no_pop {
             self.current += 1;
-        }
-        //self.current += 1;
+        }    
+        
         let peek = self.peek();
 
         let mut out = ' ';
 
         if let Some(peek) = peek {
             if peek == '\n' {
-                self.coloumn = 0;
-                self.line_no += 1;
+                if !self.no_pop {
+                    self.coloumn = 0;
+                    self.line_no += 1;
 
-                self.update_line_string();
+                    self.update_line_string();
+                }
             } else {
                 if !self.no_pop {
                     self.coloumn += 1;
@@ -228,9 +234,10 @@ impl IrLexer {
         self.input_stream.chars().nth((self.current - 1) as usize)
     }
 
+
     /// "lexes" the input
-    pub fn lex(&mut self) -> Result<(), IrError> {
-        self.update_line_string();
+    pub fn lex(&mut self) -> Result<(), IrError> { 
+        self.advance()?;
 
         while !self.is_at_end() {
             self.update_loc();
@@ -245,7 +252,8 @@ impl IrLexer {
 
     fn lex_tok(&mut self) -> Result<(), IrError> {
         let mut ty = None;
-        match self.advance()? {
+        let peek = self.peek().unwrap();
+        match peek {
             '\n' | '\r' | '\t' | ' ' => {},
 
             '(' => ty = Some(TokenType::LParam),
@@ -256,7 +264,7 @@ impl IrLexer {
             '}' => ty = Some(TokenType::RBracket),
             ']' => ty = Some(TokenType::RSquare),
 
-            '.' => ty = Some(TokenType::Dot),
+            ':' => ty = Some(TokenType::Dot),
             ',' => ty = Some(TokenType::Comma),
 
             '=' => ty = Some(TokenType::Equal),
@@ -264,6 +272,24 @@ impl IrLexer {
             '%' => ty = Some(self.scan_var_name()?),
 
             '"' => ty = Some(self.scan_string()?),
+
+            '.' => {
+                self.advance()?;
+                if let '.' = self.peek().unwrap() {} else {
+                    Err(IrError::UnexpectedCharacter { 
+                        chr: self.peek().unwrap(), 
+                        loc: self.loc.clone() 
+                    })?
+                }
+                self.advance()?;
+                if let '.' = self.peek().unwrap() {} else {
+                    Err(IrError::UnexpectedCharacter { 
+                        chr: self.peek().unwrap(), 
+                        loc: self.loc.clone() 
+                    })?
+                }
+                ty = Some(TokenType::TripleDot)
+            },
 
             'a'..='z' | 'A'..='Z' | '_' => ty = Some(self.scan_ident()?),
 
@@ -284,13 +310,15 @@ impl IrLexer {
             });
         }
 
+        self.advance()?;
+
         Ok(())
     }
 
     fn scan_var_name(&mut self) -> Result<TokenType, IrError> {
         let mut out = String::new();
 
-        out.push( self.peek().unwrap() );
+        self.advance()?;
 
         let mut looping = true;
 
@@ -302,7 +330,7 @@ impl IrLexer {
                 })?
             }
 
-            let chr = self.advance()?;
+            let chr = self.peek().unwrap();
 
             match chr {
                 '0'..='9' => out.push(chr),
@@ -313,10 +341,14 @@ impl IrLexer {
                 _ => looping = false,
             }
 
+            println!("{}", chr);
+
             if looping {
                 self.advance()?;
             }
         }
+
+        self.no_pop = false;
 
         Ok(TokenType::Var(out))
     }
@@ -379,6 +411,8 @@ impl IrLexer {
                 self.advance()?;
             }
         }
+
+        self.no_pop = true;
 
         if let Some(keyword) = self.keywords.get(&out) {
             Ok(keyword.clone())

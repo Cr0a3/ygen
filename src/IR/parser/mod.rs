@@ -171,7 +171,7 @@ impl Display for IrError {
                 fab.deactivateLocationDisplay();
 
                 fab.setCodeLine(typ.loc.line_string.to_string());
-                fab.addWhere("unkown type", typ.loc.coloumn, typ.loc.length);
+                fab.addWhere(format!("unkown type: {:?}", typ.typ), typ.loc.coloumn, typ.loc.length);
 
                 fab.to_string()
 

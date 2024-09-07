@@ -2,10 +2,30 @@ use std::collections::{HashMap, VecDeque};
 
 use crate::prelude::Ir;
 use crate::Obj::Linkage;
-use crate::IR::TypeMetadata;
+use crate::IR::{self, ir, Const, Type, TypeMetadata, Var};
 
 use super::lexer::{Loc, Token, TokenType};
 use super::IrError;
+
+#[derive(Debug, Clone, Eq)]
+#[allow(missing_docs)]
+pub struct IrInstr {
+    loc: Loc,
+    inst: Box<dyn Ir>,
+}
+
+impl PartialEq for IrInstr {
+    fn eq(&self, other: &Self) -> bool {
+        self.loc == other.loc && &self.inst == &other.inst
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[allow(missing_docs)]
+pub struct IrBlock {
+    loc: Loc,
+    body: Vec<IrInstr>,
+}
 
 /// An ir statement
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -17,7 +37,7 @@ pub enum IrStmt {
         name: String,
         ret: TypeMetadata, 
         args: HashMap<String, TypeMetadata>, 
-        body: Vec<(Box<dyn Ir>, Loc)>,
+        body: HashMap<String, IrBlock>,
         scope: Linkage,
     },
     /// a constant
@@ -125,7 +145,7 @@ impl IrParser {
 
         Ok(IrStmt::Func { 
             name: name, 
-            body: vec![],
+            body: HashMap::new(),
             scope: Linkage::Extern,
             args: args,
             ret: ret,
@@ -134,7 +154,7 @@ impl IrParser {
 
     fn parse_define(&mut self) -> Result<IrStmt, IrError> {
         let name;
-        let mut body= vec![];
+        let mut body = HashMap::new();
         let mut args = HashMap::new();
         
 
@@ -195,7 +215,9 @@ impl IrParser {
                 break;
             }
 
-            body.push( self.parse_instruction()? );
+            let (name, block) = self.parse_block()?;
+
+            body.insert( name, block );
         }
 
         Ok(IrStmt::Func { 
@@ -266,48 +288,129 @@ impl IrParser {
         })
     }
 
-    fn parse_instruction(&mut self) -> Result<(Box<dyn Ir>, Loc), IrError> {
-        let curr = self.current_token()?;
+    fn parse_block(&mut self) -> Result<(String, IrBlock), IrError> {
+        self.expect(TokenType::Ident(String::new()))?;
 
-        let node = if let TokenType::Var(var_name) = curr.typ.clone() {
-            self.input.pop_front(); // var name
+        let name;
+        let loc;
+        let curr_token = self.current_token()?;
+        if let TokenType::Ident(ident) = &curr_token.typ {
+            name = ident.to_string();
+            loc = curr_token.loc.clone();
+        } else { unreachable!() }
 
-            self.expect(TokenType::Equal)?;
-            self.input.pop_front(); // =
+        self.input.pop_front();
 
-            self.expect(TokenType::Ident(String::new())); // node
-            if let TokenType::Ident(instrinc) = self.current_token()?.typ {
-                match instrinc.as_str() {
-                    "call" => self.parse_call()?,
-                    _ => {
-                        let ty = self.parse_type()?;
-                        self.input.pop_front(); // the type
-                        self.parse_const_assing(ty)?
-                    }
-                }
-            } else { unreachable!() }
-        } else if let TokenType::Ident(instrinc) = curr.typ {
-            match instrinc.as_str() {
-                "ret" => self.parse_ret()?,
-                _ => Err(IrError::UnkownInstrinc{loc: curr.loc.clone(), found: instrinc })?,
+        self.expect(TokenType::Dot)?;
+        self.input.pop_front();
+
+        println!("{:?}", self.input);
+
+        let mut body = vec![];
+
+
+        loop {
+            let curr = self.current_token()?;
+
+            if TokenType::RParam == curr.typ {
+                break;
             }
-        } else { todo!("error handling") };
+
+            if let TokenType::Ident(_) = curr.typ {
+                break;
+            }
+
+            body.push( self.parse_instruction()? );
+        }
+
+        Ok((name, IrBlock {
+            loc: loc,
+            body: body,
+        }))
+    }
+
+    fn parse_instruction(&mut self) -> Result<IrInstr, IrError> {
+        let curr = self.current_token()?.clone();
+
+        let mut var = false;
+
+        if let TokenType::Var(_) = curr.typ.clone() {
+                var = true;
+        }
+        let node = {
+            if var {
+                let name = self.input.pop_front(); // var name
+                
+                let name = if let TokenType::Var(name) = name.expect("unreachble").typ {
+                    name
+                } else { unreachable!() };
+
+                self.expect(TokenType::Equal)?;
+                self.input.pop_front(); // =
+
+                self.expect(TokenType::Ident(String::new()))?; // node
+                if let TokenType::Ident(instrinc) = &self.current_token()?.typ {
+                   match instrinc.as_str() {
+                      "call" => self.parse_call(name)?,
+                      _ => {
+                          let ty = self.parse_type()?;
+                          self.input.pop_front(); // the type
+                          self.parse_const_assing(name, ty)?
+                      }
+                    }
+                } else { unreachable!() }
+            } else if let TokenType::Ident(instrinc) = curr.typ {
+                match instrinc.as_str() {
+                    "ret" => self.parse_ret()?,
+                    _ => Err(IrError::UnkownInstrinc{loc: curr.loc.clone(), found: instrinc })?,
+                }
+            } else { todo!("error handling") }
+        };
 
         let loc = curr.loc;
 
-        Ok((node, loc))
+        Ok(IrInstr { 
+            loc: loc, 
+            inst: node
+        })
+
     }
 
     fn parse_ret(&mut self) -> Result<Box<dyn Ir>, IrError> {
         todo!()
     }
 
-    fn parse_const_assing(&mut self, _ty: TypeMetadata) -> Result<Box<dyn Ir>, IrError> {
-        todo!()
+    fn parse_const_assing(&mut self, var: String, ty: TypeMetadata) -> Result<Box<dyn Ir>, IrError> {
+        let out = Var {
+            name: format!("%{var}"),
+            ty: ty,
+        };
+
+        let curr = self.current_token()?;
+
+        let out:  Result<Box<dyn Ir>, IrError>  = if let TokenType::Int(numeral) = &curr.typ {
+            Ok(ir::Assign::new(out, Type::from_int(ty, *numeral)))
+        } else if let TokenType::Var(var) = &curr.typ {
+            Ok(ir::Assign::new(out, Var { 
+                name: format!("{var}"),
+                ty: ty,
+            }))
+        } else if let TokenType::Ident(cons) = &curr.typ {
+            Ok(ir::Assign::new(out, Const::new(cons.to_string())))
+        } else {
+            Err(IrError::UndeterminedTokenSequence { 
+                loc: curr.loc.clone(), 
+                expected: "intenger, variable names - for valid constant assignments".to_owned() 
+            })
+        };
+
+        self.input.pop_front();
+
+        out
     }
 
-    fn parse_call(&mut self) -> Result<Box<dyn Ir>, IrError> {
-
+    fn parse_call(&mut self, var: String) -> Result<Box<dyn Ir>, IrError> {
+        todo!()
     }
 
     fn parse_data_array(&mut self) -> Result<Vec<u8>, IrError> {

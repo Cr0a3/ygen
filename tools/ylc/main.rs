@@ -22,6 +22,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     cli.add_arg("o", "out", "The output file to write too", /*required*/ false);
 
     cli.add_opt("lex", "show-lexed", "Shows the assembly tokens");
+    cli.add_opt("exprs", "show-parser-result", "Shows the parsed result");
 
     cli.scan();
 
@@ -103,6 +104,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             exit(-1)
         }
     }
+
+    if cli.opt("exprs") {
+        println!("{:?}", parser.out);
+    } 
 
     IrSemnatic::new(&parser.out).verify()?;
 
