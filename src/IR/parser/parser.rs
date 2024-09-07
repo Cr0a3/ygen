@@ -10,8 +10,8 @@ use super::IrError;
 #[derive(Debug, Clone, Eq)]
 #[allow(missing_docs)]
 pub struct IrInstr {
-    loc: Loc,
-    inst: Box<dyn Ir>,
+    pub(crate) loc: Loc,
+    pub(crate) inst: Box<dyn Ir>,
 }
 
 impl PartialEq for IrInstr {
@@ -23,8 +23,8 @@ impl PartialEq for IrInstr {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[allow(missing_docs)]
 pub struct IrBlock {
-    loc: Loc,
-    body: Vec<IrInstr>,
+    pub(crate) loc: Loc,
+    pub(crate) body: Vec<IrInstr>,
 }
 
 /// An ir statement
@@ -39,6 +39,8 @@ pub enum IrStmt {
         args: (HashMap<String, TypeMetadata>, /*unlim args*/bool), 
         body: HashMap<String, IrBlock>,
         scope: Linkage,
+
+        location: Loc,
     },
     /// a constant
     Const{
@@ -106,6 +108,7 @@ impl IrParser {
         self.expect( TokenType::Func(String::new()) )?;
 
         let tok = self.current_token()?;
+        let loc = tok.loc.to_owned();
         if let TokenType::Func(func) = &tok.typ {
             name = func.to_string();
         } else { unreachable!() }
@@ -160,6 +163,8 @@ impl IrParser {
             scope: Linkage::Extern,
             args: (args, unlim),
             ret: ret,
+
+            location: loc,
         })
     }
 
@@ -168,6 +173,7 @@ impl IrParser {
         let mut body = HashMap::new();
         let mut args = HashMap::new();
         
+        let mut link = Linkage::External;
 
         self.expect( TokenType::Define )?;
         self.input.pop_front(); // advance over define
@@ -175,9 +181,23 @@ impl IrParser {
         let ret = self.parse_type()?;
         self.input.pop_front();
 
+        let curr = self.current_token()?;
+
+        if let TokenType::Ident(ident) = &curr.typ {
+            link = match ident.as_str() {
+                "local" | "internal" | "private" => Linkage::Internal,
+                _ => Err(IrError::Unkown { 
+                    what: "linkage".to_owned(), 
+                    name: ident.to_owned(), 
+                    loc: curr.loc.clone()
+                })?
+            };
+        }
+
         self.expect( TokenType::Func(String::new()) )?;
 
         let tok = self.current_token()?;
+        let loc = tok.loc.to_owned();
         if let TokenType::Func(func) = &tok.typ {
             name = func.to_string();
         } else { unreachable!() }
@@ -237,8 +257,10 @@ impl IrParser {
             name: name, 
             body: body,
             args: (args, false),
-            scope: Linkage::Extern,
+            scope: link,
             ret: ret,
+
+            location: loc,
         })
     }
 

@@ -9,6 +9,7 @@ use crate::debug::DebugRegistry;
 use crate::prelude::Triple;
 use crate::Target::{self, Arch, CallConv};
 use std::collections::BTreeMap;
+use std::fmt::Display;
 use std::fs::File;
 use std::error::Error;
 
@@ -95,6 +96,16 @@ pub enum Linkage {
     Extern,
     /// Only aviable in the object file
     Internal,
+}
+
+impl Display for Linkage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", match self {
+            Linkage::External => "",
+            Linkage::Extern => "extern",
+            Linkage::Internal => "local",
+        })
+    }
 }
 
 /// Builds object files.

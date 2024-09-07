@@ -7,7 +7,7 @@ use lexer::Loc;
 
 use crate::Support::{self, Colorize};
 
-use super::Module;
+use super::{Module, TypeMetadata};
 
 /// Ygen-Ir lexing
 pub mod lexer;
@@ -75,6 +75,42 @@ pub enum IrError {
 
     /// A unkown type
     UnkownType(lexer::Token),
+
+    /// Value defined twice
+    DefinedTwice {
+        /// the location
+        loc: Loc,
+        /// the name
+        name: String,
+    },
+
+    /// the given return type is different than the expected one from the function type
+    FuncWrongReturnTyoe {
+        /// the expected return type
+        expected: TypeMetadata,
+        /// the found type
+        found: TypeMetadata,
+        /// location
+        loc: Loc,
+    },
+
+    /// unkown thing
+    Unkown {
+        /// whats unkown (e.g: block)
+        what: String,
+        /// the "thingy"s name
+        name: String,
+        /// location
+        loc: Loc,
+    },
+
+    /// an extern function has an body
+    ExternFunWithBody {
+        /// the name of the function
+        name: String,
+        /// the location
+        loc: Loc,
+    }
 }
 
 impl Display for IrError {
@@ -186,6 +222,52 @@ impl Display for IrError {
                 fab.addWhere("unkown ir instr", loc.coloumn, loc.length);
 
                 fab.to_string()
+            }
+        
+            IrError::DefinedTwice { loc, name } => {
+                let mut fab = Support::Error::new("defined twice", "", "", "");
+
+                fab.deactivateLocationDisplay();
+
+                fab.setCodeLine(loc.line_string.to_owned());
+                fab.addWhere(format!("{} was defined twice", name), loc.coloumn, loc.length);
+
+                fab.to_string()
+            }
+        
+            IrError::FuncWrongReturnTyoe { expected, found, loc } => {
+                let mut fab = Support::Error::new("wrong return type", "", "", "");
+
+                fab.deactivateLocationDisplay();
+
+                fab.setCodeLine(loc.line_string.to_owned());
+
+                fab.addWhere(format!("encountered the wrong return type: {found} but expected: {expected}"), loc.coloumn, loc.length);
+                
+                fab.to_string()
+            }
+        
+            IrError::Unkown { what, name, loc } => {
+                let mut fab = Support::Error::new(format!("unkown {what}"), "", "", "col");
+
+                fab.deactivateLocationDisplay();
+
+                fab.setCodeLine(loc.line_string.to_owned());
+
+                fab.addWhere(format!("unkown {what}: {name}"), loc.coloumn, loc.length);
+
+                fab.to_string()
+            }
+        
+            IrError::ExternFunWithBody { name, loc } => {
+                let mut fab = Support::Error::new("extern function has an body", "", "", "");
+
+                fab.deactivateLocationDisplay();
+
+                fab.setCodeLine(loc.line_string.to_owned());
+                fab.addWhere(format!("the func {name} is imported and has a body which isn't allowed"), loc.coloumn, loc.length);
+
+                fab.to_string() 
             }
         })
     }

@@ -131,7 +131,7 @@ impl Function {
 
         let mut string = String::new();
 
-        string += &format!("define {} @{}({}) {{\n", self.ty.ret, self.name, {
+        string += &format!("define {} {} @{}({}) {{\n", self.linkage, self.ty.ret, self.name, {
             let mut fmt = String::new();
 
             for (name, metadata) in &self.ty.args {
@@ -158,8 +158,9 @@ impl Function {
     /// Emits the Ir of the function into an colored string
     pub fn dumpColored(&self, profile: ColorProfile) -> String {
         if self.linkage == Linkage::Extern {
-            let string = format!("{} {} @{}( {})\n",
+            let string = format!("{} {} {} @{}( {})\n",
                 profile.markup("declare", ColorClass::Instr),
+                profile.markup(&format!("{}", self.linkage), ColorClass::Ty),
                 profile.markup(&self.ty.ret.to_string(), ColorClass::Ty),
                 profile.markup(&self.name, ColorClass::Name), {
                     let mut fmt = String::new();

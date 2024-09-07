@@ -109,7 +109,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         println!("{:?}", parser.out);
     } 
 
-    IrSemnatic::new(&parser.out).verify()?;
+    match IrSemnatic::new(&parser.out).verify() {
+        Ok(_) => {},
+        Err(err) => {
+            println!("{}", err);
+            exit(-1)
+        }
+    }
 
     let mut gen = IrGen::new(parser.out);
 
