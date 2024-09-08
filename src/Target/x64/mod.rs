@@ -21,8 +21,6 @@ use crate::{CodeGen::MachineMnemonic, Target::Compiler};
 /// Initializes the x86-64 target
 pub fn initializeX64Target(call_conv: CallConv) -> TargetBackendDescr {
     let mut target = TargetBackendDescr::new();
-
-    println!("{:?}", call_conv);
     
     target.call = call_conv;
 

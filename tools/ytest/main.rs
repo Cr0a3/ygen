@@ -71,6 +71,7 @@ fn main() {
     for cmd in parsed.cmd.split("&&") {
         let args = cmd.replace("%s", path_str);
         let args = unescaper::unescape(&args).unwrap();
+        let args = args.trim();
         let mut args = args.split(" ").collect::<Vec<&str>>();
 
         let program = args.get(0).expect("expected valid excutable name").to_string();
