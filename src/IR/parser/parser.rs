@@ -274,19 +274,46 @@ impl IrParser {
         PARSE NAME
         */
 
-        let name;
+        let mut scope = Linkage::External;
+        let mut parsed_scope = false;
 
-        let mut location;
+        let mut name = "unreachable".into();
+
+        let mut location = Loc::default();
 
         self.expect( TokenType::Ident(String::new()) )?;
 
         let tok = self.current_token()?;
         if let TokenType::Ident(ident) = &tok.typ {
-            name = ident.to_string();
-            location = tok.loc.clone();
+            match ident.as_str() {
+                "local" | "internal" | "private" => {
+                    parsed_scope = true;
+                    scope = Linkage::Internal
+                },
+                "public" | "external" => {
+                    parsed_scope = true;
+                    scope = Linkage::External
+                },
+                _ => {
+                    name = ident.to_string();
+                    location = tok.loc.clone();
+                }
+            }
         } else { unreachable!() }
 
         self.input.pop_front();
+
+        if parsed_scope {
+            self.expect(TokenType::Ident(String::new()))?;
+            let tok = self.current_token()?;
+
+            if let TokenType::Ident(ident) = &tok.typ {
+                name = ident.to_owned();
+                location = tok.loc.clone();
+            } else { unreachable!() }
+
+            self.input.pop_front();
+        }
 
         self.expect(TokenType::Equal)?;
         self.input.pop_front();
@@ -320,7 +347,7 @@ impl IrParser {
             name: name, 
             data: data,
             location: location,
-            scope: Linkage::Extern,
+            scope: scope,
         })
     }
 

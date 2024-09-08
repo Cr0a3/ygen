@@ -4,7 +4,7 @@ use super::IrError;
 
 /// A location reference.
 /// Is recommended to be used for giving tokens locations
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Loc {
     /// The line number
     pub line: u64,
