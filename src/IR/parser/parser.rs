@@ -186,6 +186,7 @@ impl IrParser {
         if let TokenType::Ident(ident) = &curr.typ {
             link = match ident.as_str() {
                 "local" | "internal" | "private" => Linkage::Internal,
+                "public" | "external" => Linkage::External,
                 _ => Err(IrError::Unkown { 
                     what: "linkage".to_owned(), 
                     name: ident.to_owned(), 
@@ -437,7 +438,7 @@ impl IrParser {
 
     fn parse_const_assing(&mut self, var: String, ty: TypeMetadata) -> Result<Box<dyn Ir>, IrError> {
         let out = Var {
-            name: format!("%{var}"),
+            name: var,
             ty: ty,
         };
 
@@ -447,7 +448,7 @@ impl IrParser {
             Ok(ir::Assign::new(out, Type::from_int(ty, *numeral)))
         } else if let TokenType::Var(var) = &curr.typ {
             Ok(ir::Assign::new(out, Var { 
-                name: format!("{var}"),
+                name: var.to_owned(),
                 ty: ty,
             }))
         } else if let TokenType::Ident(cons) = &curr.typ {
@@ -481,7 +482,7 @@ impl IrParser {
         self.input.pop_front(); // function name
 
         let out = Var {
-            name: format!("{var}"),
+            name: var,
             ty: func_ty
         };
 

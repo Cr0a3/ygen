@@ -13,7 +13,7 @@ use crate::Support::ColorProfile;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FunctionType {
     /// The function arguments (stored as: num, type)
-    pub args: Vec<(/*num*/usize, TypeMetadata)>,
+    pub args: Vec<TypeMetadata>,
     /// The return type
     pub ret: TypeMetadata,
     /// After the given arguments any argument type can be supplied (like the printf function - is in c ...)
@@ -24,18 +24,7 @@ impl FunctionType {
     /// Creates a new function type
     pub fn new(args: Vec<TypeMetadata>, ret: TypeMetadata) -> Self {
         Self {
-            args: {
-                let mut ret = vec![];
-
-                let mut index = 0;
-                for arg in args {
-
-                    ret.push((index, arg));
-
-                    index += 1;
-                }
-                ret
-            },
+            args: args,
             ret: ret,
             any_args: false,
         }
@@ -50,10 +39,13 @@ impl FunctionType {
     /// Returns the argument as a var
     /// If the num doesn't exists, it panics
     pub fn arg(&self, num: usize) -> Var {
-        for (n, meta) in &self.args {
-            if *n == num {
-                return Var { name: format!("%{}", n), ty: *meta }
+        let mut index = 0;
+        for meta in &self.args {
+            if index == num {
+                return Var { name: format!("%{}", index), ty: *meta }
             }
+
+            index += 1;
         }
 
         todo!("display error that var doesn't exists")
@@ -115,8 +107,9 @@ impl Function {
                 self.name, {
                     let mut fmt = String::new();
         
-                    for (name, metadata) in &self.ty.args {
-                        fmt += &format!("{} %{}, ", metadata, name);
+                    for index in 0..self.ty.args.len() {
+                        let arg = self.ty.arg(index);
+                        fmt += &format!("{} %{}, ", arg.ty, arg.name);
                     }
 
                     if self.ty.args.len() > 0 {
@@ -134,8 +127,9 @@ impl Function {
         string += &format!("define {} {} @{}({}) {{\n", self.linkage, self.ty.ret, self.name, {
             let mut fmt = String::new();
 
-            for (name, metadata) in &self.ty.args {
-                fmt += &format!("{} %{}, ", metadata, name);
+            for index in 0..self.ty.args.len() {
+                let arg = self.ty.arg(index);
+                fmt += &format!("{} %{}, ", arg.ty, arg.name);
             }
 
             if self.ty.args.len() > 0 {
@@ -165,10 +159,11 @@ impl Function {
                 profile.markup(&self.name, ColorClass::Name), {
                     let mut fmt = String::new();
         
-                    for (name, metadata) in &self.ty.args {
+                    for index in 0..self.ty.args.len() {
+                        let arg = self.ty.arg(index);
                         fmt += &format!("{} {}, ", 
-                                profile.markup(&metadata.to_string(), ColorClass::Ty),
-                                profile.markup(&format!("%{}", name), ColorClass::Var)
+                                profile.markup(&arg.ty.to_string(), ColorClass::Ty),
+                                profile.markup(&format!("%{}", arg.name), ColorClass::Var)
                             );
                     }
 
@@ -189,12 +184,14 @@ impl Function {
                         profile.markup(&self.name, ColorClass::Name), {
             let mut fmt = String::new();
 
-            for (name, metadata) in &self.ty.args {
-                fmt += &format!(" {} {}, ", 
-                        profile.markup(&metadata.to_string(), ColorClass::Ty),
-                        profile.markup(&format!("%{}", name), ColorClass::Var)
+            for index in 0..self.ty.args.len() {
+                let arg = self.ty.arg(index);
+                fmt += &format!("{} {}, ", 
+                        profile.markup(&arg.ty.to_string(), ColorClass::Ty),
+                        profile.markup(&format!("%{}", arg.name), ColorClass::Var)
                     );
             }
+            
             if self.ty.args.len() != 0 {
                 fmt.remove(fmt.len() - 2); // The last comma
             }

@@ -60,10 +60,11 @@ impl CompilationHelper {
     pub(crate) fn build_argument_preprocessing(&mut self, func: &Function) {
         let func = &func.ty;
 
-        for (num, ty) in &func.args {
+        let mut num = 0;
 
+        for ty in &func.args {
             let location = {
-                if let Some(reg) = self.call.args(self.arch).get(*num) {
+                if let Some(reg) = self.call.args(self.arch).get(num) {
                     VarLocation::Reg(match reg {
                         Reg::x64(x64) => Reg::x64(x64.sub_ty(*ty)),
                     })
@@ -73,9 +74,11 @@ impl CompilationHelper {
             };
 
             self.vars.insert(
-                Var { name: format!("%{}", num), ty: *ty }, 
+                func.arg(num), 
                 location
             );
+
+            num += 1;
         }
     }
 }

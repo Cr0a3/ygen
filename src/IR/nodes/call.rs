@@ -41,7 +41,7 @@ impl Ir for Call<Function, Vec<Var>, Var> {
         let args = &self.inner1.ty.args;
         for arg in &self.inner2 {
             if index < args.len() {
-                if matches!(args.get(index), Some((_, argty)) if *argty != (*arg).ty.into()) {
+                if matches!(args.get(index), Some(argty) if *argty != (*arg).ty.into()) {
                     Err(VerifyError::InvalidArgumentTypeFound)?
                 }
             } else {

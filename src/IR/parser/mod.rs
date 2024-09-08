@@ -110,6 +110,18 @@ pub enum IrError {
         name: String,
         /// the location
         loc: Loc,
+    },
+
+    /// found the wrong argument
+    WrongArgument {
+        /// where
+        loc: Loc,
+        /// the argument index
+        index: usize,
+        /// the expected argument
+        expected: Option<TypeMetadata>,
+        /// the found argument
+        found: TypeMetadata
     }
 }
 
@@ -268,6 +280,23 @@ impl Display for IrError {
                 fab.addWhere(format!("the func {name} is imported and has a body which isn't allowed"), loc.coloumn, loc.length);
 
                 fab.to_string() 
+            }
+        
+            IrError::WrongArgument { loc, index, expected, found } => {
+                let mut fab = Support::Error::new("found the wrong argument", "", "", "");
+
+                fab.deactivateLocationDisplay();
+                fab.setCodeLine(loc.line_string.to_owned());
+
+                let fmt_expected = if let Some(expected) = expected {
+                    format!("{expected}")
+                } else {
+                    "nothing".to_string()
+                };
+
+                fab.addWhere(format!("expected: {fmt_expected} as the {index} argument but found {}", found), loc.coloumn, loc.length);
+
+                fab.to_string()
             }
         })
     }

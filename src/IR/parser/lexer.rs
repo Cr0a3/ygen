@@ -490,6 +490,8 @@ impl IrLexer {
     fn scan_func(&mut self) -> Result<TokenType, IrError> {
         let mut out = String::new();
 
+        self.advance()?; // @
+
         let mut looping = true;
 
         while looping {

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::Obj::Linkage;
-use crate::IR::{Const, FnTy, FunctionType, Type, TypeMetadata, Var};
+use crate::IR::{Const, FnTy, Function, FunctionType, Type, TypeMetadata, Var};
 
 use crate::prelude::ir::*;
 
@@ -62,7 +62,11 @@ impl<'a> IrSemnatic<'a> {
             fun_args.push( *arg );
         }
         
-        let ty = FnTy(fun_args, ret);
+        let mut ty = FnTy(fun_args, ret);
+
+        if args.1 {
+            ty.activate_dynamic_arguments();
+        }
 
         self.func_sigs.insert(name.to_owned(), (ty, *scope));
 
@@ -115,8 +119,16 @@ impl<'a> IrSemnatic<'a> {
 
                 if let Some(node) = any.downcast_ref::<Return<Type>>() {
                     self.analiyze_ret_int(node, ret, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Return<Var>>() {
+                    self.analiyze_ret_var(&mut vars, node, ret, loc)?;
                 } else if let Some(node) = any.downcast_ref::<Assign<Var, Const>>() {
-                    self.analiyze_assign_const(node, loc)?;
+                    self.analiyze_assign_const(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Assign<Var, Var>>() {
+                    self.analiyze_assign_var(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Assign<Var, Type>>() {
+                    self.analiyze_assign_type(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Call<Function, Vec<Var>, Var>>() {
+                    self.analyize_call(&mut vars, node, loc)?;
                 }
             }
         }
@@ -138,15 +150,146 @@ impl<'a> IrSemnatic<'a> {
         Ok(())
     }
 
-    fn analiyze_assign_const(&mut self, node: &Assign<Var, Const>, loc: Loc) -> Result<(), IrError> {
+    fn analiyze_ret_var(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &Return<Var>, fsig: TypeMetadata, loc: Loc) -> Result<(), IrError> {
+        let name = node.inner1.name.to_owned();
+
+        if let Some(var) = vars.get(&name) {
+            if *var != fsig {
+                Err(IrError::FuncWrongReturnTyoe { 
+                    expected: fsig, 
+                    found: *var, 
+                    loc: loc.to_owned()
+                })?
+            }
+        } else {
+            Err(IrError::Unkown { 
+                what: "variable".to_owned(), 
+                name: name.to_owned(), 
+                loc: loc.to_owned()
+            })?
+        }
+        
+        Ok(())
+    }
+
+    fn analiyze_assign_const(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &Assign<Var, Const>, loc: Loc) -> Result<(), IrError> {
         let name = &node.inner2.name;
         if !self.const_sigs.contains_key(name) {
             Err(IrError::Unkown {
                 what: "const".to_owned(),
-                loc: loc,
+                loc: loc.to_owned(),
                 name: name.to_owned(),
             })?
         }
+
+        let name = node.inner1.name.to_owned();
+
+        if vars.contains_key(&name) {
+            Err(IrError::DefinedTwice { 
+                loc: loc.to_owned(), 
+                name: name.to_owned(),
+            })?
+        }
+
+        vars.insert(name, TypeMetadata::ptr);
+
+        Ok(())
+    }
+
+    fn analiyze_assign_var(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &Assign<Var, Var>, loc: Loc) -> Result<(), IrError> {
+        let name = &node.inner2.name;
+
+        let mut op2 = TypeMetadata::Void;
+
+        if let Some(var) = vars.get(name) {
+            op2 = *var;
+        } else {
+            Err(IrError::Unkown {
+                what: "var".to_owned(),
+                loc: loc.to_owned(),
+                name: name.to_owned(),
+            })?
+        }
+
+        let name = node.inner1.name.to_owned();
+
+        if vars.contains_key(&name) {
+            Err(IrError::DefinedTwice { 
+                loc: loc.to_owned(), 
+                name: name.to_owned(),
+            })?
+        }
+
+        vars.insert(name, op2);
+
+        Ok(())
+    }
+
+    fn analiyze_assign_type(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &Assign<Var, Type>, loc: Loc) -> Result<(), IrError> {
+        let name = node.inner1.name.to_owned();
+
+        if vars.contains_key(&name) {
+            Err(IrError::DefinedTwice { 
+                loc: loc.to_owned(), 
+                name: name.to_owned(),
+            })?
+        }
+
+        vars.insert(name, node.inner2.into());
+
+        Ok(())
+    }
+
+    fn analyize_call(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &Call<Function, Vec<Var>, Var>, loc: Loc) -> Result<(), IrError> {
+        let name = &node.inner1.name;
+        let mut sig = node.inner1.ty.to_owned();
+
+        if let Some((ty, _)) = self.func_sigs.get(&node.inner1.name) {
+            sig = ty.to_owned();
+        } else  {
+            Err(IrError::Unkown {
+                what: "function".to_owned(),
+                loc: loc.to_owned(),
+                name: name.to_owned(),
+            })?
+        }
+
+        let name = node.inner3.name.to_owned();
+
+        if vars.contains_key(&name) {
+            Err(IrError::DefinedTwice { 
+                loc: loc.to_owned(), 
+                name: name.to_owned(),
+            })?
+        }
+
+        vars.insert(name, sig.ret);
+
+        let mut index = 0;
+
+        for arg in &node.inner2 {
+            let arg = if let Some(var) = vars.get(&arg.name) {
+                var
+            } else {
+                Err(IrError::Unkown { 
+                    what: "variable".to_owned(), 
+                    name: arg.name.to_owned(), 
+                    loc: loc.to_owned(), 
+                })?
+            };
+
+            if Some(arg) != sig.args.get(index) {
+                Err(IrError::WrongArgument {
+                    loc: loc.to_owned(),
+                    index: index,
+                    expected: sig.args.get(index).copied(),
+                    found: *arg,
+                })?
+            };
+
+            index += 1;
+        }
+
 
         Ok(())
     }
