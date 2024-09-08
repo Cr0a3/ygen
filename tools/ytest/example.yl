@@ -1,6 +1,6 @@
-# RUN: cargo run -p ylc -- -in=%s -o=out.o -asm-clr && gcc out.o -o a.exe && ./a.exe 
+# RUN: cargo run -p ylc -- -in=%s -o=out.o && gcc out.o -o a.exe && ./a.exe 
 
-const const0 = "Hello World!\n"
+const const0 = "Hello World!\n\00"
 
 define void @main() {
  entry:

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{Target::Arch, IR::{Function, Var}};
+use crate::{Target::{Arch, CallConv}, IR::{Function, Var}};
 
 use super::{calling_convention::MachineCallingConvention, reg::Reg, reg_vec::RegVec, MCInstr, MachineInstr};
 
@@ -14,7 +14,7 @@ mod assign;
 pub struct CompilationHelper {
     pub(crate) regs: RegVec,
     pub(crate) arch: Arch,
-    pub(crate) lower: Option<fn(Vec<MachineInstr>) -> Vec<Box<dyn MCInstr>>>,
+    pub(crate) lower: Option<fn(CallConv, Vec<MachineInstr>) -> Vec<Box<dyn MCInstr>>>,
 
     pub(crate) call: MachineCallingConvention,
 

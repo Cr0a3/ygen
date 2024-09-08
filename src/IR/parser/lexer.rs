@@ -375,13 +375,21 @@ impl IrLexer {
 
                 _ => out.push(chr),
             }
-
-            if looping {
-                self.advance()?;
-            }
         }
 
-        Ok(TokenType::String(out))
+        let unescaped = unescaper::unescape(&out);
+
+        let unescaped = match unescaped {
+            Ok(string) => string,
+            Err(err) => {
+                Err(IrError::Boxed { 
+                    loc: self.loc.clone(), 
+                    err: Box::new(err) 
+                })?
+            }
+        };
+
+        Ok(TokenType::String(unescaped))
     }
 
     fn scan_ident(&mut self) -> Result<TokenType, IrError> {

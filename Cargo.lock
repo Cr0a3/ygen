@@ -313,6 +313,7 @@ dependencies = [
  "logos",
  "object",
  "proc",
+ "unescaper",
 ]
 
 [[package]]

@@ -1,9 +1,10 @@
 use crate::CodeGen::{MCInstr, MachineInstr, MachineMnemonic};
 use crate::Optimizations::Optimize;
+use crate::Target::CallConv;
 
 use super::{instr::{MemOp, Mnemonic, Operand, X64MCInstr}, x64Reg};
 
-fn x64_lower_instr(sink: &mut Vec<X64MCInstr>, instr: MachineInstr) {
+fn x64_lower_instr(conv: CallConv, sink: &mut Vec<X64MCInstr>, instr: MachineInstr) {
     match &instr.mnemonic {
         MachineMnemonic::Move => x64_lower_move(sink, &instr),
         MachineMnemonic::Add => x64_lower_add(sink, &instr),
@@ -15,20 +16,20 @@ fn x64_lower_instr(sink: &mut Vec<X64MCInstr>, instr: MachineInstr) {
         MachineMnemonic::Xor => x64_lower_xor(sink, &instr),
         MachineMnemonic::Zext => x64_lower_zext(sink, &instr),
         MachineMnemonic::Downcast => x64_lower_downcast(sink, &instr),
-        MachineMnemonic::Call(to) => x64_lower_call(sink, &instr, to),
+        MachineMnemonic::Call(to) => x64_lower_call(conv, sink, &instr, to),
         MachineMnemonic::Return => x64_lower_return(sink, &instr),
         MachineMnemonic::AdressLoad(to) => x64_lower_adr_load(sink, &instr, to),
     }
 }
 
 /// The function used for lowering general `MachineInstr` into `MCInstr`
-pub(crate) fn x64_lower(instrs: Vec<MachineInstr>) -> Vec<Box<dyn MCInstr>> {
+pub(crate) fn x64_lower(conv: CallConv, instrs: Vec<MachineInstr>) -> Vec<Box<dyn MCInstr>> {
     let mut out = vec![
         X64MCInstr::with0(Mnemonic::StartOptimization)
     ];
 
     for instr in instrs {
-        x64_lower_instr(&mut out, instr);
+        x64_lower_instr(conv, &mut out, instr);
     }
 
     out.optimize();
@@ -325,8 +326,12 @@ fn x64_lower_zext(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
 fn x64_lower_downcast(_sink: &mut Vec<X64MCInstr>, _instr: &MachineInstr) {
     todo!()
 }
-fn x64_lower_call(sink: &mut Vec<X64MCInstr>, _: &MachineInstr, target: &String) {   
+fn x64_lower_call(conv: CallConv, sink: &mut Vec<X64MCInstr>, _: &MachineInstr, target: &String) {   
     let func = target;
+
+    if conv.reset_eax() {
+        sink.push( X64MCInstr::with2(Mnemonic::Xor, Operand::Reg(x64Reg::Eax), Operand::Reg(x64Reg::Eax)) );
+    }
 
     sink.push( X64MCInstr::with1(Mnemonic::Call, Operand::Imm(0)).into() );
     sink.push( X64MCInstr::with1(Mnemonic::Link, Operand::LinkDestination(func.to_string(), -4)).into() );

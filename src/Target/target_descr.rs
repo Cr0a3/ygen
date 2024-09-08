@@ -118,7 +118,7 @@ impl TargetBackendDescr {
             self.whitelist.check_for_forbidden_mnemonics(&instrs)?;
 
             if let Some(lower) = helper.lower {
-                Ok(lower(instrs))
+                Ok(lower(self.call, instrs))
             } else {
                 todo!("the target architecture {:?} doesn't support instruction lowering", helper.arch)
             }
