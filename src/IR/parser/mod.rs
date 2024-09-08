@@ -122,7 +122,15 @@ pub enum IrError {
         expected: Option<TypeMetadata>,
         /// the found argument
         found: TypeMetadata
-    }
+    },
+
+    /// the name says it
+    TooManyArgsVerySupplyed {
+        /// the location
+        loc: Loc,
+        /// expected amount
+        expected: usize,
+    },
 }
 
 impl Display for IrError {
@@ -298,6 +306,17 @@ impl Display for IrError {
 
                 fab.to_string()
             }
+        
+            IrError::TooManyArgsVerySupplyed { loc, expected } => {
+                let mut fab = Support::Error::new("to many arguments were supplyed", "", "", "");
+
+                fab.deactivateLocationDisplay();
+
+                fab.setCodeLine(loc.line_string.to_owned());
+                fab.addWhere(format!("to many arguments were supplyed - expected {expected}"), loc.coloumn, loc.length);
+
+                fab.to_string()
+            }
         })
     }
 }
@@ -319,8 +338,7 @@ impl Module {
 
         let mut gen = gen::IrGen::new(parser.out);
 
-        gen.gen_funcs();
-        gen.gen_consts();
+        gen.gen();
 
         Ok(gen.module())
     }

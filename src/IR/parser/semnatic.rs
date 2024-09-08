@@ -278,14 +278,23 @@ impl<'a> IrSemnatic<'a> {
                 })?
             };
 
-            if Some(arg) != sig.args.get(index) {
-                Err(IrError::WrongArgument {
-                    loc: loc.to_owned(),
-                    index: index,
-                    expected: sig.args.get(index).copied(),
-                    found: *arg,
-                })?
-            };
+            if let Some(expected) = sig.args.get(index) {
+                if *expected != *arg {
+                    Err(IrError::WrongArgument {
+                        loc: loc.to_owned(),
+                        index: index,
+                        expected: Some(*expected),
+                        found: *arg,
+                    })?
+                }
+            } else {
+                if !sig.any_args {
+                    Err(IrError::TooManyArgsVerySupplyed {
+                        loc: loc.to_owned(),
+                        expected: sig.args.len(),
+                    })?
+                }
+            }
 
             index += 1;
         }

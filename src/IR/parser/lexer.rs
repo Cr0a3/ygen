@@ -439,8 +439,6 @@ impl IrLexer {
 
         let mut looping = true;
 
-        string.push( self.peek().unwrap() );
-
         while looping {
             if self.is_at_end() {
                 Err(IrError::UndeterminedTokenSequence { 

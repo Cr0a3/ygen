@@ -8,7 +8,7 @@ pub struct Block {
     //pub(crate) func: Function,
     pub(crate) name: String,
     pub(crate) nodes: Vec<Box<dyn Ir>>,
-    varCount: usize,
+    pub(crate) varCount: usize,
 }
 
 impl Block {

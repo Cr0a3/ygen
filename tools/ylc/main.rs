@@ -1,9 +1,9 @@
 use std::fs::File;
-use std::io::Read;
+use std::io::{Read, Write};
 use std::process::exit;
 use std::error::Error;
 
-use ygen::Support::Colorize;
+use ygen::Support::{ColorProfile, Colorize};
 use ygen::Target::initializeAllTargets;
 use ygen::{Support::Cli, Target::Triple};
 use ygen::IR::parser::{gen::IrGen, lexer::IrLexer, parser::IrParser, semnatic::IrSemnatic};
@@ -16,7 +16,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     cli.add_opt("h", "help", "Displays help");
     cli.add_opt("v", "version", "Displays the version");
+
     cli.add_arg("triple", "triple", "The target triple", /*required*/ false);
+
+    cli.add_opt("asm", "emit-assembly", "Instead of emitting generated machine code into the file, it will put the generated assembly there");
 
     cli.add_arg("in", "input", "Input file", /*required*/ true);
     cli.add_arg("o", "out", "The output file to write too", /*required*/ false);
@@ -24,6 +27,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     cli.add_opt("lex", "show-lexed", "Shows the assembly tokens");
     cli.add_opt("exprs", "show-parser-result", "Shows the parsed result");
 
+    cli.add_opt("fmt-clr", "format-colored", "Reprints the ir to stderr with color information");
+    cli.add_opt("fmt", "format", "Prints the ir formatted to stdout");
     cli.scan();
 
     if cli.opt("h") {
@@ -71,7 +76,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         },
     };
 
-    let outfile = match File::options().create(true).write(true).open(&outfile) {
+    let mut outfile = match File::options().create(true).write(true).open(&outfile) {
         Ok(file) => file,
         Err(err) => {
             println!("{}: {} {}", "Error".red().bold(), outfile, err);
@@ -119,15 +124,28 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut gen = IrGen::new(parser.out);
 
-    gen.gen_funcs();
-    gen.gen_consts();
+    gen.gen();
 
     let module: Module = gen.module();
 
-    module.emitMachineCode(
-        triple, 
-        &mut initializeAllTargets()
-    )?.emit(outfile, None)?;
+    if cli.opt("fmt-clr") {
+        eprintln!("{}", module.dumpColored(ColorProfile::default()));
+    }
+
+    if cli.opt("fmt") {
+        println!("{}", module.dump());
+    }
+
+    if cli.opt("asm") {
+        let asm = module.emitAsm(triple, &mut initializeAllTargets())?;
+
+        outfile.write_all(asm.as_bytes())?
+    } else {
+        module.emitMachineCode(
+            triple, 
+            &mut initializeAllTargets()
+        )?.emit(outfile, None)?;
+    }
 
     Ok(())
 }
