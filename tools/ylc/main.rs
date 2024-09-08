@@ -20,6 +20,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     cli.add_arg("triple", "triple", "The target triple", /*required*/ false);
 
     cli.add_opt("asm", "emit-assembly", "Instead of emitting generated machine code into the file, it will put the generated assembly there");
+    cli.add_opt("asm-clr", "print-colored-assembly", "Prints out the generated assembly to stderr");
 
     cli.add_arg("in", "input", "Input file", /*required*/ true);
     cli.add_arg("o", "out", "The output file to write too", /*required*/ false);
@@ -134,6 +135,12 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     if cli.opt("fmt") {
         println!("{}", module.dump());
+    }
+
+    if cli.opt("asm-clr") {
+        let asm = module.emitAsm(triple, &mut initializeAllTargets())?;
+
+        println!("{}", asm);
     }
 
     if cli.opt("asm") {

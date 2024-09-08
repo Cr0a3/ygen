@@ -105,17 +105,8 @@ fn main() {
             cmd.arg( arg );
         }
 
-        /*
-        WOULD PRINT OUT STDOUT
-        let out = cmd.output().expect("failed to execute the process");
-        println!("{}", unescaper::unescape(
-            out.stdout.iter()                                      
-            .filter_map(|&byte| {
-                Some(byte as char)
-            })
-            .collect::<String>()
-            .as_str()
-        ).unwrap());*/
+        //let out = cmd.output().expect("failed to execute the process");
+        //println!("{}", String::from_utf8(out.stdout).unwrap());
 
         match cmd.status() {
             Ok(status) => {
