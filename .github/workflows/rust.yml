@@ -16,7 +16,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      run: rustup update --no-self-update stable
+
     - name: Build
       run: cargo build --all
+
     - name: Run tests
       run: cargo test --all

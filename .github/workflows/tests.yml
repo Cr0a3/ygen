@@ -1,0 +1,30 @@
+name: Run ir tests
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  ytest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Install Rust toolchain
+        run: |
+          rustup update --no-self-update stable
+
+      - name: Build
+        run: cargo build --all
+
+      - name: Run tests
+        run: |
+          for file in $(find tests -type f -name "*.yl"); do
+            echo "Processing $file"
+            cargo run -p ytest -- -t="$file"
+          done
