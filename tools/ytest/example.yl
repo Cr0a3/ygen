@@ -1,5 +1,7 @@
-# RUN: cargo run -p ylc -- -in=%s -o=out.o && gcc out.o -o a.exe && ./a.exe 
+# RUN: 
+cargo run -p ylc -- -in=%s -o=out.o && gcc out.o -o a.exe && ./a.exe 
 
+# IN:
 const const0 = "Hello World!\n\00"
 
 define void @main() {
@@ -11,4 +13,5 @@ define void @main() {
 }
 declare void @printf( ptr %0, ... )
 
-# STDOUT: Hello World!
+# STDOUT: 
+Hello World!

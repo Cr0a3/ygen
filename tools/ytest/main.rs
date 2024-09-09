@@ -44,7 +44,7 @@ fn main() {
     };
 
     let parsed = parse(buf);
-    
+
     let path_str = "./tmp.yl";
 
     let path = std::path::PathBuf::from(path_str);
@@ -127,5 +127,11 @@ fn main() {
                 exit(-1)
             }
         };
+    }
+
+    if parsed.expected_out != found {
+        println!("{}: expected output didn't match actual output", "Error".red().bold());
+        println!("found: {:?}", found);
+        println!("expected: {:?}", parsed.expected_out);
     }
 }
