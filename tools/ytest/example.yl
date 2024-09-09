@@ -1,6 +1,7 @@
 # RUN: 
-cargo run -p ylc -- -in=%s -o=out.o && gcc out.o -o a.exe && ./a.exe 
-
+cargo run -p ylc -- -in=%s -o=out.o
+gcc out.o -o a.exe
+./a.exe
 # IN:
 const const0 = "Hello World!\n\00"
 

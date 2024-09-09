@@ -53,7 +53,7 @@ fn main() {
         let _ = std::fs::remove_file(&path);
     }
 
-    let mut file = match File::options().write(true).create(true).open(path) {
+    let mut file = match File::options().write(true).create(true).open(&path) {
         Ok(file) => file,
         Err(err) => {
             println!("{}: {}", "Error".red().bold(), err);
@@ -71,7 +71,7 @@ fn main() {
 
     let mut found = String::new();
 
-    for cmd in parsed.cmd.split("&&") {
+    for cmd in parsed.cmd {
         let args = cmd.replace("%s", path_str);
         let args = unescaper::unescape(&args).unwrap();
         let args = args.trim();
@@ -128,6 +128,8 @@ fn main() {
             }
         };
     }
+
+    let _ = std::fs::remove_file(&path);
 
     if parsed.expected_out != found {
         println!("{}: expected output didn't match actual output", "Error".red().bold());

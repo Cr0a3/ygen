@@ -1,13 +1,13 @@
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Parsed {
-    pub cmd: String,
+    pub cmd: Vec<String>,
     pub input: String,
     pub expected_out: String
 }
 
 pub fn parse(input: String) -> Parsed { 
     let mut out = Parsed {
-        cmd: String::new(),
+        cmd: Vec::new(),
         input: String::new(),
         expected_out: String::new(),
     };
@@ -40,7 +40,9 @@ pub fn parse(input: String) -> Parsed {
 
         if append {
             if run {
-                out.cmd.push_str(&format!("{line}\n"));
+                if !line.is_empty() {
+                    out.cmd.push(format!("{}\n", line.trim()));
+                }
             } else if stdout {
                 out.expected_out.push_str(&format!("{line}\n"));
             } else {
@@ -48,8 +50,6 @@ pub fn parse(input: String) -> Parsed {
             }
         }
     }
-
-    out.cmd = out.cmd.trim_start().to_string();
 
     //out.expected_out = unescaper::unescape(&out.expected_out).unwrap();
 
