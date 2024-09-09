@@ -14,7 +14,6 @@ impl CompilationHelper {
 
         for arg in &node.inner2 {
             let mut instr = MachineInstr::new(MachineMnemonic::Move);
-
             
             let arg_reg = args.get(reg_args);
 

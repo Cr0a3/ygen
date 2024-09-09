@@ -45,7 +45,7 @@ impl MachineCallingConvention {
             CallConv::SystemV => {
                 match arch {
                     Arch::X86_64 => vec![
-                        Reg::x64(x64Reg::Rsi), Reg::x64(x64Reg::Rdi), 
+                        Reg::x64(x64Reg::Rdi), Reg::x64(x64Reg::Rsi), 
                         Reg::x64(x64Reg::Rcx), Reg::x64(x64Reg::Rdx), 
                         Reg::x64(x64Reg::R8), Reg::x64(x64Reg::R9)
                     ],

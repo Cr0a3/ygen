@@ -1,3 +1,4 @@
+use core::str;
 use std::{fs::File, io::{Read, Write}};
 use std::process::{exit, Command};
 
@@ -68,6 +69,8 @@ fn main() {
         },
     }
 
+    let mut found = String::new();
+
     for cmd in parsed.cmd.split("&&") {
         let args = cmd.replace("%s", path_str);
         let args = unescaper::unescape(&args).unwrap();
@@ -105,13 +108,17 @@ fn main() {
             cmd.arg( arg );
         }
 
-        //let out = cmd.output().expect("failed to execute the process");
-        //println!("{}", String::from_utf8(out.stdout).unwrap());
+        let out = cmd.output().expect("failed to execute the process");
+        found.push_str(str::from_utf8(&out.stdout).unwrap());
 
         match cmd.status() {
             Ok(status) => {
                 if !status.success() {
-                    println!("{}: the programm didn't exit sucessfull", "Error".red().bold());
+                    if let Some(code) = status.code() {
+                        println!("{}: the programm didn't exit sucessfull with code {}", "Error".red().bold(), code);
+                    } else {
+                        println!("{}: the programm didn't exit sucessfull", "Error".red().bold());
+                    }
                     exit(-1)
                 }
             },
