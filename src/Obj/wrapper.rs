@@ -1,9 +1,7 @@
 use gimli::write::{Address, DwarfUnit, EndianVec, FileId, Range, RelocateWriter};
 use gimli::LittleEndian;
 use object::write::{Object, Relocation, SectionId, Symbol, SymbolId, SymbolSection};
-use object::{Architecture, BinaryFormat, Endianness, RelocationEncoding, 
-            RelocationFlags, RelocationKind, SectionKind, SymbolFlags, SymbolKind, 
-            SymbolScope};
+use object::{Architecture, BinaryFormat, Endianness, FileFlags, RelocationEncoding, RelocationFlags, RelocationKind, SectionKind, SymbolFlags, SymbolKind, SymbolScope};
 
 use crate::debug::DebugRegistry;
 use crate::prelude::Triple;
@@ -112,12 +110,14 @@ impl Display for Linkage {
 /// It also supports debugging information
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ObjectBuilder {
-    defines: BTreeMap<String, Vec<u8>>,
-    links: Vec<Link>,
+    pub(crate) defines: BTreeMap<String, Vec<u8>>,
+    pub(crate) links: Vec<Link>,
 
-    decls: Vec<(String, Decl, Linkage)>,
+    pub(crate) decls: Vec<(String, Decl, Linkage)>,
 
-    triple: Triple,
+    pub(crate) triple: Triple,
+
+    pub(crate) flags: Option<FileFlags>,
 
     /// include debugging information
     pub debug: bool,
@@ -131,6 +131,8 @@ impl ObjectBuilder {
 
             links: vec![],
             decls: vec![],
+
+            flags: None,
 
             triple: triple,
 
@@ -219,6 +221,10 @@ impl ObjectBuilder {
                 _ => unreachable!(), // cannot panic cuz the archs are filtered out by the prefius call
             }
         });
+
+        if let Some(flags) = self.flags {
+            obj.flags = flags;
+        }
 
         let secText = obj.add_section(vec![], ".text".as_bytes().to_vec(), SectionKind::Text);
         let secData = obj.add_section(vec![], ".data".as_bytes().to_vec(), SectionKind::Data);
