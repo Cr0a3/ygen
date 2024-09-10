@@ -83,6 +83,8 @@ pub struct Link {
     pub at: usize,
     /// The addend to use
     pub addend: i64,
+    /// If it is a special relocation (only internal usage)
+    pub special: bool,
 }
 
 /// The linkage of the target symbol

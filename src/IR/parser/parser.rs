@@ -1,4 +1,4 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::{BTreeMap, VecDeque};
 
 use crate::prelude::Ir;
 use crate::Obj::Linkage;
@@ -36,8 +36,8 @@ pub enum IrStmt {
     Func{
         name: String,
         ret: TypeMetadata, 
-        args: (HashMap<String, TypeMetadata>, /*unlim args*/bool), 
-        body: HashMap<String, IrBlock>,
+        args: (BTreeMap<String, TypeMetadata>, /*unlim args*/bool), 
+        body: BTreeMap<String, IrBlock>,
         scope: Linkage,
 
         location: Loc,
@@ -97,7 +97,7 @@ impl IrParser {
 
     fn parse_declare(&mut self) -> Result<IrStmt, IrError> {
         let name;
-        let mut args = HashMap::new();
+        let mut args = BTreeMap::new();
         
         self.expect( TokenType::Declare )?;
         self.input.pop_front(); // advance over declare
@@ -159,7 +159,7 @@ impl IrParser {
 
         Ok(IrStmt::Func { 
             name: name, 
-            body: HashMap::new(),
+            body: BTreeMap::new(),
             scope: Linkage::Extern,
             args: (args, unlim),
             ret: ret,
@@ -170,8 +170,8 @@ impl IrParser {
 
     fn parse_define(&mut self) -> Result<IrStmt, IrError> {
         let name;
-        let mut body = HashMap::new();
-        let mut args = HashMap::new();
+        let mut body = BTreeMap::new();
+        let mut args = BTreeMap::new();
         
         let mut link = Linkage::External;
 
@@ -555,6 +555,8 @@ impl IrParser {
         let block = if let TokenType::Ident(name) = &self.current_token()?.typ {
             name.to_owned()
         } else { unreachable!() };
+
+        self.input.pop_front();
 
         Ok(ir::Br::new(Box::from(Block { 
             name: block, 

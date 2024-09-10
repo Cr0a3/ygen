@@ -1,4 +1,4 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::{BTreeMap, VecDeque};
 
 use crate::{Obj::Linkage, IR::{Block, Const, Function, FunctionType, Module, TypeMetadata}};
 
@@ -25,7 +25,7 @@ impl IrGen {
         }
     }
 
-    fn gen_func(&mut self, name: String, ret: TypeMetadata, args:  (HashMap<String, TypeMetadata>, bool), body: HashMap<String, IrBlock>, scope: Linkage) {
+    fn gen_func(&mut self, name: String, ret: TypeMetadata, args:  (BTreeMap<String, TypeMetadata>, bool), body: BTreeMap<String, IrBlock>, scope: Linkage) {
         let mut ty = FunctionType::new(vec![], ret);
 
         for (_, arg) in &args.0 {

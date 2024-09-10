@@ -297,22 +297,24 @@ impl X64MCInstr {
                 } else if let Some(Operand::Imm(imm)) = self.op1 {
                     op.push(0xE9);
                     let bytes = imm.to_be_bytes();
-                    if imm < i8::MAX as i64 && imm > i8::MIN as i64 {
+                    /*if imm < i8::MAX as i64 && imm > i8::MIN as i64 {
                         op.pop(); op.push(0xEB);
                         op.push(bytes[7]);
-                    } else {
+                    } else {*/
                         op.push(bytes[7]);
                         op.push(bytes[6]);
                         op.push(bytes[5]);
                         op.push(bytes[4]);
-                    }
+                    //}
                 } else { todo!() }
 
                 (buildOpcode(None, None, op), None)
             }
             Mnemonic::Link => {
                 if let Some(Operand::LinkDestination(dst, addend)) = &self.op1 {
-                    (vec![], Some(Link { from: "".into(), to: dst.to_string(), at: 0, addend: *addend }))
+                    (vec![], Some(Link { from: "".into(), to: dst.to_string(), at: 0, addend: *addend, special: false }))
+                } else if let Some(Operand::BlockLinkDestination(dst, addend)) = &self.op1 {
+                    (vec![], Some(Link { from: "".into(), to: dst.to_string(), at: 0, addend: *addend, special: true }))
                 } else {
                     (vec![], None)
                 }

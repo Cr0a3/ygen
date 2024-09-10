@@ -6,7 +6,7 @@ gcc out.o -o a.exe
 define u32 @main() {
  entry:
     br test
-    ret void 0
+    ret u32 0
   
   test:
     ret u32 5

@@ -35,7 +35,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     
     data.extend_from_slice(&X64MCInstr::with2(Mnemonic::Lea, Operand::Reg(x64Reg::Rax), rip_relativ).compile()?);
 
-    obj.link( Link { from: "main".into(), to: "string".into(), at: data.len(), addend: -4 });
+    obj.link( Link { from: "main".into(), to: "string".into(), at: data.len(), addend: -4, special: false });
     
     if cfg!(target_os = "windows") {
         data.extend_from_slice(&X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rcx), Operand::Reg(x64Reg::Rax)).compile()?);
@@ -47,7 +47,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     debug.add_location(&"main".to_string(), DebugLocation { line: 4, col: 4, epilog: false, prolog: false, adr: data.len() as u64 });
     data.extend_from_slice(&X64MCInstr::with1(Mnemonic::Call, Operand::Imm(0)).compile()?); // call printf
 
-    obj.link( Link { from: "main".into(), to: "printf".into(), at: data.len(), addend: -4});
+    obj.link( Link { from: "main".into(), to: "printf".into(), at: data.len(), addend: -4, special: false });
 
     
     debug.add_location(&"main".to_string(), DebugLocation { line: 5, col: 4, epilog: false, prolog: false, adr: data.len() as u64 });

@@ -26,7 +26,7 @@ impl Block {
     pub fn dump(&self) -> String {
         let mut dump = String::new();
 
-        dump += &format!("{}:\n", self.name);
+        dump += &format!("  {}:\n", self.name);
 
         for node in &self.nodes {
             dump += &format!("\t{}\n", node.dump());

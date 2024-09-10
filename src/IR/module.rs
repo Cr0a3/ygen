@@ -1,7 +1,7 @@
-use crate::{prelude::Triple, CodeGen::MachineInstr, Obj::{Decl, Linkage, ObjectBuilder}, Optimizations::PassManager, Support::{ColorClass, ColorProfile}, Target::TargetRegistry};
+use crate::{prelude::Triple, CodeGen::MachineInstr, Obj::{Decl, Link, Linkage, ObjectBuilder}, Optimizations::PassManager, Support::{ColorClass, ColorProfile}, Target::TargetRegistry};
 
 use super::{func::FunctionType, Const, Function, VerifyError};
-use std::{collections::HashMap, error::Error, fs::OpenOptions, io::Write, path::Path};
+use std::{collections::{BTreeMap, HashMap}, error::Error, fs::OpenOptions, io::Write, path::Path};
 
 /// ## The Module
 /// The main class for handeling functions
@@ -150,16 +150,62 @@ impl Module {
         for (name, func) in &self.funcs {
             obj.decl( (&name, Decl::Function, func.linkage));
 
-            let mut comp = vec![];
+            let mut blocks = BTreeMap::new();
 
             for block in &func.blocks {
-                let (compiled, links) = &registry.buildMachineCodeForTarget(triple, block, &func)?;
+                let (compiled, links) = registry.buildMachineCodeForTarget(triple, block, &func)?;
 
-                comp.extend_from_slice(&compiled);
+                blocks.insert(block.name.to_owned(), (compiled, links));
+            }
+
+            let mut comp = vec![];
+
+            let mut block_links: Vec<((i64, i64, i64, i64), String, String)> = vec![];
+
+            let mut block_adrs = HashMap::new();
+
+            for (name, (data, links)) in blocks {
+                let prev_len = comp.len();
+
+                block_adrs.insert(name, prev_len);
+
+                comp.extend_from_slice(&data);
 
                 for link in links {
-                    obj.link(link.to_owned())
+                    if link.special { // block to block link
+                        let adr = |idx| {
+                            link.at as i64 + (prev_len as i64) + link.addend + idx
+                        };
+
+                        block_links.push(((adr(0), adr(1), adr(2), adr(3)), link.to, link.from));
+                    } else {
+                        obj.link(Link { 
+                            from: link.from, 
+                            to: link.to, 
+                            at: link.at + prev_len - 1, 
+                            addend: link.addend,
+                            special: false,
+                        });
+                    }
                 }
+            }
+
+            for (idx, target, source) in block_links {
+                let mut target_adr = *block_adrs.get(&target).expect("hmm i made a programming error") as i64;
+                let source_adr = *block_adrs.get(&source).expect("hmm i made a programming error") as i64 + 5;
+
+                target_adr = -(source_adr - target_adr);
+
+                let bytes = target_adr.to_be_bytes();
+
+                let mut set_byte = |idx: i64, to: u8| {
+                    *comp.get_mut(idx as usize).unwrap() = to;
+                };
+                
+                set_byte(idx.0, bytes[7]);
+                set_byte(idx.1, bytes[6]);
+                set_byte(idx.2, bytes[5]);
+                set_byte(idx.3, bytes[4]);
             }
 
             obj.define(&name, comp);
@@ -232,9 +278,7 @@ impl Module {
             lines += &format!("{}:\n", name);
 
             for block in &func.blocks {
-                if block.name.to_lowercase() != "entry" {
-                    lines += &format!("\t.{}:\n", block.name)
-                }
+                lines += &format!(" {}:\n", block.name);
 
                 let asm_lines = registry.buildAsmForTarget(triple, block, func)?;
 

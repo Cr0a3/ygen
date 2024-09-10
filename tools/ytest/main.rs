@@ -15,6 +15,8 @@ fn main() {
     cli.add_opt("h", "help", "Displays help");
     cli.add_opt("v", "version", "Displays the version");
 
+    cli.add_opt("no-exit", "no-exit-on-error", "Ytest does not quite when an error occurs");
+
     cli.add_arg("t", "test", "The file to the testcase", true);
 
     cli.scan();
@@ -120,13 +122,17 @@ fn main() {
                         code = exit;
                     } else {
                         println!("{}: the programm didn't exit sucessfull", "Error".red().bold());
-                        exit(-1)
+                        if !cli.opt("no-exit") {
+                            exit(-1)
+                        }
                     }
                 }
             },
             Err(err) => {
                 println!("{}: {}", "Error".red().bold(), err);
-                exit(-1)
+                if !cli.opt("no-exit") {
+                    exit(-1)
+                }
             }
         };
     }
@@ -137,11 +143,17 @@ fn main() {
         println!("{}: expected output didn't match actual output", "Error".red().bold());
         println!("found: {:?}", found);
         println!("expected: {:?}", parsed.expected_out);
-        exit(-1);
+        if !cli.opt("no-exit") {
+            exit(-1)
+        }
     }
 
     if parsed.expected_code != code {
         println!("{}: expected exit code: {} found {}", "Error".red().bold(), parsed.expected_code, code);
-        exit(-1);
+        if !cli.opt("no-exit") {
+            exit(-1)
+        }
+    } else {
+        println!("expected exit code {} matched with found one {}", parsed.expected_code, code);
     }
 }

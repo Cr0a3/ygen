@@ -96,7 +96,11 @@ impl TargetRegistry {
             if let Some(link) = link {
                 let mut link = link.clone();
 
-                link.from = funct.name.to_string();
+                if link.special {
+                    link.from = block.name.to_owned();
+                } else {
+                    link.from = funct.name.to_string();
+                }
                 link.at = res.len();
 
                 links.push(link);

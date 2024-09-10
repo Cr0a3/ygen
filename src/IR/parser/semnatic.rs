@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use crate::Obj::Linkage;
 use crate::IR::{Block, Const, FnTy, Function, FunctionType, Type, TypeMetadata, Var};
@@ -48,7 +48,7 @@ impl<'a> IrSemnatic<'a> {
         Ok(())
     }
 
-    fn add_func(&mut self, name: &String, ret: TypeMetadata, args: &(HashMap<String, TypeMetadata>, bool),  scope: &Linkage, body: &HashMap<String, IrBlock>, loc: &Loc) -> Result<(), IrError> {
+    fn add_func(&mut self, name: &String, ret: TypeMetadata, args: &(BTreeMap<String, TypeMetadata>, bool),  scope: &Linkage, body: &BTreeMap<String, IrBlock>, loc: &Loc) -> Result<(), IrError> {
         if self.func_sigs.contains_key(name) {
             Err(IrError::DefinedTwice {
                 loc: loc.clone(),
@@ -91,7 +91,7 @@ impl<'a> IrSemnatic<'a> {
         Ok(())
     }
 
-    fn analizye_func(&mut self, name: &String, ret: TypeMetadata, args: &(HashMap<String, TypeMetadata>, bool), body: &HashMap<String, IrBlock>, scope: Linkage, loc: &Loc) -> Result<(), IrError> {
+    fn analizye_func(&mut self, name: &String, ret: TypeMetadata, args: &(BTreeMap<String, TypeMetadata>, bool), body: &BTreeMap<String, IrBlock>, scope: Linkage, loc: &Loc) -> Result<(), IrError> {
         let mut vars = HashMap::new();
 
         let mut blocks = vec![];

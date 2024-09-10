@@ -141,7 +141,7 @@ impl Function {
         });
 
         for block in &self.blocks {
-            string += &format!(" {}\n", block.dump());
+            string += &format!("{}\n", block.dump());
         }
 
         string += "}";
