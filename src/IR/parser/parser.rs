@@ -2,7 +2,7 @@ use std::collections::{HashMap, VecDeque};
 
 use crate::prelude::Ir;
 use crate::Obj::Linkage;
-use crate::IR::{ir, Const, FnTy, Function, Type, TypeMetadata, Var};
+use crate::IR::{ir, Block, Const, FnTy, Function, Type, TypeMetadata, Var};
 
 use super::lexer::{Loc, Token, TokenType};
 use super::IrError;
@@ -420,6 +420,7 @@ impl IrParser {
             } else if let TokenType::Ident(instrinc) = curr.typ {
                 match instrinc.as_str() {
                     "ret" => self.parse_ret()?,
+                    "br" => self.parse_br()?,
                     _ => Err(IrError::UnkownInstrinc{loc: curr.loc.clone(), found: instrinc })?,
                 }
             } else {
@@ -544,6 +545,22 @@ impl IrParser {
             linkage: Linkage::External, 
             blocks: VecDeque::new(), 
         }, args, out))
+    }
+
+    fn parse_br(&mut self) -> Result<Box<dyn Ir>, IrError> {
+        self.input.pop_front(); // br
+
+        self.expect( TokenType::Ident(String::new()) )?; // block names are idents
+        
+        let block = if let TokenType::Ident(name) = &self.current_token()?.typ {
+            name.to_owned()
+        } else { unreachable!() };
+
+        Ok(ir::Br::new(Box::from(Block { 
+            name: block, 
+            nodes: vec![], 
+            varCount: 0
+        })))
     }
 
     fn parse_data_array(&mut self) -> Result<Vec<u8>, IrError> {

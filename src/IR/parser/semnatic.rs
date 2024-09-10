@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::Obj::Linkage;
-use crate::IR::{Const, FnTy, Function, FunctionType, Type, TypeMetadata, Var};
+use crate::IR::{Block, Const, FnTy, Function, FunctionType, Type, TypeMetadata, Var};
 
 use crate::prelude::ir::*;
 
@@ -15,7 +15,7 @@ pub struct IrSemnatic<'a> {
     input: &'a Vec<IrStmt>,
 
     const_sigs: HashMap<String, Linkage>,
-    func_sigs: HashMap<String, (FunctionType, Linkage)>,
+    func_sigs: HashMap<String, (FunctionType, Linkage, /*the blocks*/Vec<String>)>,
 }
 
 impl<'a> IrSemnatic<'a> {
@@ -33,7 +33,7 @@ impl<'a> IrSemnatic<'a> {
     pub fn verify(&mut self) -> Result<(), IrError> {
         for stmt in self.input {
             match stmt {
-                IrStmt::Func { name, ret, args, body: _, scope, location } => self.add_func(name, *ret, args, scope, location)?,
+                IrStmt::Func { name, ret, args, body, scope, location } => self.add_func(name, *ret, args, scope, body, location)?,
                 IrStmt::Const { name, data: _, location, scope } => self.add_const(name, scope, location)?
             }
         }
@@ -48,7 +48,7 @@ impl<'a> IrSemnatic<'a> {
         Ok(())
     }
 
-    fn add_func(&mut self, name: &String, ret: TypeMetadata, args: &(HashMap<String, TypeMetadata>, bool),  scope: &Linkage, loc: &Loc) -> Result<(), IrError> {
+    fn add_func(&mut self, name: &String, ret: TypeMetadata, args: &(HashMap<String, TypeMetadata>, bool),  scope: &Linkage, body: &HashMap<String, IrBlock>, loc: &Loc) -> Result<(), IrError> {
         if self.func_sigs.contains_key(name) {
             Err(IrError::DefinedTwice {
                 loc: loc.clone(),
@@ -68,7 +68,13 @@ impl<'a> IrSemnatic<'a> {
             ty.activate_dynamic_arguments();
         }
 
-        self.func_sigs.insert(name.to_owned(), (ty, *scope));
+        let mut blocks = vec![];
+
+        for (name, _) in body {
+            blocks.push( name.to_owned() );
+        }
+
+        self.func_sigs.insert(name.to_owned(), (ty, *scope, blocks));
 
         Ok(())
     }
@@ -101,6 +107,8 @@ impl<'a> IrSemnatic<'a> {
             })?
         }
 
+        let func = name;
+
         for (name, block) in body {
             if blocks.contains(name) {
                 Err(IrError::DefinedTwice {
@@ -129,7 +137,9 @@ impl<'a> IrSemnatic<'a> {
                     self.analiyze_assign_type(&mut vars, node, loc)?;
                 } else if let Some(node) = any.downcast_ref::<Call<Function, Vec<Var>, Var>>() {
                     self.analyize_call(&mut vars, node, loc)?;
-                }
+                } else if let Some(node) = any.downcast_ref::<Br<Box<Block>>>() {
+                    self.analiyze_block(func, node, loc)?;
+                }      
             }
         }
 
@@ -244,7 +254,7 @@ impl<'a> IrSemnatic<'a> {
         let name = &node.inner1.name;
         let mut sig = node.inner1.ty.to_owned();
 
-        if let Some((ty, _)) = self.func_sigs.get(&node.inner1.name) {
+        if let Some((ty, _, _)) = self.func_sigs.get(&node.inner1.name) {
             sig = ty.to_owned();
         } else  {
             Err(IrError::Unkown {
@@ -299,6 +309,22 @@ impl<'a> IrSemnatic<'a> {
             index += 1;
         }
 
+
+        Ok(())
+    }
+
+    fn analiyze_block(&mut self, func: &String, node: &Br<Box<Block>>, loc: Loc) -> Result<(), IrError> {
+        let br_block = &node.inner1.name;
+
+        let (_, _, blocks) = self.func_sigs.get(func).unwrap();
+
+        if !blocks.contains(br_block) {
+            Err(IrError::Unkown { 
+                what: "block".to_owned(), 
+                name: br_block.to_owned(), 
+                loc: loc
+            })?
+        }
 
         Ok(())
     }
