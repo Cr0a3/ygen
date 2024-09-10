@@ -7,12 +7,14 @@ mod call;
 mod cast;
 mod math;
 mod ret;
+mod br;
 
 pub use assign::*;
 pub use call::*;
 pub use cast::*;
 pub use math::*;
 pub use ret::*;
+pub use br::*;
 
 macro_rules! IrTypeWith3 {
     ($name:tt, $param1:tt, $param2:tt, $param3:tt) => {
@@ -104,6 +106,8 @@ IrTypeWith3!(Or, T, U, Z);
 IrTypeWith3!(And, T, U, Z);
 IrTypeWith3!(Mul, T, U, Z);
 IrTypeWith3!(Div, T, U, Z);
+
+IrTypeWith1!(Br, T);
 
 use crate::Support::{ColorClass, ColorProfile};
 
