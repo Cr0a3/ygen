@@ -9,6 +9,7 @@ mod cast;
 mod call;
 mod ret;
 mod assign;
+mod br;
 
 /// helps with compilation
 pub struct CompilationHelper {

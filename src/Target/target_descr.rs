@@ -162,3 +162,5 @@ compile_func!(compile_call, compile_call, Call<Function, Vec<Var>, Var>);
 compile_func!(compile_assign_var_type, compile_assign_var_type, Assign<Var, Type>);
 compile_func!(compile_assign_var_var, compile_assign_var_var, Assign<Var, Var>);
 compile_func!(compile_assign_var_const, compile_assign_var_const, Assign<Var, Const>);
+
+compile_func!(compile_br, compile_br, Br<Box<Block>>);

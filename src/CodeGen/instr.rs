@@ -96,6 +96,7 @@ pub enum MachineMnemonic {
     Downcast,
 
     Call(String),
+    Br(String),
     Return,
 
     AdressLoad(String),
@@ -118,6 +119,7 @@ impl MachineMnemonic {
             MachineMnemonic::Call(_) => "call",
             MachineMnemonic::Return => "return",
             MachineMnemonic::AdressLoad(_) => "adrload",
+            MachineMnemonic::Br(_) => "br",
         }.to_string()
     }
 }

@@ -475,6 +475,7 @@ impl X64MCInstr {
                 Operand::Reg(reg) => profile.markup(&reg.to_string(), ColorClass::Var),
                 Operand::Mem(mem) => profile.markup(&format!("{}", mem), ColorClass::Var),
                 Operand::LinkDestination(_, _) => "".to_string(),
+                Operand::BlockLinkDestination(_, _) => "".to_string(),
                 Operand::Debug(s) => s.to_string(),
             }));
             if let Some(op2) = &self.op2 {
@@ -483,6 +484,7 @@ impl X64MCInstr {
                     Operand::Reg(reg) => profile.markup(&format!(", {}", reg.to_string()), ColorClass::Var),
                     Operand::Mem(mem) => profile.markup(&format!("{}", mem), ColorClass::Var),
                     Operand::LinkDestination(_, _) => "".to_string(),
+                    Operand::BlockLinkDestination(_, _) => "".to_string(),
                     Operand::Debug(s) => s.to_string(),
                 }));
             }
@@ -702,8 +704,10 @@ pub enum Operand {
     Reg(x64Reg),
     /// A memory displacement
     Mem(MemOp),
-    /// The link destination
+    /// A link destination
     LinkDestination(String, i64),
+    /// A link destination to a block
+    BlockLinkDestination(String, i64),
     /// For debugging
     Debug(String),
 }
@@ -728,6 +732,7 @@ impl Display for Operand {
             Operand::Reg(reg) => reg.to_string(),
             Operand::Mem(mem) => format!("{}", mem),
             Operand::LinkDestination(_, _) => "".to_string(),
+            Operand::BlockLinkDestination(_, _) => "".to_string(),
             Operand::Debug(s) => s.to_string(),
         })
     }

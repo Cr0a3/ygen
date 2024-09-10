@@ -19,6 +19,7 @@ fn x64_lower_instr(conv: CallConv, sink: &mut Vec<X64MCInstr>, instr: MachineIns
         MachineMnemonic::Call(to) => x64_lower_call(conv, sink, &instr, to),
         MachineMnemonic::Return => x64_lower_return(sink, &instr),
         MachineMnemonic::AdressLoad(to) => x64_lower_adr_load(sink, &instr, to),
+        MachineMnemonic::Br(to) => x64_lower_br(sink, &instr, to),
     }
 }
 
@@ -357,5 +358,17 @@ fn x64_lower_adr_load(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr, symbol: 
     );
     sink.push(
         X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(x64Reg::Rax)).into()
+    );
+}
+fn x64_lower_br(sink: &mut Vec<X64MCInstr>, _: &MachineInstr, symbol: &String) {
+    let target = Operand::BlockLinkDestination(symbol.to_owned(), -4);
+
+    sink.push(
+        X64MCInstr::with1(Mnemonic::Jmp, Operand::Imm(0))
+    );
+
+
+    sink.push(
+        X64MCInstr::with1(Mnemonic::Link, target)
     );
 }

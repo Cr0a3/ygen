@@ -10,7 +10,7 @@ pub mod parser;
 
 /// Stores all ir nodes and the ir trait
 pub mod ir {
-    pub use super::nodes::*;
+    pub use crate::IR::nodes::*;
 }
 
 use std::error::Error;
