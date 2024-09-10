@@ -2,7 +2,8 @@
 pub struct Parsed {
     pub cmd: Vec<String>,
     pub input: String,
-    pub expected_out: String
+    pub expected_out: String,
+    pub expected_code: i32,
 }
 
 pub fn parse(input: String) -> Parsed { 
@@ -10,6 +11,7 @@ pub fn parse(input: String) -> Parsed {
         cmd: Vec::new(),
         input: String::new(),
         expected_out: String::new(),
+        expected_code: 0,
     };
     
     let mut append ;
@@ -36,6 +38,12 @@ pub fn parse(input: String) -> Parsed {
             append = false;
             stdout = false;
             run = false;
+        }
+
+        if line.trim().starts_with("# EXIT_CODE=") {
+            let line = line.trim().replace("# EXIT_CODE=", "");
+            out.expected_code = str::parse::<i32>(&line).unwrap();
+            append = false;
         }
 
         if append {

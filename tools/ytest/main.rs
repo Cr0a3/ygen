@@ -71,6 +71,8 @@ fn main() {
 
     let mut found = String::new();
 
+    let mut code = 0;
+
     for cmd in parsed.cmd {
         let args = cmd.replace("%s", path_str);
         let args = unescaper::unescape(&args).unwrap();
@@ -114,12 +116,12 @@ fn main() {
         match cmd.status() {
             Ok(status) => {
                 if !status.success() {
-                    if let Some(code) = status.code() {
-                        println!("{}: the programm didn't exit sucessfull with code {}", "Error".red().bold(), code);
+                    if let Some(exit) = status.code() {
+                        code = exit;
                     } else {
                         println!("{}: the programm didn't exit sucessfull", "Error".red().bold());
+                        exit(-1)
                     }
-                    exit(-1)
                 }
             },
             Err(err) => {
@@ -135,5 +137,11 @@ fn main() {
         println!("{}: expected output didn't match actual output", "Error".red().bold());
         println!("found: {:?}", found);
         println!("expected: {:?}", parsed.expected_out);
+        exit(-1);
+    }
+
+    if parsed.expected_code != code {
+        println!("{}: expected exit code: {} found {}", "Error".red().bold(), parsed.expected_code, code);
+        exit(-1);
     }
 }
