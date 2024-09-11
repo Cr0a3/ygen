@@ -238,11 +238,11 @@ fn x64_lower_cond_br(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr, iftrue: &
         },
     };
 
-    X64MCInstr::with2(Mnemonic::Cmp, src, value);
-    X64MCInstr::with1(Mnemonic::Jne, Operand::Imm(0));
-    X64MCInstr::with1(Mnemonic::Link, Operand::BlockLinkDestination(iffalse.to_owned(), -4));
-    X64MCInstr::with1(Mnemonic::Jmp, Operand::Imm(0));
-    X64MCInstr::with1(Mnemonic::Link, Operand::BlockLinkDestination(iftrue.to_owned(), -4));
+    sink.push(X64MCInstr::with2(Mnemonic::Cmp, src, value));
+    sink.push(X64MCInstr::with1(Mnemonic::Jne, Operand::Imm(0)));
+    sink.push(X64MCInstr::with1(Mnemonic::Link, Operand::BlockLinkDestination(iffalse.to_owned(), -4)));
+    sink.push(X64MCInstr::with1(Mnemonic::Jmp, Operand::Imm(0)));
+    sink.push(X64MCInstr::with1(Mnemonic::Link, Operand::BlockLinkDestination(iftrue.to_owned(), -4)));
 }
 
 macro_rules! LowerSimpleMath {
