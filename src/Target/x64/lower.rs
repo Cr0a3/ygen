@@ -44,73 +44,8 @@ pub(crate) fn x64_lower(conv: CallConv, instrs: Vec<MachineInstr>) -> Vec<Box<dy
     mc_instrs
 }
 
-fn x64_lower_add(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
-    let op1 = instr.operands.get(0).expect("expected a first operand");
-    let op2 = instr.operands.get(1).expect("expected a second operand");
-    let out = instr.out.expect("expected a output operand");
-
-    let op1 = match op1 {
-        crate::CodeGen::MachineOperand::Imm(i) => Operand::Imm(*i),
-        crate::CodeGen::MachineOperand::Reg(reg) => match reg {
-            crate::CodeGen::Reg::x64(x64) => Operand::Reg(*x64),
-        },
-    };
-
-    
-    let op2 = match op2 {
-        crate::CodeGen::MachineOperand::Imm(i) => Operand::Imm(*i),
-        crate::CodeGen::MachineOperand::Reg(reg) => match reg {
-            crate::CodeGen::Reg::x64(x64) => Operand::Reg(*x64),
-        },
-    };
-    
-    let out = match out {
-        crate::CodeGen::MachineOperand::Imm(i) => Operand::Imm(i),
-        crate::CodeGen::MachineOperand::Reg(reg) => match reg {
-            crate::CodeGen::Reg::x64(x64) => Operand::Reg(x64),
-        },
-    };
-
-    let tmp = || Operand::Reg(x64Reg::Rax.sub_ty(instr.meta));
-
-    sink.push( X64MCInstr::with2(Mnemonic::Mov, tmp(), op1).into() );
-    sink.push( X64MCInstr::with2(Mnemonic::Add, tmp(), op2).into() );
-    sink.push( X64MCInstr::with2(Mnemonic::Mov, out, tmp()).into() );
-
-}
-
 fn x64_lower_div(_sink: &mut Vec<X64MCInstr>, _instr: &MachineInstr) {
     todo!()
-}
-fn x64_lower_and(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
-    let op1 = instr.operands.get(0).expect("expected a first operand");
-    let op2 = instr.operands.get(1).expect("expected a second operand");
-    let out = instr.out.expect("expected a output operand");
-
-    let op1 = match op1 {
-        crate::CodeGen::MachineOperand::Imm(i) => Operand::Imm(*i),
-        crate::CodeGen::MachineOperand::Reg(reg) => match reg {
-            crate::CodeGen::Reg::x64(x64) => Operand::Reg(*x64),
-        },
-    };
-
-    
-    let op2 = match op2 {
-        crate::CodeGen::MachineOperand::Imm(i) => Operand::Imm(*i),
-        crate::CodeGen::MachineOperand::Reg(reg) => match reg {
-            crate::CodeGen::Reg::x64(x64) => Operand::Reg(*x64),
-        },
-    };
-    
-    let out = match out {
-        crate::CodeGen::MachineOperand::Imm(i) => Operand::Imm(i),
-        crate::CodeGen::MachineOperand::Reg(reg) => match reg {
-            crate::CodeGen::Reg::x64(x64) => Operand::Reg(x64),
-        },
-    };
-
-    sink.push( X64MCInstr::with2(Mnemonic::Mov, out.clone(), op1).into() );
-    sink.push( X64MCInstr::with2(Mnemonic::And, out, op2).into() );
 }
 fn x64_lower_move(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     
@@ -179,97 +114,6 @@ fn x64_lower_mul(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
 
     sink.push( X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta))).into() );
     sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(x64Reg::Rdx)).into() );
-}
-
-fn x64_lower_or(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
-    let op1 = instr.operands.get(0).expect("expected a first operand");
-    let op2 = instr.operands.get(1).expect("expected a second operand");
-    let out = instr.out.expect("expected a output operand");
-
-    let op1 = match op1 {
-        crate::CodeGen::MachineOperand::Imm(i) => Operand::Imm(*i),
-        crate::CodeGen::MachineOperand::Reg(reg) => match reg {
-            crate::CodeGen::Reg::x64(x64) => Operand::Reg(*x64),
-        },
-    };
-
-    
-    let op2 = match op2 {
-        crate::CodeGen::MachineOperand::Imm(i) => Operand::Imm(*i),
-        crate::CodeGen::MachineOperand::Reg(reg) => match reg {
-            crate::CodeGen::Reg::x64(x64) => Operand::Reg(*x64),
-        },
-    };
-    
-    let out = match out {
-        crate::CodeGen::MachineOperand::Imm(i) => Operand::Imm(i),
-        crate::CodeGen::MachineOperand::Reg(reg) => match reg {
-            crate::CodeGen::Reg::x64(x64) => Operand::Reg(x64),
-        },
-    };
-
-    sink.push( X64MCInstr::with2(Mnemonic::Mov, out.clone(), op1).into() );
-    sink.push( X64MCInstr::with2(Mnemonic::Or, out, op2).into() );
-}
-fn x64_lower_sub(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
-    let op1 = instr.operands.get(0).expect("expected a first operand");
-    let op2 = instr.operands.get(1).expect("expected a second operand");
-    let out = instr.out.expect("expected a output operand");
-
-    let op1 = match op1 {
-        crate::CodeGen::MachineOperand::Imm(i) => Operand::Imm(*i),
-        crate::CodeGen::MachineOperand::Reg(reg) => match reg {
-            crate::CodeGen::Reg::x64(x64) => Operand::Reg(*x64),
-        },
-    };
-
-    
-    let op2 = match op2 {
-        crate::CodeGen::MachineOperand::Imm(i) => Operand::Imm(*i),
-        crate::CodeGen::MachineOperand::Reg(reg) => match reg {
-            crate::CodeGen::Reg::x64(x64) => Operand::Reg(*x64),
-        },
-    };
-    
-    let out = match out {
-        crate::CodeGen::MachineOperand::Imm(i) => Operand::Imm(i),
-        crate::CodeGen::MachineOperand::Reg(reg) => match reg {
-            crate::CodeGen::Reg::x64(x64) => Operand::Reg(x64),
-        },
-    };
-
-    sink.push( X64MCInstr::with2(Mnemonic::Mov, out.clone(), op1).into() );
-    sink.push( X64MCInstr::with2(Mnemonic::Sub, out, op2).into() );
-}
-fn x64_lower_xor(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
-    let op1 = instr.operands.get(0).expect("expected a first operand");
-    let op2 = instr.operands.get(1).expect("expected a second operand");
-    let out = instr.out.expect("expected a output operand");
-
-    let op1 = match op1 {
-        crate::CodeGen::MachineOperand::Imm(i) => Operand::Imm(*i),
-        crate::CodeGen::MachineOperand::Reg(reg) => match reg {
-            crate::CodeGen::Reg::x64(x64) => Operand::Reg(*x64),
-        },
-    };
-
-    
-    let op2 = match op2 {
-        crate::CodeGen::MachineOperand::Imm(i) => Operand::Imm(*i),
-        crate::CodeGen::MachineOperand::Reg(reg) => match reg {
-            crate::CodeGen::Reg::x64(x64) => Operand::Reg(*x64),
-        },
-    };
-    
-    let out = match out {
-        crate::CodeGen::MachineOperand::Imm(i) => Operand::Imm(i),
-        crate::CodeGen::MachineOperand::Reg(reg) => match reg {
-            crate::CodeGen::Reg::x64(x64) => Operand::Reg(x64),
-        },
-    };
-
-    sink.push( X64MCInstr::with2(Mnemonic::Mov, out.clone(), op1).into() );
-    sink.push( X64MCInstr::with2(Mnemonic::Xor, out, op2).into() );
 }
 fn x64_lower_zext(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     
@@ -375,3 +219,47 @@ fn x64_lower_br(sink: &mut Vec<X64MCInstr>, _: &MachineInstr, symbol: &String) {
         X64MCInstr::with1(Mnemonic::Link, target)
     );
 }
+
+macro_rules! LowerSimpleMath {
+    ($func:ident, $mnemonic:expr) => {
+        fn $func(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {       
+            let op1 = instr.operands.get(0).expect("expected a first operand");
+            let op2 = instr.operands.get(1).expect("expected a second operand");
+            let out = instr.out.expect("expected a output operand");
+
+            let op1 = match op1 {
+                crate::CodeGen::MachineOperand::Imm(i) => Operand::Imm(*i),
+                crate::CodeGen::MachineOperand::Reg(reg) => match reg {
+                    crate::CodeGen::Reg::x64(x64) => Operand::Reg(*x64),
+                },
+            };
+
+            
+            let op2 = match op2 {
+                crate::CodeGen::MachineOperand::Imm(i) => Operand::Imm(*i),
+                crate::CodeGen::MachineOperand::Reg(reg) => match reg {
+                    crate::CodeGen::Reg::x64(x64) => Operand::Reg(*x64),
+                },
+            };
+            
+            let out = match out {
+                crate::CodeGen::MachineOperand::Imm(i) => Operand::Imm(i),
+                crate::CodeGen::MachineOperand::Reg(reg) => match reg {
+                    crate::CodeGen::Reg::x64(x64) => Operand::Reg(x64),
+                },
+            };
+
+            let tmp = || Operand::Reg(x64Reg::Rax.sub_ty(instr.meta));
+
+            sink.push( X64MCInstr::with2(Mnemonic::Mov, tmp(), op1).into() );
+            sink.push( X64MCInstr::with2($mnemonic, tmp(), op2).into() );
+            sink.push( X64MCInstr::with2(Mnemonic::Mov, out, tmp()).into() );
+        }
+    };
+}
+
+LowerSimpleMath!(x64_lower_add, Mnemonic::Add);
+LowerSimpleMath!(x64_lower_and, Mnemonic::And);
+LowerSimpleMath!(x64_lower_or, Mnemonic::Or);
+LowerSimpleMath!(x64_lower_sub, Mnemonic::Sub);
+LowerSimpleMath!(x64_lower_xor, Mnemonic::Xor);

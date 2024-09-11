@@ -1,0 +1,16 @@
+# RUN: 
+cargo run -p ylc -- -in=%s -o=out.o
+gcc out.o -o a.exe
+./a.exe
+# IN:
+define i32 @main() {
+ entry:
+    %0 = i32 66
+    %1 = i32 12
+
+    %2 = sub i32 %0, %1
+
+    ret i32 %2
+}
+
+# EXIT_CODE=54
