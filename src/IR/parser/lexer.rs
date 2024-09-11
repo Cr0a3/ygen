@@ -350,7 +350,7 @@ impl IrLexer {
             }
         }
 
-        self.no_pop = false;
+        self.no_pop = true;
 
         Ok(TokenType::Var(out))
     }
@@ -489,6 +489,8 @@ impl IrLexer {
         if negate {
             out = -out;
         }
+
+        self.no_pop = true;
 
         Ok(TokenType::Int(out))
     }

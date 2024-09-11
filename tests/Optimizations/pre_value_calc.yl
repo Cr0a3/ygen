@@ -1,0 +1,20 @@
+# RUN: 
+cargo run -p ylc -- -in=%s -o=out.o -O -fmt
+gcc out.o -o a.exe
+./a.exe
+# IN:
+define u32 @main() {
+ entry:
+    %1 = add i32 5, 6
+    %2 = cast %1 to u32
+    ret u32 %2
+}
+
+# EXIT_CODE=11
+# STDOUT: 
+define  u32 @main() {
+  entry:
+    1 = i32 11
+    2 = cast 1 to u32
+    ret u32 2
+}

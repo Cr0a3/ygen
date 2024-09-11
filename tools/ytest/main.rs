@@ -16,6 +16,7 @@ fn main() {
     cli.add_opt("v", "version", "Displays the version");
 
     cli.add_opt("no-exit", "no-exit-on-error", "Ytest does not quite when an error occurs");
+    cli.add_opt("neg-exit", "exit-code-neg", "Ytest exits automaticly even with `no-exit` if the programm returned with code -1");
 
     cli.add_arg("t", "test", "The file to the testcase", true);
 
@@ -113,13 +114,28 @@ fn main() {
         }
 
         let out = cmd.output().expect("failed to execute the process");
-        found.push_str(str::from_utf8(&out.stdout).unwrap());
+        let stdout = out.stdout;
+
+        let stdout = str::from_utf8(&stdout).unwrap();
+        let stdout = stdout.chars().filter(|x| !x.is_whitespace()).collect::<String>();
+
+        found.push_str(&stdout);
 
         match cmd.status() {
             Ok(status) => {
                 if !status.success() {
-                    if let Some(exit) = status.code() {
-                        code = exit;
+                    if let Some(exit_code) = status.code() {
+                        if parsed.expected_code == 0 || (cli.opt("exit") && code == -1) {
+                            println!("{}: the programm didn't exit sucessfull with code {}", "Error".red().bold(), exit_code);
+                            if !cli.opt("no-exit") {
+                                exit(-1);
+                            }
+                        } else if cli.opt("neg-exit") && code == -1 {
+                            println!("{}: the programm didn't exit sucessfull with code {}", "Error".red().bold(), exit_code);
+                            exit(-1);
+                        } else {
+                            code = exit_code;
+                        }
                     } else {
                         println!("{}: the programm didn't exit sucessfull", "Error".red().bold());
                         if !cli.opt("no-exit") {
@@ -141,7 +157,7 @@ fn main() {
 
     if parsed.expected_out != found {
         println!("{}: expected output didn't match actual output", "Error".red().bold());
-        println!("found: {:?}", found);
+        println!("found:    {:?}", found);
         println!("expected: {:?}", parsed.expected_out);
         if !cli.opt("no-exit") {
             exit(-1)

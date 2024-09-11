@@ -139,7 +139,51 @@ impl<'a> IrSemnatic<'a> {
                     self.analyize_call(&mut vars, node, loc)?;
                 } else if let Some(node) = any.downcast_ref::<Br<Box<Block>>>() {
                     self.analiyze_block(func, node, loc)?;
-                }      
+                } else if let Some(node) = any.downcast_ref::<Add<Var, Type, Var>>() {
+                    self.analaysiz_add_var_ty(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Sub<Var, Type, Var>>() {
+                    self.analaysiz_sub_var_ty(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Xor<Var, Type, Var>>() {
+                    self.analaysiz_xor_var_ty(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Or<Var, Type, Var>>() {
+                    self.analaysiz_or_var_ty(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<And<Var, Type, Var>>() {
+                    self.analaysiz_and_var_ty(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Mul<Var, Type, Var>>() {
+                    self.analaysiz_mul_var_ty(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Div<Var, Type, Var>>() {
+                    self.analaysiz_div_var_ty(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Add<Type, Type, Var>>() {
+                    self.analaysiz_add_ty_ty(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Sub<Type, Type, Var>>() {
+                    self.analaysiz_sub_ty_ty(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Xor<Type, Type, Var>>() {
+                    self.analaysiz_xor_ty_ty(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Or<Type, Type, Var>>() {
+                    self.analaysiz_or_ty_ty(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<And<Type, Type, Var>>() {
+                    self.analaysiz_and_ty_ty(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Mul<Type, Type, Var>>() {
+                    self.analaysiz_mul_ty_ty(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Div<Type, Type, Var>>() {
+                    self.analaysiz_div_ty_ty(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Add<Var, Var, Var>>() {
+                    self.analaysiz_add_var_var(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Sub<Var, Var, Var>>() {
+                    self.analaysiz_sub_var_var(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Xor<Var, Var, Var>>() {
+                    self.analaysiz_xor_var_var(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Or<Var, Var, Var>>() {
+                    self.analaysiz_or_var_var(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<And<Var, Var, Var>>() {
+                    self.analaysiz_and_var_var(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Mul<Var, Var, Var>>() {
+                    self.analaysiz_mul_var_var(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Div<Var, Var, Var>>() {
+                    self.analaysiz_div_var_var(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Cast<Var, TypeMetadata, Var>>() {
+                    self.analaysiz_cast(&mut vars, node, loc)?;
+                }
             }
         }
 
@@ -313,6 +357,21 @@ impl<'a> IrSemnatic<'a> {
         Ok(())
     }
 
+    fn analaysiz_cast(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &Cast<Var, TypeMetadata, Var>, loc: Loc) -> Result<(), IrError> {
+        if !vars.contains_key(&node.inner1.name) {
+            Err(IrError::Unkown {
+                loc: loc.to_owned(),
+                name: node.inner1.name.to_owned(),
+
+                what: "variable".into(),
+            })?
+        }
+
+        vars.insert(node.inner3.name.to_owned(), node.inner2);
+        
+        Ok(())
+    }
+
     fn analiyze_block(&mut self, func: &String, node: &Br<Box<Block>>, loc: Loc) -> Result<(), IrError> {
         let br_block = &node.inner1.name;
 
@@ -333,3 +392,113 @@ impl<'a> IrSemnatic<'a> {
         Ok(()) // what can go wrong on constants?
     }
 }   
+
+macro_rules! SemnaticImplMathVarTy {
+    ($func:ident, $node:ident) => {
+        impl<'a> IrSemnatic<'a> {
+            fn $func(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &$node<Var, Type, Var>, loc: Loc) -> Result<(), IrError> {
+                if !vars.contains_key(&node.inner1.name) {
+                    Err(IrError::Unkown {
+                        loc: loc.to_owned(),
+                        name: node.inner1.name.to_owned(),
+
+                        what: "variable".into(),
+                    })?
+                }
+
+                if vars.contains_key(&node.inner3.name) {
+                    Err(IrError::DefinedTwice {
+                        loc: loc.to_owned(),
+                        name: node.inner3.name.to_owned(),
+                    })?
+                }
+
+                vars.insert(node.inner3.name.to_owned(), node.inner2.into());
+                
+                Ok(())
+            }
+        }
+    };
+}
+
+SemnaticImplMathVarTy!(analaysiz_add_var_ty, Add);
+SemnaticImplMathVarTy!(analaysiz_sub_var_ty, Sub);
+SemnaticImplMathVarTy!(analaysiz_xor_var_ty, Xor);
+SemnaticImplMathVarTy!(analaysiz_or_var_ty,  Or );
+SemnaticImplMathVarTy!(analaysiz_and_var_ty, And);
+SemnaticImplMathVarTy!(analaysiz_mul_var_ty, Mul);
+SemnaticImplMathVarTy!(analaysiz_div_var_ty, Div);
+
+macro_rules! SemnaticImplMathTyTy {
+    ($func:ident, $node:ident) => {
+        impl<'a> IrSemnatic<'a> {
+            fn $func(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &$node<Type, Type, Var>, loc: Loc) -> Result<(), IrError> {
+                if vars.contains_key(&node.inner3.name) {
+                    Err(IrError::DefinedTwice {
+                        loc: loc.to_owned(),
+                        name: node.inner3.name.to_owned(),
+                    })?
+                }
+
+                vars.insert(node.inner3.name.to_owned(), node.inner1.into());
+                
+                Ok(())
+            }
+        }
+    };
+}
+
+SemnaticImplMathTyTy!(analaysiz_add_ty_ty, Add);
+SemnaticImplMathTyTy!(analaysiz_sub_ty_ty, Sub);
+SemnaticImplMathTyTy!(analaysiz_xor_ty_ty, Xor);
+SemnaticImplMathTyTy!(analaysiz_or_ty_ty,  Or );
+SemnaticImplMathTyTy!(analaysiz_and_ty_ty, And);
+SemnaticImplMathTyTy!(analaysiz_mul_ty_ty, Mul);
+SemnaticImplMathTyTy!(analaysiz_div_ty_ty, Div);
+
+macro_rules! SemnaticImplMathVarVar {
+    ($func:ident, $node:ident) => {
+        impl<'a> IrSemnatic<'a> {
+            fn $func(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &$node<Var, Var, Var>, loc: Loc) -> Result<(), IrError> {
+                if !vars.contains_key(&node.inner1.name) {
+                    Err(IrError::Unkown {
+                        loc: loc.to_owned(),
+                        name: node.inner1.name.to_owned(),
+
+                        what: "variable".into(),
+                    })?
+                }
+
+                if !vars.contains_key(&node.inner2.name) {
+                    Err(IrError::Unkown {
+                        loc: loc.to_owned(),
+                        name: node.inner2.name.to_owned(),
+
+                        what: "variable".into(),
+                    })?
+                }
+
+                if vars.contains_key(&node.inner3.name) {
+                    Err(IrError::DefinedTwice {
+                        loc: loc.to_owned(),
+                        name: node.inner3.name.to_owned(),
+                    })?
+                }
+
+                let ty = if let Some(var) = vars.get(&node.inner2.name) { var } else { unreachable!() };
+
+                vars.insert(node.inner3.name.to_owned(), *ty);
+                
+                Ok(())
+            }
+        }
+    };
+}
+
+SemnaticImplMathVarVar!(analaysiz_add_var_var, Add);
+SemnaticImplMathVarVar!(analaysiz_sub_var_var, Sub);
+SemnaticImplMathVarVar!(analaysiz_xor_var_var, Xor);
+SemnaticImplMathVarVar!(analaysiz_or_var_var,  Or );
+SemnaticImplMathVarVar!(analaysiz_and_var_var, And);
+SemnaticImplMathVarVar!(analaysiz_mul_var_var, Mul);
+SemnaticImplMathVarVar!(analaysiz_div_var_var, Div);

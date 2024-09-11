@@ -3,6 +3,8 @@ use std::io::{Read, Write};
 use std::process::exit;
 use std::error::Error;
 
+use ygen::prelude::PassManager;
+use ygen::Optimizations::Passes;
 use ygen::Support::{ColorProfile, Colorize};
 use ygen::Target::initializeAllTargets;
 use ygen::{Support::Cli, Target::Triple};
@@ -30,6 +32,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     cli.add_opt("fmt-clr", "format-colored", "Reprints the ir to stderr with color information");
     cli.add_opt("fmt", "format", "Prints the ir formatted to stdout");
+    
+    cli.add_opt("O", "optimize-simple", "Run simple optimizations");
+    
     cli.scan();
 
     if cli.opt("h") {
@@ -127,7 +132,15 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     gen.gen();
 
-    let module: Module = gen.module();
+    let mut module: Module = gen.module();
+
+    if cli.opt("O") {
+        let mut opts = PassManager::new();
+
+        opts.add( Passes::PreComputeValue() );
+
+        module.runPassMngr(opts);
+    }
 
     if cli.opt("fmt-clr") {
         eprintln!("{}", module.dumpColored(ColorProfile::default()));

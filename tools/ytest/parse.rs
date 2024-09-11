@@ -46,6 +46,8 @@ pub fn parse(input: String) -> Parsed {
             append = false;
         }
 
+        let line = line.replace("    ", "\t");
+
         if append {
             if run {
                 if !line.is_empty() {
@@ -58,6 +60,8 @@ pub fn parse(input: String) -> Parsed {
             }
         }
     }
+
+    out.expected_out = out.expected_out.chars().filter(|x| !x.is_whitespace()).collect::<String>();
 
     //out.expected_out = unescaper::unescape(&out.expected_out).unwrap();
 

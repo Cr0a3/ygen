@@ -408,13 +408,21 @@ impl IrParser {
 
                 self.expect(TokenType::Ident(String::new()))?; // node
                 if let TokenType::Ident(instrinc) = &self.current_token()?.typ {
-                   match instrinc.as_str() {
-                      "call" => self.parse_call(name)?,
-                      _ => {
-                          let ty = self.parse_type()?;
-                          self.input.pop_front(); // the type
-                          self.parse_const_assing(name, ty)?
-                      }
+                    match instrinc.as_str() {
+                        "sub" => self.parse_sub(name)?,
+                        "add" => self.parse_add(name)?,
+                        "mul" => self.parse_mul(name)?,
+                        "cast" => self.parse_cast(name)?,
+                        "xor" => self.parse_xor(name)?,
+                        "or" => self.parse_or(name)?,
+                        "and" => self.parse_and(name)?,
+                        "div" => self.parse_div(name)?,
+                        "call" => self.parse_call(name)?,
+                        _ => {
+                            let ty = self.parse_type()?;
+                            self.input.pop_front(); // the type
+                            self.parse_const_assing(name, ty)?
+                        }
                     }
                 } else { unreachable!() }
             } else if let TokenType::Ident(instrinc) = curr.typ {
@@ -565,6 +573,35 @@ impl IrParser {
         })))
     }
 
+    fn parse_cast(&mut self, var: String) -> Result<Box<dyn Ir>, IrError> {
+        self.input.pop_front();
+
+        self.expect(TokenType::Var(String::new()))?;
+
+        let in_var = if let TokenType::Var(name) = &self.current_token()?.typ {
+            Var {
+                name: name.to_owned(),
+                ty: TypeMetadata::i32,
+            }
+        } else { unreachable!() };
+
+        self.input.pop_front();
+
+        self.expect_ident("to".into())?;
+        self.input.pop_front();
+
+        let out_ty = self.parse_type()?;
+        
+        self.input.pop_front();
+
+        let out = Var { 
+            name: var, 
+            ty: out_ty 
+        };
+
+        Ok(ir::Cast::new(in_var, out_ty, out))
+    }
+
     fn parse_data_array(&mut self) -> Result<Vec<u8>, IrError> {
         self.expect(TokenType::LSquare)?;
         self.input.pop_front();
@@ -615,6 +652,30 @@ impl IrParser {
         }   
     }
 
+    fn expect_ident(&mut self, expected: String) -> Result<(), IrError> {
+        self.expect(TokenType::Ident(String::new()))?;
+
+        let ident = &self.current_token()?.typ;
+
+        let ident = if let TokenType::Ident(ident) = ident {
+            ident
+        } else { 
+            unreachable!() 
+        };
+
+        if ident.to_owned() != expected {
+            Err(IrError::ExpectedTokenButFoundAnUnexpectedOne { 
+                found: self.current_token()?.clone(), 
+                expected: Token { 
+                    typ: TokenType::Ident(expected.to_owned()), 
+                    loc: self.current_token()?.loc.clone() 
+                }
+            })?
+        }
+
+        Ok(())
+    }
+
     fn parse_type(&mut self) -> Result<TypeMetadata, IrError> {
         let token = self.current_token()?;
 
@@ -639,3 +700,102 @@ impl IrParser {
         }
     }
 }
+
+macro_rules! ParserImplParseMath {
+    ($func:ident, $node:ident) => {
+        impl IrParser {
+            fn $func(&mut self, var: String) -> Result<Box<dyn Ir>, IrError> {
+                self.input.pop_front(); // add/sub/xor/or/and/mul/div
+
+                let ty = self.parse_type()?;
+                self.input.pop_front(); // out_ty
+
+                let out = Var {
+                    name: var,
+                    ty: ty,
+                };
+
+                let curr = self.current_token()?;
+
+                Ok(match &curr.typ {
+                    TokenType::Int(op1) => {
+                        let op1 = *op1;
+
+                        self.input.pop_front(); // num1
+
+                        self.expect(TokenType::Comma)?;
+                        self.input.pop_front(); // ,
+
+                        self.expect(TokenType::Int(0))?;
+                        let op2;
+                        if let TokenType::Int(int) = &self.current_token()?.typ {
+                            op2 = *int;
+                        } else { unreachable!() }
+
+                        self.input.pop_front();
+
+                        let op1 = Type::from_int(ty, op1);
+                        let op2 = Type::from_int(ty, op2);
+
+                        ir::$node::new(op1, op2, out)
+                    },
+
+                    TokenType::Var(op1) => {
+                        let op1 = op1.to_owned();
+
+                        self.input.pop_front(); // op1
+
+                        self.expect(TokenType::Comma)?;
+                        self.input.pop_front();
+
+                        if let TokenType::Var(var) = &self.current_token()?.typ {
+                            let op1 = Var {
+                                name: op1,
+                                ty: ty
+                            };
+    
+                            let op2 = Var {
+                                name: var.to_owned(),
+                                ty: ty
+                            };
+
+                            self.input.pop_front();
+    
+                            ir::$node::new(op1, op2, out)
+                        } else if let TokenType::Int(op) = &self.current_token()?.typ {
+                            let op1 = Var {
+                                name: op1,
+                                ty: ty
+                            };
+    
+                            let op2 = Type::from_int(ty, *op);
+
+                            self.input.pop_front();
+    
+                            ir::$node::new(op1, op2, out)
+                        } else { 
+                            Err(IrError::ExpectedTokenButFoundAnUnexpectedOne {
+                                found: self.current_token()?.to_owned(),
+
+                                expected: Token { typ: TokenType::Var(") or Int()".into()), loc: Loc::default() },
+                            })?
+                        }
+                    },
+
+                    _ => Err(IrError::ExpectedTokenButFoundAnUnexpectedOne {
+                        expected: Token { typ: TokenType::Var(String::new()), loc: Loc::default() },
+                        found: curr.clone(),
+                    })?
+                })
+            }
+        }
+    };
+}
+
+ParserImplParseMath!(parse_add, Add);
+ParserImplParseMath!(parse_sub, Sub);
+ParserImplParseMath!(parse_xor, Xor);
+ParserImplParseMath!(parse_or,  Or );
+ParserImplParseMath!(parse_and, And);
+ParserImplParseMath!(parse_mul, Mul);
+ParserImplParseMath!(parse_div, Div);
