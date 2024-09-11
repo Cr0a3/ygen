@@ -27,7 +27,7 @@ impl CompilationHelper {
             self.free(&node.inner1);
         }
 
-        let src = *self.vars.get(&node.inner1).expect("expected valid variable");
+        let src = *self.vars.get(&node.inner1.name).expect("expected valid variable");
 
         let src = match src {
             super::VarLocation::Reg(reg) => MachineOperand::Reg(reg),

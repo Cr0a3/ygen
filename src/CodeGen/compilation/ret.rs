@@ -17,7 +17,7 @@ impl CompilationHelper {
 
     #[allow(missing_docs)]
     pub fn compile_ret_var(&mut self, node: &Return<Var>, mc_sink: &mut Vec<MachineInstr>, _: &Block) {
-        let src = *self.vars.get(&node.inner1).expect("expected valid variable");
+        let src = *self.vars.get(&node.inner1.name).expect("expected valid variable");
         
         let mut instr = MachineInstr::new(MachineMnemonic::Move);
 

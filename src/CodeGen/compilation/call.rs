@@ -23,7 +23,7 @@ impl CompilationHelper {
                 todo!("implemt arguments which are passed over the stack");
             }
 
-            let src = self.vars.get(arg).expect("expected valid variable");
+            let src = self.vars.get(&arg.name).expect("expected valid variable");
 
             match src {
                 VarLocation::Reg(reg) => instr.add_operand(MachineOperand::Reg(*reg)),

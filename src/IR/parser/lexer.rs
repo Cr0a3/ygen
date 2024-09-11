@@ -75,6 +75,9 @@ pub enum TokenType {
 
     /// block:
     Block(String),
+
+    /// cond
+    Cond,
 }
 
 impl TokenType {
@@ -99,6 +102,7 @@ impl TokenType {
             TokenType::Func(_) => "func",
             TokenType::TripleDot => "...",
             TokenType::Block(_) => "block",
+            TokenType::Cond => "cond",
         }.to_string()
     }
 }
@@ -145,6 +149,7 @@ impl IrLexer {
         keys.insert("declare".into(), TokenType::Declare);
         keys.insert("define".into(), TokenType::Define);
         keys.insert("const".into(), TokenType::Const);
+        keys.insert("cond".into(), TokenType::Cond);
 
         
         let lines = input

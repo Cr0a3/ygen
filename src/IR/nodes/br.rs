@@ -73,6 +73,14 @@ impl Ir for BrCond<Var, Block, Block> {
     fn compile(&self, registry: &mut crate::Target::TargetBackendDescr) {
        registry.compile_br_cond(self)
     }
+
+    fn uses(&self, var: &Var) -> bool {
+        if self.inner1.name.to_owned() == var.name.to_owned() {
+            true
+        } else {
+            false
+        }
+    }
 }
 
 /// This trait is used for building br nodes

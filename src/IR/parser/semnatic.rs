@@ -183,6 +183,8 @@ impl<'a> IrSemnatic<'a> {
                     self.analaysiz_div_var_var(&mut vars, node, loc)?;
                 } else if let Some(node) = any.downcast_ref::<Cast<Var, TypeMetadata, Var>>() {
                     self.analaysiz_cast(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<BrCond<Var, Block, Block>>() {
+                    self.analaysiz_br_cond(func, &mut vars, node, loc)?;
                 }
             }
         }
@@ -381,6 +383,36 @@ impl<'a> IrSemnatic<'a> {
             Err(IrError::Unkown { 
                 what: "block".to_owned(), 
                 name: br_block.to_owned(), 
+                loc: loc
+            })?
+        }
+
+        Ok(())
+    }
+
+    fn analaysiz_br_cond(&mut self, func: &String, vars: &mut HashMap<String, TypeMetadata>, node: &BrCond<Var, Block, Block>, loc: Loc) -> Result<(), IrError> {
+        let (_, _, blocks) = self.func_sigs.get(func).unwrap();
+
+        if !blocks.contains(&node.inner2.name) {
+            Err(IrError::Unkown { 
+                what: "block".to_owned(), 
+                name: node.inner2.name.to_owned(), 
+                loc: loc.to_owned()
+            })?
+        }
+
+        if !blocks.contains(&node.inner3.name) {
+            Err(IrError::Unkown { 
+                what: "block".to_owned(), 
+                name: node.inner3.name.to_owned(), 
+                loc: loc.to_owned()
+            })?
+        }
+
+        if !vars.contains_key(&node.inner1.name) {
+            Err(IrError::Unkown { 
+                what: "variable".to_owned(), 
+                name: node.inner1.name.to_owned(), 
                 loc: loc
             })?
         }

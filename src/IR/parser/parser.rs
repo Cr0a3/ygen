@@ -558,19 +558,67 @@ impl IrParser {
     fn parse_br(&mut self) -> Result<Box<dyn Ir>, IrError> {
         self.input.pop_front(); // br
 
-        self.expect( TokenType::Ident(String::new()) )?; // block names are idents
-        
-        let block = if let TokenType::Ident(name) = &self.current_token()?.typ {
-            name.to_owned()
-        } else { unreachable!() };
+        let current = self.current_token()?;
 
-        self.input.pop_front();
+        match &current.typ {
+            TokenType::Ident(block) => {
+                let block = block.to_owned();
 
-        Ok(ir::Br::new(Box::from(Block { 
-            name: block, 
-            nodes: vec![], 
-            varCount: 0
-        })))
+                self.input.pop_front();
+
+                Ok(ir::Br::new(Box::from(Block { 
+                    name: block, 
+                    nodes: vec![], 
+                    varCount: 0
+                })))
+            },
+            TokenType::Cond => {
+                self.input.pop_front(); // cond
+
+                let var = self.expect(TokenType::Var(String::new()))?;
+
+                let var = if let TokenType::Var(var) = var.typ 
+                                                { var } else { unreachable!() };
+
+                self.input.pop_front();
+
+                self.expect(TokenType::Ident(String::new()))?;
+
+                let iftrue;
+
+                if let TokenType::Ident(ident) = &self.current_token()?.typ {
+                    iftrue = ident.to_owned();
+                } else { unreachable!() }
+
+                self.input.pop_front();
+
+                self.expect(TokenType::Comma)?;
+                self.input.pop_front();
+
+                self.expect(TokenType::Ident(String::new()))?;
+
+                let iffalse;
+
+                if let TokenType::Ident(ident) = &self.current_token()?.typ {
+                    iffalse = ident.to_owned();
+                } else { unreachable!() }
+                self.input.pop_front();
+
+                Ok(ir::BrCond::new(Var {
+                    name: var,
+                    ty: TypeMetadata::Void,
+                }, Block {
+                    name: iftrue,
+                    nodes: vec![],
+                    varCount: 0,
+                }, Block {
+                    name: iffalse,
+                    nodes: vec![],
+                    varCount: 0,
+                }))
+            },
+            _ => Err(IrError::UnexpectedToken(self.current_token()?.clone())),
+        }
     }
 
     fn parse_cast(&mut self, var: String) -> Result<Box<dyn Ir>, IrError> {

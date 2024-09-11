@@ -19,7 +19,7 @@ pub struct CompilationHelper {
 
     pub(crate) call: MachineCallingConvention,
 
-    pub(crate) vars: HashMap<Var, VarLocation>,
+    pub(crate) vars: HashMap<String, VarLocation>,
 }
 
 impl CompilationHelper {
@@ -35,7 +35,7 @@ impl CompilationHelper {
 
     /// frees the resources of the variable
     pub(crate) fn free(&mut self, var: &Var) {
-        if let Some(location) = self.vars.get(var) {
+        if let Some(location) = self.vars.get(&var.name) {
             match location {
                 VarLocation::Reg(reg) => self.regs.push(reg.arch(), reg.clone()),
             }
@@ -52,7 +52,7 @@ impl CompilationHelper {
             todo!("Registers ran out. And memory variables are currently not implemented")
         };
 
-        self.vars.insert(var.clone(), location);
+        self.vars.insert(var.name.to_owned(), location);
 
         location
     }
@@ -75,7 +75,7 @@ impl CompilationHelper {
             };
 
             self.vars.insert(
-                func.arg(num), 
+                func.arg(num).name, 
                 location
             );
 

@@ -8,8 +8,8 @@ macro_rules! MathVarVar {
         impl CompilationHelper {
             #[allow(missing_docs)]
             pub(crate) fn $func(&mut self, node: &$node<Var, Var, Var>, mc_sink: &mut Vec<MachineInstr>, block: &Block) {
-                let src1 = *self.vars.get(&node.inner1).expect("expected valid variable");
-                let src2 = *self.vars.get(&node.inner2).expect("expected valid variable");
+                let src1 = *self.vars.get(&node.inner1.name).expect("expected valid variable");
+                let src2 = *self.vars.get(&node.inner2.name).expect("expected valid variable");
         
                 let boxed: Box<dyn Ir> = Box::new(node.clone());
         
@@ -62,7 +62,7 @@ macro_rules! MathVarType {
         impl CompilationHelper {
             #[allow(missing_docs)]
             pub fn $func(&mut self, node: &$node<Var, Type, Var>, mc_sink: &mut Vec<MachineInstr>, block: &Block) {
-                let src1 = *self.vars.get(&node.inner1).expect("expected valid variable");
+                let src1 = *self.vars.get(&node.inner1.name).expect("expected valid variable");
         
                 let boxed: Box<dyn Ir> = Box::new(node.clone());
         
