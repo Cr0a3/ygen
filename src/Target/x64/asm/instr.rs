@@ -1,6 +1,9 @@
 use std::{fmt::Display, ops::{Add, Sub}, str::FromStr};
-
-use crate::{CodeGen::MCInstr, Obj::Link, Support::{ColorClass, ColorProfile}, Target::{x64::isa::{buildOpcode, MandatoryPrefix, RexPrefix}, x64Reg}};
+use crate::CodeGen::MCInstr;
+use crate::Obj::Link;
+use crate::Support::{ColorClass, ColorProfile};
+use crate::Target::x64::isa::{buildOpcode, MandatoryPrefix, RexPrefix};
+use crate::Target::x64::x64Reg;
 
 use super::isa::ModRm;
 
@@ -48,7 +51,7 @@ impl X64MCInstr {
         self.verify()?;
         
         Ok(match self.mnemonic {
-            Mnemonic::Add | Mnemonic::Adc | Mnemonic::And | Mnemonic::Or | Mnemonic::Sub | Mnemonic::Xor | Mnemonic::Mov => {
+            Mnemonic::Add | Mnemonic::Adc | Mnemonic::And | Mnemonic::Or | Mnemonic::Sub | Mnemonic::Xor | Mnemonic::Mov | Mnemonic::Cmp => {
                 let mandatory = if let Some(Operand::Reg(reg)) = &self.op1 {
                     if reg.is_gr16() { Some(MandatoryPrefix::t16BitOps)}
                     else { None }
@@ -62,6 +65,8 @@ impl X64MCInstr {
                     Mnemonic::Or => (0x09, 0x0B, 1, 0x81, 0x80),
                     Mnemonic::Xor => (0x31, 0x33, 6, 0x81, 0x80),
                     Mnemonic::Mov => (0x89, 0x8B, 0, 0xC7, 0xC6),
+
+                    Mnemonic::Cmp => (0x83, 0x3B, 7, 0x81, 0x80),
                     _ => unreachable!(),
                 };
 
@@ -310,6 +315,19 @@ impl X64MCInstr {
 
                 (buildOpcode(None, None, op), None)
             }
+            Mnemonic::Jne => {
+                let mut op = vec![0x0F, 0x85];
+
+                if let Some(Operand::Imm(num)) = self.op1 {
+                    let bytes = num.to_be_bytes();
+                    op.push( bytes[7] );
+                    op.push( bytes[6] );
+                    op.push( bytes[5] );
+                    op.push( bytes[4] );
+                } else { unreachable!() }
+
+                (buildOpcode(None, None, op), None)
+            }
             Mnemonic::Link => {
                 if let Some(Operand::LinkDestination(dst, addend)) = &self.op1 {
                     (vec![], Some(Link { from: "".into(), to: dst.to_string(), at: 0, addend: *addend, special: false }))
@@ -387,7 +405,7 @@ impl X64MCInstr {
                     }
                 }
             },
-            Mnemonic::Add | Mnemonic::Adc | Mnemonic::Sub | Mnemonic::And | Mnemonic::Or | Mnemonic::Xor => {
+            Mnemonic::Add | Mnemonic::Adc | Mnemonic::Sub | Mnemonic::And | Mnemonic::Or | Mnemonic::Xor | Mnemonic::Cmp => {
                 if self.op2 == None || self.op1 == None {
                     Err(InstrEncodingError::InvalidVariant(self.clone(), "add/sub/and/or/xor needs to have two operand".into()))?
                 }
@@ -450,6 +468,11 @@ impl X64MCInstr {
                     Err(InstrEncodingError::InvalidVariant(self.clone(), 
                         "mul/imul need one operand of type registry".into()
                     ))?
+                }
+            }
+            Mnemonic::Jne => {
+                if let Some(Operand::Imm(_)) = self.op1 {} else {
+                    Err(InstrEncodingError::InvalidVariant(self.to_owned(), "jne expects one imm as its ops".to_owned()))?
                 }
             }
         };
@@ -616,6 +639,7 @@ pub enum Mnemonic {
     Or,
     Xor,
     Sub,
+    Cmp,
 
     Lea,
     Mov,
@@ -629,6 +653,7 @@ pub enum Mnemonic {
 
     Call,
     Jmp,
+    Jne,
 
     Endbr64,
 
@@ -664,6 +689,8 @@ impl FromStr for Mnemonic {
             "endbr64" => Ok(Mnemonic::Endbr64),
             "imul" => Ok(Mnemonic::Imul),
             "mul" => Ok(Mnemonic::Mul),
+            "jne" => Ok(Mnemonic::Jne),
+            "cmp" => Ok(Mnemonic::Cmp),
             _ => Err(()),
         }
     }
@@ -693,6 +720,8 @@ impl Display for Mnemonic {
             Mnemonic::StartOptimization => "",
             Mnemonic::EndOptimization => "",
             Mnemonic::Debug => "#",
+            Mnemonic::Jne => "jne",
+            Mnemonic::Cmp => "cmp",
         })
     }
 }

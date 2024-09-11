@@ -92,6 +92,8 @@ pub enum MachineMnemonic {
     Sub,
     Xor,
 
+    Compare(/*if yes*/String, /*if no*/String),
+
     Zext,
     Downcast,
 
@@ -120,6 +122,7 @@ impl MachineMnemonic {
             MachineMnemonic::Return => "return",
             MachineMnemonic::AdressLoad(_) => "adrload",
             MachineMnemonic::Br(_) => "br",
+            MachineMnemonic::Compare(_, _) => "compare",
         }.to_string()
     }
 }

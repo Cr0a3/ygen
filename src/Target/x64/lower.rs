@@ -20,6 +20,7 @@ fn x64_lower_instr(conv: CallConv, sink: &mut Vec<X64MCInstr>, instr: MachineIns
         MachineMnemonic::Return => x64_lower_return(sink, &instr),
         MachineMnemonic::AdressLoad(to) => x64_lower_adr_load(sink, &instr, to),
         MachineMnemonic::Br(to) => x64_lower_br(sink, &instr, to),
+        MachineMnemonic::Compare(iftrue, iffalse) => x64_lower_cond_br(sink, &instr, iftrue, iffalse),
     }
 }
 
@@ -224,6 +225,30 @@ fn x64_lower_br(sink: &mut Vec<X64MCInstr>, _: &MachineInstr, symbol: &String) {
     sink.push(
         X64MCInstr::with1(Mnemonic::Link, target)
     );
+}
+fn x64_lower_cond_br(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr, iftrue: &String, iffalse: &String) {
+    let src = instr.operands.get(0).expect("expected valid src operand at 1. place");
+    let value = instr.operands.get(1).expect("expected valid value to compare at 1. place");
+
+    let src = match src {
+        crate::CodeGen::MachineOperand::Imm(_) => unreachable!(),
+        crate::CodeGen::MachineOperand::Reg(reg) => match *reg {
+            crate::CodeGen::Reg::x64(x64) => Operand::Reg(x64),
+        },
+    };
+
+    let value = match value {
+        crate::CodeGen::MachineOperand::Imm(imm) => Operand::Imm(*imm),
+        crate::CodeGen::MachineOperand::Reg(reg) => match *reg {
+            crate::CodeGen::Reg::x64(x64) => Operand::Reg(x64),
+        },
+    };
+
+    sink.push(X64MCInstr::with2(Mnemonic::Cmp, src, value));
+    sink.push(X64MCInstr::with1(Mnemonic::Jne, Operand::Imm(0)));
+    sink.push(X64MCInstr::with1(Mnemonic::Link, Operand::BlockLinkDestination(iffalse.to_owned(), -4)));
+    sink.push(X64MCInstr::with1(Mnemonic::Jmp, Operand::Imm(0)));
+    sink.push(X64MCInstr::with1(Mnemonic::Link, Operand::BlockLinkDestination(iftrue.to_owned(), -4)));
 }
 
 macro_rules! LowerSimpleMath {

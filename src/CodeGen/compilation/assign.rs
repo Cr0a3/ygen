@@ -30,7 +30,7 @@ impl CompilationHelper {
 
     #[allow(missing_docs)]
     pub fn compile_assign_var_var(&mut self, node: &Assign<Var, Var>, mc_sink: &mut Vec<MachineInstr>, block: &Block) {
-        let src1 = *self.vars.get(&node.inner2).expect(&format!("{} has no variable location", node.inner2));
+        let src1 = *self.vars.get(&node.inner2.name).expect(&format!("{} has no variable location", node.inner2));
 
         let boxed: Box<dyn Ir> = Box::new(node.clone());
 

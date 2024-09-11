@@ -108,6 +108,7 @@ IrTypeWith3!(Mul, T, U, Z);
 IrTypeWith3!(Div, T, U, Z);
 
 IrTypeWith1!(Br, T);
+IrTypeWith3!(BrCond, T, U, Z);
 
 use crate::Support::{ColorClass, ColorProfile};
 

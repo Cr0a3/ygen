@@ -160,7 +160,7 @@ impl Module {
 
             let mut comp = vec![];
 
-            let mut block_links: Vec<((i64, i64, i64, i64), String, String)> = vec![];
+            let mut block_links: Vec<((i64, i64, i64, i64), String, String, i64)> = vec![];
 
             let mut block_adrs = HashMap::new();
 
@@ -177,7 +177,7 @@ impl Module {
                             link.at as i64 + (prev_len as i64) + link.addend + idx
                         };
 
-                        block_links.push(((adr(0), adr(1), adr(2), adr(3)), link.to, link.from));
+                        block_links.push(((adr(0), adr(1), adr(2), adr(3)), link.to, link.from, link.at as i64));
                     } else {
                         obj.link(Link { 
                             from: link.from, 
@@ -190,11 +190,11 @@ impl Module {
                 }
             }
 
-            for (idx, target, source) in block_links {
+            for (idx, target, source, off) in block_links {
                 let mut target_adr = *block_adrs.get(&target).expect("hmm i made a programming error") as i64;
                 let source_adr = *block_adrs.get(&source).expect("hmm i made a programming error") as i64 + 5;
 
-                target_adr = -(source_adr - target_adr);
+                target_adr = target_adr - source_adr - (off - source_adr);
 
                 let bytes = target_adr.to_be_bytes();
 

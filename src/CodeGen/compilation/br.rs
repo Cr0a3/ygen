@@ -1,5 +1,6 @@
-use crate::prelude::{Block, Br};
-use crate::CodeGen::{MachineInstr, MachineMnemonic};
+use crate::prelude::{Block, Br, BrCond, Ir};
+use crate::CodeGen::{MachineInstr, MachineMnemonic, MachineOperand};
+use crate::IR::Var;
 
 use super::CompilationHelper;
 
@@ -13,5 +14,31 @@ impl CompilationHelper {
         );
 
         mc_sink.push( instr );
+    }
+
+    #[allow(missing_docs)]
+    pub fn compile_br_cond(&mut self, node: &BrCond<Var, Block, Block>, mc_sink: &mut Vec<MachineInstr>, block: &Block) {
+        let boxed: Box<dyn Ir> = Box::new(node.clone());
+
+        let iftrue = node.inner2.name.to_owned();
+        let iffalse = node.inner3.name.to_owned();
+
+        if !block.isVarUsedAfterNode(&boxed, &node.inner1) {
+            self.free(&node.inner1);
+        }
+
+        let src = *self.vars.get(&node.inner1.name).expect("expected valid variable");
+
+        let src = match src {
+            super::VarLocation::Reg(reg) => MachineOperand::Reg(reg),
+        };
+
+        let mut cmp = MachineInstr::new(
+            MachineMnemonic::Compare(iffalse, iftrue) // val == 0 -> iffalse | else -> iftrue
+        );
+        cmp.add_operand(src);
+        cmp.add_operand(MachineOperand::Imm(0));
+        
+        mc_sink.push( cmp );
     }
 }
