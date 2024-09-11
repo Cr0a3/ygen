@@ -71,8 +71,11 @@ fn x64_lower_add(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
         },
     };
 
-    sink.push( X64MCInstr::with2(Mnemonic::Mov, out.clone(), op1).into() );
-    sink.push( X64MCInstr::with2(Mnemonic::Add, out, op2).into() );
+    let tmp = || Operand::Reg(x64Reg::Rax.sub_ty(instr.meta));
+
+    sink.push( X64MCInstr::with2(Mnemonic::Mov, tmp(), op1).into() );
+    sink.push( X64MCInstr::with2(Mnemonic::Add, tmp(), op2).into() );
+    sink.push( X64MCInstr::with2(Mnemonic::Mov, out, tmp()).into() );
 
 }
 

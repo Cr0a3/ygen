@@ -6,9 +6,9 @@ gcc out.o -o a.exe
 define i32 @main() {
  entry:
     %0 = i32 134
-    %1 = add i32 %0, 523
+    %1 = add i32 %0, 23
 
     ret i32 %1
 }
 
-# EXIT_CODE=657
+# EXIT_CODE=157
