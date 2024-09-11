@@ -34,10 +34,10 @@ impl CompilationHelper {
         };
 
         let mut cmp = MachineInstr::new(
-            MachineMnemonic::Compare(iftrue, iffalse)
+            MachineMnemonic::Compare(iffalse, iftrue) // val == 0 -> iffalse | else -> iftrue
         );
         cmp.add_operand(src);
-        cmp.add_operand(MachineOperand::Imm(1));
+        cmp.add_operand(MachineOperand::Imm(0));
         
         mc_sink.push( cmp );
     }
