@@ -1,2 +1,1 @@
-*.yl linguist-language=Ygen -linguist-detectable
-*.sl -linguist-detectable
+*.yl linguist-language=Ygen
