@@ -101,19 +101,25 @@ fn x64_lower_mul(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
         Mnemonic::Mul
     };
 
-    sink.push( X64MCInstr::with1(Mnemonic::Push, Operand::Reg(x64Reg::Rdx)).into() );
-    sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), op1).into() );
+    if out != Operand::Reg(x64Reg::Rdx.sub_ty(instr.meta)) {
+        sink.push( X64MCInstr::with1(Mnemonic::Push, Operand::Reg(x64Reg::Rdx)).into() );
+    }
+
+    sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), op1.to_owned()).into() );
         
     if let Operand::Imm(_) = op2 {
-        sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rbx), op2).into() );
+        sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rbx), op2.to_owned()).into() );
         sink.push( X64MCInstr::with1(mnemonic, Operand::Reg(x64Reg::Rbx)).into() );
     }
     else {
-        sink.push( X64MCInstr::with1(mnemonic, op2).into() );
+        sink.push( X64MCInstr::with1(mnemonic, op2.to_owned()).into() );
     }
 
-    sink.push( X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta))).into() );
-    sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(x64Reg::Rdx)).into() );
+    sink.push( X64MCInstr::with2(Mnemonic::Mov, out.to_owned(), Operand::Reg(x64Reg::Rax.sub_ty(instr.meta))).into() );
+
+    if out != Operand::Reg(x64Reg::Rdx.sub_ty(instr.meta)) {
+        sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(x64Reg::Rdx)).into() );
+    }
 }
 fn x64_lower_zext(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     
