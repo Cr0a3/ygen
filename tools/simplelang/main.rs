@@ -133,7 +133,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         eprintln!("{}", module.dumpColored(ColorProfile::default()));
     }
 
-    let registry = &mut initializeAllTargets();
+    let registry = &mut initializeAllTargets(Triple::host())?;
 
     if cli.opt("mc") {
         let mc_map = module.emitMachineInstrs(triple, registry)?;

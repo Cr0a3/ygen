@@ -51,8 +51,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     };
 
-    let mut registry = initializeAllTargets();
-    let backend = registry.getBasedOnTriple(triple)?;
+    let mut registry = initializeAllTargets(triple)?;
+    let backend = registry.getBasedOnArch(triple.arch)?;
 
     let asm =  cli.arg_val("as").expect("we said it was required");
     let lexed = backend.lexer().lex(asm.clone())?;

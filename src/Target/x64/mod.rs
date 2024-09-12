@@ -21,7 +21,7 @@ use crate::{CodeGen::MachineMnemonic, Target::Compiler};
 /// Initializes the x86-64 target
 pub fn initializeX64Target(call_conv: CallConv) -> TargetBackendDescr {
     let mut target = TargetBackendDescr::new();
-    
+
     target.call = call_conv;
 
     target.init = Some(initializeX64Target);
@@ -32,8 +32,6 @@ pub fn initializeX64Target(call_conv: CallConv) -> TargetBackendDescr {
     target.whitelist = construct_whitelist();
 
     target.helper = Some(construct_compilation_helper(call_conv));
-
-
 
     target
 }

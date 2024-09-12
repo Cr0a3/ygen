@@ -1,0 +1,22 @@
+# RUN: 
+cargo run -p ylc -- -in=%s -o=out.o
+gcc out.o -o a.exe
+./a.exe
+# IN:
+
+define u32 @add(u32 %0, u32 %1) {
+  entry:
+    %2 = add u32 %0, %1
+    ret u32 %2
+}
+define u32 @main() {
+ entry:
+    %1 = u32 9
+    %2 = u32 21
+
+    %3 = call u32 add u32 %1 u32 %2
+
+    ret u32 %3
+}
+
+# EXIT_CODE=30

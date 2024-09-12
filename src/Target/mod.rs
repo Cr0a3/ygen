@@ -15,12 +15,12 @@ pub use lexer::Lexer;
 pub use compiler::Compiler;
 
 /// Initializes all targets
-pub fn initializeAllTargets() -> TargetRegistry {
-    let mut registry = TargetRegistry::new();
+pub fn initializeAllTargets(triple: Triple) -> Result<TargetRegistry, triple::TripleError> {
+    let mut registry = TargetRegistry::new(triple);
 
-    registry.add( Arch::X86_64, initializeX64Target(CallConv::SystemV) );
+    registry.add( Arch::X86_64, initializeX64Target(triple.getCallConv()?) );
 
-    registry
+    Ok(registry)
 }
 
 /// Target architecture

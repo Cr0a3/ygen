@@ -148,7 +148,7 @@ impl Display for IrError {
                     length = 1;
                 }
 
-                fab.addWhere("unexpected token", token.loc.coloumn, length);
+                fab.addWhere(format!("unexpected token: {}", token.typ.name()), token.loc.coloumn, length);
 
                 fab.to_string()
             },

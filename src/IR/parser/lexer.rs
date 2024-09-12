@@ -247,6 +247,7 @@ impl IrLexer {
     /// "lexes" the input
     pub fn lex(&mut self) -> Result<(), IrError> { 
         self.advance()?;
+        self.update_line_string();
 
         while !self.is_at_end() {
             self.update_loc();
@@ -327,6 +328,7 @@ impl IrLexer {
     fn scan_var_name(&mut self) -> Result<TokenType, IrError> {
         let mut out = String::new();
 
+        out.push('%');
         self.advance()?;
 
         let mut looping = true;

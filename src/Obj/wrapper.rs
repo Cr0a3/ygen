@@ -354,7 +354,7 @@ impl ObjectBuilder {
                     Decl::Function => 0,
                     _ => -1,
                 };
-                offset = -4;
+                offset = -3;
             } else if self.triple.getCallConv() == Ok(CallConv::SystemV) {
                 addend = match ty {
                     Decl::Function => 0,

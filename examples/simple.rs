@@ -33,16 +33,18 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         "{}", module.dumpColored(ColorProfile::default())
     );
 
+    let triple = Triple::host();
+
     module.emitToAsmFile(
-        Triple::host(),
-        &mut initializeAllTargets(),
+        triple,
+        &mut initializeAllTargets(triple)?,
         Path::new("out.asm")
     )?;
 
     module
         .emitMachineCode(
-            Triple::host(), 
-            &mut initializeAllTargets()
+            triple, 
+            &mut initializeAllTargets(triple)?
         )?.emit(
             OpenOptions::new().write(true).create(true).open("out.o")?, None
     )?;

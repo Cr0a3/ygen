@@ -151,19 +151,19 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     if cli.opt("asm-clr") {
-        let asm = module.emitAsm(triple, &mut initializeAllTargets())?;
+        let asm = module.emitAsm(triple, &mut initializeAllTargets(triple)?)?;
 
         println!("{}", asm);
     }
 
     if cli.opt("asm") {
-        let asm = module.emitAsm(triple, &mut initializeAllTargets())?;
+        let asm = module.emitAsm(triple, &mut initializeAllTargets(triple)?)?;
 
         outfile.write_all(asm.as_bytes())?
     } else {
         module.emitMachineCode(
             triple, 
-            &mut initializeAllTargets()
+            &mut initializeAllTargets(triple)?
         )?.emit(outfile, None)?;
     }
 

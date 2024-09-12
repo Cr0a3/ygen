@@ -215,6 +215,10 @@ impl IrParser {
                 break;
             }
 
+            if TokenType::Comma == current.typ {
+                self.input.pop_front();
+            }
+
             let var_type = self.parse_type()?;
             self.input.pop_front();
 
@@ -225,11 +229,10 @@ impl IrParser {
             let var_name = match &token.typ {
                 TokenType::Var(name) => name.to_string(),
                 
-                _=> Err(IrError::UndeterminedTokenSequence {
-                    loc: token.loc.clone(), 
-                    expected: String::from("%s for a valid variable"),
-                })?
+                _=> Err(IrError::UnexpectedToken(token.to_owned()))?
             };
+            
+            self.input.pop_front();
 
             args.insert(var_name, var_type );
         }

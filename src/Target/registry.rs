@@ -6,14 +6,16 @@ use super::{Arch, CallConv, TargetBackendDescr, Triple};
 
 /// The target registry: manages different targets
 pub struct TargetRegistry {
-    targets: HashMap<Arch, TargetBackendDescr>
+    targets: HashMap<Arch, TargetBackendDescr>,
+    triple: Triple,
 }
 
 impl TargetRegistry {
     /// Creates an new backend registry
-    pub fn new() -> Self {
+    pub fn new(triple: Triple) -> Self {
         Self {
-            targets: HashMap::new()
+            targets: HashMap::new(),
+            triple: triple,
         }
     }
 
@@ -30,23 +32,22 @@ impl TargetRegistry {
         }
     }
 
-    /// returns the `TargetBackendDescr` for the triple (also it adjusts it's calling convention ...)
-    pub fn getBasedOnTriple(&mut self, triple: Triple) -> Result<&mut TargetBackendDescr, Box<dyn Error>> {
-        if let Some(descr) = self.targets.get_mut(&triple.arch) {
-            descr.call = triple.getCallConv()?;
-
+    /// returns the `TargetBackendDescr` for the arch (also it adjusts it's calling convention ...)
+    pub fn getBasedOnArch(&mut self, arch: Arch) -> Result<&mut TargetBackendDescr, Box<dyn Error>> {
+        if let Some(descr) = self.targets.get_mut(&arch) {
             Ok(descr)
         } else {
             Err(Box::from( 
-                RegistryError::UnsuportedArch(triple.arch) 
+                RegistryError::UnsuportedArch(arch) 
             ))
         }
     }
 
     /// emits machine instrs for target
     /// note: machine instrs are portable over all platforms
-    pub fn buildMachineInstrsForTarget(&mut self, triple: Triple, block: &Block, funct: &Function) -> Result<Vec<MachineInstr>, Box<dyn Error>> {
-        let org = self.getBasedOnTriple(triple)?;
+    pub fn buildMachineInstrsForTarget(&mut self, arch: Arch, block: &Block, funct: &Function) -> Result<Vec<MachineInstr>, Box<dyn Error>> {
+        let triple = self.triple;
+        let org = self.getBasedOnArch(arch)?;
 
         org.block = Some(block.clone());
         let instrs = org.build_instrs(&funct, &triple);
@@ -57,8 +58,10 @@ impl TargetRegistry {
     }
 
     /// Builds the ir of the given triple into text assembly code
-    pub fn buildAsmForTarget(&mut self, triple: Triple, block: &Block, funct: &Function) -> Result<Vec<String>, Box<dyn Error>> {
-        let org = self.getBasedOnTriple(triple)?;
+    pub fn buildAsmForTarget(&mut self, arch: Arch, block: &Block, funct: &Function) -> Result<Vec<String>, Box<dyn Error>> {
+       let triple = self.triple;
+
+        let org = self.getBasedOnArch(arch)?;
         org.block = Some(block.clone());
 
         let instrs = org.build_instrs(&funct, &triple);
@@ -78,8 +81,10 @@ impl TargetRegistry {
     }
 
     /// Builds the ir of the given triple into machine code
-    pub fn buildMachineCodeForTarget(&mut self, triple: Triple, block: &Block, funct: &Function) -> Result<(Vec<u8>, Vec<Link>), Box<dyn Error>> {
-        let org = self.getBasedOnTriple(triple)?;
+    pub fn buildMachineCodeForTarget(&mut self, arch: Arch, block: &Block, funct: &Function) -> Result<(Vec<u8>, Vec<Link>), Box<dyn Error>> {
+        let triple = self.triple;
+
+        let org = self.getBasedOnArch(arch)?;
 
         org.block = Some(block.clone());
 

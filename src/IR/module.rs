@@ -153,7 +153,7 @@ impl Module {
             let mut blocks = BTreeMap::new();
 
             for block in &func.blocks {
-                let (compiled, links) = registry.buildMachineCodeForTarget(triple, block, &func)?;
+                let (compiled, links) = registry.buildMachineCodeForTarget(triple.arch, block, &func)?;
 
                 blocks.insert(block.name.to_owned(), (compiled, links));
             }
@@ -236,7 +236,7 @@ impl Module {
 
             for block in &func.blocks {
                 instrs.extend_from_slice(&
-                    registry.buildMachineInstrsForTarget(triple, block, func)?
+                    registry.buildMachineInstrsForTarget(triple.arch, block, func)?
                 );
             }
 
@@ -280,7 +280,7 @@ impl Module {
             for block in &func.blocks {
                 lines += &format!(" {}:\n", block.name);
 
-                let asm_lines = registry.buildAsmForTarget(triple, block, func)?;
+                let asm_lines = registry.buildAsmForTarget(triple.arch, block, func)?;
 
                 for line in asm_lines {
                     if line.starts_with("#") { // debug
