@@ -8,6 +8,7 @@ mod cast;
 mod math;
 mod ret;
 mod br;
+mod cmp;
 
 pub use assign::*;
 pub use call::*;
@@ -15,6 +16,7 @@ pub use cast::*;
 pub use math::*;
 pub use ret::*;
 pub use br::*;
+pub use cmp::*;
 
 macro_rules! IrTypeWith3 {
     ($name:tt, $param1:tt, $param2:tt, $param3:tt) => {
@@ -109,6 +111,30 @@ IrTypeWith3!(Div, T, U, Z);
 
 IrTypeWith1!(Br, T);
 IrTypeWith3!(BrCond, T, U, Z);
+
+/// The cmp node is used to compare values
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Cmp {
+    mode: cmp::CmpMode,
+    ls: Var,
+    rs: Var,
+    out: Var,
+}
+
+impl Cmp {
+    /// Creates a new instance
+    #[allow(dead_code)]
+    pub(crate) fn new(mode: cmp::CmpMode, ls: Var, rs: Var, out: Var) -> Box<Self> {
+        Box::from(
+            Self {
+                mode: mode,
+                ls: ls,
+                rs: rs,
+                out: out,
+            }
+        )
+    }
+}
 
 use crate::Support::{ColorClass, ColorProfile};
 
