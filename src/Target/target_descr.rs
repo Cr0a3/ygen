@@ -165,3 +165,5 @@ compile_func!(compile_assign_var_const, compile_assign_var_const, Assign<Var, Co
 
 compile_func!(compile_br, compile_br, Br<Box<Block>>);
 compile_func!(compile_br_cond, compile_br_cond, BrCond<Var, Block, Block>);
+
+compile_func!(compile_cmp, compile_cmp, Cmp);

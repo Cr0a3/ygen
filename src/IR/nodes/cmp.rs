@@ -5,7 +5,7 @@ use crate::{Support::ColorClass, IR::{IRBuilder, Var, VerifyError}};
 use super::{Cmp, Ir};
 
 /// The "compare mode" (e.g: ls is equal to rs)
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum CmpMode {
     /// ls == rs
     Eqal,

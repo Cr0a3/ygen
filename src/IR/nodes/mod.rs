@@ -115,10 +115,10 @@ IrTypeWith3!(BrCond, T, U, Z);
 /// The cmp node is used to compare values
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Cmp {
-    mode: cmp::CmpMode,
-    ls: Var,
-    rs: Var,
-    out: Var,
+    pub(crate) mode: cmp::CmpMode,
+    pub(crate) ls: Var,
+    pub(crate) rs: Var,
+    pub(crate) out: Var,
 }
 
 impl Cmp {

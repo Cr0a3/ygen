@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::fmt::{Debug, Display};
 use std::any::Any;
+use crate::prelude::CmpMode;
 use crate::Obj::Link;
 use crate::IR::TypeMetadata;
 
@@ -92,7 +93,8 @@ pub enum MachineMnemonic {
     Sub,
     Xor,
 
-    Compare(/*if yes*/String, /*if no*/String),
+    BrCond(/*if yes*/String, /*if no*/String),
+    Compare(CmpMode),
 
     Zext,
     Downcast,
@@ -122,7 +124,8 @@ impl MachineMnemonic {
             MachineMnemonic::Return => "return",
             MachineMnemonic::AdressLoad(_) => "adrload",
             MachineMnemonic::Br(_) => "br",
-            MachineMnemonic::Compare(_, _) => "compare",
+            MachineMnemonic::BrCond(_, _) => "comparebr",
+            MachineMnemonic::Compare(_) => "compare",
         }.to_string()
     }
 }

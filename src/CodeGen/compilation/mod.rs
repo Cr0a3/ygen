@@ -10,6 +10,7 @@ mod call;
 mod ret;
 mod assign;
 mod br;
+mod cmp;
 
 /// helps with compilation
 pub struct CompilationHelper {

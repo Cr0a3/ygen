@@ -34,7 +34,7 @@ impl CompilationHelper {
         };
 
         let mut cmp = MachineInstr::new(
-            MachineMnemonic::Compare(iffalse, iftrue) // val == 0 -> iffalse | else -> iftrue
+            MachineMnemonic::BrCond(iffalse, iftrue) // val == 0 -> iffalse | else -> iftrue
         );
         cmp.add_operand(src);
         cmp.add_operand(MachineOperand::Imm(0));
