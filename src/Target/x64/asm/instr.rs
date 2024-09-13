@@ -374,6 +374,30 @@ impl X64MCInstr {
 
                 (buildOpcode(mandatory, rex.option(), op), None)
             }
+            Mnemonic::Setg | Mnemonic::Setge | Mnemonic::Setl | Mnemonic::Setle | Mnemonic::Sete | Mnemonic::Setne => {
+                let mut op = vec![];
+
+                let instr = match self.mnemonic {
+                    Mnemonic::Setg => 0x9F,
+                    Mnemonic::Setge => 0x9D,
+                    Mnemonic::Setl => 0x9D,
+                    Mnemonic::Setle => 0x9E,
+                    Mnemonic::Sete => 0x94,
+                    Mnemonic::Setne => 0x95,
+                    _ => unreachable!(),
+                };
+
+                op.push(0x0f);
+                op.push(instr);
+
+                if let Some(Operand::Reg(reg)) = self.op1 {
+                    op.extend_from_slice( &ModRm::regWimm(0, reg) );
+                } else if let Some(Operand::Mem(mem)) = &self.op1 {
+                    op.extend_from_slice( &ModRm::imMem(0, mem.to_owned()) );
+                } else { unreachable!() }
+
+                (buildOpcode(None, None, op), None)
+            }
         })
     }
 
@@ -473,6 +497,15 @@ impl X64MCInstr {
             Mnemonic::Jne => {
                 if let Some(Operand::Imm(_)) = self.op1 {} else {
                     Err(InstrEncodingError::InvalidVariant(self.to_owned(), "jne expects one imm as its ops".to_owned()))?
+                }
+            }
+            Mnemonic::Setg | Mnemonic::Setge | Mnemonic::Setl | Mnemonic::Setle | Mnemonic::Sete | Mnemonic::Setne => {
+                if self.op2.is_some() || self.op1.is_none() {
+                    Err(InstrEncodingError::InvalidVariant(self.to_owned(), "set.. expects one operand".to_owned()))?
+                }
+
+                if let Some(Operand::Imm(_)) = self.op1 {
+                    Err(InstrEncodingError::InvalidVariant(self.to_owned(), "set.. requires one operand of either register or memory".to_owned()))?
                 }
             }
         };
@@ -665,6 +698,14 @@ pub enum Mnemonic {
     StartOptimization,
     /// stop optimization
     EndOptimization,
+
+
+    Sete,
+    Setne,
+    Setg,
+    Setl,
+    Setge,
+    Setle,
 }
 
 impl FromStr for Mnemonic {
@@ -691,6 +732,12 @@ impl FromStr for Mnemonic {
             "mul" => Ok(Mnemonic::Mul),
             "jne" => Ok(Mnemonic::Jne),
             "cmp" => Ok(Mnemonic::Cmp),
+            "sete" => Ok(Mnemonic::Sete),
+            "setne" => Ok(Mnemonic::Setne),
+            "setg" => Ok(Mnemonic::Setg),
+            "setl" => Ok(Mnemonic::Setl),
+            "setge" => Ok(Mnemonic::Setge),
+            "setle" => Ok(Mnemonic::Setle),
             _ => Err(()),
         }
     }
@@ -722,6 +769,12 @@ impl Display for Mnemonic {
             Mnemonic::Debug => "#",
             Mnemonic::Jne => "jne",
             Mnemonic::Cmp => "cmp",
+            Mnemonic::Sete => "sete",
+            Mnemonic::Setg => "setg",
+            Mnemonic::Setl => "setl",
+            Mnemonic::Setge => "setge",
+            Mnemonic::Setle => "setle",
+            Mnemonic::Setne => "setne",
         })
     }
 }

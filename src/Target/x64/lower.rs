@@ -290,10 +290,10 @@ fn x64_lower_cmp(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr, mode: &CmpMod
     let mne = match mode {
         CmpMode::Eqal => Mnemonic::Sete,
         CmpMode::NotEqal => Mnemonic::Setne,
-        CmpMode::GreaterThan => Mnemonic::Setae,
-        CmpMode::LessThan => Mnemonic::Setbe,
-        CmpMode::GreaterThanOrEqual => Mnemonic::Setae,
-        CmpMode::LessThanOrEqual => Mnemonic::Setbe,
+        CmpMode::GreaterThan => Mnemonic::Setg,
+        CmpMode::LessThan => Mnemonic::Setl,
+        CmpMode::GreaterThanOrEqual => Mnemonic::Setge,
+        CmpMode::LessThanOrEqual => Mnemonic::Setle,
     };
 
     sink.push( X64MCInstr::with1(mne, out) );
