@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, VecDeque};
 
-use crate::prelude::Ir;
+use crate::prelude::{Cmp, CmpMode, Ir};
 use crate::Obj::Linkage;
 use crate::IR::{ir, Block, Const, FnTy, Function, Type, TypeMetadata, Var};
 
@@ -421,6 +421,7 @@ impl IrParser {
                         "and" => self.parse_and(name)?,
                         "div" => self.parse_div(name)?,
                         "call" => self.parse_call(name)?,
+                        "cmp" => self.parse_cmp(name)?,
                         _ => {
                             let ty = self.parse_type()?;
                             self.input.pop_front(); // the type
@@ -749,6 +750,65 @@ impl IrParser {
         } else {
             Err(IrError::UnkownType(token.clone()) )
         }
+    }
+
+    fn parse_cmp(&mut self, var: String) -> Result<Box<dyn Ir>, IrError> {
+        self.input.pop_front();
+
+        self.expect( TokenType::Ident(String::new()) )?;
+
+        let curr = self.current_token()?;
+        let ident = if let TokenType::Ident(ident) = &curr.typ {
+            ident.to_owned()
+        } else { unreachable!() };
+
+        let mode = match ident.as_str() {
+            "eq" => CmpMode::Eqal,
+            "ne" => CmpMode::NotEqal,
+            "ge" => CmpMode::GreaterThan,
+            "le" => CmpMode::LessThan,
+            "gte" => CmpMode::GreaterThanOrEqual,
+            "lte" => CmpMode::LessThanOrEqual,
+            _=> Err(IrError::Unkown { 
+                what: "compare mode".to_owned(), 
+                name: ident, 
+                loc: curr.loc.to_owned()
+            })?
+        };
+
+        self.input.pop_front();
+
+        let ty = self.parse_type()?;
+        self.input.pop_front();
+
+        self.expect( TokenType::Var(String::new()) )?;
+        let curr = self.current_token()?;
+        let ls = if let TokenType::Var(var) = &curr.typ {
+            var.to_owned()
+        } else { unreachable!() };
+        self.input.pop_front();
+
+        if let TokenType::Comma = self.current_token()?.typ {
+            self.input.pop_front();
+        }
+
+        self.expect( TokenType::Var(String::new()) )?;
+        let curr = self.current_token()?;
+        let rs = if let TokenType::Var(var) = &curr.typ {
+            var.to_owned()
+        } else { unreachable!() };
+        self.input.pop_front();
+
+        Ok(Cmp::new(mode, Var {
+            name: ls,
+            ty: ty,
+        }, Var {
+            name: rs,
+            ty: ty 
+        }, Var {
+            name: var,
+            ty: ty
+        }))
     }
 }
 

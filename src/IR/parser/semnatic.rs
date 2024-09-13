@@ -185,6 +185,8 @@ impl<'a> IrSemnatic<'a> {
                     self.analaysiz_cast(&mut vars, node, loc)?;
                 } else if let Some(node) = any.downcast_ref::<BrCond<Var, Block, Block>>() {
                     self.analaysiz_br_cond(func, &mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Cmp>() {
+                    self.analaysiz_cmp(&mut vars, node, loc)?;
                 }
             }
         }
@@ -416,6 +418,35 @@ impl<'a> IrSemnatic<'a> {
                 loc: loc
             })?
         }
+
+        Ok(())
+    }
+
+    fn analaysiz_cmp(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &Cmp, loc: Loc) -> Result<(), IrError> {
+        if !vars.contains_key(&node.ls.name) {
+            Err(IrError::Unkown { 
+                what: "variable".to_owned(), 
+                name: node.ls.name.to_owned(), 
+                loc: loc.clone()
+            })?
+        }
+
+        if !vars.contains_key(&node.rs.name) {
+            Err(IrError::Unkown { 
+                what: "variable".to_owned(), 
+                name: node.rs.name.to_owned(), 
+                loc: loc.clone()
+            })?
+        }
+
+        if vars.contains_key(&node.out.name) {
+            Err(IrError::DefinedTwice {
+                name: node.out.name.to_owned(), 
+                loc: loc
+            })?
+        }
+
+        vars.insert(node.out.name.to_owned(), node.out.ty);
 
         Ok(())
     }
