@@ -7,13 +7,13 @@ define u32 @main() {
  entry:
     %0 = u32 5
     %1 = u32 0
-    %2 = cmp eq u32 %0, %1
-    br cond %2 eq, ne
+    %2 = cmp le u32 %0, %1
+    br cond %2 yeah, no
   
-  ne:
-    ret u32 5
+  yeah:
+    ret u32 1
 
-  eq:
+  no:
     ret u32 4
 }
 

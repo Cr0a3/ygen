@@ -376,11 +376,12 @@ impl X64MCInstr {
             }
             Mnemonic::Setg | Mnemonic::Setge | Mnemonic::Setl | Mnemonic::Setle | Mnemonic::Sete | Mnemonic::Setne => {
                 let mut op = vec![];
+                let rex;
 
                 let instr = match self.mnemonic {
                     Mnemonic::Setg => 0x9F,
                     Mnemonic::Setge => 0x9D,
-                    Mnemonic::Setl => 0x9D,
+                    Mnemonic::Setl => 0x9C,
                     Mnemonic::Setle => 0x9E,
                     Mnemonic::Sete => 0x94,
                     Mnemonic::Setne => 0x95,
@@ -391,12 +392,25 @@ impl X64MCInstr {
                 op.push(instr);
 
                 if let Some(Operand::Reg(reg)) = self.op1 {
+
+                    rex = {
+                        let mut rex = RexPrefix::none();
+                        rex.r = reg.extended();
+                        if reg.sub64() != x64Reg::Rax &&
+                           reg.sub64() != x64Reg::Rbx &&
+                           reg.sub64() != x64Reg::Rcx &&
+                           reg.sub64() != x64Reg::Rdx {
+                            Some(rex)
+                        } else { None }
+                    };
+
                     op.extend_from_slice( &ModRm::regWimm(0, reg) );
                 } else if let Some(Operand::Mem(mem)) = &self.op1 {
+                    rex = mem.rex(true).option();
                     op.extend_from_slice( &ModRm::imMem(0, mem.to_owned()) );
                 } else { unreachable!() }
 
-                (buildOpcode(None, None, op), None)
+                (buildOpcode(None, rex, op), None)
             }
         })
     }

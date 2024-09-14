@@ -1,0 +1,20 @@
+# RUN: 
+cargo run -p ylc -- -in=%s -o=out.o
+gcc out.o -o a.exe
+./a.exe
+# IN:
+define u32 @main() {
+ entry:
+    %0 = u32 31
+    %1 = u32 30
+    %2 = cmp ne u32 %0, %1
+    br cond %2 yeah, no
+  
+  yeah:
+    ret u32 0
+
+  no:
+    ret u32 1
+}
+
+# EXIT_CODE=0
