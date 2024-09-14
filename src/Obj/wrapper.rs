@@ -360,7 +360,7 @@ impl ObjectBuilder {
                     Decl::Function => 0,
                     _ => -1,
                 };
-                offset = -4;
+                offset = -3;
             }
 
             obj.add_relocation(secText, Relocation {
