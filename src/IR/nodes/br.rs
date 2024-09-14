@@ -105,10 +105,6 @@ impl BuildBr<&Block> for IRBuilder<'_> {
 pub trait BuildBrCond<T, U, Z> {
     /// Builds a br condition node
     /// 
-    /// ```no_run
-    /// br condition iftrue, iffalse
-    /// ```
-    /// 
     /// Jumps to iftrue if the value is not 0 else to iffalse
     fn BuildBr(&mut self, val: T, iftrue: U, iffalse: Z);
 }
