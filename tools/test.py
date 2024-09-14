@@ -23,7 +23,7 @@ print(
     Fore.GREEN + str(passed) + Style.RESET_ALL + 
     " tests exited sucessfully and " + 
     Fore.RED + str(failed) + Style.RESET_ALL + 
-    " faild"
+    " failed"
 )
 
 if failed != 0:
