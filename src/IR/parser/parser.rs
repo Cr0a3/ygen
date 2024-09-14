@@ -121,6 +121,10 @@ impl IrParser {
         let mut unlim = false;
 
         loop {
+            if TokenType::Comma == self.current_token()?.typ {
+                self.input.pop_front();
+            }
+
             let current = self.current_token()?;
 
             if TokenType::RParam == current.typ {

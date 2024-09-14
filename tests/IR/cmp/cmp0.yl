@@ -10,10 +10,10 @@ define u32 @main() {
     %2 = cmp eq u32 %0, %1
     br cond %2 eq, ne
   
-  ne:
+  eq:
     ret u32 5
 
-  eq:
+  ne:
     ret u32 4
 }
 

@@ -14,7 +14,7 @@ define u32 @main() {
 # STDOUT: 
 define  u32 @main() {
   entry:
-    1 = i32 11
-    2 = cast 1 to u32
-    ret u32 2
+    %1 = i32 11
+    %2 = cast %1 to u32
+    ret u32 %2
 }
