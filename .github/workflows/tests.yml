@@ -19,12 +19,14 @@ jobs:
         run: |
           rustup update --no-self-update stable
 
+      - name: Install python
+        run: |
+         sudo apt install python3 pip3 -y
+         pip3 install colorama
+
       - name: Build
         run: cargo build --all
 
       - name: Run tests
         run: |
-          for file in $(find tests -type f -name "*.yl"); do
-            echo "Processing $file"
-            cargo run -p ytest -- -t="$file"
-          done
+          python3 tools/test.py
