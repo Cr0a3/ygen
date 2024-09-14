@@ -1,3 +1,4 @@
+from base64 import decode
 import glob
 from colorama import init, Fore, Style
 import subprocess
@@ -11,13 +12,15 @@ failed = 0
 passed = 0
 
 for test in tests:
-    process = subprocess.run(["cargo", "run", "-p", "ytest", "--", f"-t={test}"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    process = subprocess.run(["cargo", "run", "-p", "ytest", "--", f"-t={test}"], capture_output=True)
     if process.returncode == 0:
-        print(Fore.GREEN + test + Style.RESET_ALL)
+        print(Fore.GREEN + "SUCESS " + test + Style.RESET_ALL)
         passed += 1
     else:
         failed += 1
-        print(Fore.RED + test + Style.RESET_ALL)
+        print(Fore.RED + "==== FAILED " + test + " ====" + Style.RESET_ALL)
+        print(process.stdout.decode())
+        print(process.stdout.decode())
 
 print(
     Fore.GREEN + str(passed) + Style.RESET_ALL + 
