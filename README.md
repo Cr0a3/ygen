@@ -3,14 +3,23 @@
 ![Crates.io Version](https://img.shields.io/crates/v/Ygen?style=flat-square)
 ![GitHub Repo stars](https://img.shields.io/github/stars/cr0a3/ygen?style=flat-square)
 
-Ygen is a libary for building compiler backends.
+Welcome to Ygen!
+This repository contains the source code of ygen and all it's tools.
 
-It provides easy to use apis for generating ygen-ir, which is also lowerable to machine code using easy to use class method.
+Ygen is a toolkit for building fast and clean compilers using a memory safe api.
 
-The main focus is code generation but it also has support classes like for coloring.
+## Why ygen?
+
+You are probably wondering: why would I choose ygen and not llvm or cranelift??
+Here are a few reasons:
+
+- **Simplicity**: One of ygens main focus is simplicity which means to us that as much code as possible is readable and shared
+- **Similare API**: Ygens API is very similar to LLVMs API for example i designed the `IRBuilder` to be very similar to the `Builder` from LLVM
+- **Traits**: Ygen uses a lot of traits to overload functions. Great examples are the `Build...` functions from the `IRBuilder` to build ir nodes
 
 > [!WARNING]
-> This project is still early in its developement. Bugs and miscompilations are expected. DO NOT USE THE PROJECT FOR NOT TOY COMPILERS
+> This project is still early in its developement. Bugs and miscompilations are expected. <br>
+> ONLY USE YGEN FOR TOY COMPILERS
 
 
 ### Contributions
@@ -18,7 +27,7 @@ The main focus is code generation but it also has support classes like for color
 ![Contribution activity](https://repobeats.axiom.co/api/embed/70cb0d167ed0a296468773b0bf8d569f74d1b33a.svg "Repobeats analytics image")
 
 ### Simple example
-Here is a simple example on how to use Ygen to build a simple add function:
+Here is a simple example on how to use Ygen to build an add function:
 ```rust
 use std::error::Error;
 use Ygen::prelude::*;
@@ -63,7 +72,7 @@ You can add following lines (you need to include `std::fs::Path`) to compile the
 ```Rust
 module.emitToAsmFile(
     Triple::host(),
-    &mut initializeAllTargets(),
+    &mut initializeAllTargets(Triple::host())?,
     Path::new("out.asm")
 )?;
 ```
