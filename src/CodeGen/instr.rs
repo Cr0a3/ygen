@@ -68,6 +68,8 @@ pub enum MachineOperand {
     Imm(i64),
     /// a register
     Reg(Reg),
+    /// stack offset
+    Stack(i64),
 }
 
 impl Display for MachineOperand {
@@ -75,6 +77,7 @@ impl Display for MachineOperand {
         write!(f, "{}", match self {
             MachineOperand::Imm(imm) => format!("{:#x?}", imm),
             MachineOperand::Reg(reg) => format!("{:?}", reg),
+            MachineOperand::Stack(off) => format!("sp - {:#x?}", off),
         })
     }
 }
@@ -104,6 +107,9 @@ pub enum MachineMnemonic {
     Return,
 
     AdressLoad(String),
+
+    Prolog,
+    Epilog,
 }
 
 impl MachineMnemonic {
@@ -126,6 +132,8 @@ impl MachineMnemonic {
             MachineMnemonic::Br(_) => "br",
             MachineMnemonic::BrCond(_, _) => "comparebr",
             MachineMnemonic::Compare(_) => "compare",
+            MachineMnemonic::Prolog =>"prolog",
+            MachineMnemonic::Epilog => "epilog",
         }.to_string()
     }
 }
@@ -147,4 +155,13 @@ pub trait MCInstr: Any + Debug + Display {
 
     /// encodes the instruction
     fn encode(&self) -> Result<(Vec<u8>, Option<Link>), Box<dyn Error>>;
+
+    /// 
+    fn clone_box(&self) -> Box<dyn MCInstr>;
+}
+
+impl Clone for Box<dyn MCInstr> {
+    fn clone(&self) -> Self {
+        self.clone_box()
+    }
 }

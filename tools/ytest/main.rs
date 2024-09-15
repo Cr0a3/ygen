@@ -125,16 +125,16 @@ fn main() {
             Ok(status) => {
                 if !status.success() {
                     if let Some(exit_code) = status.code() {
-                        if parsed.expected_code == 0 || (cli.opt("exit") && code == -1) {
+                        if parsed.expected_code == 0 || (cli.opt("exit") && code == (-1i32 as u32)) {
                             println!("{}: the programm didn't exit sucessfull with code {}", "Error".red().bold(), exit_code);
                             if !cli.opt("no-exit") {
                                 exit(-1);
                             }
-                        } else if cli.opt("neg-exit") && code == -1 {
+                        } else if cli.opt("neg-exit") && code == (-1i32 as u32) {
                             println!("{}: the programm didn't exit sucessfull with code {}", "Error".red().bold(), exit_code);
                             exit(-1);
                         } else {
-                            code = exit_code;
+                            code = exit_code as u32;
                         }
                     } else {
                         println!("{}: the programm didn't exit sucessfull", "Error".red().bold());
@@ -164,7 +164,7 @@ fn main() {
         }
     }
 
-    if parsed.expected_code != code {
+    if parsed.expected_code as u32 != code {
         println!("{}: expected exit code: {} found {}", "Error".red().bold(), parsed.expected_code, code);
         if !cli.opt("no-exit") {
             exit(-1)

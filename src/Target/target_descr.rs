@@ -87,9 +87,19 @@ impl TargetBackendDescr {
 
         helper.build_argument_preprocessing(func);
 
+        let mut cloned_helper  = helper.clone();
+
         for node in block.nodes {
             node.compile(self);
         }
+
+        let mut vsink = vec![];
+
+        cloned_helper.compile_prolog(&mut vsink);
+
+        self.sink.extend_from_slice(&vsink);
+
+        cloned_helper.compile_epilog(&mut self.sink);
 
         let out = self.sink.clone();
 
@@ -117,11 +127,17 @@ impl TargetBackendDescr {
         if let Some(helper) = &self.helper {
             self.whitelist.check_for_forbidden_mnemonics(&instrs)?;
 
+            let mut mc_instrs = vec![];
+
             if let Some(lower) = helper.lower {
-                Ok(lower(self.call, instrs))
+                let lowered = lower(self.call, instrs);
+
+                mc_instrs.extend_from_slice(&lowered);
             } else {
                 todo!("the target architecture {:?} doesn't support instruction lowering", helper.arch)
-            }
+            };
+
+            Ok(mc_instrs)
         } else {
             todo!("no helper was registered");
         }

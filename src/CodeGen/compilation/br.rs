@@ -31,6 +31,7 @@ impl CompilationHelper {
 
         let src = match src {
             super::VarLocation::Reg(reg) => MachineOperand::Reg(reg),
+            super::VarLocation::Mem(stack) => MachineOperand::Stack(stack),
         };
 
         let mut cmp = MachineInstr::new(

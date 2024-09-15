@@ -438,8 +438,8 @@ impl X64MCInstr {
                 }
 
                 if let Some(Operand::Mem(_)) = self.op1 {
-                    if let Some(Operand::Mem(_)) = self.op2 {
-                        Err(InstrEncodingError::InvalidVariant(self.clone(), "add/sub/or/xor can't have two mem operands".into()))?
+                    if let Some(Operand::Reg(_)) = self.op2 {} else {
+                        Err(InstrEncodingError::InvalidVariant(self.clone(), "mov is only allowed: `mov rm/8, r` but something other was found".into()))?
                     }
                 }
             },
@@ -640,6 +640,10 @@ impl MCInstr for X64MCInstr {
 
     fn encode(&self) -> Result<(Vec<u8>, Option<Link>), Box<dyn std::error::Error>> {
         Ok(self.encode()?)
+    }
+    
+    fn clone_box(&self) -> Box<dyn MCInstr> {
+        Box::from( self.clone() )
     }
 }
 

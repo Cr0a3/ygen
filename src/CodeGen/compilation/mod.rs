@@ -11,8 +11,10 @@ mod ret;
 mod assign;
 mod br;
 mod cmp;
+mod prolog;
 
 /// helps with compilation
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CompilationHelper {
     pub(crate) regs: RegVec,
     pub(crate) arch: Arch,
@@ -21,6 +23,8 @@ pub struct CompilationHelper {
     pub(crate) call: MachineCallingConvention,
 
     pub(crate) vars: HashMap<String, VarLocation>,
+
+    pub(crate) stack_off: i64,
 }
 
 impl CompilationHelper {
@@ -31,6 +35,7 @@ impl CompilationHelper {
             vars: HashMap::new(),
             call: call,
             lower: None,
+            stack_off: call.shadow(arch),
         }
     }
 
@@ -39,7 +44,17 @@ impl CompilationHelper {
         if let Some(location) = self.vars.get(&var.name) {
             match location {
                 VarLocation::Reg(reg) => self.regs.push(reg.arch(), reg.clone()),
+                _ => {}, // stack offsets cannot be subtracted
             }
+        }
+    }
+
+    /// allocates resources for a var but on the stack
+    pub(crate) fn alloc_stack(&mut self, var: &Var) -> VarLocation {
+        if var.ty.byteSize() as i64 <= self.call.align(self.arch) {
+            VarLocation::Mem(self.stack_off)
+        } else {
+            todo!()
         }
     }
 
@@ -50,7 +65,7 @@ impl CompilationHelper {
                 Reg::x64(x64) => Reg::x64(x64.sub_ty(var.ty)),
             })
         } else {
-            todo!("Registers ran out. And memory variables are currently not implemented")
+            self.alloc_stack(var)
         };
 
         self.vars.insert(var.name.to_owned(), location);
@@ -88,5 +103,5 @@ impl CompilationHelper {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum VarLocation {
     Reg(Reg),
-    //Mem(Mem),
+    Mem(i64),
 }

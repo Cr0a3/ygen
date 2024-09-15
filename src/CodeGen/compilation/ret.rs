@@ -25,6 +25,7 @@ impl CompilationHelper {
         
         match src {
             super::VarLocation::Reg(reg) => instr.add_operand(MachineOperand::Reg(reg)),
+            super::VarLocation::Mem(stack) => instr.add_operand( MachineOperand::Stack(stack) ),
         }
 
         mc_sink.push(instr);

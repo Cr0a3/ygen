@@ -61,4 +61,17 @@ impl MachineCallingConvention {
     pub fn num_reg_args(&self, arch: Arch) -> usize {
         self.args(arch).len()
     }
+
+    /// returns the stack shadow space
+    pub fn shadow(&self, _: Arch) -> i64 {
+        match self.call_conv {
+            CallConv::WindowsFastCall => 32,
+            _ => 8,
+        }
+    }
+
+    /// Returns the alignment
+    pub fn align(&self, _: Arch) -> i64 {
+        8 // ygen only supports 64bit architectures
+    }
 }

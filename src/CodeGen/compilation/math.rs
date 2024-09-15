@@ -29,14 +29,17 @@ macro_rules! MathVarVar {
         
                 match src1 {
                     VarLocation::Reg(reg) => instr.add_operand(MachineOperand::Reg(reg)),
+                    VarLocation::Mem(stack) => instr.add_operand( MachineOperand::Stack(stack) ),
                 }
         
                 match src2 {
                     VarLocation::Reg(reg) => instr.add_operand(MachineOperand::Reg(reg)),
+                    VarLocation::Mem(stack) => instr.add_operand( MachineOperand::Stack(stack) ),
                 }
         
                 match out {
                     VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
+                    VarLocation::Mem(stack) => instr.add_operand( MachineOperand::Stack(stack) ),
                 }
                 
                 instr.meta = node.inner3.ty;
@@ -79,12 +82,14 @@ macro_rules! MathVarType {
         
                 match src1 {
                     VarLocation::Reg(reg) => instr.add_operand(MachineOperand::Reg(reg)),
+                    VarLocation::Mem(stack) => instr.add_operand( MachineOperand::Stack(stack) ),
                 }
         
                 instr.add_operand(MachineOperand::Imm(node.inner2.val() as i64));
 
                 match out {
                     VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
+                    VarLocation::Mem(stack) => instr.add_operand( MachineOperand::Stack(stack) ),
                 }
 
                 
@@ -127,6 +132,7 @@ macro_rules! MathTypeType {
 
                 match out {
                     VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
+                    VarLocation::Mem(stack) => instr.add_operand( MachineOperand::Stack(stack) ),
                 }
         
                 instr.meta = node.inner3.ty;

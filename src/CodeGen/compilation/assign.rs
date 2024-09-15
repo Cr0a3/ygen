@@ -18,6 +18,7 @@ impl CompilationHelper {
 
         match location {
             VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
+            VarLocation::Mem(stack) => instr.set_out( MachineOperand::Stack(stack) ),
         }
 
         instr.add_operand(MachineOperand::Imm(node.inner2.val() as i64));
@@ -47,10 +48,12 @@ impl CompilationHelper {
 
         match location {
             VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
+            VarLocation::Mem(stack) => instr.set_out( MachineOperand::Stack(stack) ),
         }
 
         match src1 {
             VarLocation::Reg(reg) => instr.add_operand(MachineOperand::Reg(reg)),
+            VarLocation::Mem(stack) => instr.add_operand( MachineOperand::Stack(stack) ),
         }
         
         instr.meta = node.inner1.ty;
@@ -74,6 +77,7 @@ impl CompilationHelper {
 
         match location {
             VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
+            VarLocation::Mem(stack) => instr.set_out( MachineOperand::Stack(stack) ),
         }
 
         

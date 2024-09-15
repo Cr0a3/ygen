@@ -22,14 +22,17 @@ impl CompilationHelper {
 
         let ls = match ls {
             super::VarLocation::Reg(reg) => MachineOperand::Reg(reg),
+            super::VarLocation::Mem(stack) => MachineOperand::Stack(stack),
         };
 
         let rs = match rs {
             super::VarLocation::Reg(reg) => MachineOperand::Reg(reg),
+            super::VarLocation::Mem(stack) => MachineOperand::Stack(stack),
         };
 
         let out = match self.alloc(&node.out) {
             super::VarLocation::Reg(reg) => MachineOperand::Reg(reg),
+            super::VarLocation::Mem(stack) => MachineOperand::Stack(stack),
         };
 
         let mut reset = MachineInstr::new(MachineMnemonic::Move);

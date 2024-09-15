@@ -5,6 +5,12 @@ use crate::Target::CallConv;
 
 use super::{instr::{MemOp, Mnemonic, Operand, X64MCInstr}, x64Reg};
 
+macro_rules! x64_stack {
+    ($off:expr) => {
+        Operand::Mem(x64Reg::Rbp - $off)
+    };
+}
+
 fn x64_lower_instr(conv: CallConv, sink: &mut Vec<X64MCInstr>, instr: MachineInstr) {
     match &instr.mnemonic {
         MachineMnemonic::Move => x64_lower_move(sink, &instr),
@@ -23,6 +29,8 @@ fn x64_lower_instr(conv: CallConv, sink: &mut Vec<X64MCInstr>, instr: MachineIns
         MachineMnemonic::Br(to) => x64_lower_br(sink, &instr, to),
         MachineMnemonic::BrCond(iftrue, iffalse) => x64_lower_cond_br(sink, &instr, iftrue, iffalse),
         MachineMnemonic::Compare(mode) => x64_lower_cmp(sink, &instr, mode),
+        MachineMnemonic::Prolog => x64_lower_prolog(sink, &instr),
+        MachineMnemonic::Epilog => x64_lower_epilog(sink, &instr),
     }
 }
 
@@ -60,6 +68,7 @@ fn x64_lower_move(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
         crate::CodeGen::MachineOperand::Reg(reg) => match reg {
             crate::CodeGen::Reg::x64(x64) => Operand::Reg(*x64),
         },
+        crate::CodeGen::MachineOperand::Stack(off) => x64_stack!((*off as u32)),
     };
     
     let out = match out {
@@ -67,7 +76,16 @@ fn x64_lower_move(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
         crate::CodeGen::MachineOperand::Reg(reg) => match reg {
             crate::CodeGen::Reg::x64(x64) => Operand::Reg(x64),
         },
+        crate::CodeGen::MachineOperand::Stack(off) => x64_stack!((off as u32)),
     };
+
+    if let Operand::Mem(_) = out {
+        if let Operand::Imm(_) = op1 {
+            sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), op1) );
+            sink.push( X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(x64Reg::Rax)) );
+            return;
+        }
+    }
 
     sink.push( X64MCInstr::with2(Mnemonic::Mov, out, op1).into() );
 }
@@ -81,6 +99,7 @@ fn x64_lower_mul(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
         crate::CodeGen::MachineOperand::Reg(reg) => match reg {
             crate::CodeGen::Reg::x64(x64) => Operand::Reg(*x64),
         },
+        crate::CodeGen::MachineOperand::Stack(off) => x64_stack!((*off as u32)),
     };
 
     
@@ -89,6 +108,7 @@ fn x64_lower_mul(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
         crate::CodeGen::MachineOperand::Reg(reg) => match reg {
             crate::CodeGen::Reg::x64(x64) => Operand::Reg(*x64),
         },
+        crate::CodeGen::MachineOperand::Stack(off) => x64_stack!((*off as u32)),
     };
     
     let out = match out {
@@ -96,6 +116,7 @@ fn x64_lower_mul(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
         crate::CodeGen::MachineOperand::Reg(reg) => match reg {
             crate::CodeGen::Reg::x64(x64) => Operand::Reg(x64),
         },
+        crate::CodeGen::MachineOperand::Stack(off) => x64_stack!((off as u32)),
     };
 
     let mnemonic = if instr.meta.signed() {
@@ -137,6 +158,7 @@ fn x64_lower_zext(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
         crate::CodeGen::MachineOperand::Reg(reg) => match reg {
             crate::CodeGen::Reg::x64(x64) => Operand::Reg(*x64),
         },
+        crate::CodeGen::MachineOperand::Stack(off) => x64_stack!((*off as u32)),
     };
 
     let op2 = match op2 {
@@ -144,6 +166,7 @@ fn x64_lower_zext(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
         crate::CodeGen::MachineOperand::Reg(reg) => match reg {
             crate::CodeGen::Reg::x64(x64) => Operand::Reg(*x64),
         },
+        crate::CodeGen::MachineOperand::Stack(off) => x64_stack!((*off as u32)),
     };
     
     let out = match out {
@@ -151,6 +174,7 @@ fn x64_lower_zext(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
         crate::CodeGen::MachineOperand::Reg(reg) => match reg {
             crate::CodeGen::Reg::x64(x64) => Operand::Reg(x64),
         },
+        crate::CodeGen::MachineOperand::Stack(off) => x64_stack!((off as u32)),
     };
 
     if let Operand::Reg(op1) = op1 {
@@ -204,6 +228,7 @@ fn x64_lower_adr_load(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr, symbol: 
         crate::CodeGen::MachineOperand::Reg(reg) => match reg {
             crate::CodeGen::Reg::x64(x64) => Operand::Reg(x64),
         },
+        crate::CodeGen::MachineOperand::Stack(off) => x64_stack!((off as u32)),
     };
 
     sink.push(
@@ -237,6 +262,7 @@ fn x64_lower_cond_br(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr, iftrue: &
         crate::CodeGen::MachineOperand::Reg(reg) => match *reg {
             crate::CodeGen::Reg::x64(x64) => Operand::Reg(x64),
         },
+        crate::CodeGen::MachineOperand::Stack(off) => x64_stack!((*off as u32)),
     };
 
     let value = match value {
@@ -244,6 +270,7 @@ fn x64_lower_cond_br(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr, iftrue: &
         crate::CodeGen::MachineOperand::Reg(reg) => match *reg {
             crate::CodeGen::Reg::x64(x64) => Operand::Reg(x64),
         },
+        crate::CodeGen::MachineOperand::Stack(off) => x64_stack!((*off as u32)),
     };
 
     sink.push(X64MCInstr::with2(Mnemonic::Cmp, src, value));
@@ -270,6 +297,7 @@ fn x64_lower_cmp(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr, mode: &CmpMod
         crate::CodeGen::MachineOperand::Reg(reg) => match *reg {
             crate::CodeGen::Reg::x64(x64) => Operand::Reg(x64),
         },
+        crate::CodeGen::MachineOperand::Stack(off) => x64_stack!((*off as u32)),
     };
 
     let mut rs = match rs {
@@ -277,6 +305,7 @@ fn x64_lower_cmp(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr, mode: &CmpMod
         crate::CodeGen::MachineOperand::Reg(reg) => match *reg {
             crate::CodeGen::Reg::x64(x64) => Operand::Reg(x64),
         },
+        crate::CodeGen::MachineOperand::Stack(off) => x64_stack!((*off as u32)),
     };
 
     if let Operand::Imm(_) = ls {
@@ -311,6 +340,7 @@ macro_rules! LowerSimpleMath {
                 crate::CodeGen::MachineOperand::Reg(reg) => match reg {
                     crate::CodeGen::Reg::x64(x64) => Operand::Reg(*x64),
                 },
+                crate::CodeGen::MachineOperand::Stack(off) => x64_stack!((*off as u32)),
             };
 
             
@@ -319,6 +349,7 @@ macro_rules! LowerSimpleMath {
                 crate::CodeGen::MachineOperand::Reg(reg) => match reg {
                     crate::CodeGen::Reg::x64(x64) => Operand::Reg(*x64),
                 },
+                crate::CodeGen::MachineOperand::Stack(off) => x64_stack!((*off as u32)),
             };
             
             let out = match out {
@@ -326,6 +357,7 @@ macro_rules! LowerSimpleMath {
                 crate::CodeGen::MachineOperand::Reg(reg) => match reg {
                     crate::CodeGen::Reg::x64(x64) => Operand::Reg(x64),
                 },
+                crate::CodeGen::MachineOperand::Stack(off) => x64_stack!((off as u32)),
             };
 
             let tmp = || Operand::Reg(x64Reg::Rax.sub_ty(instr.meta));
@@ -342,3 +374,25 @@ LowerSimpleMath!(x64_lower_and, Mnemonic::And);
 LowerSimpleMath!(x64_lower_or, Mnemonic::Or);
 LowerSimpleMath!(x64_lower_sub, Mnemonic::Sub);
 LowerSimpleMath!(x64_lower_xor, Mnemonic::Xor);
+
+fn x64_lower_prolog(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
+    sink.push( X64MCInstr::with1(Mnemonic::Push, Operand::Reg(x64Reg::Rbp) ) );
+    sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rbp), Operand::Reg(x64Reg::Rsp)  ) );
+    if let Some(op0) = instr.operands.get(0) {
+        let op0 = match op0 {
+            crate::CodeGen::MachineOperand::Imm(imm) => Operand::Imm(*imm),
+            crate::CodeGen::MachineOperand::Reg(reg) => {
+                match reg {
+                    crate::CodeGen::Reg::x64(x64) => Operand::Reg(*x64),
+                }
+            },
+            crate::CodeGen::MachineOperand::Stack(off) => x64_stack!(*off as u32),
+        };
+
+        sink.push( X64MCInstr::with2(Mnemonic::Sub, Operand::Reg(x64Reg::Rbp),  op0) );
+    }
+}
+
+fn x64_lower_epilog(sink: &mut Vec<X64MCInstr>, _: &MachineInstr) {
+    sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(x64Reg::Rbp) ) );
+}
