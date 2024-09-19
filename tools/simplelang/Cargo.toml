@@ -9,5 +9,5 @@ path = "main.rs"
 
 [dependencies]
 ygen = { workspace = true }
-logos = "0.14.1"
+logos = "0.14.2"
 unescaper = "0.1.5"
