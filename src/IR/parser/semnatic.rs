@@ -187,6 +187,8 @@ impl<'a> IrSemnatic<'a> {
                     self.analaysiz_br_cond(func, &mut vars, node, loc)?;
                 } else if let Some(node) = any.downcast_ref::<Cmp>() {
                     self.analaysiz_cmp(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Alloca<Var, TypeMetadata>>() {
+                    self.analaysiz_alloca(&mut vars, node, loc)?;
                 }
             }
         }
@@ -448,6 +450,19 @@ impl<'a> IrSemnatic<'a> {
 
         vars.insert(node.out.name.to_owned(), node.out.ty);
 
+        Ok(())
+    }
+
+    fn analaysiz_alloca(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &Alloca<Var, TypeMetadata>, loc: Loc) -> Result<(), IrError> {
+        if vars.contains_key(&node.inner1.name) {
+            Err(IrError::DefinedTwice { 
+                loc: loc, 
+                name: node.inner1.name.to_owned() 
+            })?
+        }
+
+        vars.insert(node.inner1.name.to_owned(), node.inner1.ty);
+        
         Ok(())
     }
 

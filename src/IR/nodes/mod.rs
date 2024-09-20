@@ -9,6 +9,7 @@ mod math;
 mod ret;
 mod br;
 mod cmp;
+mod alloca;
 
 pub use assign::*;
 pub use call::*;
@@ -111,6 +112,8 @@ IrTypeWith3!(Div, T, U, Z);
 
 IrTypeWith1!(Br, T);
 IrTypeWith3!(BrCond, T, U, Z);
+
+IrTypeWith2!(Alloca, T, U);
 
 /// The cmp node is used to compare values
 #[derive(Debug, Clone, PartialEq, Eq)]

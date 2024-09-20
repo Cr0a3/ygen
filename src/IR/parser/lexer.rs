@@ -151,7 +151,8 @@ impl IrLexer {
         keys.insert("const".into(), TokenType::Const);
         keys.insert("cond".into(), TokenType::Cond);
 
-        
+        let input = format!("{}\n", input);
+
         let lines = input
             .split('\n')
             .map(|x| x.to_string())
@@ -184,7 +185,7 @@ impl IrLexer {
     }
 
     fn is_at_end(&self) -> bool {
-        self.current >= (self.input_stream.chars().count()) as u64
+        self.current > (self.input_stream.chars().count() - 1) as u64
     }
 
     fn update_loc(&mut self) {
@@ -222,6 +223,8 @@ impl IrLexer {
                 out = peek;
             }
         } else {
+            println!("curr: {}", self.current);
+            println!("len: {}", self.input_stream.chars().count());
             Err(IrError::OutOfChars)?
         }
 

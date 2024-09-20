@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, VecDeque};
 
-use crate::prelude::{Cmp, CmpMode, Ir};
+use crate::prelude::{Alloca, Cmp, CmpMode, Ir};
 use crate::Obj::Linkage;
 use crate::IR::{ir, Block, Const, FnTy, Function, Type, TypeMetadata, Var};
 
@@ -426,6 +426,7 @@ impl IrParser {
                         "div" => self.parse_div(name)?,
                         "call" => self.parse_call(name)?,
                         "cmp" => self.parse_cmp(name)?,
+                        "alloca" => self.parse_alloca(name)?,
                         _ => {
                             let ty = self.parse_type()?;
                             self.input.pop_front(); // the type
@@ -656,6 +657,21 @@ impl IrParser {
         };
 
         Ok(ir::Cast::new(in_var, out_ty, out))
+    }
+
+    fn parse_alloca(&mut self, var: String) -> Result<Box<dyn Ir>, IrError> {
+        self.input.pop_front();
+
+        let ty = self.parse_type()?;
+
+        self.input.pop_front();
+
+        let out = Var {
+            name: var,
+            ty: TypeMetadata::ptr,
+        };
+
+        Ok( Alloca::new(out, ty) )
     }
 
     fn parse_data_array(&mut self) -> Result<Vec<u8>, IrError> {
