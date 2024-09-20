@@ -87,23 +87,35 @@ impl TargetBackendDescr {
 
         helper.build_argument_preprocessing(func);
 
-        let mut cloned_helper  = helper.clone();
+        let mut cloned_helper  = CompilationHelper::new(helper.arch, helper.call);
 
         for node in block.nodes {
             node.compile(self);
+        }
+
+        if let Some(helper) = &mut self.helper {
+            cloned_helper.stack_off = helper.stack_off;
         }
 
         let mut vsink = vec![];
 
         cloned_helper.compile_prolog(&mut vsink);
 
-        self.sink.extend_from_slice(&vsink);
+        vsink.extend_from_slice(&self.sink);
 
-        cloned_helper.compile_epilog(&mut self.sink);
+        let last = vsink.last().cloned();
 
-        let out = self.sink.clone();
+        vsink.remove(vsink.len() - 1); // ret
 
-        out
+        cloned_helper.compile_epilog(&mut vsink);
+
+        if let Some(last) = last {
+            vsink.push(last);
+        }
+
+        self.sink = vsink;
+
+        self.sink.to_owned()
     }
 
     /// Resets all values to "factory standart"
@@ -115,7 +127,9 @@ impl TargetBackendDescr {
             self.compile = reference.compile;
             self.helper = reference.helper;
             self.block = reference.block;
+
             assert_eq!(self.call, reference.call);
+
             self.call = reference.call;
             self.sink = reference.sink;
             self.whitelist = reference.whitelist;
@@ -183,3 +197,5 @@ compile_func!(compile_br, compile_br, Br<Box<Block>>);
 compile_func!(compile_br_cond, compile_br_cond, BrCond<Var, Block, Block>);
 
 compile_func!(compile_cmp, compile_cmp, Cmp);
+
+compile_func!(compile_alloca, compile_alloca, Alloca<Var, TypeMetadata>);

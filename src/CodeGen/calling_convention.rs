@@ -72,6 +72,6 @@ impl MachineCallingConvention {
 
     /// Returns the alignment
     pub fn align(&self, _: Arch) -> i64 {
-        8 // ygen only supports 64bit architectures
+        8 // ygen (currently) only supports x64 which has an alignment of 8
     }
 }

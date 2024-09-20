@@ -1,5 +1,5 @@
 use crate::prelude::CmpMode;
-use crate::CodeGen::{MCInstr, MachineInstr, MachineMnemonic};
+use crate::CodeGen::{MCInstr, MachineInstr, MachineMnemonic, MachineOperand};
 use crate::Optimizations::Optimize;
 use crate::Target::CallConv;
 
@@ -31,6 +31,7 @@ fn x64_lower_instr(conv: CallConv, sink: &mut Vec<X64MCInstr>, instr: MachineIns
         MachineMnemonic::Compare(mode) => x64_lower_cmp(sink, &instr, mode),
         MachineMnemonic::Prolog => x64_lower_prolog(sink, &instr),
         MachineMnemonic::Epilog => x64_lower_epilog(sink, &instr),
+        MachineMnemonic::StackAlloc => x64_lower_salloc(sink, &instr),
     }
 }
 
@@ -395,4 +396,37 @@ fn x64_lower_prolog(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
 
 fn x64_lower_epilog(sink: &mut Vec<X64MCInstr>, _: &MachineInstr) {
     sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(x64Reg::Rbp) ) );
+}
+
+fn x64_lower_salloc(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
+    let out = instr.out.expect("stack allocations need outputs");
+    let offset = instr.operands.get(0).expect("stack allocations need one operand");
+
+    let offset = match offset {
+        MachineOperand::Imm(imm) => *imm,
+        _ => panic!("stack allocations require one operand of type imm")
+    };
+
+    let out = match out {
+        crate::CodeGen::MachineOperand::Imm(i) => Operand::Imm(i),
+        crate::CodeGen::MachineOperand::Reg(reg) => match reg {
+            crate::CodeGen::Reg::x64(x64) => Operand::Reg(x64),
+        },
+        crate::CodeGen::MachineOperand::Stack(off) => x64_stack!((off as u32)),
+    };
+
+    if let Operand::Mem(_) = out {
+        let tmp = || Operand::Reg( x64Reg::Rax );
+
+        sink.push(
+            X64MCInstr::with2(Mnemonic::Lea, tmp(), x64_stack!(offset as u32))
+        );
+        sink.push(
+            X64MCInstr::with2(Mnemonic::Mov, out, tmp())
+        )
+    } else {
+        sink.push(
+            X64MCInstr::with2(Mnemonic::Lea, out, x64_stack!(offset as u32))
+        )
+    }
 }

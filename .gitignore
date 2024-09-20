@@ -1,7 +1,6 @@
 /target
 *.asm
 *.o
-*.c
 *.exe
 *.out
 tmp.yl

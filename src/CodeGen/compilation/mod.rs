@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{Target::{Arch, CallConv}, IR::{Function, Var}};
+use crate::{Target::{Arch, CallConv}, IR::{Function, TypeMetadata, Var}};
 
 use super::{calling_convention::MachineCallingConvention, reg::Reg, reg_vec::RegVec, MCInstr, MachineInstr};
 
@@ -12,6 +12,7 @@ mod assign;
 mod br;
 mod cmp;
 mod prolog;
+mod alloca;
 
 /// helps with compilation
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -51,11 +52,36 @@ impl CompilationHelper {
 
     /// allocates resources for a var but on the stack
     pub(crate) fn alloc_stack(&mut self, var: &Var) -> VarLocation {
-        if var.ty.byteSize() as i64 <= self.call.align(self.arch) {
+        let loc = if var.ty.byteSize() as i64 <= self.call.align(self.arch) {
             VarLocation::Mem(self.stack_off)
         } else {
             todo!()
-        }
+        };
+
+        self.vars.insert(var.name.to_owned(), loc);
+
+        self.stack_off += self.call.align(self.arch);
+
+        loc
+    }
+
+    /// allocates a variable on the stack
+    /// 
+    /// The difference to `alloc_stack` is that here you can use a custom stack space size
+    /// 
+    /// **NOTE:** it does not register the var
+    pub(crate) fn alloc_custom_stack(&mut self, ty: &TypeMetadata) -> (VarLocation, i64) {
+        let loc = if ty.byteSize() as i64 <= self.call.align(self.arch) {
+            VarLocation::Mem(self.stack_off)
+        } else {
+            todo!()
+        };
+
+        let ret = (loc, self.stack_off);
+
+        self.stack_off += self.call.align(self.arch);
+
+        ret
     }
 
     /// allocates resources for a new variable
@@ -65,7 +91,7 @@ impl CompilationHelper {
                 Reg::x64(x64) => Reg::x64(x64.sub_ty(var.ty)),
             })
         } else {
-            self.alloc_stack(var)
+            return self.alloc_stack(var);
         };
 
         self.vars.insert(var.name.to_owned(), location);
