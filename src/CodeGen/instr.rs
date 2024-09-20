@@ -110,6 +110,7 @@ pub enum MachineMnemonic {
     StackAlloc,
 
     Store,
+    Load,
 
     Prolog,
     Epilog,
@@ -139,6 +140,7 @@ impl MachineMnemonic {
             MachineMnemonic::Epilog => "epilog",
             MachineMnemonic::StackAlloc => "salloc",
             MachineMnemonic::Store => "store",
+            MachineMnemonic::Load => "load",
         }.to_string()
     }
 }

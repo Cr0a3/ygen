@@ -4,16 +4,20 @@ use crate::{Target::{Arch, CallConv}, IR::{Function, TypeMetadata, Var}};
 
 use super::{calling_convention::MachineCallingConvention, reg::Reg, reg_vec::RegVec, MCInstr, MachineInstr};
 
-mod math;
-mod cast;
 mod call;
 mod ret;
-mod assign;
 mod br;
+
+mod assign;
 mod cmp;
+mod math;
+mod cast;
+
 mod prolog;
+
 mod alloca;
 mod store;
+mod load;
 
 /// helps with compilation
 #[derive(Debug, Clone, PartialEq, Eq)]

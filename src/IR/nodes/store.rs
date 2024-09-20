@@ -32,6 +32,14 @@ impl Ir for Store<Var, Var> {
     fn compile(&self, registry: &mut crate::Target::TargetBackendDescr) {
         registry.compile_store(self)
     }
+
+    fn uses(&self, var: &Var) -> bool {
+        if self.inner2.name == var.name {
+            true
+        } else {
+            false
+        }
+    }
 }
 
 impl Ir for Store<Var, Type> {

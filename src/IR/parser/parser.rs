@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, VecDeque};
 
-use crate::prelude::{Alloca, Cmp, CmpMode, Ir, Store};
+use crate::prelude::{Alloca, Cmp, CmpMode, Ir, Load, Store};
 use crate::Obj::Linkage;
 use crate::IR::{ir, Block, Const, FnTy, Function, Type, TypeMetadata, Var};
 
@@ -427,6 +427,7 @@ impl IrParser {
                         "call" => self.parse_call(name)?,
                         "cmp" => self.parse_cmp(name)?,
                         "alloca" => self.parse_alloca(name)?,
+                        "load" => self.parse_load(name)?,
                         _ => {
                             let ty = self.parse_type()?;
                             self.input.pop_front(); // the type
@@ -698,13 +699,13 @@ impl IrParser {
                 name: var,
                 ty: TypeMetadata::ptr,
             }, Type::from_int(ty, imm)))
-        } else if let TokenType::Var(src) = self.current_token()?.typ.to_owned() {
+        } else if let TokenType::Var(var) = self.current_token()?.typ.to_owned() {
             self.input.pop_front();
 
             self.expect( TokenType::Comma )?;
             self.input.pop_front();
 
-            let var = if let TokenType::Var(var) = &self.current_token()?.typ {
+            let src = if let TokenType::Var(var) = &self.current_token()?.typ {
                 var.to_owned()
             } else { unreachable!() };
             self.input.pop_front();
@@ -879,6 +880,31 @@ impl IrParser {
             name: var,
             ty: ty
         }))
+    }
+
+    fn parse_load(&mut self, var: String) -> Result<Box<dyn Ir>, IrError> {
+        self.input.pop_front();
+
+        let ty = self.parse_type()?;
+
+        let out = Var {
+            name: var,
+            ty: ty
+        };
+
+        self.input.pop_front(); // ty
+        self.expect(TokenType::Var(String::new()))?;
+
+        let var = if let TokenType::Var(var) = self.current_token()?.typ.to_owned() {
+            Var {
+                name: var,
+                ty: TypeMetadata::ptr
+            }
+        } else { unreachable!() };
+
+        self.input.pop_front();
+
+        Ok(Load::new(out, var, ty))
     }
 }
 

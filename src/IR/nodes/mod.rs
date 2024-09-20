@@ -11,6 +11,7 @@ mod br;
 mod cmp;
 mod alloca;
 mod store;
+mod load;
 
 pub use assign::*;
 pub use call::*;
@@ -102,8 +103,11 @@ macro_rules! IrTypeWith1 {
 
 IrTypeWith1!(Return, T);
 IrTypeWith3!(Call, T, U, Z);
+
 IrTypeWith2!(Assign, T, U);
+
 IrTypeWith3!(Cast, T, U, Z);
+
 IrTypeWith3!(Add, T, U, Z);
 IrTypeWith3!(Sub, T, U, Z);
 IrTypeWith3!(Xor, T, U, Z);
@@ -117,6 +121,7 @@ IrTypeWith3!(BrCond, T, U, Z);
 
 IrTypeWith2!(Alloca, T, U);
 IrTypeWith2!(Store, T, U);
+IrTypeWith3!(Load, T, U, Z);
 
 /// The cmp node is used to compare values
 #[derive(Debug, Clone, PartialEq, Eq)]

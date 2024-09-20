@@ -193,6 +193,8 @@ impl<'a> IrSemnatic<'a> {
                     self.analaysiz_store(&mut vars, node, loc)?;
                 } else if let Some(node) = any.downcast_ref::<Store<Var, Type>>() {
                     self.analaysiz_store_ty(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Load<Var, Var, TypeMetadata>>() {
+                    self.analaysiz_load(&mut vars, node, loc)?;
                 }
             }
         }
@@ -498,6 +500,22 @@ impl<'a> IrSemnatic<'a> {
                 loc: loc.to_owned()
             })?
         }
+        
+        Ok(())
+    }
+
+    fn analaysiz_load(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &Load<Var, Var, TypeMetadata>,loc: Loc) -> Result<(), IrError> {
+        // TODO: maybe add checks that the pointer can only be a type of ptr and not i32
+        
+        if !vars.contains_key(&node.inner2.name) {
+            Err(IrError::Unkown {
+                what: "variable".to_owned(), 
+                name: node.inner2.name.to_owned(), 
+                loc: loc 
+            })?
+        }
+
+        vars.insert(node.inner1.name.to_owned(), node.inner3);
         
         Ok(())
     }
