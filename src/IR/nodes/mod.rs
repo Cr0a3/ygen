@@ -10,6 +10,7 @@ mod ret;
 mod br;
 mod cmp;
 mod alloca;
+mod store;
 
 pub use assign::*;
 pub use call::*;
@@ -18,6 +19,7 @@ pub use math::*;
 pub use ret::*;
 pub use br::*;
 pub use cmp::*;
+pub use store::*;
 
 macro_rules! IrTypeWith3 {
     ($name:tt, $param1:tt, $param2:tt, $param3:tt) => {
@@ -114,6 +116,7 @@ IrTypeWith1!(Br, T);
 IrTypeWith3!(BrCond, T, U, Z);
 
 IrTypeWith2!(Alloca, T, U);
+IrTypeWith2!(Store, T, U);
 
 /// The cmp node is used to compare values
 #[derive(Debug, Clone, PartialEq, Eq)]

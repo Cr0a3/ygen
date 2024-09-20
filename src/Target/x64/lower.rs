@@ -32,6 +32,7 @@ fn x64_lower_instr(conv: CallConv, sink: &mut Vec<X64MCInstr>, instr: MachineIns
         MachineMnemonic::Prolog => x64_lower_prolog(sink, &instr),
         MachineMnemonic::Epilog => x64_lower_epilog(sink, &instr),
         MachineMnemonic::StackAlloc => x64_lower_salloc(sink, &instr),
+        MachineMnemonic::Store => x64_lower_store(sink, &instr),
     }
 }
 
@@ -429,4 +430,61 @@ fn x64_lower_salloc(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
             X64MCInstr::with2(Mnemonic::Lea, out, x64_stack!(offset as u32))
         )
     }
+}
+
+fn x64_lower_store(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
+    let ptr = instr.out.expect("stack stores need a output");
+    let value = instr.operands.get(0).expect("stack stores need one operand");
+
+    let ptr = match ptr {
+        MachineOperand::Imm(imm) => Operand::Imm(imm),
+        MachineOperand::Reg(reg) => match reg {
+            crate::CodeGen::Reg::x64(x64) => Operand::Reg(x64),
+        },
+        MachineOperand::Stack(off) => x64_stack!(off as u32),
+    };
+    
+    let value = match value {
+        MachineOperand::Imm(imm) => Operand::Imm(*imm),
+        MachineOperand::Reg(reg) => match reg {
+            crate::CodeGen::Reg::x64(x64) => Operand::Reg(*x64),
+        },
+        MachineOperand::Stack(off) => x64_stack!(*off as u32),
+    };
+
+    if let Operand::Reg(ptr) = ptr {
+        if let Operand::Imm(_) = value {
+            sink.push(
+                X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), value)
+            );
+            sink.push( 
+                X64MCInstr::with2(Mnemonic::Mov, Operand::Mem(MemOp {
+                    base: Some(ptr),
+                    index: None,
+                    scale: 1,
+                    displ: 0,
+                    rip: false,
+                }), Operand::Reg(x64Reg::Rax))
+            )
+        } else {
+            sink.push( 
+                X64MCInstr::with2(Mnemonic::Mov, Operand::Mem(MemOp {
+                    base: Some(ptr),
+                    index: None,
+                    scale: 1,
+                    displ: 0,
+                    rip: false,
+                }), value)
+            )
+        }
+    } else {
+        sink.push( 
+            X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), value)
+        );
+    
+        sink.push( 
+            X64MCInstr::with2(Mnemonic::Mov, ptr, Operand::Reg(x64Reg::Rax))
+        );
+    }
+
 }

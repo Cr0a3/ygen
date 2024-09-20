@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, VecDeque};
 
-use crate::prelude::{Alloca, Cmp, CmpMode, Ir};
+use crate::prelude::{Alloca, Cmp, CmpMode, Ir, Store};
 use crate::Obj::Linkage;
 use crate::IR::{ir, Block, Const, FnTy, Function, Type, TypeMetadata, Var};
 
@@ -438,6 +438,7 @@ impl IrParser {
                 match instrinc.as_str() {
                     "ret" => self.parse_ret()?,
                     "br" => self.parse_br()?,
+                    "store" => self.parse_store()?,
                     _ => Err(IrError::UnkownInstrinc{loc: curr.loc.clone(), found: instrinc })?,
                 }
             } else {
@@ -672,6 +673,55 @@ impl IrParser {
         };
 
         Ok( Alloca::new(out, ty) )
+    }
+
+    fn parse_store(&mut self) -> Result<Box<dyn Ir>, IrError> {
+        self.input.pop_front();
+
+        let ty = self.parse_type()?;
+        self.input.pop_front();
+
+        if let TokenType::Int(imm) = self.current_token()?.typ {
+            self.input.pop_front();
+
+            self.expect(TokenType::Comma)?;
+            self.input.pop_front();
+
+            self.expect(TokenType::Var(String::new()) )?;
+
+            let var = if let TokenType::Var(var) = &self.current_token()?.typ {
+                var.to_owned()
+            } else { unreachable!() };
+            self.input.pop_front();
+
+            Ok(Store::new(Var {
+                name: var,
+                ty: TypeMetadata::ptr,
+            }, Type::from_int(ty, imm)))
+        } else if let TokenType::Var(src) = self.current_token()?.typ.to_owned() {
+            self.input.pop_front();
+
+            self.expect( TokenType::Comma )?;
+            self.input.pop_front();
+
+            let var = if let TokenType::Var(var) = &self.current_token()?.typ {
+                var.to_owned()
+            } else { unreachable!() };
+            self.input.pop_front();
+
+            Ok(Store::new(Var {
+                name: src,
+                ty: TypeMetadata::ptr,
+            }, Var {
+                name: var,
+                ty: ty
+            }))
+        } else {
+            Err(IrError::ExpectedTokenButFoundAnUnexpectedOne { 
+                found: self.current_token()?.clone(), 
+                expected: Token { typ: TokenType::Var(String::new()), loc: Loc::default() }
+            })
+        }
     }
 
     fn parse_data_array(&mut self) -> Result<Vec<u8>, IrError> {

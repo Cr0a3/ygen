@@ -13,6 +13,7 @@ mod br;
 mod cmp;
 mod prolog;
 mod alloca;
+mod store;
 
 /// helps with compilation
 #[derive(Debug, Clone, PartialEq, Eq)]

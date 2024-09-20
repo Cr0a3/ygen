@@ -199,3 +199,5 @@ compile_func!(compile_br_cond, compile_br_cond, BrCond<Var, Block, Block>);
 compile_func!(compile_cmp, compile_cmp, Cmp);
 
 compile_func!(compile_alloca, compile_alloca, Alloca<Var, TypeMetadata>);
+compile_func!(compile_store, compile_store, Store<Var, Var>);
+compile_func!(compile_store_ty, compile_store_ty, Store<Var, Type>);

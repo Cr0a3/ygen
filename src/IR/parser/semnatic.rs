@@ -189,6 +189,10 @@ impl<'a> IrSemnatic<'a> {
                     self.analaysiz_cmp(&mut vars, node, loc)?;
                 } else if let Some(node) = any.downcast_ref::<Alloca<Var, TypeMetadata>>() {
                     self.analaysiz_alloca(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Store<Var, Var>>() {
+                    self.analaysiz_store(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Store<Var, Type>>() {
+                    self.analaysiz_store_ty(&mut vars, node, loc)?;
                 }
             }
         }
@@ -462,6 +466,38 @@ impl<'a> IrSemnatic<'a> {
         }
 
         vars.insert(node.inner1.name.to_owned(), node.inner1.ty);
+        
+        Ok(())
+    }
+
+    fn analaysiz_store(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &Store<Var, Var>, loc: Loc) -> Result<(), IrError> {
+        if !vars.contains_key(&node.inner1.name) {
+            Err(IrError::Unkown { 
+                what: "var".to_owned(), 
+                name: node.inner1.name.to_owned(), 
+                loc: loc.to_owned()
+            })?
+        }
+
+        if !vars.contains_key(&node.inner2.name) {
+            Err(IrError::Unkown { 
+                what: "var".to_owned(), 
+                name: node.inner2.name.to_owned(), 
+                loc: loc.to_owned()
+            })?
+        }
+        
+        Ok(())
+    }
+    
+    fn analaysiz_store_ty(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &Store<Var, Type>, loc: Loc) -> Result<(), IrError> {
+        if !vars.contains_key(&node.inner1.name) {
+            Err(IrError::Unkown { 
+                what: "var".to_owned(), 
+                name: node.inner1.name.to_owned(), 
+                loc: loc.to_owned()
+            })?
+        }
         
         Ok(())
     }
