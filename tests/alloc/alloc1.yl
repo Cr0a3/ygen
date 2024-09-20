@@ -1,0 +1,22 @@
+# RUN:
+cargo run -p ylc -- -in=%s -o=out.o
+gcc out.o -o a.exe
+./a.exe
+
+# IN:
+
+define void @set(ptr %0) {
+  entry:
+    store i32 5, %0
+    ret void 0
+}
+
+define i32 @main() {
+  entry:
+	%1 = alloca i32
+    %tmp = call void set ptr %1
+    %2 = load i32 %1
+	ret i32 %2
+}
+
+# EXIT_CODE=5
