@@ -21,7 +21,7 @@ impl PartialEq for IrCodeGenArea {
 /// `CompilationHelper` but with node metadata
 pub struct IrCodeGenHelper {
     pub(crate) compiled: Vec<IrCodeGenArea>,
-    helper: CompilationHelper,
+    pub(crate) helper: CompilationHelper,
 }
 
 impl IrCodeGenHelper {

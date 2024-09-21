@@ -137,13 +137,39 @@ impl TargetBackendDescr {
 
         let mut ir_helper = IrCodeGenHelper::new(helper.to_owned());
 
-        for node in block.nodes.to_owned() {
-            node.compile_dir(&mut ir_helper, &block);
+        for node in block.nodes.to_owned() {    
+            helper.stack_off = ir_helper.helper.stack_off;
+
+            if let Some(node) = node.as_any().downcast_ref::<Return<Type>>() {
+                ir_helper.compile_ret_ty(node, &block);
+
+                let mut epilog = vec![];
+                helper.compile_epilog(&mut epilog);
+
+                ir_helper.compiled.push(IrCodeGenArea {
+                    node: None,
+                    compiled: epilog,
+                })
+            } else if let Some(node) = node.as_any().downcast_ref::<Return<Var>>() {
+                ir_helper.compile_ret_var(node, &block);
+
+                let mut epilog = vec![];
+                helper.compile_epilog(&mut epilog);
+
+                ir_helper.compiled.push(IrCodeGenArea {
+                    node: None,
+                    compiled: epilog,
+                })
+            } else {
+                node.compile_dir(&mut ir_helper, &block);
+            }
         }
 
         let mut instrs = VecDeque::from(ir_helper.compiled);
 
         let mut prolog = vec![];
+
+        *helper = ir_helper.helper;
 
         helper.compile_prolog(&mut prolog);
 
@@ -152,7 +178,9 @@ impl TargetBackendDescr {
             compiled: prolog,
         });
 
-        Vec::from( instrs )
+        let instrs = Vec::from( instrs );
+
+        instrs
     }
 
     /// Resets all values to "factory standart"
