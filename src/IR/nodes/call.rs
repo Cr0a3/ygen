@@ -75,6 +75,10 @@ impl Ir for Call<Function, Vec<Var>, Var> {
 
         uses
     }
+    
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
+        compiler.compile_call(&self, &block)
+    }
 }
 
 

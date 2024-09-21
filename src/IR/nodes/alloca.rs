@@ -31,6 +31,10 @@ impl Ir for Alloca<Var, TypeMetadata> {
     fn compile(&self, registry: &mut crate::Target::TargetBackendDescr) {
         registry.compile_alloca(self)
     }
+    
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
+        compiler.compile_alloca(&self, &block)
+    }
 }
 
 impl IRBuilder<'_> {

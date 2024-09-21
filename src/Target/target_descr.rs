@@ -1,7 +1,7 @@
+use std::collections::VecDeque;
 use std::error::Error;
-
 use crate::prelude::{ir::*, Block, Var};
-use crate::CodeGen::MCInstr;
+use crate::CodeGen::{IrCodeGenArea, IrCodeGenHelper, MCDocInstr, MCInstr};
 use crate::CodeGen::{compilation::CompilationHelper, MachineInstr};
 use crate::IR::{Const, Function, Type, TypeMetadata};
 
@@ -118,6 +118,43 @@ impl TargetBackendDescr {
         self.sink.to_owned()
     }
 
+    /// builds the instruction with ir debug metadata
+    pub fn build_instrs_with_ir_debug(&mut self, func: &Function, triple: &Triple) -> Vec<IrCodeGenArea> {
+        let helper = if let Some(helper) = &mut self.helper { helper }
+        else { panic!("no current compilation helper"); };
+
+        if helper.arch != triple.arch {
+            panic!("the architecture of the triple {:?} isn't the same as the one of the compilation helper {:?}", triple.arch, helper.arch)
+        }
+
+        let block = if let Some(block) = &self.block {
+            block.clone()
+        } else {
+            panic!("no current block");
+        };
+
+        helper.build_argument_preprocessing(func);
+
+        let mut ir_helper = IrCodeGenHelper::new(helper.to_owned());
+
+        for node in block.nodes.to_owned() {
+            node.compile_dir(&mut ir_helper, &block);
+        }
+
+        let mut instrs = VecDeque::from(ir_helper.compiled);
+
+        let mut prolog = vec![];
+
+        helper.compile_prolog(&mut prolog);
+
+        instrs.push_front(IrCodeGenArea {
+            node: None,
+            compiled: prolog,
+        });
+
+        Vec::from( instrs )
+    }
+
     /// Resets all values to "factory standart"
     pub fn reset(&mut self) {
         if let Some(init) = self.init {
@@ -155,6 +192,36 @@ impl TargetBackendDescr {
         } else {
             todo!("no helper was registered");
         }
+    }
+
+    /// loweres the machine instructions into dyn MCInstr but with node information
+    pub fn lower_debug(&self, areas: Vec<IrCodeGenArea>) -> Result<Vec<Box<dyn MCInstr>>, Box<dyn Error>> {
+        if let Some(helper) = &self.helper {
+            let mut mc_instrs = vec![];
+
+            for area in areas {
+                if let Some(node) = area.node {
+                    mc_instrs.push( MCDocInstr::doc(node.dump()) );
+                }
+
+                let instrs = area.compiled;
+
+                self.whitelist.check_for_forbidden_mnemonics(&instrs)?;
+    
+    
+                if let Some(lower) = helper.lower {
+                    let lowered = lower(self.call, instrs);
+    
+                    mc_instrs.extend_from_slice(&lowered);
+                } else {
+                    todo!("the target architecture {:?} doesn't support instruction lowering", helper.arch)
+                };
+            }
+
+            Ok(mc_instrs)
+        } else {
+            todo!("no helper was registered");
+        }       
     }
 }
 

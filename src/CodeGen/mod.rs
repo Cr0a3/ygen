@@ -4,6 +4,7 @@ pub(crate) mod settings;
 pub(crate) mod instr;
 pub(crate) mod compilation;
 pub(crate) mod calling_convention;
+pub(crate) mod ir_area;
 
 pub use reg_vec::*;
 pub use reg::*;
@@ -11,3 +12,4 @@ pub use settings::*;
 pub use instr::*;
 pub use calling_convention::*;
 pub use compilation::*;
+pub use ir_area::*;

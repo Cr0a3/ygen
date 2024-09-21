@@ -64,8 +64,8 @@ impl TargetRegistry {
         let org = self.getBasedOnArch(arch)?;
         org.block = Some(block.clone());
 
-        let instrs = org.build_instrs(&funct, &triple);
-        let instrs = org.lower(instrs)?;
+        let instrs = org.build_instrs_with_ir_debug(&funct, &triple);
+        let instrs = org.lower_debug(instrs)?;
 
         let mut asm = vec![];
 

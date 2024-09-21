@@ -39,6 +39,10 @@ impl Ir for Br<Box<Block>> {
     fn is(&self, other: &Box<dyn Ir>) -> bool {
         other.dump() == self.dump()
     }
+    
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
+        compiler.compile_br(&self, &block)
+    }
 }
 
 impl Ir for BrCond<Var, Block, Block> {
@@ -80,6 +84,10 @@ impl Ir for BrCond<Var, Block, Block> {
         } else {
             false
         }
+    }
+    
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
+        compiler.compile_br_cond(&self, &block)
     }
 }
 

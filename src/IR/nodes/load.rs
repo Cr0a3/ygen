@@ -40,6 +40,10 @@ impl Ir for Load<Var, Var, TypeMetadata> {
             false
         }
     }
+    
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
+        compiler.compile_load(&self, &block)
+    }
 }
 
 impl IRBuilder<'_> {

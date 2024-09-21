@@ -3,6 +3,7 @@
 use std::collections::VecDeque;
 
 mod compilation;
+mod lowr_debug;
 //use compilation::*;
 
 use super::{CallConv, Lexer, TargetBackendDescr, WhiteList};

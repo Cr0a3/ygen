@@ -172,3 +172,38 @@ impl Clone for Box<dyn MCInstr> {
         self.clone_box()
     }
 }
+
+/// a doc comment in the generated assembly code
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MCDocInstr {
+    msg: String,
+}
+
+impl MCDocInstr {
+    /// creates a new documentation instruction
+    pub fn doc(msg: String) -> Box<dyn MCInstr> {
+        Box::new( Self {
+            msg: msg
+        } )
+    }
+}
+
+impl Display for MCDocInstr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "// {}", self.msg)
+    }
+}
+
+impl MCInstr for MCDocInstr {
+    fn dump(&self) -> Result<Vec<String>, Box<dyn Error>> {
+        Ok(vec![format!("// {}", self.msg)])
+    }
+
+    fn encode(&self) -> Result<(Vec<u8>, Option<Link>), Box<dyn Error>> {
+        Ok((vec![], None))
+    }
+
+    fn clone_box(&self) -> Box<dyn MCInstr> {
+        Box::new( self.clone() )
+    }
+}

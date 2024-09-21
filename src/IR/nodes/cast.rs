@@ -41,6 +41,10 @@ impl Ir for Cast<Var, TypeMetadata, Var> {
     fn compile(&self, registry: &mut TargetBackendDescr) {
         registry.compile_cast_var(&self)
     }
+    
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
+        compiler.compile_cast(&self, &block)
+    }
 }
 
 /// Trait for the cast instruction

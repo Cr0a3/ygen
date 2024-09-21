@@ -102,6 +102,10 @@ macro_rules! MathIrNode {
                 if *var == self.inner3 { true }
                 else { false }
             }
+    
+            fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
+                compiler.$compileFuncTyTy(&self, &block)
+            }
         }
         
         impl Ir for $name<Var, Var, Var> {
@@ -153,6 +157,10 @@ macro_rules! MathIrNode {
                 if *var == self.inner1 || *var == self.inner2 || *var == self.inner3 { true }
                 else { false }
             }
+    
+            fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
+                compiler.$compileFuncVarVar(&self, &block)
+            }
         }
         
         impl Ir for $name<Var, Type, Var> {
@@ -203,6 +211,10 @@ macro_rules! MathIrNode {
             fn uses(&self, var: &Var) -> bool {
                 if *var == self.inner1 || *var == self.inner3 { true }
                 else { false }
+            }
+    
+            fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
+                compiler.$compileFuncVarTy(&self, &block)
             }
         }
         

@@ -246,7 +246,7 @@ impl Module {
         Ok(out)
     }
 
-    /// emits all function into one asm file
+    /// emits all function into one asm string
     pub fn emitAsm(&self, triple: Triple, registry: &mut TargetRegistry) -> Result<String, Box<dyn Error>> {
         let mut lines = String::new();
         lines.push_str(&format!("// made using {} v{}\n", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION")));

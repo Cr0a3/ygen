@@ -40,6 +40,10 @@ impl Ir for Store<Var, Var> {
             false
         }
     }
+    
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
+        compiler.compile_store(&self, &block)
+    }
 }
 
 impl Ir for Store<Var, Type> {
@@ -73,6 +77,10 @@ impl Ir for Store<Var, Type> {
 
     fn compile(&self, registry: &mut crate::Target::TargetBackendDescr) {
         registry.compile_store_ty(self)
+    }
+    
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
+        compiler.compile_store_ty(&self, &block)
     }
 }
 

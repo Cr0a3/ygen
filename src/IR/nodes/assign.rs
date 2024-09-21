@@ -41,6 +41,10 @@ impl Ir for Assign<Var, Type> {
         if *var == self.inner1 { true }
         else { false }
     }
+    
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
+        compiler.compile_assign_var_type(&self, &block)
+    }
 }
 
 impl Ir for Assign<Var, Var> {
@@ -85,6 +89,10 @@ impl Ir for Assign<Var, Var> {
         else if *var == self.inner2 { true }
         else { false }
     }
+    
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
+        compiler.compile_assign_var_var(&self, &block)
+    }
 }
 
 impl Ir for Assign<Var, Const> {
@@ -119,6 +127,10 @@ impl Ir for Assign<Var, Const> {
     fn uses(&self, var: &Var) -> bool {
         if *var == self.inner1 { true }
         else { false }
+    }
+    
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
+        compiler.compile_assign_var_const(&self, &block)
     }
 }
 

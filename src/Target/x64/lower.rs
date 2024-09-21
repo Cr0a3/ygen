@@ -11,7 +11,7 @@ macro_rules! x64_stack {
     };
 }
 
-fn x64_lower_instr(conv: CallConv, sink: &mut Vec<X64MCInstr>, instr: MachineInstr) {
+pub(crate) fn x64_lower_instr(conv: CallConv, sink: &mut Vec<X64MCInstr>, instr: MachineInstr) {
     match &instr.mnemonic {
         MachineMnemonic::Move => x64_lower_move(sink, &instr),
         MachineMnemonic::Add => x64_lower_add(sink, &instr),

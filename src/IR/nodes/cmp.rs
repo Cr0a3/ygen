@@ -74,6 +74,10 @@ impl Ir for Cmp {
         else if other.name == self.rs.name { true }
         else { false }
     }
+    
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
+        compiler.compile_cmp(&self, &block)
+    }
 }
 
 /// The trait `BuildCmp` is used to build the cmp node

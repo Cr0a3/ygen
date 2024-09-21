@@ -36,6 +36,10 @@ impl Ir for Return<Type> {
     fn compile(&self, registry: &mut TargetBackendDescr) {
         registry.compile_ret_ty(&self)
     }
+    
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
+        compiler.compile_ret_ty(&self, block)
+    }
 }
 
 impl Ir for Return<Var> {
@@ -76,6 +80,10 @@ impl Ir for Return<Var> {
     fn uses(&self, var: &Var) -> bool {
         if *var == self.inner1 { true }
         else { false }
+    }
+    
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
+        compiler.compile_ret_var(&self, &block)
     }
 }
 
