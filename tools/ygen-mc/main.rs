@@ -34,6 +34,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     cli.add_opt("lex", "show-lexed", "Shows the assembly tokens");
 
+    cli.add_opt("no-out", "dont-show-output", "Disables compilation output printing");
+    cli.add_opt("no-asm", "dont-show-asm-string", "Disables pretty asm string printing printing");
+
     cli.scan();
 
     if cli.opt("h") {
@@ -58,22 +61,28 @@ fn main() -> Result<(), Box<dyn Error>> {
     let lexed = backend.lexer().lex(asm.clone())?;
 
     if cli.opt("lex") {
-        println!("{}: {:?}", "Lexing result".gray(), lexed);
+        if !cli.opt("no-color") {
+            println!("{}: {:?}", "Lexing result".gray(), lexed);
+        } else {
+            println!("{}: {:?}", "Lexing result", lexed);
+        }
     }
 
     let mut comp = backend.compiler().new(lexed);
     match comp.parse() {
         Ok(_) => {},
         Err(err) => {
-            eprintln!("{}: {}", "Error".red().bold(), err); 
+            eprintln!("{}: {}", "Error", err); 
             exit(-1);
         },
     };
 
-    if !cli.opt("no-color") {
-        println!("{}: {}", "Asm string".gray(), comp.coloredOut(ColorProfile::default()));
-    } else {
-        println!("Asm string: {}", comp.printOut());
+    if !cli.opt("no-asm") {
+        if !cli.opt("no-color") {
+            println!("{}: {}", "Asm string".gray(), comp.coloredOut(ColorProfile::default()));
+        } else {
+            println!("Asm string: {}", comp.printOut());
+        }
     }
 
     let out = comp.out();
@@ -81,10 +90,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     let out = match out {
         Ok(out) => out,
         Err(err) => {
-            eprintln!("{}: {}", "Error".red().bold(), err); 
+            eprintln!("{}: {}", "Error", err); 
             exit(-1);
         },
     };
+
+    if cli.opt("no-out") {
+        return Ok(());
+    }
 
     if !cli.opt("no-color") {
         println!("{}: {}", "Compilation result".gray(), {

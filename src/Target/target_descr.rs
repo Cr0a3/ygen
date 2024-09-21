@@ -24,6 +24,8 @@ pub struct TargetBackendDescr {
     pub(crate) sink: Vec<MachineInstr>,
 
     pub(crate) whitelist: WhiteList,
+
+    pub(crate) epilogs: Vec<String>,
 }
 
 macro_rules! compile_func {
@@ -58,6 +60,7 @@ impl TargetBackendDescr {
             helper: None,
             whitelist: WhiteList::new(),
             sink: vec![],
+            epilogs: vec![],
         }
     }
     /// Returns the lexer to use with the TargetBackendDescr
@@ -137,29 +140,44 @@ impl TargetBackendDescr {
 
         let mut ir_helper = IrCodeGenHelper::new(helper.to_owned());
 
-        for node in block.nodes.to_owned() {    
+        for node in block.nodes.to_owned() {
             helper.stack_off = ir_helper.helper.stack_off;
+
+            if ir_helper.helper.stack_off != ir_helper.helper.call.shadow(helper.arch) {
+                if !self.epilogs.contains(&func.name) {
+                    println!("hi");
+                    self.epilogs.push(func.name.to_owned());
+                }
+            } else {
+                println!("{}", ir_helper.helper.stack_off);
+                //println!("{}", ir_helper.helper.shadow(helper.arch));
+            }
+        
 
             if let Some(node) = node.as_any().downcast_ref::<Return<Type>>() {
                 ir_helper.compile_ret_ty(node, &block);
 
-                let mut epilog = vec![];
-                helper.compile_epilog(&mut epilog);
-
-                ir_helper.compiled.push(IrCodeGenArea {
-                    node: None,
-                    compiled: epilog,
-                })
+                if self.epilogs.contains(&func.name) {
+                    let mut epilog = vec![];
+                    helper.compile_epilog(&mut epilog);
+    
+                    ir_helper.compiled.push(IrCodeGenArea {
+                        node: None,
+                        compiled: epilog,
+                    })
+                }
             } else if let Some(node) = node.as_any().downcast_ref::<Return<Var>>() {
                 ir_helper.compile_ret_var(node, &block);
 
-                let mut epilog = vec![];
-                helper.compile_epilog(&mut epilog);
-
-                ir_helper.compiled.push(IrCodeGenArea {
-                    node: None,
-                    compiled: epilog,
-                })
+                if self.epilogs.contains(&func.name) {
+                    let mut epilog = vec![];
+                    helper.compile_epilog(&mut epilog);
+    
+                    ir_helper.compiled.push(IrCodeGenArea {
+                        node: None,
+                        compiled: epilog,
+                    })
+                }
             } else {
                 node.compile_dir(&mut ir_helper, &block);
             }
