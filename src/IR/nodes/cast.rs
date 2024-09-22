@@ -45,6 +45,16 @@ impl Ir for Cast<Var, TypeMetadata, Var> {
     fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
         compiler.compile_cast(&self, &block)
     }
+
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        if self.inner2 == self.inner1.ty {
+            Some(Assign::new(self.inner3.to_owned(), self.inner1.to_owned()))
+        } else { None }
+    }
 }
 
 /// Trait for the cast instruction

@@ -35,6 +35,14 @@ impl Ir for Alloca<Var, TypeMetadata> {
     fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
         compiler.compile_alloca(&self, &block)
     }
+    
+    fn maybe_inline(&self, _: &std::collections::HashMap<String, crate::prelude::Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
 }
 
 impl IRBuilder<'_> {

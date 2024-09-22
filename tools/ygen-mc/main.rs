@@ -72,7 +72,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     match comp.parse() {
         Ok(_) => {},
         Err(err) => {
-            eprintln!("{}: {}", "Error", err); 
+            if !cli.opt("no-clr") {
+                eprintln!("{}: {}", "Error".red().bold(), err); 
+            } else {
+                println!("{}: {}", "Error", err); 
+            }
             exit(-1);
         },
     };
@@ -90,7 +94,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let out = match out {
         Ok(out) => out,
         Err(err) => {
-            eprintln!("{}: {}", "Error", err); 
+            if !cli.opt("no-clr") {
+                eprintln!("{}: {}", "Error".red().bold(), err); 
+            } else {
+                println!("{}: {}", "Error", err); 
+            }
             exit(-1);
         },
     };

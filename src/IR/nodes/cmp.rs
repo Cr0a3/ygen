@@ -1,8 +1,8 @@
 use std::fmt::Display;
 
-use crate::{Support::ColorClass, IR::{IRBuilder, Var, VerifyError}};
+use crate::{Support::ColorClass, IR::{IRBuilder, Type, Var, VerifyError}};
 
-use super::{Cmp, Ir};
+use super::{Assign, Cmp, Ir};
 
 /// The "compare mode" (e.g: ls is equal to rs)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -36,11 +36,12 @@ impl Display for CmpMode {
 
 impl Ir for Cmp {
     fn dump(&self) -> String {
-        format!("cmp {} {} {}, {}", self.mode, self.ls.ty, self.ls.name, self.rs.name)
+        format!("{} = cmp {} {} {}, {}", self.out.name, self.mode, self.ls.ty, self.ls.name, self.rs.name)
     }
 
     fn dumpColored(&self, profile: crate::Support::ColorProfile) -> String {
-        format!("{} {} {} {}, {}",
+        format!("{} = {} {} {} {}, {}",
+            profile.markup(&self.out.name, ColorClass::Var),
             profile.markup("cmp", ColorClass::Instr),
             profile.markup(&format!("{}", self.mode), ColorClass::Ty),
             profile.markup(&format!("{}", self.ls.ty), ColorClass::Ty),
@@ -77,6 +78,27 @@ impl Ir for Cmp {
     
     fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
         compiler.compile_cmp(&self, &block)
+    }
+    
+    fn maybe_inline(&self, _: &std::collections::HashMap<String, crate::prelude::Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        if self.ls == self.rs {
+            let yes = match self.mode {
+                CmpMode::Eqal => 1,
+                CmpMode::NotEqal => 0,
+                CmpMode::GreaterThan => 0,
+                CmpMode::LessThan => 0,
+                CmpMode::GreaterThanOrEqual => 1,
+                CmpMode::LessThanOrEqual => 1,
+            };
+
+            Some(Assign::new(self.out.to_owned(), Type::from_int(
+                self.out.ty, yes
+            )))
+        } else { None }
     }
 }
 

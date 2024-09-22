@@ -1,15 +1,17 @@
+use std::collections::HashMap;
+
 use crate::Support::ColorClass;
-use crate::IR::{IRBuilder, TypeMetadata, Var};
+use crate::IR::{IRBuilder, Type, TypeMetadata, Var};
 
 use super::{Ir, Load};
 
 impl Ir for Load<Var, Var, TypeMetadata> {
     fn dump(&self) -> String {
-        format!("{} = load {} {}", self.inner1.name, self.inner3, self.inner2.name)
+        format!("{} = load {}, {}", self.inner1.name, self.inner3, self.inner2.name)
     }
 
     fn dumpColored(&self, profile: crate::Support::ColorProfile) -> String {
-        format!("{} = {} {} {}", 
+        format!("{} = {} {}, {}", 
             profile.markup(&self.inner1.name, ColorClass::Var), 
             profile.markup("load", ColorClass::Instr), 
             profile.markup(&self.inner3.to_string(), ColorClass::Ty),
@@ -43,6 +45,13 @@ impl Ir for Load<Var, Var, TypeMetadata> {
     
     fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
         compiler.compile_load(&self, &block)
+    }
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
     }
 }
 

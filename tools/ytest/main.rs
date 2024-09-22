@@ -135,20 +135,20 @@ fn main() {
             Ok(status) => {
                 if !status.success() {
                     if let Some(exit_code) = status.code() {
+                        code = exit_code as u32;
+
                         if let Some(expected_code) = parsed.expected_code {
-                            if expected_code == 0 || (cli.opt("exit") && code == (-1i32 as u32)) {
+                            if expected_code == 0 || (cli.opt("exit") && code == (-1i32 as u32)) && !parsed.ignore_fail {
                                 println!("{}: the programm didn't exit sucessfull with code {}", "Error".red().bold(), exit_code);
                                 if !cli.opt("no-exit") {
                                     exit(-1);
                                 }
-                            } 
-                        } else if cli.opt("neg-exit") && code == (-1i32 as u32) {
+                            }
+                        } else if cli.opt("neg-exit") && code == (-1i32 as u32) && !parsed.ignore_fail {
                             println!("{}: the programm didn't exit sucessfull with code {}", "Error".red().bold(), exit_code);
                             exit(-1);
-                        } else {
-                            code = exit_code as u32;
                         }
-                    } else {
+                    } else if !parsed.ignore_fail {
                         println!("{}: the programm didn't exit sucessfull", "Error".red().bold());
                         if !cli.opt("no-exit") {
                             exit(-1)

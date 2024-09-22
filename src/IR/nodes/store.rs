@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::IR::{IRBuilder, Type, TypeMetadata, Var};
 use crate::Support::ColorClass;
 
@@ -44,6 +46,16 @@ impl Ir for Store<Var, Var> {
     fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
         compiler.compile_store(&self, &block)
     }
+    
+    fn maybe_inline(&self, const_values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let Some(constant) = const_values.get(&self.inner2.name) {
+            Some( Store::new(self.inner1.to_owned(), *constant) )
+        } else { None }
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
 }
 
 impl Ir for Store<Var, Type> {
@@ -81,6 +93,14 @@ impl Ir for Store<Var, Type> {
     
     fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
         compiler.compile_store_ty(&self, &block)
+    }
+    
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
     }
 }
 

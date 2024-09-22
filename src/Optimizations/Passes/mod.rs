@@ -1,5 +1,3 @@
-//mod MathInline;
-mod MathEval;
+mod ConstantEvaluation;
 
-pub use MathEval::PreComputeValue;
-//pub use MathInline::InlineConstValue;
+pub use ConstantEvaluation::*;

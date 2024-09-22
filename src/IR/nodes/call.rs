@@ -79,6 +79,14 @@ impl Ir for Call<Function, Vec<Var>, Var> {
     fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
         compiler.compile_call(&self, &block)
     }
+    
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
 }
 
 

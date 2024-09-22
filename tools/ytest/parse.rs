@@ -5,6 +5,7 @@ pub struct Parsed {
     pub expected_out: Option<String>,
     pub expected_stderr: Option<String>,
     pub expected_code: Option<i32>,
+    pub ignore_fail: bool,
 }
 
 pub fn parse(input: String) -> Parsed { 
@@ -14,6 +15,7 @@ pub fn parse(input: String) -> Parsed {
         expected_out: None,
         expected_code: None,
         expected_stderr: None,
+        ignore_fail: false,
     };
     
     let mut append ;
@@ -51,6 +53,15 @@ pub fn parse(input: String) -> Parsed {
             stdout = false;
             stderr = false;
             run = false;
+        }
+
+        if line.trim().starts_with("# EXPECT_FAIL") {
+            append= false;
+            run = false;
+            stdout = false;
+            stderr = false;
+            
+            out.ignore_fail = true;
         }
 
         if line.trim().starts_with("# EXIT_CODE=") {

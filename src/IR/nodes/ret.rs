@@ -40,6 +40,14 @@ impl Ir for Return<Type> {
     fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
         compiler.compile_ret_ty(&self, block)
     }
+    
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
 }
 
 impl Ir for Return<Var> {
@@ -84,6 +92,16 @@ impl Ir for Return<Var> {
     
     fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
         compiler.compile_ret_var(&self, &block)
+    }
+    
+    fn maybe_inline(&self, const_values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let Some(constant) = const_values.get(&self.inner1.name) {
+            Some( Return::new(*constant) )
+        } else { None }
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
     }
 }
 

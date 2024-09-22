@@ -137,7 +137,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     if cli.opt("O") {
         let mut opts = PassManager::new();
 
-        opts.add( Passes::PreComputeValue() );
+        opts.add( Passes::ConstantEvaluation() );
 
         module.runPassMngr(opts);
     }

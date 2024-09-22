@@ -1,0 +1,28 @@
+# RUN:
+cargo run -p ylc -- -in=%s -O -fmt
+# IN:
+
+define i32 @main() {
+  entry:
+    %0 = i32 5
+    br cond %0 yes, yes
+
+  yes:
+    ret i32 0
+
+  no:
+    ret i32 0
+}
+
+# STDERR:
+define i32 @main() {
+  entry:
+    %0 = i32 5
+    br yes
+
+  no:
+    ret i32 0
+    
+  yes:
+    ret i32 0
+}

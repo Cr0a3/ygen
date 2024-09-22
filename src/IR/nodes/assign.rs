@@ -45,6 +45,14 @@ impl Ir for Assign<Var, Type> {
     fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
         compiler.compile_assign_var_type(&self, &block)
     }
+
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
 }
 
 impl Ir for Assign<Var, Var> {
@@ -93,6 +101,16 @@ impl Ir for Assign<Var, Var> {
     fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
         compiler.compile_assign_var_var(&self, &block)
     }
+    
+    fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let Some(lhs) = values.get(&self.inner2.name) {
+            Some(Assign::new(self.inner1.to_owned(), *lhs))
+        } else { None }
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
 }
 
 impl Ir for Assign<Var, Const> {
@@ -131,6 +149,14 @@ impl Ir for Assign<Var, Const> {
     
     fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
         compiler.compile_assign_var_const(&self, &block)
+    }
+    
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
     }
 }
 

@@ -1,4 +1,6 @@
-use crate::{Support::ColorClass, IR::{Block, IRBuilder, Var}};
+use std::collections::HashMap;
+
+use crate::{Support::ColorClass, IR::{Block, IRBuilder, Type, Var}};
 
 use super::{Br, BrCond, Ir};
 
@@ -42,6 +44,14 @@ impl Ir for Br<Box<Block>> {
     
     fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
         compiler.compile_br(&self, &block)
+    }
+    
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
     }
 }
 
@@ -88,6 +98,16 @@ impl Ir for BrCond<Var, Block, Block> {
     
     fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
         compiler.compile_br_cond(&self, &block)
+    }
+
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        if self.inner2.name == self.inner3.name {
+            Some(Br::new( Box::new( self.inner3.to_owned() ) ))
+        } else { None }
     }
 }
 

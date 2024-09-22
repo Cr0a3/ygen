@@ -1,0 +1,18 @@
+# RUN:
+cargo run -p ylc -- -in=%s -O -fmt
+# IN:
+
+define i32 @main() {
+  entry:
+    %0 = i32 5
+    %1 = cast %0 to i32
+    ret i32 %1
+}
+
+# STDERR:
+define i32 @main() {
+  entry:
+    %0 = i32 5
+    %1 = i32 %0
+    ret i32 %1
+}

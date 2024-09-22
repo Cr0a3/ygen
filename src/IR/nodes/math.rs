@@ -1,7 +1,7 @@
 use super::*;
 
 macro_rules! MathIrNode {
-    ($name:ident, $compileFuncVarVar:ident, $compileFuncVarTy:ident, $compileFuncTyTy:ident, $buildTraitName:ident, $buildFuncName:ident, $dump:expr) => {
+    ($name:ident, $compileFuncVarVar:ident, $compileFuncVarTy:ident, $compileFuncTyTy:ident, $buildTraitName:ident, $buildFuncName:ident, $dump:expr, $op:tt) => {
         /// Used for overloading the build function
         pub trait $buildTraitName<T, U> {
             /// Xors values
@@ -106,6 +106,17 @@ macro_rules! MathIrNode {
             fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
                 compiler.$compileFuncTyTy(&self, &block)
             }
+    
+            fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+                None
+            }
+            
+            fn eval(&self) -> Option<Box<dyn Ir>> {
+                Some(Assign::new(
+                    self.inner3.to_owned(), Type::from_int
+                    (self.inner1.into(), (self.inner1.val() $op self.inner2.val()) as i64
+                )))
+            }
         }
         
         impl Ir for $name<Var, Var, Var> {
@@ -160,6 +171,25 @@ macro_rules! MathIrNode {
     
             fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
                 compiler.$compileFuncVarVar(&self, &block)
+            }
+    
+            fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+                if let Some(lhs) = values.get(&self.inner1.name) {
+                    if let Some(rhs) = values.get(&self.inner2.name) {
+                        Some(Assign::new(
+                            self.inner3.to_owned(), Type::from_int
+                            (self.inner1.ty, (lhs.val() $op rhs.val()) as i64
+                        )))
+                    } else {
+                        Some($name::new(self.inner2.to_owned(), *lhs, self.inner3.to_owned()))
+                    }
+                } else if let Some(rhs) = values.get(&self.inner2.name) {
+                    Some($name::new(self.inner2.to_owned(), *rhs, self.inner3.to_owned()))
+                } else { None }
+            }
+            
+            fn eval(&self) -> Option<Box<dyn Ir>> {
+                None
             }
         }
         
@@ -216,16 +246,29 @@ macro_rules! MathIrNode {
             fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
                 compiler.$compileFuncVarTy(&self, &block)
             }
+
+            fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+                if let Some(lhs) = values.get(&self.inner1.name) {
+                    Some(Assign::new(
+                        self.inner3.to_owned(), Type::from_int
+                        (self.inner1.ty, (lhs.val() $op self.inner2.val()) as i64
+                    )))
+                } else { None }
+            }
+            
+            fn eval(&self) -> Option<Box<dyn Ir>> {
+                None
+            }
         }
         
     };
 }
 
-MathIrNode!(Add,    compile_add_var_var,   compile_add_var_type, compile_add_type_type, BuildAdd, BuildAdd, "add");
-MathIrNode!(Sub,    compile_sub_var_var,   compile_sub_var_type, compile_sub_type_type, BuildSub, BuildSub, "sub");
-MathIrNode!(Xor,    compile_xor_var_var,   compile_xor_var_type, compile_xor_type_type, BuildXor, BuildXor, "xor");
-MathIrNode!(Or,     compile_or_var_var,    compile_or_var_type, compile_or_type_type, BuildOr, BuildOr, "or");
-MathIrNode!(And,    compile_and_var_var,   compile_and_var_type, compile_and_type_type, BuildAnd, BuildAnd, "and");
-MathIrNode!(Mul,    compile_mul_var_var,   compile_mul_var_type, compile_mul_type_type, BuildMul, BuildMul, "mul");
-MathIrNode!(Div,    compile_div_var_var,   compile_div_var_type, compile_div_type_type, BuildDiv, BuildDiv, "div");
+MathIrNode!(Add,    compile_add_var_var,   compile_add_var_type, compile_add_type_type, BuildAdd, BuildAdd, "add", +);
+MathIrNode!(Sub,    compile_sub_var_var,   compile_sub_var_type, compile_sub_type_type, BuildSub, BuildSub, "sub", -);
+MathIrNode!(Xor,    compile_xor_var_var,   compile_xor_var_type, compile_xor_type_type, BuildXor, BuildXor, "xor", ^);
+MathIrNode!(Or,     compile_or_var_var,    compile_or_var_type, compile_or_type_type, BuildOr, BuildOr, "or", |);
+MathIrNode!(And,    compile_and_var_var,   compile_and_var_type, compile_and_type_type, BuildAnd, BuildAnd, "and", &);
+MathIrNode!(Mul,    compile_mul_var_var,   compile_mul_var_type, compile_mul_type_type, BuildMul, BuildMul, "mul", *);
+MathIrNode!(Div,    compile_div_var_var,   compile_div_var_type, compile_div_type_type, BuildDiv, BuildDiv, "div", /);
 

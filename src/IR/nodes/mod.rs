@@ -1,4 +1,4 @@
-use std::{any::Any, fmt::Debug, hash::Hash};
+use std::{any::Any, collections::HashMap, fmt::Debug, hash::Hash};
 use super::{Const, Function, FunctionType, IRBuilder, Type, TypeMetadata, Var, VerifyError};
 use crate::Target::TargetBackendDescr;
 
@@ -179,6 +179,12 @@ pub(crate) trait Ir: Debug + Any {
     fn is(&self, other: &Box<dyn Ir>) -> bool {
         other.dump() == self.dump()
     }
+
+    /// inlines the variables to the types if possible
+    fn maybe_inline(&self, const_values: &HashMap<String, Type>) -> Option<Box<dyn Ir>>;
+
+    /// evaluteas the node
+    fn eval(&self) -> Option<Box<dyn Ir>>;
 }
 
 impl PartialEq for Box<dyn Ir> {
