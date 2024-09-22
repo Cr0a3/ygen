@@ -27,4 +27,4 @@ define i32 @main() {
     ret i32 0
 }
 
-# EXIT_CODE=1
+# EXPECT_FAIL
