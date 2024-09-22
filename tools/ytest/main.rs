@@ -56,23 +56,26 @@ fn main() {
         let _ = std::fs::remove_file(&path);
     }
 
-    let mut file = match File::options().write(true).create(true).open(&path) {
-        Ok(file) => file,
-        Err(err) => {
-            println!("{}: {}", "Error".red().bold(), err);
-            exit(-1)
-        },
-    };
-
-    match file.write_all(parsed.input.as_bytes()) {
-        Ok(_) => {},
-        Err(err) => {
-            println!("{}: {}", "Error".red().bold(), err);
-            exit(-1)
-        },
+    if let Some(input) = parsed.input {
+        let mut file = match File::options().write(true).create(true).open(&path) {
+            Ok(file) => file,
+            Err(err) => {
+                println!("{}: {}", "Error".red().bold(), err);
+                exit(-1)
+            },
+        };
+    
+        match file.write_all(input.as_bytes()) {
+            Ok(_) => {},
+            Err(err) => {
+                println!("{}: {}", "Error".red().bold(), err);
+                exit(-1)
+            },
+        }
     }
 
     let mut found = String::new();
+    let mut found_stderr = String::new();
 
     let mut code = 0;
 
@@ -121,15 +124,24 @@ fn main() {
 
         found.push_str(&stdout);
 
+        let stderr = out.stderr;
+
+        let stderr = str::from_utf8(&stderr).unwrap();
+        let stderr = stderr.chars().filter(|x| !x.is_whitespace()).collect::<String>();
+
+        found_stderr.push_str( &stderr );
+
         match cmd.status() {
             Ok(status) => {
                 if !status.success() {
                     if let Some(exit_code) = status.code() {
-                        if parsed.expected_code == 0 || (cli.opt("exit") && code == (-1i32 as u32)) {
-                            println!("{}: the programm didn't exit sucessfull with code {}", "Error".red().bold(), exit_code);
-                            if !cli.opt("no-exit") {
-                                exit(-1);
-                            }
+                        if let Some(expected_code) = parsed.expected_code {
+                            if expected_code == 0 || (cli.opt("exit") && code == (-1i32 as u32)) {
+                                println!("{}: the programm didn't exit sucessfull with code {}", "Error".red().bold(), exit_code);
+                                if !cli.opt("no-exit") {
+                                    exit(-1);
+                                }
+                            } 
                         } else if cli.opt("neg-exit") && code == (-1i32 as u32) {
                             println!("{}: the programm didn't exit sucessfull with code {}", "Error".red().bold(), exit_code);
                             exit(-1);
@@ -155,21 +167,35 @@ fn main() {
 
     let _ = std::fs::remove_file(&path);
 
-    if parsed.expected_out != found {
-        println!("{}: expected output didn't match actual output", "Error".red().bold());
-        println!("found:    {:?}", found);
-        println!("expected: {:?}", parsed.expected_out);
-        if !cli.opt("no-exit") {
-            exit(-1)
+    if let Some(expected) = parsed.expected_out {
+        if expected != found {
+            println!("{}: expected output didn't match actual output", "Error".red().bold());
+            println!("found:    {:?}", found);
+            println!("expected: {:?}", expected);
+            if !cli.opt("no-exit") {
+                exit(-1)
+            }
+        }
+    }
+    if let Some(expected) = parsed.expected_stderr {
+        if expected != found_stderr {
+            println!("{}: expected stderr didn't match actual output", "Error".red().bold());
+            println!("found:    {:?}", found);
+            println!("expected: {:?}", expected);
+            if !cli.opt("no-exit") {
+                exit(-1)
+            }
         }
     }
 
-    if parsed.expected_code as u32 != code {
-        println!("{}: expected exit code: {} found {}", "Error".red().bold(), parsed.expected_code, code);
-        if !cli.opt("no-exit") {
-            exit(-1)
+    if let Some(expected_code) = parsed.expected_code {
+        if expected_code as u32 != code {
+            println!("{}: expected exit code: {} found {}", "Error".red().bold(), expected_code, code);
+            if !cli.opt("no-exit") {
+                exit(-1)
+            }
+        } else {
+            println!("expected exit code {} matched with found one {}", expected_code, code);
         }
-    } else {
-        println!("expected exit code {} matched with found one {}", parsed.expected_code, code);
     }
 }

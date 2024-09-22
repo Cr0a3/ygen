@@ -1,22 +1,25 @@
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Parsed {
     pub cmd: Vec<String>,
-    pub input: String,
-    pub expected_out: String,
-    pub expected_code: i32,
+    pub input: Option<String>,
+    pub expected_out: Option<String>,
+    pub expected_stderr: Option<String>,
+    pub expected_code: Option<i32>,
 }
 
 pub fn parse(input: String) -> Parsed { 
     let mut out = Parsed {
         cmd: Vec::new(),
-        input: String::new(),
-        expected_out: String::new(),
-        expected_code: 0,
+        input: None,
+        expected_out: None,
+        expected_code: None,
+        expected_stderr: None,
     };
     
     let mut append ;
 
     let mut stdout = false;
+    let mut stderr = false;
     let mut run = false;
 
     for line in input.lines() {
@@ -25,24 +28,34 @@ pub fn parse(input: String) -> Parsed {
         if line.trim().starts_with("# RUN:") {
             append = false;
             stdout = false;
+            stderr = false;
             run = true;
         }
         
         if line.trim().starts_with("# STDOUT:") {
             append = false;
             stdout = true;
+            stderr = false;
+            run = false;
+        }
+
+        if line.trim().starts_with("# STDERR:") {
+            append = false;
+            stdout = true;
+            stderr = true;
             run = false;
         }
 
         if line.trim().starts_with("# IN:") {
             append = false;
             stdout = false;
+            stderr = false;
             run = false;
         }
 
         if line.trim().starts_with("# EXIT_CODE=") {
             let line = line.trim().replace("# EXIT_CODE=", "");
-            out.expected_code = str::parse::<i32>(&line).unwrap();
+            out.expected_code = Some(str::parse::<i32>(&line).unwrap());
             append = false;
         }
 
@@ -54,16 +67,30 @@ pub fn parse(input: String) -> Parsed {
                     out.cmd.push(format!("{}\n", line.trim()));
                 }
             } else if stdout {
-                out.expected_out.push_str(&format!("{line}\n"));
+                if let Some(expected) = &mut out.expected_out {
+                    expected.push_str(&format!("{line}\n"));
+                } else {
+                    out.expected_out = Some(format!("{line}\n"));
+                }
+            } else if stderr {
+                if let Some(expected) = &mut out.expected_stderr {
+                    expected.push_str(&format!("{line}\n"));
+                } else {
+                    out.expected_stderr = Some(format!("{line}\n"));
+                }
             } else {
-                out.input.push_str(&format!("{line}\n"));
+                if let Some(input) = &mut out.input {
+                    input.push_str(&format!("{line}\n"));
+                } else {
+                    out.input = Some(format!("{line}\n"));
+                }
             }
         }
     }
 
-    out.expected_out = out.expected_out.chars().filter(|x| !x.is_whitespace()).collect::<String>();
-
-    //out.expected_out = unescaper::unescape(&out.expected_out).unwrap();
+    if let Some(out) = &mut out.expected_out {
+        *out = out.chars().filter(|x| !x.is_whitespace()).collect::<String>();
+    }
 
     out
 }
