@@ -34,6 +34,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     cli.add_opt("fmt", "format", "Prints the ir formatted to stdout");
     
     cli.add_opt("O", "optimize-simple", "Run simple optimizations");
+    cli.add_arg("passes", "optimization-passes", "The optimization passes to run", false);
     
     cli.scan();
 
@@ -134,7 +135,24 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut module: Module = gen.module();
 
-    if cli.opt("O") {
+    if let Some(passes) = cli.arg_val("passes") {
+        let mut opts = PassManager::new();
+
+        let passes = passes.split(',').collect::<Vec<&str>>();
+
+        for pass in passes {
+            let pass = match pass.to_lowercase().as_str() {
+                "cp" | "const_eval" | "const_evaluation" | "const-eval" | "const-evaluation" => Some(Passes::ConstantEvaluation()),
+                _ => {eprintln!("unkown pass: {}", pass); None },
+            };
+
+            if let Some(pass) = pass {
+                opts.add( pass );
+            }
+        }
+
+        module.runPassMngr(opts);
+    } else if cli.opt("O") {
         let mut opts = PassManager::new();
 
         opts.add( Passes::ConstantEvaluation() );
