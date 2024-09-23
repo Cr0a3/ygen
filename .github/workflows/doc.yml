@@ -24,6 +24,11 @@ jobs:
     - name: Build Documentation
       run: |
         cargo doc --all --no-deps
+        cargo install mdbook
+        mkdir ./target/doc/dev-guide
+        cd dev-guide
+        mdbook build
+        mv -f book ../target/doc/dev-guide
       
     - name: Doc Index Page Redirection
       run: echo '<meta http-equiv="refresh" content="1; url=Ygen/index.html">' > ./target/doc/index.html
