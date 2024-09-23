@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::Optimizations::Pass;
 
 /// ## Pass DeadNodeElimination <br>
@@ -18,35 +16,41 @@ pub fn DeadNodeElimination() -> Box<dyn Pass> {
 impl Pass for DeadNodeElimination {
     fn run(&self, block: &mut crate::prelude::Block) {
         for _ in 0..self.recursion_steps {
-            let mut used: HashMap<String, /*position*/usize> = HashMap::new();
+            let mut used: Vec<String> = Vec::new();
     
-            let mut index = 0;
-    
-            let iter = block.nodes.to_owned();
-            let iter = iter.iter().rev();
+            let mut index = -2; // why ????? but it works for **one** tested example
+
+            let mut to_remove = vec![];
+
+            let iter = block.nodes.iter();
+            let iter = iter.rev();
 
             for node in iter {
-                index += 1;
-
-                println!("{}", node.dump());
                 let inputs =  node.inputs();
                 let out = node.output();
     
                 for input in inputs {
-                    if !used.contains_key(&input.name) {
-                        println!("used just got an addition {}", input.name);
-                        used.insert(input.name, index);
+                    if !used.contains(&input.name) {
+                        used.push(input.name);
                     } else {
-                        println!("used already contains {}", input.name);
                     }
                 }
 
                 if let Some(out) = out {
-                    if !used.contains_key(&out.name) {
-                        index -= 1;
-                        block.nodes.remove(index);
+                    if !used.contains(&out.name) {
+                        to_remove.push(index);
                     }
                 }
+                
+                index += 1;
+            }
+
+            let mut subdend = 0;
+
+            for index in to_remove {
+                block.nodes.remove(index as usize - subdend);
+
+                subdend += 1;
             }
         }
     }

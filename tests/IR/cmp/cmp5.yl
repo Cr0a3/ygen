@@ -5,7 +5,7 @@ gcc out.o -o a.exe
 # IN:
 define u32 @is_smaller_or_equal(u32 %0, u32 %1) {
   entry:
-    %2 = cmp gte u32 %0, %1
+    %2 = cmp lte u32 %0, %1
     ret u32 %2
 }
 
