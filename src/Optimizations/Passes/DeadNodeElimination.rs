@@ -17,13 +17,13 @@ impl Pass for DeadNodeElimination {
     fn run(&self, block: &mut crate::prelude::Block) {
         for _ in 0..self.recursion_steps {
             let mut used: Vec<String> = Vec::new();
-    
-            let mut index = -2; // why ????? but it works for **one** tested example
 
             let mut to_remove = vec![];
 
             let iter = block.nodes.iter();
             let iter = iter.rev();
+
+            let mut index = iter.len();
 
             for node in iter {
                 let inputs =  node.inputs();
@@ -41,11 +41,11 @@ impl Pass for DeadNodeElimination {
                         to_remove.push(index);
                     }
                 }
-                
-                index += 1;
+    
+                index -= 1;
             }
 
-            let mut subdend = 0;
+            let mut subdend = 1;
 
             for index in to_remove {
                 block.nodes.remove(index as usize - subdend);
