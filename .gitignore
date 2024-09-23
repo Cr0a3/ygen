@@ -1,4 +1,5 @@
 /target
+dev-guide/book
 *.asm
 *.o
 *.exe
