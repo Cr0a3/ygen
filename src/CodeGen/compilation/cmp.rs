@@ -35,10 +35,10 @@ impl CompilationHelper {
             super::VarLocation::Mem(stack) => MachineOperand::Stack(stack),
         };
 
-        let mut reset = MachineInstr::new(MachineMnemonic::Move);
+        /*let mut reset = MachineInstr::new(MachineMnemonic::Move); // integrated into the cmp machine instr
         reset.set_out(out);
         reset.add_operand(MachineOperand::Imm(0));
-        mc_sink.push( reset );
+        mc_sink.push( reset );*/
 
         let mut cmp = MachineInstr::new(MachineMnemonic::Compare(node.mode) );
         

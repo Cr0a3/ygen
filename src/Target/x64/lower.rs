@@ -319,6 +319,8 @@ fn x64_lower_cmp(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr, mode: &CmpMod
 
     sink.push(X64MCInstr::with2(Mnemonic::Cmp, ls, rs));
     
+    sink.push(X64MCInstr::with2(Mnemonic::Mov, out.clone(), Operand::Imm(0)));
+
     let mne = match mode {
         CmpMode::Eqal => Mnemonic::Sete,
         CmpMode::NotEqal => Mnemonic::Setne,
