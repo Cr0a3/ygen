@@ -5,6 +5,7 @@ mod srcmngr;
 mod tokmngr;
 mod error;
 mod profile;
+mod type_switch;
 
 use std::process::exit;
 
@@ -15,6 +16,7 @@ pub use pad::Pad;
 pub use srcmngr::SrcMngr;
 pub use tokmngr::TokenMgr;
 pub use error::Error;
+pub use type_switch::*;
 
 use crate::IR::VerifyError;
 
