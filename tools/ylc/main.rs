@@ -142,7 +142,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         for pass in passes {
             let pass = match pass.to_lowercase().as_str() {
-                "cp" | "const_eval" | "const_evaluation" | "const-eval" | "const-evaluation" => Some(Passes::ConstantEvaluation()),
+                "cp" | "const_eval" | "const_evaluation" | "const-eval" | "const-evaluation" =>     Some( Passes::ConstantEvaluation() ),
+                "dne" | "dead_node" | "dead_node_elim" | "dead-node" | "dead-node-elimination" =>   Some( Passes::DeadNodeElimination() ),
                 _ => {eprintln!("unkown pass: {}", pass); None },
             };
 
@@ -156,6 +157,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let mut opts = PassManager::new();
 
         opts.add( Passes::ConstantEvaluation() );
+        opts.add( Passes::DeadNodeElimination() );
 
         module.runPassMngr(opts);
     }

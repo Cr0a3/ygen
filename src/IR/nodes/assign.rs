@@ -53,6 +53,14 @@ impl Ir for Assign<Var, Type> {
     fn eval(&self) -> Option<Box<dyn Ir>> {
         None
     }
+    
+    fn inputs(&self) -> Vec<Var> {
+        vec![]
+    }
+    
+    fn output(&self) -> Option<Var> {
+        Some(self.inner1.to_owned())
+    }
 }
 
 impl Ir for Assign<Var, Var> {
@@ -111,6 +119,14 @@ impl Ir for Assign<Var, Var> {
     fn eval(&self) -> Option<Box<dyn Ir>> {
         None
     }
+    
+    fn inputs(&self) -> Vec<Var> {
+        vec![self.inner2.to_owned()]
+    }
+    
+    fn output(&self) -> Option<Var> {
+        Some(self.inner1.to_owned())
+    }
 }
 
 impl Ir for Assign<Var, Const> {
@@ -157,6 +173,14 @@ impl Ir for Assign<Var, Const> {
     
     fn eval(&self) -> Option<Box<dyn Ir>> {
         None
+    }
+    
+    fn inputs(&self) -> Vec<Var> {
+        vec![]
+    }
+    
+    fn output(&self) -> Option<Var> {
+        Some(self.inner1.to_owned())
     }
 }
 

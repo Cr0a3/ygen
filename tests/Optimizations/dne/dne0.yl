@@ -1,0 +1,17 @@
+# RUN:
+cargo run -p ylc -- -in=%s -passes=dne -fmt
+# IN:
+
+define i32 @main() {
+  entry:
+    %0 = i32 5
+    %2 = add i32 5, 3
+    ret i32 %2
+}
+
+# STDOUT:
+define i32 @main() {
+  entry:
+    %2 = add 5, 3
+    ret i32 %2
+}

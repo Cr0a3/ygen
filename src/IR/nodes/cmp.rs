@@ -100,6 +100,14 @@ impl Ir for Cmp {
             )))
         } else { None }
     }
+    
+    fn inputs(&self) -> Vec<Var> {
+        vec![self.ls.to_owned(), self.rs.to_owned()]
+    }
+    
+    fn output(&self) -> Option<Var> {
+        Some(self.out.to_owned())
+    }
 }
 
 /// The trait `BuildCmp` is used to build the cmp node

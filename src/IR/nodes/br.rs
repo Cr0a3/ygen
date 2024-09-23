@@ -53,6 +53,14 @@ impl Ir for Br<Box<Block>> {
     fn eval(&self) -> Option<Box<dyn Ir>> {
         None
     }
+    
+    fn inputs(&self) -> Vec<Var> {
+        vec![]
+    }
+    
+    fn output(&self) -> Option<Var> {
+        None
+    }
 }
 
 impl Ir for BrCond<Var, Block, Block> {
@@ -108,6 +116,14 @@ impl Ir for BrCond<Var, Block, Block> {
         if self.inner2.name == self.inner3.name {
             Some(Br::new( Box::new( self.inner3.to_owned() ) ))
         } else { None }
+    }
+    
+    fn inputs(&self) -> Vec<Var> {
+        vec![self.inner1.to_owned()]
+    }
+    
+    fn output(&self) -> Option<Var> {
+        None
     }
 }
 

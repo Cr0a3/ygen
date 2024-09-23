@@ -4,10 +4,10 @@ use crate::{prelude::*, Optimizations::Pass};
 
 /// ## Pass ConstantEvaluation <br>
 /// precomputes constant values
-pub struct ConstantEvaluation {}
+pub(crate) struct ConstantEvaluation {}
 
 /// Creates a new ConstantEvaluation pass which is heap allocated
-pub fn ConstantEvaluation() -> Box<ConstantEvaluation> {
+pub fn ConstantEvaluation() -> Box<dyn Pass> {
     Box::from( ConstantEvaluation {} )
 }
 

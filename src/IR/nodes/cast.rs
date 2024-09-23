@@ -55,6 +55,14 @@ impl Ir for Cast<Var, TypeMetadata, Var> {
             Some(Assign::new(self.inner3.to_owned(), self.inner1.to_owned()))
         } else { None }
     }
+    
+    fn inputs(&self) -> Vec<Var> {
+        vec![self.inner1.to_owned()]
+    }
+    
+    fn output(&self) -> Option<Var> {
+        Some(self.inner3.to_owned())
+    }
 }
 
 /// Trait for the cast instruction

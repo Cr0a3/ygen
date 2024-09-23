@@ -185,6 +185,12 @@ pub(crate) trait Ir: Debug + Any {
 
     /// evaluteas the node
     fn eval(&self) -> Option<Box<dyn Ir>>;
+
+    /// returns the vars used by the node as input
+    fn inputs(&self) -> Vec<Var>;
+
+    /// returns the output var
+    fn output(&self) -> Option<Var>;
 }
 
 impl PartialEq for Box<dyn Ir> {

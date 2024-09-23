@@ -48,6 +48,14 @@ impl Ir for Return<Type> {
     fn eval(&self) -> Option<Box<dyn Ir>> {
         None
     }
+    
+    fn inputs(&self) -> Vec<Var> {
+        vec![]
+    }
+    
+    fn output(&self) -> Option<Var> {
+        None
+    }
 }
 
 impl Ir for Return<Var> {
@@ -101,6 +109,14 @@ impl Ir for Return<Var> {
     }
     
     fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn inputs(&self) -> Vec<Var> {
+        vec![self.inner1.to_owned()]
+    }
+    
+    fn output(&self) -> Option<Var> {
         None
     }
 }

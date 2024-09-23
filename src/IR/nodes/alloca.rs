@@ -43,6 +43,14 @@ impl Ir for Alloca<Var, TypeMetadata> {
     fn eval(&self) -> Option<Box<dyn Ir>> {
         None
     }
+    
+    fn inputs(&self) -> Vec<Var> {
+        vec![]
+    }
+    
+    fn output(&self) -> Option<Var> {
+        Some(self.inner1.to_owned())
+    }
 }
 
 impl IRBuilder<'_> {

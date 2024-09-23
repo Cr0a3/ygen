@@ -117,6 +117,14 @@ macro_rules! MathIrNode {
                     (self.inner1.into(), (self.inner1.val() $op self.inner2.val()) as i64
                 )))
             }
+    
+            fn inputs(&self) -> Vec<Var> {
+                vec![]
+            }
+            
+            fn output(&self) -> Option<Var> {
+                Some(self.inner3.to_owned())
+            }
         }
         
         impl Ir for $name<Var, Var, Var> {
@@ -191,6 +199,14 @@ macro_rules! MathIrNode {
             fn eval(&self) -> Option<Box<dyn Ir>> {
                 None
             }
+    
+            fn inputs(&self) -> Vec<Var> {
+                vec![self.inner1.to_owned(), self.inner2.to_owned()]
+            }
+            
+            fn output(&self) -> Option<Var> {
+                Some(self.inner3.to_owned())
+            }
         }
         
         impl Ir for $name<Var, Type, Var> {
@@ -258,6 +274,14 @@ macro_rules! MathIrNode {
             
             fn eval(&self) -> Option<Box<dyn Ir>> {
                 None
+            }
+    
+            fn inputs(&self) -> Vec<Var> {
+                vec![self.inner1.to_owned()]
+            }
+            
+            fn output(&self) -> Option<Var> {
+                Some(self.inner3.to_owned())
             }
         }
         

@@ -87,6 +87,14 @@ impl Ir for Call<Function, Vec<Var>, Var> {
     fn eval(&self) -> Option<Box<dyn Ir>> {
         None
     }
+    
+    fn inputs(&self) -> Vec<Var> {
+        self.inner2.to_owned()
+    }
+    
+    fn output(&self) -> Option<Var> {
+        None // yes it has an output but it will get optimized away, so i just say "it has no output"
+    }
 }
 
 
