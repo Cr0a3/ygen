@@ -6,6 +6,7 @@ use crate::Obj::Link;
 use crate::IR::TypeMetadata;
 
 use super::reg::Reg;
+use super::VarLocation;
 
 /// a low level instruction which is portable over platforms
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -82,6 +83,21 @@ impl Display for MachineOperand {
     }
 }
 
+impl From<VarLocation> for MachineOperand {
+    fn from(location: VarLocation) -> Self {
+        match location {
+            VarLocation::Reg(reg) => MachineOperand::Reg(reg),
+            VarLocation::Mem(mem) => MachineOperand::Stack(mem),
+        }
+    }
+}
+
+impl From<&VarLocation> for MachineOperand {
+    fn from(value: &VarLocation) -> Self {
+        (*value).into()
+    }
+}
+
 /// The mnemonic to use
 #[allow(missing_docs)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -114,33 +130,46 @@ pub enum MachineMnemonic {
 
     Prolog,
     Epilog,
+
+    /// stack arg
+    Push,
+
+    /// stack arg cleanup
+    PushCleanup,
+
+    CallStackPrepare,
+    CallStackRedo,
 }
 
 impl MachineMnemonic {
     /// Returns the name of the mnemonic
     pub fn name(&self) -> String {
         match self {
-            MachineMnemonic::Move => "move",
-            MachineMnemonic::Add => "add",
-            MachineMnemonic::And => "and",
-            MachineMnemonic::Div => "div",
-            MachineMnemonic::Mul => "mul",
-            MachineMnemonic::Or => "or",
-            MachineMnemonic::Sub => "sub",
-            MachineMnemonic::Xor => "xor",
-            MachineMnemonic::Zext => "zext",
-            MachineMnemonic::Downcast => "dwcast",
-            MachineMnemonic::Call(_) => "call",
-            MachineMnemonic::Return => "return",
-            MachineMnemonic::AdressLoad(_) => "adrload",
-            MachineMnemonic::Br(_) => "br",
-            MachineMnemonic::BrCond(_, _) => "comparebr",
-            MachineMnemonic::Compare(_) => "compare",
-            MachineMnemonic::Prolog =>"prolog",
-            MachineMnemonic::Epilog => "epilog",
-            MachineMnemonic::StackAlloc => "salloc",
-            MachineMnemonic::Store => "store",
-            MachineMnemonic::Load => "load",
+            MachineMnemonic::Move =>                "move",
+            MachineMnemonic::Add =>                 "add",
+            MachineMnemonic::And =>                 "and",
+            MachineMnemonic::Div =>                 "div",
+            MachineMnemonic::Mul =>                 "mul",
+            MachineMnemonic::Or =>                  "or",
+            MachineMnemonic::Sub =>                 "sub",
+            MachineMnemonic::Xor =>                 "xor",
+            MachineMnemonic::Zext =>                "zext",
+            MachineMnemonic::Downcast =>            "dwcast",
+            MachineMnemonic::Call(_) =>             "call",
+            MachineMnemonic::Return =>              "return",
+            MachineMnemonic::AdressLoad(_) =>       "adrload",
+            MachineMnemonic::Br(_) =>               "br",
+            MachineMnemonic::BrCond(_, _) =>        "comparebr",
+            MachineMnemonic::Compare(_) =>          "compare",
+            MachineMnemonic::Prolog =>              "prolog",
+            MachineMnemonic::Epilog =>              "epilog",
+            MachineMnemonic::StackAlloc =>          "salloc",
+            MachineMnemonic::Store =>               "store",
+            MachineMnemonic::Load =>                "load",
+            MachineMnemonic::Push =>                "push",
+            MachineMnemonic::PushCleanup =>         "clean_push",
+            MachineMnemonic::CallStackPrepare =>    "callsprep",
+            MachineMnemonic::CallStackRedo =>    "callspred",
         }.to_string()
     }
 }

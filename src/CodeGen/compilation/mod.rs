@@ -29,6 +29,7 @@ pub struct CompilationHelper {
     pub(crate) call: MachineCallingConvention,
 
     pub(crate) vars: HashMap<String, VarLocation>,
+    pub(crate) var_types: HashMap<String, TypeMetadata>,
 
     pub(crate) stack_off: i64,
 }
@@ -39,6 +40,7 @@ impl CompilationHelper {
             regs: RegVec::new(),
             arch: arch,
             vars: HashMap::new(),
+            var_types: HashMap::new(),
             call: call,
             lower: None,
             stack_off: call.shadow(arch),
@@ -64,6 +66,7 @@ impl CompilationHelper {
         };
 
         self.vars.insert(var.name.to_owned(), loc);
+        self.var_types.insert(var.name.to_owned(), var.ty);
 
         self.stack_off += self.call.align(self.arch);
 
@@ -100,6 +103,7 @@ impl CompilationHelper {
         };
 
         self.vars.insert(var.name.to_owned(), location);
+        self.var_types.insert(var.name.to_owned(), var.ty);
 
         location
     }
@@ -121,10 +125,14 @@ impl CompilationHelper {
                 }
             };
 
+            let name = || func.arg(num).name;
+
             self.vars.insert(
-                func.arg(num).name, 
+                name(), 
                 location
             );
+
+            self.var_types.insert(name(), *ty);
 
             num += 1;
         }

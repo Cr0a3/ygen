@@ -1,5 +1,5 @@
 use crate::prelude::CmpMode;
-use crate::CodeGen::{MCInstr, MachineInstr, MachineMnemonic, MachineOperand};
+use crate::CodeGen::{MCInstr, MachineCallingConvention, MachineInstr, MachineMnemonic, MachineOperand};
 use crate::Optimizations::Optimize;
 use crate::Target::CallConv;
 
@@ -34,6 +34,25 @@ pub(crate) fn x64_lower_instr(conv: CallConv, sink: &mut Vec<X64MCInstr>, instr:
         MachineMnemonic::StackAlloc => x64_lower_salloc(sink, &instr),
         MachineMnemonic::Store => x64_lower_store(sink, &instr),
         MachineMnemonic::Load => x64_lower_load(sink, &instr),
+        MachineMnemonic::Push => x64_lower_push(sink, &instr),
+        MachineMnemonic::PushCleanup => x64_lower_push_cleanup(sink, &instr),
+        MachineMnemonic::CallStackPrepare => {
+            sink.push(X64MCInstr::with2(
+                Mnemonic::Sub, Operand::Reg(x64Reg::Rsp), 
+                Operand::Imm(
+                    MachineCallingConvention {
+                    call_conv: conv
+                }.shadow(crate::Target::Arch::X86_64) - 8
+            )));
+        },MachineMnemonic::CallStackRedo => {
+            sink.push(X64MCInstr::with2(
+                Mnemonic::Add, Operand::Reg(x64Reg::Rsp), 
+                Operand::Imm(
+                    MachineCallingConvention {
+                    call_conv: conv
+                }.shadow(crate::Target::Arch::X86_64) - 8
+            )));
+        },
     }
 }
 
@@ -532,4 +551,27 @@ fn x64_lower_load(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
         );
     }
 
+}
+
+fn x64_lower_push(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
+    let input = instr.operands.get(0).expect("push needs an operand");
+
+    sink.push(
+        X64MCInstr::with1(Mnemonic::Push, match input {
+            MachineOperand::Imm(imm) => Operand::Imm(*imm),
+            MachineOperand::Reg(reg) => {
+                match *reg {
+                    crate::CodeGen::Reg::x64(x64) => Operand::Reg(x64),
+                }
+            },
+            MachineOperand::Stack(off) => x64_stack!(*off as u32),
+        })
+    );
+
+    sink.push(X64MCInstr::with2(Mnemonic::Sub, Operand::Reg(x64Reg::Rsp), Operand::Imm(8))); // for 16 byte alignment
+}
+
+fn x64_lower_push_cleanup(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
+    sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta))));
+    sink.push(X64MCInstr::with2(Mnemonic::Add, Operand::Reg(x64Reg::Rsp), Operand::Imm(8))); // for 16 byte alignment
 }

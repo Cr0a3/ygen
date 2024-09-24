@@ -9,7 +9,7 @@ pub(crate) struct DeadNodeElimination {
 /// Creates a new DeadNodeElimination pass which is heap allocated
 pub fn DeadNodeElimination() -> Box<dyn Pass> {
     Box::from( DeadNodeElimination {
-        recursion_steps: 4,
+        recursion_steps: 1, // for other values we get errors--+
     } )
 }
 
@@ -45,7 +45,7 @@ impl Pass for DeadNodeElimination {
                 index -= 1;
             }
 
-            let mut subdend = 1;
+            let mut subdend = 0;
 
             for index in to_remove {
                 block.nodes.remove(index as usize - subdend);
