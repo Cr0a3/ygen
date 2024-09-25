@@ -152,10 +152,35 @@ impl Module {
 
             let mut blocks = BTreeMap::new();
 
+            let mut index = 0;
+
             for block in &func.blocks {
-                let (compiled, links) = registry.buildMachineCodeForTarget(triple.arch, block, &func)?;
+                let (mut compiled, links) = registry.buildMachineCodeForTarget(triple.arch, block, &func)?;
+                
+                if registry.requires_prolog(&func) && index == 0 {
+                    let mut helper = registry.getBasedOnArch(triple.arch)?.helper.clone().unwrap();
+                    
+                    helper.stack_off = *registry.stacks.get(&func.name).unwrap();
+
+                    let mut prolog = vec![];
+
+                    helper.compile_prolog(&mut prolog);
+
+                    let mc_instrs = helper.lower.unwrap()(triple.getCallConv()?, prolog);
+                    let mut compiled_prolog = vec![];
+
+                    for instr in mc_instrs {
+                        compiled_prolog.extend_from_slice(&instr.encode()?.0);
+                    }
+
+                    let compiled_backup = compiled.clone();
+                    compiled = compiled_prolog;
+                    compiled.extend_from_slice(&compiled_backup);
+                }
 
                 blocks.insert(block.name.to_owned(), (compiled, links));
+
+                index += 1;
             }
 
             let mut comp = vec![];
@@ -240,6 +265,21 @@ impl Module {
                 );
             }
 
+            if registry.requires_prolog(&func) {
+                let backup = instrs.clone();
+                
+                let mut helper = registry.getBasedOnArch(triple.arch)?.helper.clone().unwrap();
+                
+                helper.stack_off = *registry.stacks.get(&func.name).unwrap();
+
+                let mut prolog = vec![];
+
+                helper.compile_prolog(&mut prolog);
+
+                instrs = prolog;
+                instrs.extend_from_slice(&backup);
+            }
+
             out.insert(name.to_string(), instrs);
         }
 
@@ -277,10 +317,30 @@ impl Module {
 
             lines += &format!("{}:\n", name);
 
+            let mut index = 0;
+
             for block in &func.blocks {
                 lines += &format!(" {}:\n", block.name);
-
+                
                 let asm_lines = registry.buildAsmForTarget(triple.arch, block, func)?;
+                
+                if registry.requires_prolog(&func) && index == 0 {
+                    let mut helper = registry.getBasedOnArch(triple.arch)?.helper.clone().unwrap();
+                    
+                    helper.stack_off = *registry.stacks.get(&func.name).unwrap();
+
+                    let mut prolog = vec![];
+
+                    helper.compile_prolog(&mut prolog);
+
+                    let mc_instrs = helper.lower.unwrap()(triple.getCallConv()?, prolog);
+
+                    for instr in mc_instrs {
+                        for line in instr.dump()?  {
+                            lines += &format!("\t{}\n", line);
+                        }
+                    }
+                }
 
                 for line in asm_lines {
                     if line.starts_with("#") { // debug
@@ -289,6 +349,8 @@ impl Module {
 
                     lines += &format!("\t{}\n", line);
                 }
+            
+                index += 1;
             }
         }
 

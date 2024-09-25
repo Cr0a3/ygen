@@ -137,6 +137,13 @@ impl CompilationHelper {
             num += 1;
         }
     }
+
+    #[inline]
+    pub(crate) fn epilog(&self) -> bool {
+        if self.stack_off != self.call.shadow(self.arch) {
+            true
+        } else { false }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

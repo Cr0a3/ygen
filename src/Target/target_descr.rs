@@ -1,4 +1,3 @@
-use std::collections::VecDeque;
 use std::error::Error;
 use crate::prelude::{ir::*, Block, Var};
 use crate::CodeGen::{IrCodeGenArea, IrCodeGenHelper, MCDocInstr, MCInstr};
@@ -23,9 +22,9 @@ pub struct TargetBackendDescr {
 
     pub(crate) sink: Vec<MachineInstr>,
 
-    pub(crate) whitelist: WhiteList,
+    pub(crate) epilog: bool,
 
-    pub(crate) epilogs: Vec<String>,
+    pub(crate) whitelist: WhiteList,
 }
 
 macro_rules! compile_func {
@@ -60,7 +59,7 @@ impl TargetBackendDescr {
             helper: None,
             whitelist: WhiteList::new(),
             sink: vec![],
-            epilogs: vec![],
+            epilog: false,
         }
     }
     /// Returns the lexer to use with the TargetBackendDescr
@@ -75,50 +74,15 @@ impl TargetBackendDescr {
 
     /// builds all ir nodes of the current block into a vector of MachineInstr
     pub fn build_instrs(&mut self, func: &Function, triple: &Triple) -> Vec<MachineInstr> {
-        let helper = if let Some(helper) = &mut self.helper { helper }
-        else { panic!("no current compilation helper"); };
+        let areas = self.build_instrs_with_ir_debug(func, triple);
 
-        if helper.arch != triple.arch {
-            panic!("the architecture of the triple {:?} isn't the same as the one of the compilation helper {:?}", triple.arch, helper.arch)
+        let mut merged = vec![];
+
+        for area in areas {
+            merged.extend_from_slice(&area.compiled);
         }
 
-        let block = if let Some(block) = &self.block {
-            block.clone()
-        } else {
-            panic!("no current block");
-        };
-
-        helper.build_argument_preprocessing(func);
-
-        let mut cloned_helper  = CompilationHelper::new(helper.arch, helper.call);
-
-        for node in block.nodes {
-            node.compile(self);
-        }
-
-        if let Some(helper) = &mut self.helper {
-            cloned_helper.stack_off = helper.stack_off;
-        }
-
-        let mut vsink = vec![];
-
-        cloned_helper.compile_prolog(&mut vsink);
-
-        vsink.extend_from_slice(&self.sink);
-
-        let last = vsink.last().cloned();
-
-        vsink.remove(vsink.len() - 1); // ret
-
-        cloned_helper.compile_epilog(&mut vsink);
-
-        if let Some(last) = last {
-            vsink.push(last);
-        }
-
-        self.sink = vsink;
-
-        self.sink.to_owned()
+        merged
     }
 
     /// builds the instruction with ir debug metadata
@@ -141,64 +105,53 @@ impl TargetBackendDescr {
         let mut ir_helper = IrCodeGenHelper::new(helper.to_owned());
 
         for node in block.nodes.to_owned() {
-            helper.stack_off = ir_helper.helper.stack_off;
-
-            if ir_helper.helper.stack_off != ir_helper.helper.call.shadow(helper.arch) {
-                if !self.epilogs.contains(&func.name) {
-                    println!("hi");
-                    self.epilogs.push(func.name.to_owned());
-                }
-            } else {
-                println!("{}", ir_helper.helper.stack_off);
-                //println!("{}", ir_helper.helper.shadow(helper.arch));
+            if ir_helper.helper.epilog() {
+                self.epilog = true;
             }
-        
+
+            // VERY UGLY CODE WHICH SINCRONICES THE MAX STACK_OFF 
+            // OF EITHER ir_helper or helper (the one who has the biggest gets selected)
+            if helper.stack_off < ir_helper.helper.stack_off {
+                helper.stack_off = ir_helper.helper.stack_off;
+            } else if ir_helper.helper.stack_off < helper.stack_off {
+                ir_helper.helper.stack_off = helper.stack_off;
+            }
 
             if let Some(node) = node.as_any().downcast_ref::<Return<Type>>() {
                 ir_helper.compile_ret_ty(node, &block);
 
-                if self.epilogs.contains(&func.name) {
-                    let mut epilog = vec![];
-                    helper.compile_epilog(&mut epilog);
+                if self.epilog {
+                    let mut epilog_instrs = vec![];
+                    helper.compile_epilog(&mut epilog_instrs);
     
-                    ir_helper.compiled.push(IrCodeGenArea {
-                        node: None,
-                        compiled: epilog,
-                    })
+                    if let Some(last) = ir_helper.compiled.last_mut() {
+                        let backup = last.compiled.clone();
+                        last.compiled = epilog_instrs;
+                        last.compiled.extend_from_slice(&backup);
+                    } else { unreachable!() }
+
                 }
             } else if let Some(node) = node.as_any().downcast_ref::<Return<Var>>() {
                 ir_helper.compile_ret_var(node, &block);
 
-                if self.epilogs.contains(&func.name) {
-                    let mut epilog = vec![];
-                    helper.compile_epilog(&mut epilog);
+                if self.epilog {
+                    let mut epilog_instrs = vec![];
+                    helper.compile_epilog(&mut epilog_instrs);
     
-                    ir_helper.compiled.push(IrCodeGenArea {
-                        node: None,
-                        compiled: epilog,
-                    })
+                    if let Some(last) = ir_helper.compiled.last_mut() {
+                        let backup = last.compiled.clone();
+                        last.compiled = epilog_instrs;
+                        last.compiled.extend_from_slice(&backup);
+                    } else { unreachable!() }
                 }
             } else {
                 node.compile_dir(&mut ir_helper, &block);
             }
         }
 
-        let mut instrs = VecDeque::from(ir_helper.compiled);
-
-        let mut prolog = vec![];
-
         *helper = ir_helper.helper;
 
-        helper.compile_prolog(&mut prolog);
-
-        instrs.push_front(IrCodeGenArea {
-            node: None,
-            compiled: prolog,
-        });
-
-        let instrs = Vec::from( instrs );
-
-        instrs
+        ir_helper.compiled
     }
 
     /// Resets all values to "factory standart"
@@ -216,6 +169,7 @@ impl TargetBackendDescr {
             self.call = reference.call;
             self.sink = reference.sink;
             self.whitelist = reference.whitelist;
+            self.epilog = false;
         }
     }
 

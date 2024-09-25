@@ -23,7 +23,7 @@ impl Pass for DeadNodeElimination {
             let iter = block.nodes.iter();
             let iter = iter.rev();
 
-            let mut index = iter.len();
+            let mut index = iter.len() as i32;
 
             for node in iter {
                 let inputs =  node.inputs();
@@ -38,7 +38,7 @@ impl Pass for DeadNodeElimination {
 
                 if let Some(out) = out {
                     if !used.contains(&out.name) {
-                        to_remove.push(index);
+                        to_remove.push(index - 1);
                     }
                 }
     

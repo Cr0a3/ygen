@@ -1,12 +1,16 @@
 use std::{collections::HashMap, error::Error, fmt::Display};
 
-use crate::{prelude::{Block, Function}, CodeGen::MachineInstr, Obj::Link};
+use crate::{prelude::Function, CodeGen::MachineInstr, Obj::Link, IR::Block};
 
 use super::{Arch, CallConv, TargetBackendDescr, Triple};
 
 /// The target registry: manages different targets
 pub struct TargetRegistry {
     targets: HashMap<Arch, TargetBackendDescr>,
+
+    epilogs: HashMap<String, bool>,
+    pub(crate) stacks: HashMap<String, i64>,
+
     triple: Triple,
 }
 
@@ -15,6 +19,8 @@ impl TargetRegistry {
     pub fn new(triple: Triple) -> Self {
         Self {
             targets: HashMap::new(),
+            epilogs: HashMap::new(),
+            stacks: HashMap::new(),
             triple: triple,
         }
     }
@@ -43,25 +49,68 @@ impl TargetRegistry {
         }
     }
 
-    /// emits machine instrs for target
-    /// note: machine instrs are portable over all platforms
+    /// emits machine instrs for target <br>
+    /// **note**: machine instrs are portable over all platforms <br>
+    /// **warning**: Does not add a prolog
     pub fn buildMachineInstrsForTarget(&mut self, arch: Arch, block: &Block, funct: &Function) -> Result<Vec<MachineInstr>, Box<dyn Error>> {
         let triple = self.triple;
+
+        let mut epilog = if let Some(ep) = self.epilogs.get(&funct.name) {
+            *ep
+        } else { false };
+
+        let stack = self.stacks.get(&funct.name).cloned();
+
         let org = self.getBasedOnArch(arch)?;
+        org.epilog = epilog;
+
+        if let Some(stack_off) = stack {
+            org.helper.as_mut().unwrap().stack_off = stack_off;
+        };
+
+        org.epilog = epilog;
 
         org.block = Some(block.clone());
         let instrs = org.build_instrs(&funct, &triple);
 
+        epilog = org.epilog;
+
+        let stack = org.helper.as_ref().unwrap().stack_off;
+
         org.reset();
+
+        if epilog {
+            if !self.epilogs.contains_key(&funct.name) {
+                self.epilogs.insert( funct.name.to_owned(), epilog );
+            }
+        }
+
+        if let Some(stacks) = self.stacks.get_mut(&funct.name) {
+            *stacks = stack;
+        } else {
+            self.stacks.insert(funct.name.to_owned(), stack);
+        }
 
         Ok(instrs)
     }
 
-    /// Builds the ir of the given triple into text assembly code
+    /// Builds the ir of the given triple into text assembly code <br>
+    /// **warning**: Does not add a prolog
     pub fn buildAsmForTarget(&mut self, arch: Arch, block: &Block, funct: &Function) -> Result<Vec<String>, Box<dyn Error>> {
        let triple = self.triple;
+       let mut epilog = if let Some(ep) = self.epilogs.get(&funct.name) {
+            *ep
+        } else { false };
+
+        let stack = self.stacks.get(&funct.name).cloned();
 
         let org = self.getBasedOnArch(arch)?;
+        org.epilog = epilog;
+
+        if let Some(stack_off) = stack {
+            org.helper.as_mut().unwrap().stack_off = stack_off;
+        };
+
         org.block = Some(block.clone());
 
         let instrs = org.build_instrs_with_ir_debug(&funct, &triple);
@@ -74,18 +123,47 @@ impl TargetRegistry {
                 instr.to_string()
             )
         }
-        
+
+        let stack = org.helper.as_ref().unwrap().stack_off;
+
+        epilog = org.epilog;
         org.reset();
+
+        if epilog {
+            if !self.epilogs.contains_key(&funct.name) {
+                self.epilogs.insert(funct.name.to_string(), epilog);
+            }
+        }
+
+        if let Some(stacks) = self.stacks.get_mut(&funct.name) {
+            println!("before: {}", *stacks);
+            println!("after: {}", stack);
+            *stacks = stack;
+        } else {
+            self.stacks.insert(funct.name.to_owned(), stack);
+        }
 
         Ok(asm)
     }
 
-    /// Builds the ir of the given triple into machine code
+    /// Builds the ir of the given triple into machine code <br>
+    /// **warning**: Does not add a prolog
     pub fn buildMachineCodeForTarget(&mut self, arch: Arch, block: &Block, funct: &Function) -> Result<(Vec<u8>, Vec<Link>), Box<dyn Error>> {
         let triple = self.triple;
+        let mut epilog = if let Some(ep) = self.epilogs.get(&funct.name) {
+             *ep
+         } else { false };
 
-        let org = self.getBasedOnArch(arch)?;
+         let stack = self.stacks.get(&funct.name).cloned();
+ 
+         let org = self.getBasedOnArch(arch)?;
+         org.epilog = epilog;
+ 
+         if let Some(stack_off) = stack {
+            org.helper.as_mut().unwrap().stack_off = stack_off;
+         };
 
+        org.epilog = epilog;
         org.block = Some(block.clone());
 
         let instrs = org.build_instrs(&funct, &triple);
@@ -112,9 +190,33 @@ impl TargetRegistry {
             }
         }
 
+        let stack = org.helper.as_ref().unwrap().stack_off;
+
+        epilog = org.epilog;
+
         org.reset();
 
+
+        if epilog {
+            if !self.epilogs.contains_key(&funct.name) {
+                self.epilogs.insert(funct.name.to_string(), epilog);
+            }
+        }
+
+        if let Some(stacks) = self.stacks.get_mut(&funct.name) {
+            *stacks = stack;
+        } else {
+            self.stacks.insert(funct.name.to_owned(), stack);
+        }
+
         Ok((res, links))
+    }
+
+    /// returns if the function needs to get an added prolog
+    pub fn requires_prolog(&self, funct: &Function) -> bool {
+        if self.epilogs.contains_key(&funct.name) {
+            true
+        } else { false }
     }
 }
 

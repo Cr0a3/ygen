@@ -166,6 +166,7 @@ pub(crate) trait Ir: Debug + Any {
     fn clone_box(&self) -> Box<dyn Ir>;
 
     /// Compiles the node based on the given target
+    #[allow(dead_code)]
     fn compile(&self, registry: &mut TargetBackendDescr);
 
     /// Compiles the node with node information to the given target

@@ -400,6 +400,7 @@ LowerSimpleMath!(x64_lower_sub, Mnemonic::Sub);
 LowerSimpleMath!(x64_lower_xor, Mnemonic::Xor);
 
 fn x64_lower_prolog(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
+    //sink.push( X64MCInstr::with0(Mnemonic::Endbr64) );
     sink.push( X64MCInstr::with1(Mnemonic::Push, Operand::Reg(x64Reg::Rbp) ) );
     sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rbp), Operand::Reg(x64Reg::Rsp)  ) );
     if let Some(op0) = instr.operands.get(0) {

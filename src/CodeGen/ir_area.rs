@@ -227,3 +227,15 @@ impl IrCodeGenHelper {
         ir::Store<Var, Type> 
     );
 }
+
+impl Into<Vec<MachineInstr>> for IrCodeGenHelper {
+    fn into(self) -> Vec<MachineInstr> {
+        let mut merged = vec![];
+
+        for area in &self.compiled {
+            merged.extend_from_slice(&area.compiled);
+        }
+
+        merged
+    }
+}
