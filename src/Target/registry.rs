@@ -1,6 +1,6 @@
 use std::{collections::HashMap, error::Error, fmt::Display};
 
-use crate::{prelude::Function, CodeGen::MachineInstr, Obj::Link, IR::Block};
+use crate::{debug::DebugLocation, prelude::Function, CodeGen::MachineInstr, Obj::Link, IR::Block};
 
 use super::{Arch, CallConv, TargetBackendDescr, Triple};
 
@@ -118,10 +118,12 @@ impl TargetRegistry {
 
         let mut asm = vec![];
 
-        for instr in instrs {
-            asm.push(
-                instr.to_string()
-            )
+        for (instrs, _) in instrs {
+            for instr in instrs {
+                asm.push(
+                    instr.to_string()
+                )
+            }
         }
 
         let stack = org.helper.as_ref().unwrap().stack_off;
@@ -216,6 +218,70 @@ impl TargetRegistry {
             true
         } else { false }
     }
+
+    /// build the debugging information for an function
+    pub fn buildDebugInfo(&mut self, arch: Arch, block: &Block, funct: &Function) -> Result<Vec<DebugLocation>, Box<dyn Error>> {
+        let triple = self.triple;
+        let mut epilog = if let Some(ep) = self.epilogs.get(&funct.name) {
+             *ep
+         } else { false };
+
+         let stack = self.stacks.get(&funct.name).cloned();
+ 
+         let org = self.getBasedOnArch(arch)?;
+         org.epilog = epilog;
+ 
+         if let Some(stack_off) = stack {
+            org.helper.as_mut().unwrap().stack_off = stack_off;
+         };
+
+        org.epilog = epilog;
+        org.block = Some(block.clone());
+
+        let instrs = org.build_instrs_with_ir_debug(&funct, &triple);
+        let instrs = org.lower_debug(instrs)?;
+
+        let mut dbgs = vec![];
+
+        let mut offset = 0;
+
+        for (instrs, location) in &instrs {
+            dbgs.push(
+                DebugLocation {
+                    line: location.line,
+                    col: location.line,
+                    epilog: false,
+                    prolog: false,
+                    adr: offset,
+                }
+            );
+
+            for instr in instrs {
+                offset += instr.encode()?.0.len() as u64;
+            }    
+        }
+
+        let stack = org.helper.as_ref().unwrap().stack_off;
+
+        epilog = org.epilog;
+
+        org.reset();
+
+
+        if epilog {
+            if !self.epilogs.contains_key(&funct.name) {
+                self.epilogs.insert(funct.name.to_string(), epilog);
+            }
+        }
+
+        if let Some(stacks) = self.stacks.get_mut(&funct.name) {
+            *stacks = stack;
+        } else {
+            self.stacks.insert(funct.name.to_owned(), stack);
+        }
+
+        Ok(dbgs)
+    } 
 }
 
 /// Stores errors which can occure in the `getBasedOnTriple` function in the `TargetRegistry`

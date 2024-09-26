@@ -12,6 +12,7 @@ mod cmp;
 mod alloca;
 mod store;
 mod load;
+mod debug;
 
 pub use assign::*;
 pub use call::*;
@@ -21,6 +22,7 @@ pub use ret::*;
 pub use br::*;
 pub use cmp::*;
 pub use store::*;
+pub use debug::*;
 
 macro_rules! IrTypeWith3 {
     ($name:tt, $param1:tt, $param2:tt, $param3:tt) => {

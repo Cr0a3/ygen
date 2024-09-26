@@ -1,9 +1,19 @@
-use std::{error::Error, fs::OpenOptions, path::Path};
+use std::{error::Error, fs::OpenOptions, path::{Path, PathBuf}};
+use gimli::DW_LANG_C;
 use ygen::{prelude::*, Support::ColorProfile, Target::initializeAllTargets};
 
 
+// hello_world.c:
+// 1 #include <stdout.h>
+// 2 
+// 3 int main() {
+// 4     printf("Hello World!");
+// 5     return 0;
+// 6 }
+
 pub fn main() -> Result<(), Box<dyn Error>> {
     let mut module = Module();
+    module.init_dbg("ygen example".to_owned(), DW_LANG_C, &PathBuf::from("hello_world.c"));
 
     let mut builder = IRBuilder();
 
@@ -26,9 +36,11 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     let entry = func.addBlock("entry");
     builder.positionAtEnd(entry); 
 
+    builder.BuildDebug(4, 0, PathBuf::from("hello_world.c"));
     let string = builder.BuildAssign(&string);
     builder.BuildCall( &other, vec![string] );
 
+    builder.BuildDebug(5, 0, PathBuf::from("hello_world.c"));
     builder.BuildRet( Type::Void );
 
     module.verify()?;
@@ -45,13 +57,18 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         Path::new("out.o")
     )?;
 
-    module
+    let (mut object, debug) = module
         .emitMachineCode(
             triple, 
             &mut initializeAllTargets(triple)?,
-            false
-        )?.0.emit(
-            OpenOptions::new().write(true).create(true).open("out.o")?, None
+            true // turns on debugging information
+        )?;
+
+    object.debug = true; // additionaly we need to turn debugging information in the object file on
+
+    object.emit(
+            OpenOptions::new().write(true).create(true).open("out.o")?, 
+            debug
     )?;
 
     Ok(())

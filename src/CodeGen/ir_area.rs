@@ -1,4 +1,5 @@
-use crate::prelude::Ir;
+use crate::debug::DebugLocation;
+use crate::prelude::{DebugNode, Ir};
 use crate::CodeGen::MachineInstr;
 
 use crate::IR::{ir, Block, Const, Function, Type, TypeMetadata, Var};
@@ -9,6 +10,7 @@ use super::CompilationHelper;
 #[derive(Debug, Clone, Eq)]
 pub struct IrCodeGenArea {
     pub(crate) node: Option<Box<dyn Ir>>,
+    pub(crate) debug_info: Option<DebugLocation>,
     pub(crate) compiled: Vec<MachineInstr>, 
 }
 
@@ -22,6 +24,7 @@ impl PartialEq for IrCodeGenArea {
 pub struct IrCodeGenHelper {
     pub(crate) compiled: Vec<IrCodeGenArea>,
     pub(crate) helper: CompilationHelper,
+    pub(crate) debug_program: Option<DebugNode>,
 }
 
 impl IrCodeGenHelper {
@@ -30,7 +33,26 @@ impl IrCodeGenHelper {
         Self {
             compiled: vec![],
             helper: compiler,
+            debug_program: None,
         }
+    }
+
+    pub(crate) fn set_location_node(&mut self, node: &DebugNode) {
+        self.debug_program = Some(node.to_owned());
+    }
+
+    pub(crate) fn get_location(&self) -> Option<DebugLocation> {
+        if let Some(prog) = &self.debug_program {
+            Some(
+                DebugLocation { 
+                    line: prog.line as u64, 
+                    col: prog.coloumn as u64, 
+                    epilog: false, 
+                    prolog: false,
+                    adr: 0
+                }
+            )
+        } else { None }
     }
 }
 
@@ -41,6 +63,7 @@ macro_rules! ir_codegen_wrap {
             let mut area = IrCodeGenArea {
                 node: Some(node.clone_box()),
                 compiled: Vec::new(),
+                debug_info: self.get_location(),
             };
 
             self.helper.$func(node, &mut area.compiled, block);

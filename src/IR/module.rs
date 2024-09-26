@@ -1,7 +1,9 @@
-use crate::{prelude::Triple, CodeGen::MachineInstr, Obj::{Decl, Link, Linkage, ObjectBuilder}, Optimizations::PassManager, Support::{ColorClass, ColorProfile}, Target::TargetRegistry};
+use gimli::DwLang;
+
+use crate::{debug::{DebugLocation, DebugRegistry}, prelude::Triple, CodeGen::MachineInstr, Obj::{Decl, Link, Linkage, ObjectBuilder}, Optimizations::PassManager, Support::{ColorClass, ColorProfile}, Target::TargetRegistry};
 
 use super::{func::FunctionType, Const, Function, VerifyError};
-use std::{collections::{BTreeMap, HashMap}, error::Error, fs::OpenOptions, io::Write, path::Path};
+use std::{collections::{BTreeMap, HashMap}, error::Error, fmt::Debug, fs::OpenOptions, io::Write, path::Path};
 
 /// ## The Module
 /// The main class for handeling functions
@@ -9,6 +11,7 @@ use std::{collections::{BTreeMap, HashMap}, error::Error, fs::OpenOptions, io::W
 pub struct Module {
     pub(crate) funcs: HashMap<String, Function>,
     pub(crate) consts: HashMap<String, Const>,
+    pub(crate) dbg_registry: Option<DebugRegistry>,
 }
 
 impl Module {
@@ -17,7 +20,13 @@ impl Module {
         Self {
             funcs: HashMap::new(),
             consts: HashMap::new(),
+            dbg_registry: None,
         }
+    }
+
+    /// Initializes debugging metadata
+    pub fn init_dbg(&mut self, producer: String, lang: DwLang, infile: &Path) {
+        self.dbg_registry = Some(DebugRegistry::new(producer, lang, infile));
     }
 
     /// Adds a new function to the module
@@ -139,7 +148,7 @@ impl Module {
     }
 
     /// emits the machine code of the module into an object file (in the form of an object builder)
-    pub fn emitMachineCode(&self, triple: Triple, registry: &mut TargetRegistry) -> Result<ObjectBuilder, Box<dyn Error>> {
+    pub fn emitMachineCode(&mut self, triple: Triple, registry: &mut TargetRegistry, debug: bool) -> Result<(ObjectBuilder, Option<DebugRegistry>), Box<dyn Error>> {
         let mut obj = ObjectBuilder::new(triple);
 
         for (_, consta) in &self.consts {
@@ -171,6 +180,34 @@ impl Module {
                     let mc_instrs = helper.lower.unwrap()(triple.getCallConv()?, prolog);
                     for instr in mc_instrs {
                         comp.extend_from_slice(&instr.encode()?.0);
+                    }
+
+                    if debug {
+                        if let Some(reg) = self.dbg_registry.as_mut() {
+                            reg.add_location(&func.name, DebugLocation {
+                                line: 0,
+                                col: 0,
+                                epilog: false,
+                                prolog: true,
+                                adr: 0,
+                            });
+                        } else {
+                            panic!("you need to initialize debugging information for the registry in order to use debugging information")
+                        }
+                    }
+                }
+
+                if debug {
+                    let mut debug_info = registry.buildDebugInfo(triple.arch, block, &func)?;
+
+                    for dbg in &mut debug_info {
+                        dbg.adr += comp.len() as u64 + 1;
+
+                        if let Some(reg) = self.dbg_registry.as_mut() {
+                            reg.add_location(&func.name, *dbg);
+                        } else {
+                            panic!("you need to initialize debugging information for the registry in order to use debugging information")
+                        }
                     }
                 }
 
@@ -231,7 +268,7 @@ impl Module {
             obj.define(&name, comp);
         }
 
-        Ok(obj)
+        Ok((obj, self.dbg_registry.to_owned()))
     }
 
     /// emits all function into one asm file

@@ -1,4 +1,6 @@
+use std::collections::HashMap;
 use std::error::Error;
+use crate::debug::DebugLocation;
 use crate::prelude::{ir::*, Block, Var};
 use crate::CodeGen::{IrCodeGenArea, IrCodeGenHelper, MCDocInstr, MCInstr};
 use crate::CodeGen::{compilation::CompilationHelper, MachineInstr};
@@ -194,12 +196,14 @@ impl TargetBackendDescr {
         }
     }
 
-    /// loweres the machine instructions into dyn MCInstr but with node information
-    pub fn lower_debug(&self, areas: Vec<IrCodeGenArea>) -> Result<Vec<Box<dyn MCInstr>>, Box<dyn Error>> {
+    /// loweres the machine instructions into dyn MCInstr but with debug information
+    pub fn lower_debug(&self, areas: Vec<IrCodeGenArea>) -> Result< HashMap<Vec<Box<dyn MCInstr>>, DebugLocation>, Box<dyn Error>> {
         if let Some(helper) = &self.helper {
-            let mut mc_instrs = vec![];
+            let mut debug = HashMap::new();
 
             for area in areas {
+                let mut mc_instrs = vec![];
+
                 if let Some(node) = area.node {
                     mc_instrs.push( MCDocInstr::doc(node.dump()) );
                 }
@@ -216,9 +220,21 @@ impl TargetBackendDescr {
                 } else {
                     todo!("the target architecture {:?} doesn't support instruction lowering", helper.arch)
                 };
+
+                if let Some(debug_info) = area.debug_info {
+                    debug.insert(mc_instrs, debug_info);
+                } else {
+                    debug.insert(mc_instrs, DebugLocation {
+                        line: 0,
+                        col: 0,
+                        epilog: false,
+                        prolog: false,
+                        adr: 0,
+                    });
+                }
             }
 
-            Ok(mc_instrs)
+            Ok(debug)
         } else {
             todo!("no helper was registered");
         }       

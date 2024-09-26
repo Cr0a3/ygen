@@ -62,6 +62,7 @@ impl Display for MachineInstr {
     }
 }
 
+
 /// a low level operand which is portable over platforms
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum MachineOperand {
@@ -199,6 +200,20 @@ pub trait MCInstr: Any + Debug + Display {
 impl Clone for Box<dyn MCInstr> {
     fn clone(&self) -> Self {
         self.clone_box()
+    }
+}
+
+impl PartialEq for Box<dyn MCInstr> {
+    fn eq(&self, other: &Self) -> bool {
+        self.dump().unwrap_or(vec![]) == other.dump().unwrap_or(vec![])
+    }
+}
+
+impl Eq for Box<dyn MCInstr> {}
+
+impl std::hash::Hash for Box<dyn MCInstr> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.dump().unwrap_or(vec![]).hash(state);
     }
 }
 

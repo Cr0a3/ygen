@@ -44,8 +44,9 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     module
         .emitMachineCode(
             triple, 
-            &mut initializeAllTargets(triple)?
-        )?.emit(
+            &mut initializeAllTargets(triple)?,
+            false
+        )?.0.emit(
             OpenOptions::new().write(true).create(true).open("out.o")?, None
     )?;
 
