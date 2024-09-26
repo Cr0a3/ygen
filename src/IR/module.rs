@@ -154,8 +154,10 @@ impl Module {
 
             let mut index = 0;
 
+            let mut comp = vec![];
+
             for block in &func.blocks {
-                let (mut compiled, links) = registry.buildMachineCodeForTarget(triple.arch, block, &func)?;
+                let (compiled, links) = registry.buildMachineCodeForTarget(triple.arch, block, &func)?;
                 
                 if registry.requires_prolog(&func) && index == 0 {
                     let mut helper = registry.getBasedOnArch(triple.arch)?.helper.clone().unwrap();
@@ -167,23 +169,15 @@ impl Module {
                     helper.compile_prolog(&mut prolog);
 
                     let mc_instrs = helper.lower.unwrap()(triple.getCallConv()?, prolog);
-                    let mut compiled_prolog = vec![];
-
                     for instr in mc_instrs {
-                        compiled_prolog.extend_from_slice(&instr.encode()?.0);
+                        comp.extend_from_slice(&instr.encode()?.0);
                     }
-
-                    let compiled_backup = compiled.clone();
-                    compiled = compiled_prolog;
-                    compiled.extend_from_slice(&compiled_backup);
                 }
 
                 blocks.insert(block.name.to_owned(), (compiled, links));
 
                 index += 1;
             }
-
-            let mut comp = vec![];
 
             let mut block_links: Vec<((i64, i64, i64, i64), String, String, i64)> = vec![];
 
@@ -202,7 +196,8 @@ impl Module {
                             link.at as i64 + (prev_len as i64) + link.addend + idx
                         };
 
-                        block_links.push(((adr(0), adr(1), adr(2), adr(3)), link.to, link.from, link.at as i64));
+                        block_links.push(((adr(0), adr(1), adr(2), adr(3)), link.to, link.from, link.at as i64 + link.addend - 1
+                    ));
                     } else {
                         obj.link(Link { 
                             from: link.from, 
@@ -219,7 +214,7 @@ impl Module {
                 let mut target_adr = *block_adrs.get(&target).expect("hmm i made a programming error") as i64;
                 let source_adr = *block_adrs.get(&source).expect("hmm i made a programming error") as i64 + 5;
 
-                target_adr = target_adr - source_adr - (off - source_adr);
+                target_adr -= source_adr + off;
 
                 let bytes = target_adr.to_be_bytes();
 

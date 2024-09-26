@@ -136,8 +136,6 @@ impl TargetRegistry {
         }
 
         if let Some(stacks) = self.stacks.get_mut(&funct.name) {
-            println!("before: {}", *stacks);
-            println!("after: {}", stack);
             *stacks = stack;
         } else {
             self.stacks.insert(funct.name.to_owned(), stack);
