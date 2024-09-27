@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, VecDeque};
+use std::path::PathBuf;
 
-use crate::prelude::{Alloca, Cmp, CmpMode, Ir, Load, Store};
+use crate::prelude::{Alloca, Cmp, CmpMode, DebugNode, Ir, Load, Store};
 use crate::Obj::Linkage;
 use crate::IR::{ir, Block, Const, FnTy, Function, Type, TypeMetadata, Var};
 
@@ -9,9 +10,10 @@ use super::IrError;
 
 #[derive(Debug, Clone, Eq)]
 #[allow(missing_docs)]
+#[allow(private_interfaces)]
 pub struct IrInstr {
-    pub(crate) loc: Loc,
-    pub(crate) inst: Box<dyn Ir>,
+    pub loc: Loc,
+    pub inst: Box<dyn Ir>,
 }
 
 impl PartialEq for IrInstr {
@@ -23,8 +25,8 @@ impl PartialEq for IrInstr {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[allow(missing_docs)]
 pub struct IrBlock {
-    pub(crate) loc: Loc,
-    pub(crate) body: Vec<IrInstr>,
+    pub loc: Loc,
+    pub body: Vec<IrInstr>,
 }
 
 /// An ir statement
@@ -442,6 +444,40 @@ impl IrParser {
                     "store" => self.parse_store()?,
                     _ => Err(IrError::UnkownInstrinc{loc: curr.loc.clone(), found: instrinc })?,
                 }
+            } else if let TokenType::ExclamationMark = curr.typ {
+                self.input.pop_front();
+                self.expect_ident("dbg".to_owned())?;
+                self.input.pop_front();
+
+                self.expect(TokenType::Int(0))?;
+                let line = if let TokenType::Int(int) = &self.current_token()?.typ {
+                    *int
+                } else { unreachable!() };
+                self.input.pop_front();
+
+                self.expect(TokenType::Dot)?;
+                self.input.pop_front();
+
+                self.expect(TokenType::Int(0))?;
+                let coloumn = if let TokenType::Int(int) = &self.current_token()?.typ {
+                    *int
+                } else { unreachable!() };
+                self.input.pop_front();
+
+                self.expect_ident("in".to_owned())?;
+                self.input.pop_front();
+
+                self.expect(TokenType::UnIdent(String::new()))?;
+                let file = if let TokenType::UnIdent(string) = &self.current_token()?.typ {
+                    string.to_owned()
+                } else { unreachable!() };
+                self.input.pop_front();
+
+                Box::new(DebugNode {
+                    line: line,
+                    coloumn: coloumn,
+                    file: PathBuf::from(&file),
+                })
             } else {
                 Err(IrError::UnexpectedToken(curr.clone()))?
              }

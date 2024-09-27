@@ -1,6 +1,5 @@
 use std::{error::Error, fs::OpenOptions, path::{Path, PathBuf}};
-use gimli::DW_LANG_C;
-use ygen::{prelude::*, Support::ColorProfile, Target::initializeAllTargets};
+use ygen::{debug::Lang, prelude::*, Support::ColorProfile, Target::initializeAllTargets};
 
 
 // hello_world.c:
@@ -13,7 +12,7 @@ use ygen::{prelude::*, Support::ColorProfile, Target::initializeAllTargets};
 
 pub fn main() -> Result<(), Box<dyn Error>> {
     let mut module = Module();
-    module.init_dbg("ygen example".to_owned(), DW_LANG_C, &PathBuf::from("hello_world.c"));
+    module.init_dbg("ygen example".to_owned(), Lang::C, &PathBuf::from("hello_world.c"));
 
     let mut builder = IRBuilder();
 

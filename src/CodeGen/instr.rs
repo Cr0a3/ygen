@@ -211,11 +211,6 @@ impl PartialEq for Box<dyn MCInstr> {
 
 impl Eq for Box<dyn MCInstr> {}
 
-impl std::hash::Hash for Box<dyn MCInstr> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.dump().unwrap_or(vec![]).hash(state);
-    }
-}
 
 /// a doc comment in the generated assembly code
 #[derive(Debug, Clone, PartialEq, Eq)]

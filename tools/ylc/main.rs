@@ -1,9 +1,10 @@
 use std::fs::File;
 use std::io::{Read, Write};
+use std::path::PathBuf;
 use std::process::exit;
 use std::error::Error;
 
-use ygen::prelude::PassManager;
+use ygen::prelude::{DebugNode, PassManager};
 use ygen::Optimizations::Passes;
 use ygen::Support::{ColorProfile, Colorize};
 use ygen::Target::initializeAllTargets;
@@ -36,6 +37,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     cli.add_opt("O", "optimize-simple", "Run simple optimizations");
     cli.add_arg("passes", "optimization-passes", "The optimization passes to run", false);
     
+    cli.add_opt("g", "debug", "Adds debugging metadata");
+
     cli.scan();
 
     if cli.opt("h") {
@@ -129,11 +132,34 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     }
 
+    let mut dbg_file = PathBuf::from("");
+
+    for stmt in &parser.out {
+        match stmt {
+            ygen::IR::parser::parser::IrStmt::Func { name: _, ret: _, args: _, body, scope: _, location: _ } => {
+                for (_, block) in body {
+                    for node in &block.body {
+                        if let Some(dbg) = node.inst.as_any().downcast_ref::<DebugNode>() {
+                            dbg_file = dbg.file.to_owned();
+                        }
+                    }
+                }
+            },
+            _ => {},
+        }
+    }
+
     let mut gen = IrGen::new(parser.out);
 
     gen.gen();
 
     let mut module: Module = gen.module();
+
+    module.init_dbg(
+        "ygen ir language compiler (ylc)".to_owned(), 
+        /*The dwarf std doesn't have ygen ir*/ygen::debug::Lang::Rust, 
+        &std::path::PathBuf::from(dbg_file)
+    );
 
     if let Some(passes) = cli.arg_val("passes") {
         let mut opts = PassManager::new();
@@ -176,15 +202,20 @@ fn main() -> Result<(), Box<dyn Error>> {
         println!("{}", asm);
     }
 
+    let debug = cli.opt("g");
+
     if cli.opt("asm") {
         let asm = module.emitAsm(triple, &mut initializeAllTargets(triple)?)?;
 
         outfile.write_all(asm.as_bytes())?
     } else {
-        module.emitMachineCode(
+        let (mut object, debug_registry) = module.emitMachineCode(
             triple, 
-            &mut initializeAllTargets(triple)?
-        )?.emit(outfile, None)?;
+            &mut initializeAllTargets(triple)?,
+            debug
+        )?;
+        object.debug = debug;
+        object.emit(outfile, debug_registry)?;
     }
 
     Ok(())

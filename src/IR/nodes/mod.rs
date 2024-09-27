@@ -153,7 +153,7 @@ use crate::Support::{ColorClass, ColorProfile};
 
 
 /// The ir trait
-pub(crate) trait Ir: Debug + Any {
+pub trait Ir: Debug + Any {
     /// Returns the ir node as his textual representation
     fn dump(&self) -> String;
     /// Returns the ir node as his textual representation with colors
@@ -162,7 +162,8 @@ pub(crate) trait Ir: Debug + Any {
     /// Turns the ir node to an any
     fn as_any(&self) -> &dyn Any;
 
-    fn verify(&self, FuncTy: FunctionType) -> Result<(), VerifyError>;
+    /// verifys the instruction (used for return instruction) based on the return type
+    fn verify(&self, _: FunctionType) -> Result<(), VerifyError>;
 
     /// Clones the node into a box of `Box<dyn Ir>`
     fn clone_box(&self) -> Box<dyn Ir>;
@@ -179,6 +180,7 @@ pub(crate) trait Ir: Debug + Any {
         false
     }
 
+    /// checks if the node is equal to the other node (used for the implementation of Eq)
     fn is(&self, other: &Box<dyn Ir>) -> bool {
         other.dump() == self.dump()
     }

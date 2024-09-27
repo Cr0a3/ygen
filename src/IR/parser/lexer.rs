@@ -78,6 +78,12 @@ pub enum TokenType {
 
     /// cond
     Cond,
+
+    /// !
+    ExclamationMark,
+
+    /// ^abc (till line end)
+    UnIdent(String),
 }
 
 impl TokenType {
@@ -103,6 +109,8 @@ impl TokenType {
             TokenType::TripleDot => "...",
             TokenType::Block(_) => "block",
             TokenType::Cond => "cond",
+            TokenType::ExclamationMark => "!",
+            TokenType::UnIdent(_) => "uident",
         }.to_string()
     }
 }
@@ -302,6 +310,33 @@ impl IrLexer {
                     })?
                 }
                 ty = Some(TokenType::TripleDot)
+            },
+
+            '!' => ty = Some(TokenType::ExclamationMark),
+
+            '^' => {
+                self.advance()?;
+                let mut ident = String::new();
+
+                loop {
+                    let peek = self.peek();
+
+                    if let Some(peek) = peek {
+                        if '\n' == peek {
+                            break;
+                        }
+
+                        if '\r' != peek {
+                            ident.push(peek);
+                        }
+                    } else {
+                        break;
+                    }
+
+                    self.advance()?;
+                }
+
+                ty = Some(TokenType::UnIdent(ident))
             },
 
             'a'..='z' | 'A'..='Z' | '_' => ty = Some(self.scan_ident()?),

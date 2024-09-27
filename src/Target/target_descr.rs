@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::error::Error;
 use crate::debug::DebugLocation;
 use crate::prelude::{ir::*, Block, Var};
@@ -197,9 +196,9 @@ impl TargetBackendDescr {
     }
 
     /// loweres the machine instructions into dyn MCInstr but with debug information
-    pub fn lower_debug(&self, areas: Vec<IrCodeGenArea>) -> Result< HashMap<Vec<Box<dyn MCInstr>>, DebugLocation>, Box<dyn Error>> {
+    pub fn lower_debug(&self, areas: Vec<IrCodeGenArea>) -> Result< Vec<(Vec<Box<dyn MCInstr>>, DebugLocation)>, Box<dyn Error>> {
         if let Some(helper) = &self.helper {
-            let mut debug = HashMap::new();
+            let mut debug = Vec::new();
 
             for area in areas {
                 let mut mc_instrs = vec![];
@@ -222,15 +221,15 @@ impl TargetBackendDescr {
                 };
 
                 if let Some(debug_info) = area.debug_info {
-                    debug.insert(mc_instrs, debug_info);
+                    debug.push((mc_instrs, debug_info));
                 } else {
-                    debug.insert(mc_instrs, DebugLocation {
+                    debug.push((mc_instrs, DebugLocation {
                         line: 0,
                         col: 0,
                         epilog: false,
                         prolog: false,
                         adr: 0,
-                    });
+                    }));
                 }
             }
 

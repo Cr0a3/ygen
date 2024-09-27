@@ -17,11 +17,11 @@ pub struct DebugNode {
 
 impl Ir for DebugNode {
     fn dump(&self) -> String {
-        format!("!dbg {}:{} in {:?}", self.line, self.coloumn, self.file.to_str().unwrap())
+        format!("!dbg {}:{} in ^{}", self.line, self.coloumn, self.file.to_str().unwrap())
     }
 
     fn dumpColored(&self, profile: crate::Support::ColorProfile) -> String {
-        format!("{}: {}:{} {} {}", 
+        format!("{}: {}:{} {} ^{}", 
             profile.markup("!dbg", ColorClass::Instr),
             profile.markup(&self.line.to_string(), ColorClass::Value), 
             profile.markup(&self.coloumn.to_string(), ColorClass::Value), 
