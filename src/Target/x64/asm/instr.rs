@@ -416,7 +416,12 @@ impl X64MCInstr {
                     op.extend_from_slice( &ModRm::regWimm(0, reg) );
                 } else if let Some(Operand::Mem(mem)) = &self.op1 {
                     rex = mem.rex(true).option();
-                    op.extend_from_slice( &ModRm::imMem(0, mem.to_owned()) );
+                    let (mod_, encoded) = mem.encode(None);
+                    
+                    if mem.index.is_some() {
+                        op.push(mod_ << 6 | 0b100);
+                    }
+                    op.extend_from_slice( &encoded );
                 } else { unreachable!() }
 
                 (buildOpcode(None, rex, op), None)
