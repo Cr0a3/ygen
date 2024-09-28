@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-use crate::{Target::{Arch, CallConv}, IR::{Function, TypeMetadata, Var}};
+use crate::{Target::{Arch, CallConv}, IR::{Function, TypeMetadata}};
 
-use super::{calling_convention::MachineCallingConvention, reg::Reg, reg_vec::RegVec, MCInstr, MachineInstr};
+use super::{calling_convention::MachineCallingConvention, reg::Reg, reg_alloc::RegAlloc, reg_vec::RegVec, MCInstr, MachineInstr};
 
 mod call;
 mod ret;
@@ -32,10 +32,12 @@ pub struct CompilationHelper {
     pub(crate) var_types: HashMap<String, TypeMetadata>,
 
     pub(crate) stack_off: i64,
+
+    pub(crate) alloc: RegAlloc,
 }
 
 impl CompilationHelper {
-    pub(crate) fn new(arch: Arch, call: MachineCallingConvention) -> Self {
+    pub(crate) fn new(arch: Arch, call: MachineCallingConvention, alloc: RegAlloc) -> Self {
         Self {
             regs: RegVec::new(),
             arch: arch,
@@ -44,98 +46,15 @@ impl CompilationHelper {
             call: call,
             lower: None,
             stack_off: call.shadow(arch),
+            alloc: alloc,
         }
     }
 
-    /// frees the resources of the variable
-    pub(crate) fn free(&mut self, var: &Var) {
-        if let Some(location) = self.vars.get(&var.name) {
-            match location {
-                VarLocation::Reg(reg) => self.regs.push(reg.arch(), reg.clone()),
-                _ => {}, // stack offsets cannot be subtracted
-            }
-        }
-    }
-
-    /// allocates resources for a var but on the stack
-    pub(crate) fn alloc_stack(&mut self, var: &Var) -> VarLocation {
-        let loc = if var.ty.byteSize() as i64 <= self.call.align(self.arch) {
-            VarLocation::Mem(self.stack_off)
-        } else {
-            todo!()
-        };
-
-        self.vars.insert(var.name.to_owned(), loc);
-        self.var_types.insert(var.name.to_owned(), var.ty);
-
-        self.stack_off += self.call.align(self.arch);
-
-        loc
-    }
-
-    /// allocates a variable on the stack
-    /// 
-    /// The difference to `alloc_stack` is that here you can use a custom stack space size
-    /// 
-    /// **NOTE:** it does not register the var
-    pub(crate) fn alloc_custom_stack(&mut self, ty: &TypeMetadata) -> (VarLocation, i64) {
-        let loc = if ty.byteSize() as i64 <= self.call.align(self.arch) {
-            VarLocation::Mem(self.stack_off)
-        } else {
-            todo!()
-        };
-
-        let ret = (loc, self.stack_off);
-
-        self.stack_off += self.call.align(self.arch);
-
-        ret
-    }
-
-    /// allocates resources for a new variable
-    pub(crate) fn alloc(&mut self, var: &Var) -> VarLocation {
-        let location = if let Some(reg) = self.regs.pop(self.arch) {
-            VarLocation::Reg(match reg {
-                Reg::x64(x64) => Reg::x64(x64.sub_ty(var.ty)),
-            })
-        } else {
-            return self.alloc_stack(var);
-        };
-
-        self.vars.insert(var.name.to_owned(), location);
-        self.var_types.insert(var.name.to_owned(), var.ty);
-
-        location
-    }
-
-    /// passes the arguments into the right register
-    pub(crate) fn build_argument_preprocessing(&mut self, func: &Function) {
-        let func = &func.ty;
-
-        let mut num = 0;
-
-        for ty in &func.args {
-            let location = {
-                if let Some(reg) = self.call.args(self.arch).get(num) {
-                    VarLocation::Reg(match reg {
-                        Reg::x64(x64) => Reg::x64(x64.sub_ty(*ty)),
-                    })
-                } else {
-                    todo!("The new system currently doesn't support memory")
-                }
-            };
-
-            let name = || func.arg(num).name;
-
-            self.vars.insert(
-                name(), 
-                location
-            );
-
-            self.var_types.insert(name(), *ty);
-
-            num += 1;
-        }
+    /// runs the register allocator
+    pub fn run_alloc(&mut self, func: &Function) {
+        self.alloc.run_alloc(func);
+        self.vars = self.alloc.vars.to_owned();
+        self.var_types = self.alloc.var_types.to_owned();
     }
 
     #[inline]

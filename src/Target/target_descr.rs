@@ -10,6 +10,7 @@ use super::{CallConv, Compiler, Lexer};
 
 /// The TargetBackendDescr is used to store all the functions/information to compile ir nodes into assembly
 #[allow(unused)]
+#[derive(Clone)]
 pub struct TargetBackendDescr {
     pub(crate) init: Option<fn(CallConv)->TargetBackendDescr>,
 
@@ -74,8 +75,8 @@ impl TargetBackendDescr {
     }
 
     /// builds all ir nodes of the current block into a vector of MachineInstr
-    pub fn build_instrs(&mut self, func: &Function, triple: &Triple) -> Vec<MachineInstr> {
-        let areas = self.build_instrs_with_ir_debug(func, triple);
+    pub fn build_instrs(&mut self, triple: &Triple) -> Vec<MachineInstr> {
+        let areas = self.build_instrs_with_ir_debug(triple);
 
         let mut merged = vec![];
 
@@ -87,7 +88,7 @@ impl TargetBackendDescr {
     }
 
     /// builds the instruction with ir debug metadata
-    pub fn build_instrs_with_ir_debug(&mut self, func: &Function, triple: &Triple) -> Vec<IrCodeGenArea> {
+    pub fn build_instrs_with_ir_debug(&mut self, triple: &Triple) -> Vec<IrCodeGenArea> {
         let helper = if let Some(helper) = &mut self.helper { helper }
         else { panic!("no current compilation helper"); };
 
@@ -100,8 +101,6 @@ impl TargetBackendDescr {
         } else {
             panic!("no current block");
         };
-
-        helper.build_argument_preprocessing(func);
 
         let mut ir_helper = IrCodeGenHelper::new(helper.to_owned());
 

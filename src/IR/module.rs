@@ -169,10 +169,8 @@ impl Module {
                 let (compiled, links) = registry.buildMachineCodeForTarget(triple.arch, block, &func)?;
                 
                 if registry.requires_prolog(&func) && index == 0 {
-                    let mut helper = registry.getBasedOnArch(triple.arch)?.helper.clone().unwrap();
+                    let mut helper = registry.getBackendForFuncOrFork(triple.arch, func).helper.expect("expected valid helper");
                     
-                    helper.stack_off = *registry.stacks.get(&func.name).unwrap();
-
                     let mut prolog = vec![];
 
                     helper.compile_prolog(&mut prolog);
@@ -300,9 +298,7 @@ impl Module {
             if registry.requires_prolog(&func) {
                 let backup = instrs.clone();
                 
-                let mut helper = registry.getBasedOnArch(triple.arch)?.helper.clone().unwrap();
-                
-                helper.stack_off = *registry.stacks.get(&func.name).unwrap();
+                let mut helper = registry.getBackendForFuncOrFork(triple.arch, func).helper.expect("expected valid helper");
 
                 let mut prolog = vec![];
 
@@ -357,9 +353,7 @@ impl Module {
                 let asm_lines = registry.buildAsmForTarget(triple.arch, block, func)?;
                 
                 if registry.requires_prolog(&func) && index == 0 {
-                    let mut helper = registry.getBasedOnArch(triple.arch)?.helper.clone().unwrap();
-                    
-                    helper.stack_off = *registry.stacks.get(&func.name).unwrap();
+                    let mut helper = registry.getBackendForFuncOrFork(triple.arch, func).helper.expect("expected valid helper");
 
                     let mut prolog = vec![];
 

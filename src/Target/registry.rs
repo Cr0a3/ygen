@@ -7,9 +7,9 @@ use super::{Arch, CallConv, TargetBackendDescr, Triple};
 /// The target registry: manages different targets
 pub struct TargetRegistry {
     targets: HashMap<Arch, TargetBackendDescr>,
+    funcs: HashMap<String, TargetBackendDescr>,
 
-    epilogs: HashMap<String, bool>,
-    pub(crate) stacks: HashMap<String, i64>,
+    pub(crate) epilogs: HashMap<String, bool>,
 
     triple: Triple,
 }
@@ -19,8 +19,8 @@ impl TargetRegistry {
     pub fn new(triple: Triple) -> Self {
         Self {
             targets: HashMap::new(),
+            funcs: HashMap::new(),
             epilogs: HashMap::new(),
-            stacks: HashMap::new(),
             triple: triple,
         }
     }
@@ -49,47 +49,50 @@ impl TargetRegistry {
         }
     }
 
+    pub(crate) fn getBackendForFuncOrFork(&mut self, arch: Arch, funct: &Function) -> TargetBackendDescr {
+        if let Some(backend) = self.funcs.get(&funct.name) {
+            let backend = backend.to_owned();
+
+            return backend;
+        } else if let Some(to_fork) = self.targets.get(&arch) {
+            let to_fork = to_fork.to_owned();
+            self.funcs.insert(funct.name.to_owned(), to_fork);
+            self.getBackendForFuncOrFork(arch, funct)
+        } else { panic!("the arch: {:?} wasn't initialized", arch); }
+    }
+
+    fn updateFuncBackend(&mut self, name: &String, backend: TargetBackendDescr) {
+        if let Some(original) = self.funcs.get_mut(name) {
+            *original = backend;
+        }
+    }
+
     /// emits machine instrs for target <br>
     /// **note**: machine instrs are portable over all platforms <br>
     /// **warning**: Does not add a prolog
     pub fn buildMachineInstrsForTarget(&mut self, arch: Arch, block: &Block, funct: &Function) -> Result<Vec<MachineInstr>, Box<dyn Error>> {
         let triple = self.triple;
 
-        let mut epilog = if let Some(ep) = self.epilogs.get(&funct.name) {
-            *ep
-        } else { false };
+        let run_alloc = if let Some(_) = self.funcs.get(&funct.name) { false } else { true };
+        
+        let mut backend = self.getBackendForFuncOrFork(arch, funct);
 
-        let stack = self.stacks.get(&funct.name).cloned();
-
-        let org = self.getBasedOnArch(arch)?;
-        org.epilog = epilog;
-
-        if let Some(stack_off) = stack {
-            org.helper.as_mut().unwrap().stack_off = stack_off;
-        };
-
-        org.epilog = epilog;
-
-        org.block = Some(block.clone());
-        let instrs = org.build_instrs(&funct, &triple);
-
-        epilog = org.epilog;
-
-        let stack = org.helper.as_ref().unwrap().stack_off;
-
-        org.reset();
-
-        if epilog {
-            if !self.epilogs.contains_key(&funct.name) {
-                self.epilogs.insert( funct.name.to_owned(), epilog );
+        if run_alloc {
+            if let Some(helper) = &mut backend.helper {
+                helper.run_alloc(&funct);
             }
         }
 
-        if let Some(stacks) = self.stacks.get_mut(&funct.name) {
-            *stacks = stack;
-        } else {
-            self.stacks.insert(funct.name.to_owned(), stack);
+        backend.block = Some(block.clone());
+        let instrs = backend.build_instrs(&triple);
+
+        if backend.epilog {
+            if !self.epilogs.contains_key(&funct.name) {
+                self.epilogs.insert( funct.name.to_owned(), true );
+            }
         }
+
+        self.updateFuncBackend(&funct.name, backend);
 
         Ok(instrs)
     }
@@ -98,23 +101,21 @@ impl TargetRegistry {
     /// **warning**: Does not add a prolog
     pub fn buildAsmForTarget(&mut self, arch: Arch, block: &Block, funct: &Function) -> Result<Vec<String>, Box<dyn Error>> {
        let triple = self.triple;
-       let mut epilog = if let Some(ep) = self.epilogs.get(&funct.name) {
-            *ep
-        } else { false };
 
-        let stack = self.stacks.get(&funct.name).cloned();
+       let run_alloc = if let Some(_) = self.funcs.get(&funct.name) { false } else { true };
 
-        let org = self.getBasedOnArch(arch)?;
-        org.epilog = epilog;
+        let mut backend = self.getBackendForFuncOrFork(arch, funct);
 
-        if let Some(stack_off) = stack {
-            org.helper.as_mut().unwrap().stack_off = stack_off;
-        };
+        if run_alloc {
+            if let Some(helper) = &mut backend.helper {
+                helper.run_alloc(&funct);
+            }
+        }
 
-        org.block = Some(block.clone());
+        backend.block = Some(block.clone());
 
-        let instrs = org.build_instrs_with_ir_debug(&funct, &triple);
-        let instrs = org.lower_debug(instrs)?;
+        let instrs = backend.build_instrs_with_ir_debug(&triple);
+        let instrs = backend.lower_debug(instrs)?;
 
         let mut asm = vec![];
 
@@ -126,22 +127,13 @@ impl TargetRegistry {
             }
         }
 
-        let stack = org.helper.as_ref().unwrap().stack_off;
-
-        epilog = org.epilog;
-        org.reset();
-
-        if epilog {
+        if backend.epilog {
             if !self.epilogs.contains_key(&funct.name) {
-                self.epilogs.insert(funct.name.to_string(), epilog);
+                self.epilogs.insert(funct.name.to_string(), true);
             }
         }
 
-        if let Some(stacks) = self.stacks.get_mut(&funct.name) {
-            *stacks = stack;
-        } else {
-            self.stacks.insert(funct.name.to_owned(), stack);
-        }
+        self.updateFuncBackend(&funct.name, backend);
 
         Ok(asm)
     }
@@ -150,24 +142,21 @@ impl TargetRegistry {
     /// **warning**: Does not add a prolog
     pub fn buildMachineCodeForTarget(&mut self, arch: Arch, block: &Block, funct: &Function) -> Result<(Vec<u8>, Vec<Link>), Box<dyn Error>> {
         let triple = self.triple;
-        let mut epilog = if let Some(ep) = self.epilogs.get(&funct.name) {
-             *ep
-         } else { false };
 
-         let stack = self.stacks.get(&funct.name).cloned();
- 
-         let org = self.getBasedOnArch(arch)?;
-         org.epilog = epilog;
- 
-         if let Some(stack_off) = stack {
-            org.helper.as_mut().unwrap().stack_off = stack_off;
-         };
+        let run_alloc = if let Some(_) = self.funcs.get(&funct.name) { false } else { true };
 
-        org.epilog = epilog;
-        org.block = Some(block.clone());
+        let mut backend = self.getBackendForFuncOrFork(arch, funct);
 
-        let instrs = org.build_instrs(&funct, &triple);
-        let instrs = org.lower(instrs)?;
+        if run_alloc {
+            if let Some(helper) = &mut backend.helper {
+                helper.run_alloc(&funct);
+            }
+        }
+
+        backend.block = Some(block.clone());
+
+        let instrs = backend.build_instrs(&triple);
+        let instrs = backend.lower(instrs)?;
 
         let mut res = vec![];
         let mut links = vec![];
@@ -190,24 +179,13 @@ impl TargetRegistry {
             }
         }
 
-        let stack = org.helper.as_ref().unwrap().stack_off;
-
-        epilog = org.epilog;
-
-        org.reset();
-
-
-        if epilog {
+        if backend.epilog {
             if !self.epilogs.contains_key(&funct.name) {
-                self.epilogs.insert(funct.name.to_string(), epilog);
+                self.epilogs.insert(funct.name.to_string(), true);
             }
         }
 
-        if let Some(stacks) = self.stacks.get_mut(&funct.name) {
-            *stacks = stack;
-        } else {
-            self.stacks.insert(funct.name.to_owned(), stack);
-        }
+        self.updateFuncBackend(&funct.name, backend);
 
         Ok((res, links))
     }
@@ -222,24 +200,21 @@ impl TargetRegistry {
     /// build the debugging information for an function
     pub fn buildDebugInfo(&mut self, arch: Arch, block: &Block, funct: &Function) -> Result<Vec<DebugLocation>, Box<dyn Error>> {
         let triple = self.triple;
-        let mut epilog = if let Some(ep) = self.epilogs.get(&funct.name) {
-             *ep
-         } else { false };
 
-         let stack = self.stacks.get(&funct.name).cloned();
- 
-         let org = self.getBasedOnArch(arch)?;
-         org.epilog = epilog;
- 
-         if let Some(stack_off) = stack {
-            org.helper.as_mut().unwrap().stack_off = stack_off;
-         };
+        let run_alloc = if let Some(_) = self.funcs.get(&funct.name) { false } else { true };
 
-        org.epilog = epilog;
-        org.block = Some(block.clone());
+        let mut backend = self.getBackendForFuncOrFork(arch, funct);
 
-        let instrs = org.build_instrs_with_ir_debug(&funct, &triple);
-        let instrs = org.lower_debug(instrs)?;
+        if run_alloc {
+            if let Some(helper) = &mut backend.helper {
+                helper.run_alloc(&funct);
+            }
+        }
+
+        backend.block = Some(block.clone());
+
+        let instrs = backend.build_instrs_with_ir_debug(&triple);
+        let instrs = backend.lower_debug(instrs)?;
 
         let mut dbgs = vec![];
 
@@ -261,24 +236,13 @@ impl TargetRegistry {
             }    
         }
 
-        let stack = org.helper.as_ref().unwrap().stack_off;
-
-        epilog = org.epilog;
-
-        org.reset();
-
-
-        if epilog {
+        if backend.epilog {
             if !self.epilogs.contains_key(&funct.name) {
-                self.epilogs.insert(funct.name.to_string(), epilog);
+                self.epilogs.insert(funct.name.to_string(), true);
             }
         }
 
-        if let Some(stacks) = self.stacks.get_mut(&funct.name) {
-            *stacks = stack;
-        } else {
-            self.stacks.insert(funct.name.to_owned(), stack);
-        }
+        self.updateFuncBackend(&funct.name, backend);
 
         Ok(dbgs)
     } 

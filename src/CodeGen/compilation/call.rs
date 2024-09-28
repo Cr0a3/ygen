@@ -1,15 +1,13 @@
 use std::collections::HashMap;
 
-use crate::{prelude::{Call, Ir}, CodeGen::{MachineMnemonic, MachineOperand}};
+use crate::{prelude::Call, CodeGen::{MachineMnemonic, MachineOperand}};
 use crate::IR::{Block, Function, Var};
 use super::{CompilationHelper, VarLocation};
 use crate::CodeGen::MachineInstr;
 
 impl CompilationHelper {
     #[allow(missing_docs)]
-    pub fn compile_call(&mut self, node: &Call<Function, Vec<Var>, Var>, mc_sink: &mut Vec<MachineInstr>, block: &Block) {
-        let boxed: Box<dyn Ir> = Box::new(node.clone());
-
+    pub fn compile_call(&mut self, node: &Call<Function, Vec<Var>, Var>, mc_sink: &mut Vec<MachineInstr>, _: &Block) {
         let mut reg_args = 0;
 
         let args = self.call.args(self.arch);
@@ -26,7 +24,10 @@ impl CompilationHelper {
                         // SAVE IT ONTO THE STACK
                         let mut save = MachineInstr::new( MachineMnemonic::Move );
             
-                        let (_, off) = self.alloc_custom_stack(&typ);
+                        let off = match self.alloc.alloc_stack(typ) {
+                            VarLocation::Mem(off) => off,
+                            _ => unreachable!(),
+                        };
                         saved.insert(name.to_owned(), (off, loc));
 
                         save.set_out(MachineOperand::Stack(off));
@@ -42,29 +43,28 @@ impl CompilationHelper {
         let mut pushes = Vec::new();
 
         for arg in &node.inner2 {
-            let mut instr = MachineInstr::new(MachineMnemonic::Move);
-
             let src = self.vars.get(&arg.name).expect(&format!("expected valid variable: {}", arg.name));
 
             let arg_reg = args.get(reg_args);
 
-            if let Some(arg) = arg_reg {
-                instr.set_out(MachineOperand::Reg(*arg));
+            if let Some(reg) = arg_reg {
+                let mut instr = MachineInstr::new(MachineMnemonic::Move);
+
+                let mut op = src.into();
+
+                if let Some((save, _)) = saved.get(&arg.name) {
+                    op = MachineOperand::Stack(*save);
+                }
+
+                instr.set_out(MachineOperand::Reg(*reg));
+                instr.add_operand(op);
+                mc_sink.push( instr );
             } else {
-                instr = MachineInstr::new(MachineMnemonic::Push);
+                let mut instr = MachineInstr::new(MachineMnemonic::Push);
                 instr.add_operand(src.into());
                 pushes.push(arg.ty);
+                mc_sink.push( instr );
             }
-
-            let mut op = src.into();
-
-            if let Some((save, _)) = saved.get(&arg.name) {
-                op = MachineOperand::Stack(*save);
-            }
-
-            instr.add_operand(op);
-
-            mc_sink.push( instr );
 
             reg_args += 1;
         }
@@ -97,25 +97,23 @@ impl CompilationHelper {
             mc_sink.push( instr );
         }
 
-        if block.isVarUsedAfterNode(&boxed, &node.inner3) {
-            let mut instr = MachineInstr::new(MachineMnemonic::Move);
+        let mut instr = MachineInstr::new(MachineMnemonic::Move);
 
-            let loc = self.alloc(&node.inner3);
+        let loc = *self.vars.get(&node.inner3.name).unwrap();
 
-            instr.add_operand(
-                MachineOperand::Reg(
-                    self.call.return_reg(self.arch, node.inner1.ty.ret)
-                )
-            );
+        instr.add_operand(
+            MachineOperand::Reg(
+                self.call.return_reg(self.arch, node.inner1.ty.ret)
+            )
+        );
 
-            instr.meta = node.inner1.ty.ret;
+        instr.meta = node.inner1.ty.ret;
 
-            match loc {
-                VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
-                VarLocation::Mem(stack) => instr.add_operand( MachineOperand::Stack(stack) ),
-            }
-
-            mc_sink.push(instr);
+        match loc {
+            VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
+            VarLocation::Mem(stack) => instr.set_out( MachineOperand::Stack(stack) ),
         }
+
+        mc_sink.push(instr);
     }
 }

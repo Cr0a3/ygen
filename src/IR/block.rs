@@ -72,6 +72,7 @@ impl Block {
     }
 
     /// Returns true if the variable is used after the ir node
+    #[allow(unused)]
     pub(crate) fn isVarUsedAfterNode(&self, start: &Box<dyn Ir>, var: &Var) -> bool {
         let mut used = false;
         let mut started = false;

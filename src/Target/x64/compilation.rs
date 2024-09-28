@@ -1,4 +1,4 @@
-use crate::{CodeGen::{calling_convention::MachineCallingConvention, compilation::CompilationHelper, Reg}, Target::{Arch, CallConv}};
+use crate::{CodeGen::{calling_convention::MachineCallingConvention, compilation::CompilationHelper, reg_alloc::RegAlloc, Reg}, Target::{Arch, CallConv}};
 
 use super::x64Reg;
 
@@ -8,7 +8,7 @@ pub(crate) fn construct_compilation_helper(call_conv: CallConv) -> CompilationHe
         call_conv: call_conv
     };
 
-    let mut helper = CompilationHelper::new(Arch::X86_64, calling_convention);
+    let mut helper = CompilationHelper::new(Arch::X86_64, calling_convention, RegAlloc::new(Arch::X86_64, call_conv));
 
     helper.regs.push(Arch::X86_64, Reg::x64(x64Reg::Rcx));
     helper.regs.push(Arch::X86_64, Reg::x64(x64Reg::Rdx));

@@ -370,6 +370,15 @@ impl X64MCInstr {
                     op.push(r);
 
                     op.extend_from_slice(&ModRm::regWimm(i, reg));
+                } else if let Some(Operand::Mem(mem)) = &self.op1 {
+                    rex = mem.rex(false);
+                    op.push(r);
+                    let (mod_, rm) = mem.encode(None);
+
+                    if mem.index.is_some() {
+                        op.push(mod_ << 6 | i << 3 | 0b100);
+                    }
+                    op.extend_from_slice(&rm);
                 } else { todo!() }
 
                 (buildOpcode(mandatory, rex.option(), op), None)
@@ -499,12 +508,12 @@ impl X64MCInstr {
             }
             Mnemonic::Mul | Mnemonic::Imul => {
                 if !(self.op1 != None && self.op2 == None) {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "mul/imul need on operand of type register".into()))?
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "mul/imul need on operand of type r/m".into()))?
                 }
 
-                if let Some(Operand::Reg(_)) = self.op1 {} else {
+                if let Some(Operand::Imm(_)) = self.op1  {
                     Err(InstrEncodingError::InvalidVariant(self.clone(), 
-                        "mul/imul need one operand of type registry".into()
+                        "mul/imul need one operand of type r/m".into()
                     ))?
                 }
             }

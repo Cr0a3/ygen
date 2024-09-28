@@ -7,23 +7,11 @@ macro_rules! MathVarVar {
     ($func:ident, $node:ident, $mnemonic:expr) => {
         impl CompilationHelper {
             #[allow(missing_docs)]
-            pub(crate) fn $func(&mut self, node: &$node<Var, Var, Var>, mc_sink: &mut Vec<MachineInstr>, block: &Block) {
+            pub(crate) fn $func(&mut self, node: &$node<Var, Var, Var>, mc_sink: &mut Vec<MachineInstr>, _: &Block) {
                 let src1 = *self.vars.get(&node.inner1.name).expect("expected valid variable");
                 let src2 = *self.vars.get(&node.inner2.name).expect("expected valid variable");
         
-                let boxed: Box<dyn Ir> = Box::new(node.clone());
-        
-                if !block.isVarUsedAfterNode(&boxed, &node.inner1) { // op1
-                    self.free(&node.inner1);
-                }
-                if !block.isVarUsedAfterNode(&boxed, &node.inner2) { // op2
-                    self.free(&node.inner2);
-                }
-                if !block.isVarUsedAfterNode(&boxed, &node.inner3) { // out
-                    return; 
-                }
-        
-                let out = self.alloc(&node.inner3);
+                let out = *self.vars.get(&node.inner3.name).unwrap();
         
                 let mut instr = MachineInstr::new($mnemonic);
         
@@ -39,7 +27,7 @@ macro_rules! MathVarVar {
         
                 match out {
                     VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
-                    VarLocation::Mem(stack) => instr.add_operand( MachineOperand::Stack(stack) ),
+                    VarLocation::Mem(stack) => instr.set_out( MachineOperand::Stack(stack) ),
                 }
                 
                 instr.meta = node.inner3.ty;
@@ -59,24 +47,13 @@ MathVarVar!(compile_or_var_var, Or, MachineMnemonic::Or);
 MathVarVar!(compile_sub_var_var, Sub, MachineMnemonic::Sub);
 MathVarVar!(compile_xor_var_var, Xor, MachineMnemonic::Xor);
 
-
 macro_rules! MathVarType {
     ($func:ident, $node:ident, $mnemonic:expr) => {
         impl CompilationHelper {
             #[allow(missing_docs)]
-            pub fn $func(&mut self, node: &$node<Var, Type, Var>, mc_sink: &mut Vec<MachineInstr>, block: &Block) {
+            pub fn $func(&mut self, node: &$node<Var, Type, Var>, mc_sink: &mut Vec<MachineInstr>, _: &Block) {
                 let src1 = *self.vars.get(&node.inner1.name).expect("expected valid variable");
-        
-                let boxed: Box<dyn Ir> = Box::new(node.clone());
-        
-                if !block.isVarUsedAfterNode(&boxed, &node.inner1) { // op1
-                    self.free(&node.inner1);
-                }
-                if !block.isVarUsedAfterNode(&boxed, &node.inner3) { // out
-                    return; 
-                }
-        
-                let out = self.alloc(&node.inner3);
+                let out = *self.vars.get(&node.inner3.name).unwrap();
         
                 let mut instr = MachineInstr::new($mnemonic);
         
@@ -89,7 +66,7 @@ macro_rules! MathVarType {
 
                 match out {
                     VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
-                    VarLocation::Mem(stack) => instr.add_operand( MachineOperand::Stack(stack) ),
+                    VarLocation::Mem(stack) => instr.set_out( MachineOperand::Stack(stack) ),
                 }
 
                 
@@ -101,7 +78,6 @@ macro_rules! MathVarType {
     };
 }
 
-
 MathVarType!(compile_add_var_type, Add, MachineMnemonic::Add);
 MathVarType!(compile_and_var_type, And, MachineMnemonic::And);
 MathVarType!(compile_div_var_type, Div, MachineMnemonic::Div);
@@ -110,19 +86,12 @@ MathVarType!(compile_or_var_type, Or, MachineMnemonic::Or);
 MathVarType!(compile_sub_var_type, Sub, MachineMnemonic::Sub);
 MathVarType!(compile_xor_var_type, Xor, MachineMnemonic::Xor);
 
-
 macro_rules! MathTypeType {
     ($func:ident, $node:ident, $mnemonic:expr) => {
         impl CompilationHelper {
             #[allow(missing_docs)]
-            pub(crate) fn $func(&mut self, node: &$node<Type, Type, Var>, mc_sink: &mut Vec<MachineInstr>, block: &Block) {
-                let boxed: Box<dyn Ir> = Box::new(node.clone());
-
-                if !block.isVarUsedAfterNode(&boxed, &node.inner3) { // out
-                    return; 
-                }
-        
-                let out = self.alloc(&node.inner3);
+            pub(crate) fn $func(&mut self, node: &$node<Type, Type, Var>, mc_sink: &mut Vec<MachineInstr>, _: &Block) {
+                let out = *self.vars.get(&node.inner3.name).unwrap();
         
                 let mut instr = MachineInstr::new($mnemonic);
         
@@ -132,7 +101,7 @@ macro_rules! MathTypeType {
 
                 match out {
                     VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
-                    VarLocation::Mem(stack) => instr.add_operand( MachineOperand::Stack(stack) ),
+                    VarLocation::Mem(stack) => instr.set_out( MachineOperand::Stack(stack) ),
                 }
         
                 instr.meta = node.inner3.ty;
@@ -142,7 +111,6 @@ macro_rules! MathTypeType {
         }
     };
 }
-
 
 MathTypeType!(compile_add_type_type, Add, MachineMnemonic::Add);
 MathTypeType!(compile_and_type_type, And, MachineMnemonic::And);

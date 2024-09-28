@@ -12,7 +12,7 @@ impl CompilationHelper {
             super::VarLocation::Mem(mem) => MachineOperand::Stack(mem),
         };
 
-        let out = self.alloc(&node.inner1);
+        let out = *self.vars.get(&node.inner1.name).unwrap();
         let out = match out {
             super::VarLocation::Reg(reg) => MachineOperand::Reg(reg),
             super::VarLocation::Mem(mem) => MachineOperand::Stack(mem),

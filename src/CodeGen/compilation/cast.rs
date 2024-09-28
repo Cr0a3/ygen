@@ -1,23 +1,14 @@
-use crate::prelude::{Cast, Ir};
+use crate::prelude::Cast;
 use crate::IR::{Block, TypeMetadata, Var};
 use super::{CompilationHelper, VarLocation};
 use crate::CodeGen::{MachineInstr, MachineMnemonic, MachineOperand};
 
 impl CompilationHelper {
     #[allow(missing_docs)]
-    pub fn compile_cast(&mut self, node: &Cast<Var, TypeMetadata, Var>, mc_sink: &mut Vec<MachineInstr>, block: &Block) {
+    pub fn compile_cast(&mut self, node: &Cast<Var, TypeMetadata, Var>, mc_sink: &mut Vec<MachineInstr>, _: &Block) {
         let src1 = *self.vars.get(&node.inner1.name).expect("expected valid variable");
 
-        let boxed: Box<dyn Ir> = Box::new(node.clone());
-
-        if !block.isVarUsedAfterNode(&boxed, &node.inner1) {
-            self.free(&node.inner1)
-        }
-        if !block.isVarUsedAfterNode(&boxed, &node.inner3) {
-            return;
-        }
-
-        let out = self.alloc(&node.inner3);
+        let out = *self.vars.get(&node.inner3.name).unwrap();
 
         let op = {
 

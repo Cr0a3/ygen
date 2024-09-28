@@ -1,4 +1,4 @@
-use crate::prelude::{Block, Br, BrCond, Ir};
+use crate::prelude::{Block, Br, BrCond};
 use crate::CodeGen::{MachineInstr, MachineMnemonic, MachineOperand};
 use crate::IR::Var;
 
@@ -17,15 +17,9 @@ impl CompilationHelper {
     }
 
     #[allow(missing_docs)]
-    pub fn compile_br_cond(&mut self, node: &BrCond<Var, Block, Block>, mc_sink: &mut Vec<MachineInstr>, block: &Block) {
-        let boxed: Box<dyn Ir> = Box::new(node.clone());
-
+    pub fn compile_br_cond(&mut self, node: &BrCond<Var, Block, Block>, mc_sink: &mut Vec<MachineInstr>, _: &Block) {
         let iftrue = node.inner2.name.to_owned();
         let iffalse = node.inner3.name.to_owned();
-
-        if !block.isVarUsedAfterNode(&boxed, &node.inner1) {
-            self.free(&node.inner1);
-        }
 
         let src = *self.vars.get(&node.inner1.name).expect("expected valid variable");
 
