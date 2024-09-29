@@ -1,5 +1,5 @@
 # RUN:
-cargo run -p ylc -- -in=%s -o=out.o -O
+cargo run -p ylc -- -in=%s -o=out.o
 gcc out.o -o a.exe
 ./a.exe
 

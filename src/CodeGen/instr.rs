@@ -140,6 +140,8 @@ pub enum MachineMnemonic {
 
     CallStackPrepare,
     CallStackRedo,
+
+    AdrMove,
 }
 
 impl MachineMnemonic {
@@ -170,7 +172,8 @@ impl MachineMnemonic {
             MachineMnemonic::Push =>                "push",
             MachineMnemonic::PushCleanup =>         "clean_push",
             MachineMnemonic::CallStackPrepare =>    "callsprep",
-            MachineMnemonic::CallStackRedo =>    "callspred",
+            MachineMnemonic::CallStackRedo =>       "callspred",
+            MachineMnemonic::AdrMove =>             "adrmov",    
         }.to_string()
     }
 }

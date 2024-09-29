@@ -30,23 +30,28 @@ pub struct CompilationHelper {
 
     pub(crate) vars: HashMap<String, VarLocation>,
     pub(crate) var_types: HashMap<String, TypeMetadata>,
+    pub(crate) allocated_vars: Vec<String>,
 
     pub(crate) stack_off: i64,
+
+    pub(crate) tmp_reg: Reg,
 
     pub(crate) alloc: RegAlloc,
 }
 
 impl CompilationHelper {
-    pub(crate) fn new(arch: Arch, call: MachineCallingConvention, alloc: RegAlloc) -> Self {
+    pub(crate) fn new(arch: Arch, call: MachineCallingConvention, alloc: RegAlloc, tmp: Reg) -> Self {
         Self {
             regs: RegVec::new(),
             arch: arch,
+            allocated_vars: Vec::new(),
             vars: HashMap::new(),
             var_types: HashMap::new(),
             call: call,
             lower: None,
             stack_off: call.shadow(arch),
             alloc: alloc,
+            tmp_reg: tmp,
         }
     }
 

@@ -53,6 +53,7 @@ pub(crate) fn x64_lower_instr(conv: CallConv, sink: &mut Vec<X64MCInstr>, instr:
                 }.shadow(crate::Target::Arch::X86_64) - 8
             )));
         },
+        MachineMnemonic::AdrMove => x64_lower_adrm(sink, &instr),
     }
 }
 
@@ -101,7 +102,7 @@ fn x64_lower_move(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     };
 
     if let Operand::Mem(_) = out {
-        if let Operand::Imm(_) = op1 {
+        if let Operand::Reg(_) = op1 {} else {
             sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), op1) );
             sink.push( X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(x64Reg::Rax)) );
             return;
@@ -362,9 +363,10 @@ fn x64_lower_cmp(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr, mode: &CmpMod
     }
     
     if let Operand::Mem(_) = &out {
-        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), Operand::Imm(0)));
+        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), Operand::Imm(0)));
+        sink.push(X64MCInstr::with2(Mnemonic::Mov, out.clone(), Operand::Reg(x64Reg::Rax)));
     } else {
-        sink.push(X64MCInstr::with2(Mnemonic::Mov, out.clone(), Operand::Reg(x64Reg::Rax.sub_ty(instr.meta))));
+        sink.push(X64MCInstr::with2(Mnemonic::Xor, out.clone(), out.clone()))
     }
 
     let mne = match mode {
@@ -503,7 +505,17 @@ fn x64_lower_store(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     };
 
     if let Operand::Reg(ptr) = ptr {
-        if let Operand::Imm(_) = value {
+        if let Operand::Reg(_) = value {
+            sink.push( 
+                X64MCInstr::with2(Mnemonic::Mov, Operand::Mem(MemOp {
+                    base: Some(ptr),
+                    index: None,
+                    scale: 1,
+                    displ: 0,
+                    rip: false,
+                }), value)
+            )
+        } else {
             sink.push(
                 X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), value)
             );
@@ -515,16 +527,6 @@ fn x64_lower_store(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
                     displ: 0,
                     rip: false,
                 }), Operand::Reg(x64Reg::Rax))
-            )
-        } else {
-            sink.push( 
-                X64MCInstr::with2(Mnemonic::Mov, Operand::Mem(MemOp {
-                    base: Some(ptr),
-                    index: None,
-                    scale: 1,
-                    displ: 0,
-                    rip: false,
-                }), value)
             )
         }
     } else {
@@ -560,15 +562,31 @@ fn x64_lower_load(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     };
 
     if let Operand::Reg(ptr) = ptr {
-        sink.push( 
-            X64MCInstr::with2(Mnemonic::Mov, out, Operand::Mem(MemOp {
-                base: Some(ptr),
-                index: None,
-                scale: 1,
-                displ: 0,
-                rip: false,
-            }))
-        )
+        if let Operand::Reg(_) = out {
+            sink.push( 
+                X64MCInstr::with2(Mnemonic::Mov, out, Operand::Mem(MemOp {
+                    base: Some(ptr),
+                    index: None,
+                    scale: 1,
+                    displ: 0,
+                    rip: false,
+                }))
+            )
+        } else {
+            sink.push( 
+                X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), Operand::Mem(MemOp {
+                    base: Some(ptr),
+                    index: None,
+                    scale: 1,
+                    displ: 0,
+                    rip: false,
+                }))
+            );
+
+            sink.push(
+                X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)))
+            );
+        }
     } else {
         sink.push( 
             X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), ptr)
@@ -602,4 +620,29 @@ fn x64_lower_push(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
 fn x64_lower_push_cleanup(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta))));
     sink.push(X64MCInstr::with2(Mnemonic::Add, Operand::Reg(x64Reg::Rsp), Operand::Imm(8))); // for 16 byte alignment
+}
+
+fn x64_lower_adrm(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
+    let op = instr.operands.get(0).expect("expected adrm expectes one operand");
+    let out = instr.out.expect("expected adrm expectes one operand");
+
+    let op = match op {
+        MachineOperand::Stack(stack) => x64_stack!(*stack as u32),
+        _ => panic!("the input for adrm needs to be an stack variable"),
+    };
+
+    let out = match out {
+        MachineOperand::Imm(imm) => Operand::Imm(imm),
+        MachineOperand::Reg(reg) => match reg {
+            crate::CodeGen::Reg::x64(x64) => Operand::Reg(x64),
+        },
+        MachineOperand::Stack(stack) => x64_stack!(stack as u32),
+    };
+
+    if let Operand::Reg(_) = out {
+        sink.push(X64MCInstr::with2(Mnemonic::Lea, out, op));
+    } else {
+        sink.push(X64MCInstr::with2(Mnemonic::Lea, Operand::Reg(x64Reg::Rax), op));
+        sink.push(X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(x64Reg::Rax)));
+    }
 }

@@ -32,7 +32,7 @@ impl RegAlloc {
             free_registers: RegVec::new(),
             arch: arch,
             call: call,
-            stack_off: call.shadow(arch),
+            stack_off: call.align(arch),
 
             vars: HashMap::new(),
             var_types: HashMap::new(),

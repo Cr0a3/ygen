@@ -6,10 +6,7 @@ use super::{CompilationHelper, VarLocation};
 impl CompilationHelper {
     #[allow(missing_docs)]
     pub fn compile_alloca(&mut self, node: &Alloca<Var, TypeMetadata>, mc_sink: &mut Vec<MachineInstr>, _: &Block) {
-        let off = match self.alloc.alloc_stack(node.inner2) {
-            VarLocation::Mem(off) => off,
-            _ => unreachable!(),
-        };
+        
 
         let out = *self.vars.get(&node.inner1.name).unwrap();
 
@@ -18,10 +15,21 @@ impl CompilationHelper {
             super::VarLocation::Mem(mem) => MachineOperand::Stack(mem),
         };
 
+        let off = if let MachineOperand::Stack(mem) = out {
+            mem
+        } else {
+            match self.alloc.alloc_stack(node.inner2) {
+                VarLocation::Mem(off) => off,
+                _ => unreachable!(),
+            }
+        };
+
         let mut instr = MachineInstr::new(MachineMnemonic::StackAlloc);
 
         instr.set_out(out);
         instr.add_operand(MachineOperand::Imm(off));
+        
+        self.allocated_vars.push(node.inner1.name.to_owned());
 
         mc_sink.push(instr);
     }

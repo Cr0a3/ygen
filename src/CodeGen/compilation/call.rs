@@ -48,22 +48,43 @@ impl CompilationHelper {
             let arg_reg = args.get(reg_args);
 
             if let Some(reg) = arg_reg {
-                let mut instr = MachineInstr::new(MachineMnemonic::Move);
+                if !self.allocated_vars.contains(&arg.name) {
+                    let mut instr = MachineInstr::new(MachineMnemonic::Move);
+    
+                    let mut op = src.into();
+    
+                    if let Some((save, _)) = saved.get(&arg.name) {
+                        op = MachineOperand::Stack(*save);
+                    }
+    
+                    instr.set_out(MachineOperand::Reg(*reg));
+                    instr.add_operand(op);
+                    mc_sink.push( instr );
+                } else {
+                    let mut instr = MachineInstr::new(MachineMnemonic::AdrMove);
 
-                let mut op = src.into();
-
-                if let Some((save, _)) = saved.get(&arg.name) {
-                    op = MachineOperand::Stack(*save);
+                    instr.set_out(MachineOperand::Reg(*reg));
+                    instr.add_operand(src.into());
+                    mc_sink.push( instr );
                 }
-
-                instr.set_out(MachineOperand::Reg(*reg));
-                instr.add_operand(op);
-                mc_sink.push( instr );
             } else {
-                let mut instr = MachineInstr::new(MachineMnemonic::Push);
-                instr.add_operand(src.into());
-                pushes.push(arg.ty);
-                mc_sink.push( instr );
+                if !self.allocated_vars.contains(&arg.name) {
+                    let mut instr = MachineInstr::new(MachineMnemonic::Push);
+                    instr.add_operand(src.into());
+                    pushes.push(arg.ty);
+                    mc_sink.push( instr );
+                } else {
+                    let mut instr = MachineInstr::new(MachineMnemonic::AdrMove);
+
+                    instr.set_out(MachineOperand::Reg(self.tmp_reg));
+                    instr.add_operand(src.into());
+                    mc_sink.push( instr );
+
+                    let mut instr = MachineInstr::new(MachineMnemonic::Push);
+                    instr.add_operand(MachineOperand::Reg(self.tmp_reg));
+                    pushes.push(arg.ty);
+                    mc_sink.push( instr );
+                }
             }
 
             reg_args += 1;
