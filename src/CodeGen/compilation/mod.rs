@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
-use crate::{Target::{Arch, CallConv}, IR::{Function, TypeMetadata}};
+use crate::Target::{Arch, CallConv};
+use crate::IR::{Function, TypeMetadata};
 
-use super::{calling_convention::MachineCallingConvention, reg::Reg, reg_alloc::RegAlloc, reg_vec::RegVec, MCInstr, MachineInstr};
+use super::{calling_convention::MachineCallingConvention, reg::Reg, reg_alloc::RegAlloc, MCInstr, MachineInstr};
 
 mod call;
 mod ret;
@@ -22,7 +23,6 @@ mod load;
 /// helps with compilation
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CompilationHelper {
-    pub(crate) regs: RegVec,
     pub(crate) arch: Arch,
     pub(crate) lower: Option<fn(CallConv, Vec<MachineInstr>) -> Vec<Box<dyn MCInstr>>>,
 
@@ -42,7 +42,6 @@ pub struct CompilationHelper {
 impl CompilationHelper {
     pub(crate) fn new(arch: Arch, call: MachineCallingConvention, alloc: RegAlloc, tmp: Reg) -> Self {
         Self {
-            regs: RegVec::new(),
             arch: arch,
             allocated_vars: Vec::new(),
             vars: HashMap::new(),

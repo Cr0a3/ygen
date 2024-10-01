@@ -353,20 +353,11 @@ fn x64_lower_cmp(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr, mode: &CmpMod
         rs = tmp;
     }
 
-    
-
     if let Operand::Mem(_) = ls {
         sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), ls));
         sink.push(X64MCInstr::with2(Mnemonic::Cmp, Operand::Reg(x64Reg::Rax), rs));
     } else {
         sink.push(X64MCInstr::with2(Mnemonic::Cmp, ls, rs));
-    }
-    
-    if let Operand::Mem(_) = &out {
-        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), Operand::Imm(0)));
-        sink.push(X64MCInstr::with2(Mnemonic::Mov, out.clone(), Operand::Reg(x64Reg::Rax)));
-    } else {
-        sink.push(X64MCInstr::with2(Mnemonic::Xor, out.clone(), out.clone()))
     }
 
     let mne = match mode {
