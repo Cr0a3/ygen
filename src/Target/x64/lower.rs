@@ -619,7 +619,10 @@ fn x64_lower_adrm(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
 
     let op = match op {
         MachineOperand::Stack(stack) => x64_stack!(*stack as u32),
-        _ => panic!("the input for adrm needs to be an stack variable"),
+        MachineOperand::Imm(imm) => Operand::Imm(*imm),
+        MachineOperand::Reg(reg) => match *reg {
+            crate::CodeGen::Reg::x64(x64_reg) => Operand::Reg(x64_reg),
+        },
     };
 
     let out = match out {
@@ -631,9 +634,17 @@ fn x64_lower_adrm(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     };
 
     if let Operand::Reg(_) = out {
-        sink.push(X64MCInstr::with2(Mnemonic::Lea, out, op));
+        if let Operand::Mem(_) = op {
+            sink.push(X64MCInstr::with2(Mnemonic::Lea, out, op));
+        } else {
+            sink.push(X64MCInstr::with2(Mnemonic::Mov, out, op));
+        }
     } else {
-        sink.push(X64MCInstr::with2(Mnemonic::Lea, Operand::Reg(x64Reg::Rax), op));
+        if let Operand::Mem(_) = op {
+            sink.push(X64MCInstr::with2(Mnemonic::Lea, Operand::Reg(x64Reg::Rax), op));
+        } else {
+            sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), op));
+        }
         sink.push(X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(x64Reg::Rax)));
     }
 }

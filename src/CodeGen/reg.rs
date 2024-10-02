@@ -14,4 +14,24 @@ impl Reg {
             Reg::x64(_) => Arch::X86_64,
         }
     }
+    
+    /// returns if the list contains on of the register variants
+    #[inline]
+    pub fn contains_reg(reg: Reg, vec: &Vec<Reg>) -> bool {
+        let mut seen = false;
+
+        for vector_reg in vec {
+            if seen { break; }
+
+            match vector_reg {
+                Reg::x64(x64_reg) => {
+                    match &reg {
+                        Reg::x64(reg) => seen = x64_reg.sub64() == reg.sub64(),
+                    }
+                }
+            }
+        }
+
+        seen
+    }
 }

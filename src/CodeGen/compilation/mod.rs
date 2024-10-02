@@ -61,6 +61,17 @@ impl CompilationHelper {
         self.var_types = self.alloc.var_types.to_owned();
     }
 
+    fn get_vars_to_save_for_call(&self, node: &crate::prelude::Call<crate::prelude::Function, Vec<crate::prelude::Var>, crate::prelude::Var>) -> Vec<(String, VarLocation)> {
+        let vars = self.alloc.scoped_vars_before_node(Box::new( node.clone() ));
+    
+        let mut with_name = vec![];
+        for (var, location) in vars {
+            with_name.push((var.name, location));
+        }
+
+        with_name
+    }
+
     #[inline]
     pub(crate) fn epilog(&self) -> bool {
         if self.stack_off != self.call.shadow(self.arch) {

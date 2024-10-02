@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{prelude::Call, CodeGen::{MachineMnemonic, MachineOperand}};
+use crate::{prelude::Call, CodeGen::{MachineMnemonic, MachineOperand, Reg}};
 use crate::IR::{Block, Function, Var};
 use super::{CompilationHelper, VarLocation};
 use crate::CodeGen::MachineInstr;
@@ -13,14 +13,13 @@ impl CompilationHelper {
         let args = self.call.args(self.arch);
 
         let mut saved = HashMap::new();
-
         
-        for (name, loc) in self.vars.to_owned() {
+        for (name, loc) in self.get_vars_to_save_for_call(node) {
             let typ = *self.var_types.get(&name).unwrap();
 
             match loc {
                 VarLocation::Reg(reg) => {
-                    if args.contains(&reg) {
+                    if Reg::contains_reg(reg, &args) {
                         // SAVE IT ONTO THE STACK
                         let mut save = MachineInstr::new( MachineMnemonic::Move );
             

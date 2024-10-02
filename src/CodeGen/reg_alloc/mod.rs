@@ -2,7 +2,7 @@ use std::{any::TypeId, collections::HashMap};
 
 use prep::RegAllocPrep;
 
-use crate::{prelude::Ir, Support::TypeSwitch, Target::{Arch, CallConv}, IR::{Function, TypeMetadata}};
+use crate::{prelude::Ir, Support::TypeSwitch, Target::{Arch, CallConv}, IR::{Function, TypeMetadata, Var}};
 
 use super::{MachineCallingConvention, Reg, RegVec, VarLocation};
 
@@ -19,6 +19,8 @@ pub struct RegAlloc {
 
     pub(crate) vars: HashMap<String, VarLocation>,
     pub(crate) var_types: HashMap<String, TypeMetadata>,
+
+    pub(crate) scopes: HashMap<String, Vec<(Var, VarLocation)>>,
 }
 
 impl RegAlloc {
@@ -36,6 +38,8 @@ impl RegAlloc {
 
             vars: HashMap::new(),
             var_types: HashMap::new(),
+
+            scopes: HashMap::new(),
         }
     }
 
@@ -86,6 +90,17 @@ impl RegAlloc {
             let location = self.alloc_rv(out.ty);
             self.vars.insert(out.name.to_owned(), location);
         }*/
+
+        let mut scopes = Vec::new();
+
+        for (name, location) in &self.vars {
+            scopes.push( (Var {
+                name: name.to_owned(),
+                ty: *self.var_types.get(name).unwrap(),
+            }, *location) );
+        }
+
+        self.scopes.insert(node.dump(), scopes);
 
         let mut matcher = TypeSwitch::new();
 
@@ -194,5 +209,12 @@ impl RegAlloc {
         self.stack_off += self.call.align(self.arch);
         
         ret
+    }
+
+    #[inline]
+    pub(crate) fn scoped_vars_before_node(&self, node: Box<dyn Ir>) -> Vec< (Var, VarLocation) > {
+        let got = self.scopes.get(&node.dump()).expect("expected valid node");
+
+        got.to_owned()
     }
 }
