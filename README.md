@@ -4,7 +4,7 @@
 ![GitHub Repo stars](https://img.shields.io/github/stars/cr0a3/ygen?style=flat-square)
 
 Welcome to Ygen!
-This repository contains the source code of ygen and all it's tools.
+This repository contains the source code of the ygen project.
 
 Ygen is a toolkit for building fast and clean compilers using a memory safe api.
 
