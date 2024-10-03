@@ -40,7 +40,7 @@
 //!  - `add` adds two numbers
 //!  - `ret` returns an constant or a variable 
 
-pub use proc;
+pub use ygen_proc as proc_macro;
 
 /// The target module: every stuff which has to do with targets. Like:
 ///  * The target triple

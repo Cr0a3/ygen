@@ -2,10 +2,12 @@
 name = "ygen-mc"
 version = "0.1.0"
 edition = "2021"
+description = "Ygens machine code playground"
+license = "Apache-2.0"
 
 [[bin]]
 name = "ygen-mc"
 path = "main.rs"
 
 [dependencies]
-ygen = { workspace = true }
+Ygen = "0.1.2"

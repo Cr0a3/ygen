@@ -9,14 +9,13 @@ members = [
 
 [workspace.dependencies]
 ygen = { path = "." }
-proc = { path = "src/proc/."}
 
 [package]
-name = "ygen"
-version = "0.1.1"
+name = "Ygen"
+version = "0.1.2"
 edition = "2021"
 authors = ["Cr0a3"]
-documentation = "https://toni-graphics.github.io/ygen/Ygen/index.html"
+homepage = "https://ygen.vercel.app/"
 repository = "https://github.com/Toni-Graphics/ygen"
 license = "Apache-2.0"
 description = "Yet another code generation libary like LLVM"
@@ -30,5 +29,5 @@ rustdoc-args = ["--allow", "warnings"]
 gimli = { version = "0.31.0", features = ["write"] }
 logos = "0.14.2"
 object = { version = "0.36.4", features = ["write"] }
-proc = { workspace = true }
 unescaper = "0.1.5"
+ygen_proc = "0.1.0"

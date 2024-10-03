@@ -4,13 +4,13 @@ use std::path::PathBuf;
 use std::process::exit;
 use std::error::Error;
 
-use ygen::prelude::{DebugNode, PassManager};
-use ygen::Optimizations::Passes;
-use ygen::Support::{ColorProfile, Colorize};
-use ygen::Target::initializeAllTargets;
-use ygen::{Support::Cli, Target::Triple};
-use ygen::IR::parser::{gen::IrGen, lexer::IrLexer, parser::IrParser, semnatic::IrSemnatic};
-use ygen::IR::Module;
+use Ygen::prelude::{DebugNode, PassManager};
+use Ygen::Optimizations::Passes;
+use Ygen::Support::{ColorProfile, Colorize};
+use Ygen::Target::initializeAllTargets;
+use Ygen::{Support::Cli, Target::Triple};
+use Ygen::IR::parser::{gen::IrGen, lexer::IrLexer, parser::IrParser, semnatic::IrSemnatic};
+use Ygen::IR::Module;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut cli = Cli::new(
@@ -136,7 +136,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     for stmt in &parser.out {
         match stmt {
-            ygen::IR::parser::parser::IrStmt::Func { name: _, ret: _, args: _, body, scope: _, location: _ } => {
+            Ygen::IR::parser::parser::IrStmt::Func { name: _, ret: _, args: _, body, scope: _, location: _ } => {
                 for (_, block) in body {
                     for node in &block.body {
                         if let Some(dbg) = node.inst.as_any().downcast_ref::<DebugNode>() {
@@ -157,7 +157,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     module.init_dbg(
         "ygen ir language compiler (ylc)".to_owned(), 
-        /*The dwarf std doesn't have ygen ir*/ygen::debug::Lang::Rust, 
+        /*The dwarf std doesn't have ygen ir*/Ygen::debug::Lang::Rust, 
         &std::path::PathBuf::from(dbg_file)
     );
 

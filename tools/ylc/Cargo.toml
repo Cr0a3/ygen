@@ -2,10 +2,11 @@
 name = "ylc"
 version = "0.1.0"
 edition = "2021"
-
+description = "Ygens ir compiler"
+license = "Apache-2.0"
 [[bin]]
 name = "ylc"
 path = "main.rs"
 
 [dependencies]
-ygen = { workspace = true }
+Ygen = "0.1.2"

@@ -2,11 +2,13 @@
 name = "ytest"
 version = "0.1.0"
 edition = "2021"
+description = "Ygens testing infrastructure"
+license = "Apache-2.0"
 
 [[bin]]
 name = "ytest"
 path = "main.rs"
 
 [dependencies]
-ygen = { workspace = true }
+Ygen = "0.1.2"
 unescaper = "0.1.5"

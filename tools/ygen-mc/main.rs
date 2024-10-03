@@ -19,10 +19,10 @@
 
 use std::{error::Error, process::exit};
 
-use ygen::{self, Support::{ColorProfile, Colorize}, Target::{initializeAllTargets, Triple}};
+use Ygen::{self, Support::{ColorProfile, Colorize}, Target::{initializeAllTargets, Triple}};
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut cli = ygen::Support::Cli::new(
+    let mut cli = Ygen::Support::Cli::new(
         "ygen-mc", "Ygens machine code playground", "1.0", "Cr0a3"
     );
 

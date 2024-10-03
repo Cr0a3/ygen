@@ -1,7 +1,9 @@
 [package]
-name = "proc"
+name = "ygen_proc"
 version = "0.1.0"
 edition = "2021"
+description = "Ygens procedual macros"
+license = "Apache-2.0"
 
 [dependencies]
 syn = { version = "2.0", features = ["full"] }

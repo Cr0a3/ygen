@@ -2,7 +2,7 @@ use core::str;
 use std::{fs::File, io::{Read, Write}};
 use std::process::{exit, Command};
 
-use ygen::Support::{Cli, Colorize};
+use Ygen::Support::{Cli, Colorize};
 
 mod parse;
 use parse::*;
