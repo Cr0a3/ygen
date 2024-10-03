@@ -20,9 +20,9 @@ define i32 @main() {
     %0 = i32 5
     br yes
 
-  no:
+  yes:
     ret i32 0
     
-  yes:
+  no:
     ret i32 0
 }
