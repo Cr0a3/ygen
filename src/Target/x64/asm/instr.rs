@@ -66,7 +66,7 @@ impl X64MCInstr {
                     Mnemonic::Xor => (0x31, 0x33, 6, 0x81, 0x80),
                     Mnemonic::Mov => (0x89, 0x8B, 0, 0xC7, 0xC6),
 
-                    Mnemonic::Cmp => (0x83, 0x3B, 7, 0x81, 0x80),
+                    Mnemonic::Cmp => (0x39, 0x3B, 7, 0x81, 0x80),
                     _ => unreachable!(),
                 };
 
@@ -404,7 +404,7 @@ impl X64MCInstr {
 
                     rex = {
                         let mut rex = RexPrefix::none();
-                        rex.r = reg.extended();
+                        rex.b = reg.extended();
                         if reg.sub64() != x64Reg::Rax &&
                            reg.sub64() != x64Reg::Rbx &&
                            reg.sub64() != x64Reg::Rcx &&

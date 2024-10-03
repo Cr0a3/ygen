@@ -163,6 +163,7 @@ impl TargetRegistry {
 
         for instr in &instrs {
             let (encoded, link) = &instr.encode()?;
+            println!("`{}` is `{:X?}`", instr, encoded);
             res.extend_from_slice(&encoded);
 
             if let Some(link) = link {
