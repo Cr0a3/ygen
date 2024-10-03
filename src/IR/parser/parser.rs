@@ -39,7 +39,7 @@ pub enum IrStmt {
         name: String,
         ret: TypeMetadata, 
         args: (BTreeMap<String, TypeMetadata>, /*unlim args*/bool), 
-        body: BTreeMap<String, IrBlock>,
+        body: Vec<(String, IrBlock)>,
         scope: Linkage,
 
         location: Loc,
@@ -165,7 +165,7 @@ impl IrParser {
 
         Ok(IrStmt::Func { 
             name: name, 
-            body: BTreeMap::new(),
+            body: Vec::new(),
             scope: Linkage::Extern,
             args: (args, unlim),
             ret: ret,
@@ -176,7 +176,7 @@ impl IrParser {
 
     fn parse_define(&mut self) -> Result<IrStmt, IrError> {
         let name;
-        let mut body = BTreeMap::new();
+        let mut body = vec![];
         let mut args = BTreeMap::new();
         
         let mut link = Linkage::External;
@@ -258,7 +258,7 @@ impl IrParser {
 
             let (name, block) = self.parse_block()?;
 
-            body.insert( name, block );
+            body.push( (name, block) );
         }
 
         self.input.pop_front(); // }

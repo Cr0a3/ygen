@@ -3,7 +3,7 @@ use gimli::DwLang;
 use crate::{debug::{DebugLocation, DebugRegistry}, prelude::Triple, CodeGen::MachineInstr, Obj::{Decl, Link, Linkage, ObjectBuilder}, Optimizations::PassManager, Support::{ColorClass, ColorProfile}, Target::TargetRegistry};
 
 use super::{func::FunctionType, Const, Function, VerifyError};
-use std::{collections::{BTreeMap, HashMap}, error::Error, fmt::Debug, fs::OpenOptions, io::Write, path::Path};
+use std::{collections::HashMap, error::Error, fmt::Debug, fs::OpenOptions, io::Write, path::Path};
 
 /// ## The Module
 /// The main class for handeling functions
@@ -159,7 +159,7 @@ impl Module {
         for (name, func) in &self.funcs {
             obj.decl( (&name, Decl::Function, func.linkage));
 
-            let mut blocks = BTreeMap::new();
+            let mut blocks: Vec<(String, (Vec<u8>, Vec<Link>))> = Vec::new();
 
             let mut index = 0;
 
@@ -209,7 +209,7 @@ impl Module {
                     }
                 }
 
-                blocks.insert(block.name.to_owned(), (compiled, links));
+                blocks.push((block.name.to_owned(), (compiled, links)));
 
                 index += 1;
             }
@@ -283,8 +283,8 @@ impl Module {
 
     /// emits machine instrs for target
     /// note: machine instrs are portable over all platforms
-    pub fn emitMachineInstrs(&self, triple: Triple, registry: &mut TargetRegistry) -> Result<HashMap<String, Vec<MachineInstr>>, Box<dyn Error>> {
-        let mut out = HashMap::new();
+    pub fn emitMachineInstrs(&self, triple: Triple, registry: &mut TargetRegistry) -> Result<Vec<(String, Vec<MachineInstr>)>, Box<dyn Error>> {
+        let mut out = Vec::new();
 
         for (name, func) in &self.funcs {
             let mut instrs = vec![];
@@ -308,7 +308,7 @@ impl Module {
                 instrs.extend_from_slice(&backup);
             }
 
-            out.insert(name.to_string(), instrs);
+            out.push((name.to_string(), instrs));
         }
 
         Ok(out)

@@ -21,6 +21,8 @@ pub struct RegAlloc {
     pub(crate) var_types: HashMap<String, TypeMetadata>,
 
     pub(crate) scopes: HashMap<String, Vec<(Var, VarLocation)>>,
+
+    pub(crate) processed_args: bool,
 }
 
 impl RegAlloc {
@@ -40,6 +42,8 @@ impl RegAlloc {
             var_types: HashMap::new(),
 
             scopes: HashMap::new(),
+
+            processed_args: false,
         }
     }
 
@@ -70,11 +74,15 @@ impl RegAlloc {
 
             num += 1;
         }
+
+        self.processed_args = true;
     }
 
     /// runs all variable allocations for the function
     pub fn run_alloc(&mut self, func: &Function) {
-        self.arg_prep(func);
+        if !self.processed_args {
+            self.arg_prep(func);
+        }
 
         for block in &func.blocks {
             for node in &block.nodes {
@@ -188,7 +196,7 @@ impl RegAlloc {
                 _ => todo!(),
             }
         } else {
-            todo!("implement type for {}", node.dump())
+            todo!("implement register allocating for {}", node.dump())
         }
 
     }

@@ -1,0 +1,34 @@
+# RUN: 
+cargo run -p ylc -- -in=%s -o=out.o
+gcc out.o -o a.exe
+./a.exe
+# IN:
+const const0 = "Hello World!\n\00"
+
+define i32 @func(i32 %0) {
+  entry:
+    %1 = alloca i32
+
+    %tmp = i32 5
+    %2 = cmp eq i32 %0, %tmp
+    br cond %2 is5, after
+
+  is5:
+    store i32 0, %1
+    br after
+
+  after:
+    %2 = load i32 %1
+    ret i32 %2
+}
+
+define i32 @main() {
+ entry:
+    %0 = i32 5
+
+    %1 = call i32 func i32 %0
+    
+    ret i32 %1
+}
+
+# EXIT_CODE=0
