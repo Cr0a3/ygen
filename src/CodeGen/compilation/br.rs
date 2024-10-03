@@ -18,6 +18,13 @@ impl CompilationHelper {
 
     #[allow(missing_docs)]
     pub fn compile_br_cond(&mut self, node: &BrCond<Var, Block, Block>, mc_sink: &mut Vec<MachineInstr>, _: &Block) {
+        // COMPILES TO:
+        // if node.inner1 == 0 {
+        //     goto node.inner2;
+        // } else {
+        //     goto node.inner3;
+        //}
+        
         let iftrue = node.inner2.name.to_owned();
         let iffalse = node.inner3.name.to_owned();
 
@@ -29,7 +36,7 @@ impl CompilationHelper {
         };
 
         let mut cmp = MachineInstr::new(
-            MachineMnemonic::BrCond(iffalse, iftrue) // val == 0 -> iffalse | else -> iftrue
+            MachineMnemonic::BrCond(iftrue, iffalse)
         );
         cmp.add_operand(src);
         cmp.add_operand(MachineOperand::Imm(0));

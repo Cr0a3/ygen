@@ -32,8 +32,6 @@ pub struct CompilationHelper {
     pub(crate) var_types: HashMap<String, TypeMetadata>,
     pub(crate) allocated_vars: Vec<String>,
 
-    pub(crate) stack_off: i64,
-
     pub(crate) tmp_reg: Reg,
 
     pub(crate) alloc: RegAlloc,
@@ -48,7 +46,6 @@ impl CompilationHelper {
             var_types: HashMap::new(),
             call: call,
             lower: None,
-            stack_off: call.shadow(arch),
             alloc: alloc,
             tmp_reg: tmp,
         }
@@ -74,7 +71,7 @@ impl CompilationHelper {
 
     #[inline]
     pub(crate) fn epilog(&self) -> bool {
-        if self.stack_off != self.call.shadow(self.arch) {
+        if self.alloc.stack_off != self.call.shadow(self.arch) {
             true
         } else { false }
     }

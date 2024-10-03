@@ -111,10 +111,10 @@ impl TargetBackendDescr {
 
             // VERY UGLY CODE WHICH SINCRONICES THE MAX STACK_OFF 
             // OF EITHER ir_helper or helper (the one who has the biggest gets selected)
-            if helper.stack_off < ir_helper.helper.stack_off {
-                helper.stack_off = ir_helper.helper.stack_off;
-            } else if ir_helper.helper.stack_off < helper.stack_off {
-                ir_helper.helper.stack_off = helper.stack_off;
+            if helper.alloc.stack_off < ir_helper.helper.alloc.stack_off {
+                helper.alloc.stack_off = ir_helper.helper.alloc.stack_off;
+            } else if ir_helper.helper.alloc.stack_off < helper.alloc.stack_off {
+                ir_helper.helper.alloc.stack_off = helper.alloc.stack_off;
             }
 
             if let Some(node) = node.as_any().downcast_ref::<Return<Type>>() {

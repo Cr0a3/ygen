@@ -11,10 +11,10 @@ define u32 @main() {
     br cond %2 yeah, no
   
   yeah:
-    ret u32 0
+    ret u32 12
 
   no:
     ret u32 1
 }
 
-# EXIT_CODE=0
+# EXIT_CODE=12

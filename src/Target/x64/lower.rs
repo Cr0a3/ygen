@@ -313,9 +313,9 @@ fn x64_lower_cond_br(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr, iftrue: &
         sink.push(X64MCInstr::with2(Mnemonic::Cmp, src, value));
     }
     sink.push(X64MCInstr::with1(Mnemonic::Jne, Operand::Imm(0)));
-    sink.push(X64MCInstr::with1(Mnemonic::Link, Operand::BlockLinkDestination(iffalse.to_owned(), -4)));
+    sink.push(X64MCInstr::with1(Mnemonic::Link, Operand::BlockLinkDestination(iftrue.to_owned(), -4))); // not 0
     sink.push(X64MCInstr::with1(Mnemonic::Jmp, Operand::Imm(0)));
-    sink.push(X64MCInstr::with1(Mnemonic::Link, Operand::BlockLinkDestination(iftrue.to_owned(), -4)));
+    sink.push(X64MCInstr::with1(Mnemonic::Link, Operand::BlockLinkDestination(iffalse.to_owned(), -4))); // is 0
 }
 fn x64_lower_cmp(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr, mode: &CmpMode) {
     let ls = instr.operands.get(0).expect("expected valid src operand at 1. place");
@@ -354,10 +354,45 @@ fn x64_lower_cmp(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr, mode: &CmpMod
     }
 
     if let Operand::Mem(_) = ls {
-        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), ls));
-        sink.push(X64MCInstr::with2(Mnemonic::Cmp, Operand::Reg(x64Reg::Rax), rs));
+        if ls == out {
+            sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rbx), ls.clone()));
+            sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), Operand::Imm(0)));
+            sink.push(X64MCInstr::with2(Mnemonic::Mov, ls, Operand::Reg(x64Reg::Rax)));
+            sink.push(X64MCInstr::with2(Mnemonic::Cmp, Operand::Reg(x64Reg::Rbx), rs));
+        } else if rs == out {
+            sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rbx), rs.clone()));
+            sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), Operand::Imm(0)));
+            sink.push(X64MCInstr::with2(Mnemonic::Mov, rs, Operand::Reg(x64Reg::Rax)));
+            sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), ls));
+            sink.push(X64MCInstr::with2(Mnemonic::Cmp, Operand::Reg(x64Reg::Rax), Operand::Reg(x64Reg::Rbx)));
+        } else {
+            if let Operand::Reg(_) = out {
+                sink.push(X64MCInstr::with2(Mnemonic::Mov, out.clone(), Operand::Imm(0)));
+            } else {
+                sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), Operand::Imm(0)));
+                sink.push(X64MCInstr::with2(Mnemonic::Mov, out.clone(), Operand::Reg(x64Reg::Rax)));
+            }
+            sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), ls));
+            sink.push(X64MCInstr::with2(Mnemonic::Cmp, Operand::Reg(x64Reg::Rax), rs));
+        }
     } else {
-        sink.push(X64MCInstr::with2(Mnemonic::Cmp, ls, rs));
+        if ls == out {
+            sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), ls.clone()));
+            sink.push(X64MCInstr::with2(Mnemonic::Mov, ls, Operand::Imm(0)));
+            sink.push(X64MCInstr::with2(Mnemonic::Cmp, Operand::Reg(x64Reg::Rax), rs));
+        } else if rs == out {
+            sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), rs.clone()));
+            sink.push(X64MCInstr::with2(Mnemonic::Mov, rs, Operand::Imm(0)));
+            sink.push(X64MCInstr::with2(Mnemonic::Cmp, ls, Operand::Reg(x64Reg::Rax)));
+        } else {
+            if let Operand::Reg(_) = out {
+                sink.push(X64MCInstr::with2(Mnemonic::Mov, out.clone(), Operand::Imm(0)));
+            } else {
+                sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), Operand::Imm(0)));
+                sink.push(X64MCInstr::with2(Mnemonic::Mov, out.clone(), Operand::Reg(x64Reg::Rax)));
+            }
+            sink.push(X64MCInstr::with2(Mnemonic::Cmp, ls, rs));
+        }
     }
 
     let mne = match mode {
