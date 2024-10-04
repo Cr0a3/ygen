@@ -34,4 +34,16 @@ impl Reg {
 
         seen
     }
+
+    /// Returns if the register one register variant is a variant of the same register
+    /// (E.g: `rcx.is(ecx) = true`)
+    pub fn is(&self, other: &Reg) -> bool {
+        match self {
+            Reg::x64(x64_reg) => {
+                match other {
+                    Reg::x64(reg) => x64_reg.sub64() == reg.sub64(),
+                }
+            }
+        }  
+    }
 }

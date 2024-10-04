@@ -65,6 +65,20 @@ impl RegAlloc {
                 }
             };
 
+            if let VarLocation::Reg(reg) = location {
+                let vec = self.free_registers.inner(self.arch);
+
+                let mut index = 0;
+                for item in vec.clone() {
+                    if item.is(&reg) {
+                        vec.remove(index);
+                    } else {
+                        index += 1;
+                    }
+                }
+                println!("after: {:?}", self.free_registers.inner(self.arch));
+            }
+
             let name = || func.arg(num).name;
 
             self.vars.insert(

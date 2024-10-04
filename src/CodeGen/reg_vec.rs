@@ -40,4 +40,12 @@ impl RegVec {
             entry.reverse();
         }
     }
+
+    pub(crate) fn inner(&mut self, arch: Arch) -> &mut Vec<Reg> {
+        if let Some(entry) = self.regs.get_mut(&arch) {
+            entry
+        } else {
+            panic!("unkown entry: {:?}", arch)
+        }
+    }
 }
