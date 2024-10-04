@@ -3,7 +3,6 @@ cargo run -p ylc -- -in=%s -o=out.o
 gcc out.o -o a.exe
 ./a.exe
 # IN:
-const const0 = "Hello World!\n\00"
 
 define i32 @func(i32 %0) {
   entry:
@@ -27,8 +26,10 @@ define i32 @main() {
     %0 = i32 5
 
     %1 = call i32 func i32 %0
+
+    %2 = add i32 %1, 1
     
-    ret i32 %1
+    ret i32 %2
 }
 
-# EXIT_CODE=0
+# EXIT_CODE=1

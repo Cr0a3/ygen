@@ -20,6 +20,13 @@ impl CompilationHelper {
         instr.meta = node.inner1.ty;
 
         mc_sink.push( instr );
+
+        if let Some(phi_loc) = self.alloc.phi_vars.get(&node.inner1.name) {
+            let mut instr = MachineInstr::new(MachineMnemonic::Move);
+            instr.set_out((*phi_loc).into());
+            instr.add_operand(location.into());
+            mc_sink.push(instr);
+        }
         
     }
 
@@ -44,6 +51,13 @@ impl CompilationHelper {
         instr.meta = node.inner1.ty;
 
         mc_sink.push( instr );
+
+        if let Some(phi_loc) = self.alloc.phi_vars.get(&node.inner1.name) {
+            let mut instr = MachineInstr::new(MachineMnemonic::Move);
+            instr.set_out((*phi_loc).into());
+            instr.add_operand(location.into());
+            mc_sink.push(instr);
+        }
     }
     
     #[allow(missing_docs)]
@@ -63,5 +77,12 @@ impl CompilationHelper {
         instr.meta = node.inner1.ty; // is a pointer but i just wrote it here
 
         mc_sink.push( instr );
+
+        if let Some(phi_loc) = self.alloc.phi_vars.get(&node.inner1.name) {
+            let mut instr = MachineInstr::new(MachineMnemonic::Move);
+            instr.set_out((*phi_loc).into());
+            instr.add_operand(location.into());
+            mc_sink.push(instr);
+        }
     }
 }

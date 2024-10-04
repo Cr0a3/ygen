@@ -1,0 +1,23 @@
+# RUN:
+cargo run -p ylc -- -in=%s -o=out.o
+gcc out.o -o a.exe
+./a.exe
+# IN:
+
+define i32 @main() {
+entry:
+    %1 = i32 0
+    %tmp = i32 0
+    %2 = cmp eq i32 %1, %tmp
+    br cond %2 is0, isnt
+
+is0:
+    %3 = i32 5
+    br isnt
+
+isnt:
+    %phied = phi i32 [%1, entry %3, isnt]
+    ret i32 %phied
+}
+
+# EXIT_CODE=5

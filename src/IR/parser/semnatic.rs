@@ -195,6 +195,12 @@ impl<'a> IrSemnatic<'a> {
                     self.analaysiz_store_ty(&mut vars, node, loc)?;
                 } else if let Some(node) = any.downcast_ref::<Load<Var, Var, TypeMetadata>>() {
                     self.analaysiz_load(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Phi>() {
+                    if vars.contains_key(&node.out.name) {
+                        Err(IrError::DefinedTwice { loc: loc, name: node.out.name.to_owned() })?
+                    } else {
+                        vars.insert(node.out.name.to_owned(), node.typ);
+                    }
                 }
             }
         }

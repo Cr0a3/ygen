@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, VecDeque};
 use std::path::PathBuf;
 
-use crate::prelude::{Alloca, Cmp, CmpMode, DebugNode, Ir, Load, Store};
+use crate::prelude::{Alloca, Cmp, CmpMode, DebugNode, Ir, Load, Phi, Store};
 use crate::Obj::Linkage;
 use crate::IR::{ir, Block, Const, FnTy, Function, Type, TypeMetadata, Var};
 
@@ -430,6 +430,7 @@ impl IrParser {
                         "cmp" => self.parse_cmp(name)?,
                         "alloca" => self.parse_alloca(name)?,
                         "load" => self.parse_load(name)?,
+                        "phi" => self.parse_phi(name)?,
                         _ => {
                             let ty = self.parse_type()?;
                             self.input.pop_front(); // the type
@@ -941,6 +942,56 @@ impl IrParser {
         self.input.pop_front();
 
         Ok(Load::new(out, var, ty))
+    }
+
+    fn parse_phi(&mut self, var: String) -> Result<Box<dyn Ir>, IrError> {
+        self.input.pop_front();
+
+        let out_ty = self.parse_type()?;
+        let out = Var {
+            name: var,
+            ty: out_ty
+        };
+
+        self.input.pop_front();
+
+        self.expect(TokenType::LSquare)?;
+        self.input.pop_front();
+
+        let mut recives = Vec::new();
+
+        loop {
+            let current = self.input.pop_front();
+            let current = if let Some(current) = current { current } else { Err(IrError::OutOfTokens)? };
+
+            if let TokenType::RSquare = current.typ {
+                break;
+            }
+
+            if let TokenType::Var(var) = current.typ {
+                self.expect(TokenType::Comma)?;
+                self.input.pop_front();
+
+                let current = self.input.pop_front().expect("the parser ran out of tokens");
+                if let TokenType::Ident(block) = current.typ {
+                    recives.push((Block {
+                        name: block,
+                        nodes: Vec::new(),
+                        varCount: 0,
+                    }, Var {
+                        name: var,
+                        ty: out_ty,
+                    }));
+                } else {
+                    Err(IrError::UnexpectedToken(current))?
+                }
+            } else {
+                Err(IrError::UnexpectedToken(current))?
+            }
+
+        }
+
+        Ok(Box::new(Phi::new(out, recives, out_ty)))
     }
 }
 

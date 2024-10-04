@@ -2,7 +2,7 @@ use std::{any::TypeId, collections::HashMap};
 
 use prep::RegAllocPrep;
 
-use crate::{prelude::Ir, Support::TypeSwitch, Target::{Arch, CallConv}, IR::{Function, TypeMetadata, Var}};
+use crate::{prelude::{Ir, Phi}, Support::TypeSwitch, Target::{Arch, CallConv}, IR::{Function, TypeMetadata, Var}};
 
 use super::{MachineCallingConvention, Reg, RegVec, VarLocation};
 
@@ -19,6 +19,7 @@ pub struct RegAlloc {
 
     pub(crate) vars: HashMap<String, VarLocation>,
     pub(crate) var_types: HashMap<String, TypeMetadata>,
+    pub(crate) phi_vars: HashMap<String, VarLocation>,
 
     pub(crate) scopes: HashMap<String, Vec<(Var, VarLocation)>>,
 
@@ -40,6 +41,7 @@ impl RegAlloc {
 
             vars: HashMap::new(),
             var_types: HashMap::new(),
+            phi_vars: HashMap::new(),
 
             scopes: HashMap::new(),
 
@@ -82,6 +84,15 @@ impl RegAlloc {
     pub fn run_alloc(&mut self, func: &Function) {
         if !self.processed_args {
             self.arg_prep(func);
+        }
+
+        // run phis
+        for block in &func.blocks {
+            for node in &block.nodes {
+                if let Some(phi) = node.as_any().downcast_ref::<Phi>() {
+                    self.phi_prep( phi );
+                }
+            }
         }
 
         for block in &func.blocks {
@@ -153,6 +164,8 @@ impl RegAlloc {
             matcher.case(TypeId::of::<Div<Var, Var, Var>>(), 34);
             matcher.case(TypeId::of::<Div<Var, Type, Var>>(), 35);
             matcher.case(TypeId::of::<Div<Type, Type, Var>>(), 36);
+            
+            matcher.case(TypeId::of::<Phi>(), 37);
         }
         if let Some(switched) = matcher.switch(node.as_any().type_id()) {
             match *switched {
@@ -193,6 +206,7 @@ impl RegAlloc {
                 34 => self.prep(node.as_any().downcast_ref::<Div<Var, Var, Var>>().unwrap()),
                 35 => self.prep(node.as_any().downcast_ref::<Div<Var, Type, Var>>().unwrap()),
                 36 => self.prep(node.as_any().downcast_ref::<Div<Type, Type, Var>>().unwrap()),
+                37 => {}, // handeled before
                 _ => todo!(),
             }
         } else {
@@ -224,5 +238,16 @@ impl RegAlloc {
         let got = self.scopes.get(&node.dump()).expect("expected valid node");
 
         got.to_owned()
+    }
+
+    pub(crate) fn phi_prep(&mut self, phi: &Phi) {
+        let out = self.alloc_rv(phi.typ);
+
+        for (_, var) in &phi.recive_from_blocks {
+            self.phi_vars.insert(var.name.to_owned(), out);
+        }
+
+        self.vars.insert(phi.out.name.to_owned(), out);
+        self.var_types.insert(phi.out.name.to_owned(), phi.typ);
     }
 }

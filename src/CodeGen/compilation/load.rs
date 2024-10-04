@@ -26,6 +26,13 @@ impl CompilationHelper {
         instr.meta = node.inner3;
 
         mc_sink.push( instr );
+
+        if let Some(phi_loc) = self.alloc.phi_vars.get(&node.inner1.name) {
+            let mut instr = MachineInstr::new(MachineMnemonic::Move);
+            instr.set_out((*phi_loc).into());
+            instr.add_operand(out.into());
+            mc_sink.push(instr);
+        }
         
     }
 }

@@ -6,8 +6,6 @@ use super::{CompilationHelper, VarLocation};
 impl CompilationHelper {
     #[allow(missing_docs)]
     pub fn compile_alloca(&mut self, node: &Alloca<Var, TypeMetadata>, mc_sink: &mut Vec<MachineInstr>, _: &Block) {
-        
-
         let out = *self.vars.get(&node.inner1.name).unwrap();
 
         let out = match out {
@@ -32,5 +30,12 @@ impl CompilationHelper {
         self.allocated_vars.push(node.inner1.name.to_owned());
 
         mc_sink.push(instr);
+
+        if let Some(phi_loc) = self.alloc.phi_vars.get(&node.inner1.name) {
+            let mut instr = MachineInstr::new(MachineMnemonic::Move);
+            instr.set_out((*phi_loc).into());
+            instr.add_operand(out.into());
+            mc_sink.push(instr);
+        }
     }
 }

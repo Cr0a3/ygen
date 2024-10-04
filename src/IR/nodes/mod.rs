@@ -1,5 +1,6 @@
-use std::{any::Any, collections::HashMap, fmt::Debug, hash::Hash};
-use super::{Const, Function, FunctionType, IRBuilder, Type, TypeMetadata, Var, VerifyError};
+use std::{any::Any, fmt::Debug, hash::Hash};
+use std::collections::HashMap;
+use super::{Block, Const, Function, FunctionType, IRBuilder, Type, TypeMetadata, Var, VerifyError};
 use crate::Target::TargetBackendDescr;
 
 mod assign;
@@ -13,6 +14,7 @@ mod alloca;
 mod store;
 mod load;
 mod debug;
+mod phi;
 
 pub use assign::*;
 pub use call::*;
@@ -149,9 +151,25 @@ impl Cmp {
     }
 }
 
+/// The phi node which is used to influence the register allocator
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Phi {
+    pub(crate) out: Var,
+    pub(crate) recive_from_blocks: Vec<(Block, Var)>,
+    pub(crate) typ: TypeMetadata,
+}
+
+impl Phi {
+    pub(crate) fn new(out: Var, recives: Vec<(Block, Var)>, typ: TypeMetadata) -> Self {
+        Self {
+            out: out,
+            recive_from_blocks: recives,
+            typ: typ
+        }
+    }
+}
+
 use crate::Support::{ColorClass, ColorProfile};
-
-
 /// The ir trait
 pub trait Ir: Debug + Any {
     /// Returns the ir node as his textual representation
