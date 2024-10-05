@@ -574,11 +574,11 @@ impl ColorEncoder {
             let b = i16::from_str_radix(&clr_str[4..6], 16).ok();
 
             if !r.is_none() { _r = r.unwrap(); } else {
-                println!("{} {}", "Error: ".red(), "red color channel in encoded color string is null"); }
+                panic!("{} {}", "Error: ".red(), "red color channel in encoded color string is null"); }
             if !r.is_none() { _g = g.unwrap(); } else {
-                println!("{} {}", "Error: ".red(), "green color channel in encoded color string is null"); }
+                panic!("{} {}", "Error: ".red(), "green color channel in encoded color string is null"); }
             if !r.is_none() { _b = b.unwrap(); } else {
-                println!("{} {}", "Error: ".red(), "blue color channel in encoded color string is null"); }
+                panic!("{} {}", "Error: ".red(), "blue color channel in encoded color string is null"); }
 
             if _r != -1 && _g != -1 && _b != -1 {
                 str = str.replace(

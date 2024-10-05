@@ -649,7 +649,6 @@ fn x64_lower_push_cleanup(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
 }
 
 fn x64_lower_adrm(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
-    println!("adrm");
     let op = instr.operands.get(0).expect("expected adrm expectes one operand");
     let out = instr.out.expect("expected adrm expectes one operand");
 

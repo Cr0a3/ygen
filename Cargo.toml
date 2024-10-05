@@ -32,3 +32,9 @@ logos = "0.14.2"
 object = { version = "0.36.4", features = ["write"] }
 proc = { workspace = true }
 unescaper = "0.1.5"
+
+winapi = { version = "0.3.9", features = ["winnt", "memoryapi", "libloaderapi"], optional = true }
+libc = { version = "0.2.154", optional = true }
+
+[features]
+jit = ["dep:libc", "dep:winapi"]

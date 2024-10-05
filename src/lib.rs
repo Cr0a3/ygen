@@ -69,6 +69,10 @@ pub mod CodeGen;
 /// Debugging information
 pub mod debug;
 
+/// Jit execution utillities
+#[cfg(feature = "jit")]
+pub mod Jit;
+
 /// Most common used functions, classes, enums of this Libary
 pub mod prelude {
     pub use crate::IR::*;

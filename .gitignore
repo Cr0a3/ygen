@@ -1,4 +1,5 @@
 /target
+.vscode/
 dev-guide/book
 *.asm
 *.o

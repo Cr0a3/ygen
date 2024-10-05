@@ -76,7 +76,6 @@ impl RegAlloc {
                         index += 1;
                     }
                 }
-                println!("after: {:?}", self.free_registers.inner(self.arch));
             }
 
             let name = || func.arg(num).name;
