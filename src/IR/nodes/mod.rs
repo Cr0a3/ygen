@@ -15,6 +15,7 @@ mod store;
 mod load;
 mod debug;
 mod phi;
+mod switch;
 
 pub use assign::*;
 pub use call::*;
@@ -25,6 +26,7 @@ pub use br::*;
 pub use cmp::*;
 pub use store::*;
 pub use debug::*;
+pub use switch::*;
 
 macro_rules! IrTypeWith3 {
     ($name:tt, $param1:tt, $param2:tt, $param3:tt) => {

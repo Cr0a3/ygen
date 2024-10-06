@@ -315,8 +315,12 @@ impl X64MCInstr {
 
                 (buildOpcode(None, None, op), None)
             }
-            Mnemonic::Jne => {
-                let mut op = vec![0x0F, 0x85];
+            Mnemonic::Jne | Mnemonic::Je => {
+                let mut op = match self.mnemonic {
+                    Mnemonic::Jne => vec![0x0F, 0x85],
+                    Mnemonic::Je => vec![0x0F, 0x84],
+                    _ => unreachable!()
+                };
 
                 if let Some(Operand::Imm(num)) = self.op1 {
                     let bytes = num.to_be_bytes();
@@ -522,9 +526,9 @@ impl X64MCInstr {
                     ))?
                 }
             }
-            Mnemonic::Jne => {
+            Mnemonic::Jne | Mnemonic::Je => {
                 if let Some(Operand::Imm(_)) = self.op1 {} else {
-                    Err(InstrEncodingError::InvalidVariant(self.to_owned(), "jne expects one imm as its ops".to_owned()))?
+                    Err(InstrEncodingError::InvalidVariant(self.to_owned(), "j.. expects one imm as its ops".to_owned()))?
                 }
             }
             Mnemonic::Setg | Mnemonic::Setge | Mnemonic::Setl | Mnemonic::Setle | Mnemonic::Sete | Mnemonic::Setne => {
@@ -718,7 +722,9 @@ pub enum Mnemonic {
 
     Call,
     Jmp,
+
     Jne,
+    Je,
 
     Endbr64,
 
@@ -730,7 +736,6 @@ pub enum Mnemonic {
     StartOptimization,
     /// stop optimization
     EndOptimization,
-
 
     Sete,
     Setne,
@@ -763,6 +768,7 @@ impl FromStr for Mnemonic {
             "imul" => Ok(Mnemonic::Imul),
             "mul" => Ok(Mnemonic::Mul),
             "jne" => Ok(Mnemonic::Jne),
+            "je" => Ok(Mnemonic::Je),
             "cmp" => Ok(Mnemonic::Cmp),
             "sete" => Ok(Mnemonic::Sete),
             "setne" => Ok(Mnemonic::Setne),
@@ -800,6 +806,7 @@ impl Display for Mnemonic {
             Mnemonic::EndOptimization => "",
             Mnemonic::Debug => "#",
             Mnemonic::Jne => "jne",
+            Mnemonic::Je => "je",
             Mnemonic::Cmp => "cmp",
             Mnemonic::Sete => "sete",
             Mnemonic::Setg => "setg",

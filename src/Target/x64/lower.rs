@@ -2,6 +2,7 @@ use crate::prelude::CmpMode;
 use crate::CodeGen::{MCInstr, MachineCallingConvention, MachineInstr, MachineMnemonic, MachineOperand};
 use crate::Optimizations::Optimize;
 use crate::Target::CallConv;
+use crate::IR::{BlockId, Type};
 
 use super::{instr::{MemOp, Mnemonic, Operand, X64MCInstr}, x64Reg};
 
@@ -54,6 +55,7 @@ pub(crate) fn x64_lower_instr(conv: CallConv, sink: &mut Vec<X64MCInstr>, instr:
             )));
         },
         MachineMnemonic::AdrMove => x64_lower_adrm(sink, &instr),
+        MachineMnemonic::Switch(cases) => x64_lower_switch(sink, &instr, cases),
     }
 }
 
@@ -681,5 +683,36 @@ fn x64_lower_adrm(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
             sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), op));
         }
         sink.push(X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(x64Reg::Rax)));
+    }
+}
+
+fn x64_lower_switch(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr, cases: &Vec<(Type, BlockId)>) {
+    let var = *instr.operands.get(0).expect("switch expectes an variable to switch");
+    let mut var = match var {
+        MachineOperand::Imm(imm) => Operand::Imm(imm),
+        MachineOperand::Reg(x64) => match x64 {
+            crate::CodeGen::Reg::x64(x64_reg) => Operand::Reg(x64_reg),
+        },
+        MachineOperand::Stack(stack) => x64_stack!(stack as u32),
+    };
+
+    if let Operand::Mem(_) = var {
+        sink.push(
+            X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), var)
+        );
+
+        var = Operand::Reg(x64Reg::Rax);
+    }
+
+    for (case_type, block) in cases {
+        sink.push(
+            X64MCInstr::with2(Mnemonic::Cmp, var.clone(), Operand::Imm(case_type.val() as i64)),
+        ); 
+        sink.push(
+            X64MCInstr::with1(Mnemonic::Je, Operand::Imm(0))
+        );
+        sink.push(
+            X64MCInstr::with1(Mnemonic::Link, Operand::BlockLinkDestination(block.name.to_owned(), -4))
+        );
     }
 }

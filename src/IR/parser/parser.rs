@@ -1,7 +1,7 @@
-use std::collections::{BTreeMap, VecDeque};
+use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::path::PathBuf;
 
-use crate::prelude::{Alloca, Cmp, CmpMode, DebugNode, Ir, Load, Phi, Store};
+use crate::prelude::{Alloca, Cmp, CmpMode, DebugNode, Ir, Load, Phi, Store, Switch};
 use crate::Obj::Linkage;
 use crate::IR::block::BlockId;
 use crate::IR::{ir, Block, Const, FnTy, Type, TypeMetadata, Var};
@@ -444,6 +444,7 @@ impl IrParser {
                     "ret" => self.parse_ret()?,
                     "br" => self.parse_br()?,
                     "store" => self.parse_store()?,
+                    "switch" => self.parse_switch()?,
                     _ => Err(IrError::UnkownInstrinc{loc: curr.loc.clone(), found: instrinc })?,
                 }
             } else if let TokenType::ExclamationMark = curr.typ {
@@ -982,6 +983,71 @@ impl IrParser {
         }
 
         Ok(Box::new(Phi::new(out, recives, out_ty)))
+    }
+
+    fn parse_switch(&mut self) -> Result<Box<dyn Ir>, IrError> {
+        self.input.pop_front(); // switch
+
+        let typ = self.parse_type()?;
+        self.input.pop_front();
+
+        self.expect(TokenType::Var(String::new()))?;
+        let var = if let TokenType::Var(var) = &self.current_token()?.typ {
+            Var {
+                name: var.to_owned(),
+                ty: typ,
+            }
+        } else { unreachable!() };
+        self.input.pop_front();
+
+        self.expect(TokenType::Comma)?;
+        self.input.pop_front();
+
+        self.expect_ident("default".into())?;
+        self.input.pop_front();
+
+        self.expect(TokenType::Ident(String::new()))?;
+        let default = if let TokenType::Ident(ident) = &self.current_token()?.typ {
+            ident.to_owned()
+        } else { unreachable!() };
+        self.input.pop_front();
+
+        self.expect(TokenType::LSquare)?;
+        self.input.pop_front();
+
+        let mut cases = HashMap::new();
+
+        loop {
+            let current = self.current_token()?;
+
+            if let TokenType::RSquare = current.typ {
+                break;
+            }
+
+            let ty = self.parse_type()?;
+            self.input.pop_front();
+
+            self.expect(TokenType::Int(0))?;
+            let ty = if let TokenType::Int(int) = &self.current_token()?.typ {
+                Type::from_int(ty, *int)
+            } else { unreachable!() };
+            self.input.pop_front();
+
+            self.expect(TokenType::Comma)?;
+            self.input.pop_front();
+
+            self.expect(TokenType::Ident(String::new()))?;
+            let block = if let TokenType::Ident(ident) = &self.current_token()?.typ {
+                ident.to_owned()
+            } else { unreachable!() };
+            self.input.pop_front();
+
+            cases.insert(ty, BlockId(block));
+        }
+
+        self.input.pop_front();
+
+        Ok(Box::new( Switch::new(var, cases, BlockId(default)) ))
     }
 }
 

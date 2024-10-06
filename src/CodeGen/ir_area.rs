@@ -249,6 +249,11 @@ impl IrCodeGenHelper {
         "Loweres the store node", 
         ir::Store<Var, Type> 
     );
+    ir_codegen_wrap!(
+        compile_switch, 
+        "Loweres the switch node", 
+        ir::Switch
+    );
 }
 
 impl Into<Vec<MachineInstr>> for IrCodeGenHelper {

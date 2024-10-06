@@ -9,7 +9,7 @@ use super::parser::{IrStmt, IrBlock};
 use super::lexer::Loc;
 use super::IrError;
 
-/// semantic analaysiz for ir stmts
+/// semantic analyze for ir stmts
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IrSemnatic<'a> {
     input: &'a Vec<IrStmt>,
@@ -201,6 +201,8 @@ impl<'a> IrSemnatic<'a> {
                     } else {
                         vars.insert(node.out.name.to_owned(), node.typ);
                     }
+                } else if let Some(node) = any.downcast_ref::<Switch>() {
+                    self.analyze_switch(func, &mut vars, node, loc)?;
                 } else {
                     todo!("implement node: {}", node.inst.dump());
                 }
@@ -512,7 +514,7 @@ impl<'a> IrSemnatic<'a> {
         Ok(())
     }
 
-    fn analaysiz_load(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &Load<Var, Var, TypeMetadata>,loc: Loc) -> Result<(), IrError> {
+    fn analaysiz_load(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &Load<Var, Var, TypeMetadata>, loc: Loc) -> Result<(), IrError> {
         // TODO: maybe add checks that the pointer can only be a type of ptr and not i32
         
         if !vars.contains_key(&node.inner2.name) {
@@ -530,6 +532,38 @@ impl<'a> IrSemnatic<'a> {
 
     fn analyize_const(&mut self, _: &String, _: &Vec<u8>, _: &Loc, _: Linkage) -> Result<(), IrError> {
         Ok(()) // what can go wrong on constants?
+    }
+
+    fn analyze_switch(&mut self, func: &String, vars: &mut HashMap<String, TypeMetadata>, node: &Switch, loc: Loc) -> Result<(), IrError> {
+        let (_, _, blocks) = self.func_sigs.get(func).unwrap();
+        
+        if !vars.contains_key(&node.to_switch.name) {
+            Err(IrError::Unkown { 
+                what: "variable".into(), 
+                name: node.to_switch.name.to_owned(), 
+                loc: loc.clone() 
+            })?
+        }
+
+        if !blocks.contains(&node.default.name) {
+            Err(IrError::Unkown { 
+                what: "block".into(), 
+                name: node.default.name.to_owned(), 
+                loc: loc.clone() 
+            })?
+        }
+
+        for (_, case) in &node.cases {
+            if !blocks.contains(&case.name) {
+                Err(IrError::Unkown { 
+                    what: "block".into(), 
+                    name: case.name.to_owned(), 
+                    loc: loc.clone() 
+                })?
+            }
+        }
+
+        Ok(())
     }
 }   
 

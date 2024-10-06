@@ -97,7 +97,7 @@ pub fn Block(name: &str, func: &Function) -> Block {
 }
 
 /// Describes the block 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct BlockId {
     pub(crate) name: String,
 }

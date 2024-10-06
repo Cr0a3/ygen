@@ -20,6 +20,8 @@ mod alloca;
 mod store;
 mod load;
 
+mod switch;
+
 /// helps with compilation
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CompilationHelper {

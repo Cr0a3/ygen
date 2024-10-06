@@ -1,0 +1,32 @@
+# RUN:
+cargo run -p ylc -- -in=%s -o=out.o
+gcc out.o -o a.exe
+./a.exe
+# IN:
+
+define i32 @main() {
+  entry:
+    %0 = i32 5
+    br switch
+
+  switch:
+    switch i32 %0, default default [
+        i32 0, is0
+        i32 1, is1
+        i32 5, is5
+    ]
+
+  default:
+    ret i32 %0
+
+  is0:
+    ret i32 100
+
+  is1:
+    ret i32 2
+
+  is5:
+    ret i32 1
+}
+
+# EXIT_CODE=1

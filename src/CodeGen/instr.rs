@@ -3,7 +3,7 @@ use std::fmt::{Debug, Display};
 use std::any::Any;
 use crate::prelude::CmpMode;
 use crate::Obj::Link;
-use crate::IR::TypeMetadata;
+use crate::IR::{BlockId, Type, TypeMetadata};
 
 use super::reg::Reg;
 use super::VarLocation;
@@ -142,6 +142,8 @@ pub enum MachineMnemonic {
     CallStackRedo,
 
     AdrMove,
+
+    Switch(Vec<(Type, BlockId)>),
 }
 
 impl MachineMnemonic {
@@ -174,6 +176,7 @@ impl MachineMnemonic {
             MachineMnemonic::CallStackPrepare =>    "callsprep",
             MachineMnemonic::CallStackRedo =>       "callspred",
             MachineMnemonic::AdrMove =>             "adrmov",    
+            MachineMnemonic::Switch(_) =>           "switch",
         }.to_string()
     }
 }

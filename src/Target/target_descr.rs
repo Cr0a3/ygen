@@ -283,3 +283,5 @@ compile_func!(compile_alloca, compile_alloca, Alloca<Var, TypeMetadata>);
 compile_func!(compile_store, compile_store, Store<Var, Var>);
 compile_func!(compile_store_ty, compile_store_ty, Store<Var, Type>);
 compile_func!(compile_load, compile_load, Load<Var, Var, TypeMetadata>);
+
+compile_func!(compile_switch, compile_switch, Switch);

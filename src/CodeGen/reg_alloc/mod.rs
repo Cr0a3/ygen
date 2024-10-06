@@ -179,6 +179,7 @@ impl RegAlloc {
             matcher.case(TypeId::of::<Div<Type, Type, Var>>(), 36);
             
             matcher.case(TypeId::of::<Phi>(), 37);
+            matcher.case(TypeId::of::<Switch>(), 38);
         }
         if let Some(switched) = matcher.switch(node.as_any().type_id()) {
             match *switched {
@@ -220,6 +221,7 @@ impl RegAlloc {
                 35 => self.prep(node.as_any().downcast_ref::<Div<Var, Type, Var>>().unwrap()),
                 36 => self.prep(node.as_any().downcast_ref::<Div<Type, Type, Var>>().unwrap()),
                 37 => {}, // handeled before
+                38 => {}, // switch does not allocate anything
                 _ => todo!(),
             }
         } else {
