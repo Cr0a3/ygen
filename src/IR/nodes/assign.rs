@@ -189,9 +189,9 @@ pub trait BuildAssign<T> {
     /// builds an assignment
     fn BuildAssign(&mut self, value: T) -> Var;
 }
-impl BuildAssign<Type> for IRBuilder<'_> {
+impl BuildAssign<Type> for Function {
     fn BuildAssign(&mut self, value: Type) -> Var {
-        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.get_mut(self.blocks.len() - 1).expect("the IRBuilder needs to have an current block\nConsider creating one");
         
         let out = Var::new(block, value.into());
 
@@ -201,9 +201,9 @@ impl BuildAssign<Type> for IRBuilder<'_> {
     }
 }
 
-impl BuildAssign<Var> for IRBuilder<'_> {
+impl BuildAssign<Var> for Function {
     fn BuildAssign(&mut self, value: Var) -> Var {
-        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.get_mut(self.blocks.len() - 1).expect("the IRBuilder needs to have an current block\nConsider creating one");
         
         let out = Var::new(block, value.ty);
 
@@ -213,9 +213,9 @@ impl BuildAssign<Var> for IRBuilder<'_> {
     }
 }
 
-impl BuildAssign<&Const> for IRBuilder<'_> {
+impl BuildAssign<&Const> for Function {
     fn BuildAssign(&mut self, value: &Const) -> Var {
-        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.get_mut(self.blocks.len() - 1).expect("the IRBuilder needs to have an current block\nConsider creating one");
         
         let out = Var::new(block, TypeMetadata::ptr);
 

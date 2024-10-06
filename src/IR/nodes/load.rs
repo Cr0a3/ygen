@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::Support::ColorClass;
-use crate::IR::{IRBuilder, Type, TypeMetadata, Var};
+use crate::IR::{Function, Type, TypeMetadata, Var};
 
 use super::{Ir, Load};
 
@@ -63,10 +63,10 @@ impl Ir for Load<Var, Var, TypeMetadata> {
     }
 }
 
-impl IRBuilder<'_> {
+impl Function {
     /// the load instruction loads an value from an pointer into a normal variable
     pub fn BuildLoad(&mut self, ptr: Var, ty: TypeMetadata) -> Var {
-        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.get_mut(self.blocks.len() - 1).expect("the IRBuilder needs to have an current block\nConsider creating one");
         
         let out = Var::new(block, ty);
 

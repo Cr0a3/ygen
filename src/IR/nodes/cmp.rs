@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
-use crate::{Support::ColorClass, IR::{IRBuilder, Type, Var, VerifyError}};
+use crate::Support::ColorClass;
+use crate::IR::{Function, Type, Var, VerifyError};
 
 use super::{Assign, Cmp, Ir};
 
@@ -116,9 +117,9 @@ pub trait BuildCmp {
     fn BuildCmp(&mut self, mode: CmpMode, ls: Var, rs: Var) -> Var;
 }
 
-impl BuildCmp for IRBuilder<'_> {
+impl BuildCmp for Function {
     fn BuildCmp(&mut self, mode: CmpMode, ls: Var, rs: Var) -> Var {
-        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.get_mut(self.blocks.len()  -1).expect("the IRBuilder needs to have an current block\nConsider creating one");
         
         let out = Var::new(block, ls.ty);
 

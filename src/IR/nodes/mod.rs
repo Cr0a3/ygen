@@ -1,6 +1,6 @@
 use std::{any::Any, fmt::Debug, hash::Hash};
 use std::collections::HashMap;
-use super::{Block, Const, Function, FunctionType, IRBuilder, Type, TypeMetadata, Var, VerifyError};
+use super::{Block, Const, Function, FunctionType, Type, TypeMetadata, Var, VerifyError};
 use crate::Target::TargetBackendDescr;
 
 mod assign;

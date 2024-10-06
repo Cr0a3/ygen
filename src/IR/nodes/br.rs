@@ -1,10 +1,12 @@
 use std::collections::HashMap;
 
-use crate::{Support::ColorClass, IR::{Block, IRBuilder, Type, Var}};
+use crate::Support::ColorClass;
+use crate::IR::block::BlockId;
+use crate::IR::{Function, Type, Var};
 
 use super::{Br, BrCond, Ir};
 
-impl Ir for Br<Box<Block>> {
+impl Ir for Br<BlockId> {
     fn dump(&self) -> String {
         format!("br {}", self.inner1.name)
     }
@@ -63,7 +65,7 @@ impl Ir for Br<Box<Block>> {
     }
 }
 
-impl Ir for BrCond<Var, Block, Block> {
+impl Ir for BrCond<Var, BlockId, BlockId> {
     fn dump(&self) -> String {
         format!("br cond {} {}, {}", self.inner1.name, self.inner2.name, self.inner3.name)
     }
@@ -114,7 +116,7 @@ impl Ir for BrCond<Var, Block, Block> {
     
     fn eval(&self) -> Option<Box<dyn Ir>> {
         if self.inner2.name == self.inner3.name {
-            Some(Br::new( Box::new( self.inner3.to_owned() ) ))
+            Some(Br::new( self.inner3.to_owned() ))
         } else { None }
     }
     
@@ -133,15 +135,11 @@ pub trait BuildBr<T> {
     fn BuildBr(&mut self, val: T);
 }
 
-impl BuildBr<&Block> for IRBuilder<'_> {
-    fn BuildBr(&mut self, to: &Block) {
-        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+impl BuildBr<&BlockId> for Function {
+    fn BuildBr(&mut self, to: &BlockId) {
+        let block = self.blocks.get_mut(self.blocks.len() - 1).expect("the IRBuilder needs to have an current block\nConsider creating one");
 
-        block.push_ir(Br::new(Box::from(Block { // creating a new one in order to safe some memory space
-            name: to.name.to_owned(),
-            nodes: vec![], 
-            varCount: 0 
-        })));
+        block.push_ir(Br::new( to.to_owned() ));
     }
 }
 
@@ -153,18 +151,10 @@ pub trait BuildBrCond<T, U, Z> {
     fn BuildBrCond(&mut self, val: T, iftrue: U, iffalse: Z);
 }
 
-impl BuildBrCond<Var, &Block, &Block> for IRBuilder<'_> {
-    fn BuildBrCond(&mut self, val: Var, iftrue: &Block, iffalse: &Block) {
-        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+impl BuildBrCond<Var, &BlockId, &BlockId> for Function {
+    fn BuildBrCond(&mut self, val: Var, iftrue: &BlockId, iffalse: &BlockId) {
+        let block = self.blocks.get_mut(self.blocks.len() - 1).expect("the IRBuilder needs to have an current block\nConsider creating one");
 
-        block.push_ir( BrCond::new(val, Block {
-            name: iftrue.name.to_owned(),
-            nodes: vec![],
-            varCount: 0,
-        }, Block { 
-            name: iffalse.name.to_owned(), 
-            nodes: vec![], 
-            varCount: 0, 
-        }) );
+        block.push_ir( BrCond::new(val, iftrue.to_owned(), iffalse.to_owned()));
     }
 }

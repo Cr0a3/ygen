@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
-use crate::{prelude::Call, CodeGen::{MachineMnemonic, MachineOperand, Reg}};
-use crate::IR::{Block, Function, Var};
+use crate::{prelude::Call, CodeGen::{MachineMnemonic, MachineOperand, Reg}, IR::FuncId};
+use crate::IR::{Block, Var};
 use super::{CompilationHelper, VarLocation};
 use crate::CodeGen::MachineInstr;
 
 impl CompilationHelper {
     #[allow(missing_docs)]
-    pub fn compile_call(&mut self, node: &Call<Function, Vec<Var>, Var>, mc_sink: &mut Vec<MachineInstr>, _: &Block) {
+    pub fn compile_call(&mut self, node: &Call<FuncId, Vec<Var>, Var>, mc_sink: &mut Vec<MachineInstr>, _: &Block) {
         let mut reg_args = 0;
 
         let args = self.call.args(self.arch);

@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use crate::{Support::ColorClass, IR::IRBuilder};
+use crate::{Support::ColorClass, IR::Function};
 
 use super::Ir;
 
@@ -67,10 +67,10 @@ impl Ir for DebugNode {
     }
 }
 
-impl IRBuilder<'_> {
+impl Function {
     /// Sets the source location for debugging (all of the ir nodes will respond to the location till an new location is set)
     pub fn BuildDebug(&mut self, line: i64, coloumn: i64, file: PathBuf) {
-        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.get_mut(self.blocks.len() - 1).expect("the IRBuilder needs to have an current block\nConsider creating one");
        
         block.push_ir( Box::new( DebugNode { 
             line: line, 

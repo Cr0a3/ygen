@@ -5,11 +5,9 @@ use ygen::{prelude::*, Support::ColorProfile, Target::initializeAllTargets};
 pub fn main() -> Result<(), Box<dyn Error>> {
     let mut module = Module();
 
-    let mut builder = IRBuilder();
-
     let other = module.add("printf", &FnTy(vec![TypeMetadata::ptr], TypeMetadata::Void));
     other.import();
-    let other = other.clone();
+    let other = other.id();
     
     let string = module.addConst("str");
     string.set("Hello World!\n\0".as_bytes().to_vec());
@@ -23,13 +21,12 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
     func.extrn();
 
-    let entry = func.addBlock("entry");
-    builder.positionAtEnd(entry); 
+    func.addBlock("entry");
 
-    let string = builder.BuildAssign(&string);
-    builder.BuildCall( &other, vec![string] );
+    let string = func.BuildAssign(&string);
+    func.BuildCall( &other, vec![string] );
 
-    builder.BuildRet( Type::Void );
+    func.BuildRet( Type::Void );
 
     module.verify()?;
 

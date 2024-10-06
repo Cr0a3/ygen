@@ -62,8 +62,6 @@ impl CodeGenerator {
 
             index += 1;
         }
-        
-        let mut builder = IRBuilder();
 
         if func.dynamic_args {
             func_ty.activate_dynamic_arguments();
@@ -81,19 +79,18 @@ impl CodeGenerator {
             return;
         }
 
-        let block = fun.addBlock("entry");
-        builder.positionAtStart(block);
+        fun.addBlock("entry");
 
         for stmt in &func.body {
-            self.gen_stmt(stmt, &mut builder, &mut vars);
+            self.gen_stmt(stmt, &mut fun, &mut vars);
         }
 
-        builder.BuildRet(Type::Void); // will automaticlly be removed but i added it here so that functions which don't return and are allowed to do that have an return instruction
+        fun.BuildRet(Type::Void); // will automaticlly be removed but i added it here so that functions which don't return and are allowed to do that have an return instruction
 
         self.functions.insert(func.name.to_string(), fun);
     }
 
-    fn gen_stmt(&mut self, stmt: &Statement, builder: &mut IRBuilder, vars: &mut HashMap<String, Var>) {
+    fn gen_stmt(&mut self, stmt: &Statement, builder: &mut Function, vars: &mut HashMap<String, Var>) {
         match stmt {
             Statement::Expr(expr) => { self.gen_expr(expr, builder, vars); },
             Statement::Ret(ret) => { self.gen_ret(ret, builder, vars); },
@@ -101,7 +98,7 @@ impl CodeGenerator {
         }
     }
 
-    fn gen_expr(&mut self, expr: &Expr, builder: &mut IRBuilder, vars: &mut HashMap<String, Var>) -> Var {
+    fn gen_expr(&mut self, expr: &Expr, builder: &mut Function, vars: &mut HashMap<String, Var>) -> Var {
         match expr {
             Expr::Var((name, _)) => vars.get(name).unwrap().clone(),
             Expr::Binary(bin) => self.gen_bin(bin, builder, vars),
@@ -111,7 +108,7 @@ impl CodeGenerator {
         }
     }
 
-    fn gen_ret(&mut self, ret: &RetStmt, builder: &mut IRBuilder, vars: &mut HashMap<String, Var>) {
+    fn gen_ret(&mut self, ret: &RetStmt, builder: &mut Function, vars: &mut HashMap<String, Var>) {
         let ret = if let Some(ret) = &ret.var { 
             ret
         } else {
@@ -125,7 +122,7 @@ impl CodeGenerator {
 
     }
 
-    fn gen_bin(&mut self, bin: &(Operator, Option<Box<Expr>>, Option<Box<Expr>>), builder: &mut IRBuilder, vars: &mut HashMap<String, Var>) -> Var {
+    fn gen_bin(&mut self, bin: &(Operator, Option<Box<Expr>>, Option<Box<Expr>>), builder: &mut Function, vars: &mut HashMap<String, Var>) -> Var {
         let left = bin.1.as_ref().unwrap();
         let right = bin.2.as_ref().unwrap();
 
@@ -151,8 +148,8 @@ impl CodeGenerator {
         }
     }
 
-    fn gen_call(&mut self, call: &CallStmt, builder: &mut IRBuilder, vars: &mut HashMap<String, Var>) -> Var {
-        let fun = &self.functions.get(&call.name).unwrap().clone();
+    fn gen_call(&mut self, call: &CallStmt, builder: &mut Function, vars: &mut HashMap<String, Var>) -> Var {
+        let fun = self.functions.get(&call.name).unwrap().id();
 
         let mut args = vec![];
 
@@ -164,7 +161,7 @@ impl CodeGenerator {
         builder.BuildCall(&fun, args)
     }
 
-    fn gen_string(&mut self, builder: &mut IRBuilder, string: &String) -> Var {
+    fn gen_string(&mut self, builder: &mut Function, string: &String) -> Var {
         let constant = self.module.addConst(&format!(".const{}", self.const_index));
 
         self.const_index += 1;

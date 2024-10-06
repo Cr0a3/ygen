@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 
+use super::block::BlockId;
 use super::Block;
 use super::TypeMetadata;
 use super::Var;
@@ -94,9 +95,9 @@ impl Function {
     }
 
     /// Adds a new block to the function
-    pub fn addBlock(&mut self, name: &str) -> &mut Block {
+    pub fn addBlock(&mut self, name: &str) -> BlockId {
         self.blocks.push_back(Block::new(name, &self));
-        self.blocks.back_mut().expect("unreachable") // we previusly pushed something so here it is safe
+        BlockId(name.to_owned())
     }
 
     /// Emits the Ir of the function into a string
@@ -225,6 +226,14 @@ impl Function {
             mngr.run(block);
         }
     }
+
+    /// Constructs an id for the function
+    pub fn id(&self) -> FuncId {
+        FuncId {
+            name: self.name.to_owned(),
+            ty: self.ty.to_owned(),
+        }
+    }
 }
 
 /// Creates a new function type
@@ -235,4 +244,11 @@ pub fn FnTy(args: Vec<TypeMetadata>, ret: TypeMetadata) -> FunctionType {
 /// Creates a new Function
 pub fn Func(name: String, ty: FunctionType) -> Function {
     Function::new(name, ty)
+}
+
+/// A function id (describes arguments and the name)
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FuncId {
+    pub(crate) name: String,
+    pub(crate) ty: FunctionType,
 }

@@ -1,7 +1,6 @@
 mod module;
 mod func;
 mod typ;
-mod builder;
 mod block;
 mod var;
 mod constant;
@@ -17,12 +16,11 @@ use std::error::Error;
 use std::fmt::Display;
 
 pub use module::Module;
-pub use func::{Function, FunctionType, FnTy, Func};
+pub use func::{Function, FunctionType, FnTy, Func, FuncId};
 pub use constant::Const;
 pub use typ::Type;
 pub use typ::TypeMetadata;
-pub use builder::IRBuilder;
-pub use block::Block;
+pub use block::{Block, BlockId};
 pub use var::Var;
 
 /// An error which stores if an ir node is invalid

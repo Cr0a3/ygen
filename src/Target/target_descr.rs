@@ -3,7 +3,7 @@ use crate::debug::DebugLocation;
 use crate::prelude::{ir::*, Block, Var};
 use crate::CodeGen::{IrCodeGenArea, IrCodeGenHelper, MCDocInstr, MCInstr};
 use crate::CodeGen::{compilation::CompilationHelper, MachineInstr};
-use crate::IR::{Const, Function, Type, TypeMetadata};
+use crate::IR::{BlockId, Const, FuncId, Type, TypeMetadata};
 
 use super::{Triple, WhiteList};
 use super::{CallConv, Compiler, Lexer};
@@ -268,14 +268,14 @@ compile_func!(compile_ret_var, compile_ret_var, Return<Var>);
 
 compile_func!(compile_cast_var, compile_cast, Cast<Var, TypeMetadata, Var>);
 
-compile_func!(compile_call, compile_call, Call<Function, Vec<Var>, Var>);
+compile_func!(compile_call, compile_call, Call<FuncId, Vec<Var>, Var>);
 
 compile_func!(compile_assign_var_type, compile_assign_var_type, Assign<Var, Type>);
 compile_func!(compile_assign_var_var, compile_assign_var_var, Assign<Var, Var>);
 compile_func!(compile_assign_var_const, compile_assign_var_const, Assign<Var, Const>);
 
-compile_func!(compile_br, compile_br, Br<Box<Block>>);
-compile_func!(compile_br_cond, compile_br_cond, BrCond<Var, Block, Block>);
+compile_func!(compile_br, compile_br, Br<BlockId>);
+compile_func!(compile_br_cond, compile_br_cond, BrCond<Var, BlockId, BlockId>);
 
 compile_func!(compile_cmp, compile_cmp, Cmp);
 

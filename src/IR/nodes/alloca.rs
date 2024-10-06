@@ -1,4 +1,4 @@
-use crate::IR::{IRBuilder, TypeMetadata, Var};
+use crate::IR::{Function, TypeMetadata, Var};
 use crate::Support::ColorClass;
 
 use super::{Alloca, Ir};
@@ -53,10 +53,10 @@ impl Ir for Alloca<Var, TypeMetadata> {
     }
 }
 
-impl IRBuilder<'_> {
+impl Function {
     /// Builds an stack allocation (the out var is the pointer to the allocated stack region)
     pub fn BuildAlloca(&mut self, ty: TypeMetadata) -> Var {
-        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.get_mut(self.blocks.len() - 1).expect("the IRBuilder needs to have an current block\nConsider creating one");
         
         let out = Var::new(block, TypeMetadata::ptr);
 

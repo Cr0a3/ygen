@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::IR::{IRBuilder, Type, TypeMetadata, Var};
+use crate::IR::{Function, Type, TypeMetadata, Var};
 use crate::Support::ColorClass;
 
 use super::{Store, Ir};
@@ -126,17 +126,17 @@ pub trait BuildStore<T, U> {
     fn BuildStore(&mut self, target: T, value: U);
 }
 
-impl BuildStore<Var, Var> for IRBuilder<'_> {
+impl BuildStore<Var, Var> for Function {
     fn BuildStore(&mut self, target: Var, value: Var) {
-        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.get_mut(self.blocks.len() - 1).expect("the IRBuilder needs to have an current block\nConsider creating one");
 
         block.push_ir( Store::new(target, value) );
     }
 }
 
-impl BuildStore<Var, Type> for IRBuilder<'_> {
+impl BuildStore<Var, Type> for Function {
     fn BuildStore(&mut self, target: Var, value: Type) {
-        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.get_mut(self.blocks.len() - 1).expect("the IRBuilder needs to have an current block\nConsider creating one");
 
         block.push_ir( Store::new(target, value) );
     }

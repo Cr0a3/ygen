@@ -7,8 +7,6 @@ type AddFunc = unsafe extern "C" fn(i32, i32) -> i32;
 pub fn basic() -> Result<(), Box<dyn Error>> {
     let mut module = Module();
 
-    let mut builder = IRBuilder();
-
     let ty = FnTy(vec![TypeMetadata::i32, TypeMetadata::i32], TypeMetadata::i32);
     
     let func = module.add(
@@ -17,12 +15,11 @@ pub fn basic() -> Result<(), Box<dyn Error>> {
 
     func.extrn();
 
-    let entry = func.addBlock("entry");
-    builder.positionAtEnd(entry); 
+    func.addBlock("entry");
 
-    let val = builder.BuildAdd(ty.arg(0), ty.arg(1));
+    let val = func.BuildAdd(ty.arg(0), ty.arg(1));
     
-    builder.BuildRet( val );
+    func.BuildRet( val );
 
     module.verify()?;
 
@@ -40,22 +37,22 @@ pub fn basic() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-pub fn blocks() -> Result<(), Box<dyn Error>> {
-    let mut module = ygen::ir!(
-        r#"
-        define i32 @test(i32 %0) {
-          entry:
-             %ret_value = call i32 add i32 %0 i32 %0
-             ret i32 %ret_value
-        }
+pub fn call() -> Result<(), Box<dyn Error>> {
+    let mut module = Module();
 
-        define i32 @add(i32 %0, i32 %1) {
-          entry:
-            %2 = add i32 %0, %1
-            ret i32 %2
-        }
-        "#
-    );
+    let test_ty = FnTy(vec![TypeMetadata::i32], TypeMetadata::i32);
+    let add_ty = FnTy(vec![TypeMetadata::i32, TypeMetadata::i32], TypeMetadata::i32);
+
+    let add = module.add("add", &add_ty);
+    let ret = add.BuildAdd(add_ty.arg(0), add_ty.arg(1));
+    add.BuildRet(ret);
+
+    let add = add.id();
+
+    let test = module.add("test", &test_ty);
+
+    let out = test.BuildCall(&add, vec![test_ty.arg(0), test_ty.arg(1)]);
+    test.BuildRet(out);
 
     let mut funcs = module.jitMap(&mut initializeAllTargets(Triple::host())? )?;
 

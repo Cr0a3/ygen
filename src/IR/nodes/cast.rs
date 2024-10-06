@@ -72,9 +72,9 @@ pub trait BuildCast<T, U> {
     fn BuildCast(&mut self, var: T, ty: U) -> Var;
 }
 
-impl BuildCast<Var, TypeMetadata> for IRBuilder<'_> {
+impl BuildCast<Var, TypeMetadata> for Function {
     fn BuildCast(&mut self, var: Var, ty: TypeMetadata) -> Var {
-        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.get_mut(self.blocks.len() - 1).expect("the IRBuilder needs to have an current block\nConsider creating one");
         
         let out = Var::new(block, ty);
 

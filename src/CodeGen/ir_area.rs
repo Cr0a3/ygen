@@ -2,7 +2,7 @@ use crate::debug::DebugLocation;
 use crate::prelude::{DebugNode, Ir};
 use crate::CodeGen::MachineInstr;
 
-use crate::IR::{ir, Block, Const, Function, Type, TypeMetadata, Var};
+use crate::IR::{ir, Block, BlockId, Const, FuncId, Type, TypeMetadata, Var};
 
 use super::CompilationHelper;
 
@@ -202,17 +202,17 @@ impl IrCodeGenHelper {
     ir_codegen_wrap!(
         compile_br, 
         "Loweres the xor node", 
-        ir::Br<Box<Block>>
+        ir::Br<BlockId>
     );
     ir_codegen_wrap!(
         compile_br_cond, 
         "Loweres the br cond node", 
-        ir::BrCond<Var, Block, Block>
+        ir::BrCond<Var, BlockId, BlockId>
     );
     ir_codegen_wrap!(
         compile_call, 
         "Loweres the call node", 
-        ir::Call<Function, Vec<Var>, Var>
+        ir::Call<FuncId, Vec<Var>, Var>
     );
     ir_codegen_wrap!(
         compile_cast, 

@@ -1,4 +1,5 @@
 use std::error::Error;
+#[cfg(feature = "jit")]
 use ygen::{prelude::*, Jit::JitFunction, Target::initializeAllTargets};
 
 type AddFunc = unsafe extern "C" fn(i32, i32) -> i32;
@@ -6,8 +7,6 @@ type AddFunc = unsafe extern "C" fn(i32, i32) -> i32;
 #[cfg(feature = "jit")]
 pub fn main() -> Result<(), Box<dyn Error>> {
     let mut module = Module();
-
-    let mut builder = IRBuilder();
 
     let ty = FnTy(vec![TypeMetadata::i32, TypeMetadata::i32], TypeMetadata::i32);
     
@@ -17,12 +16,11 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
     func.extrn();
 
-    let entry = func.addBlock("entry");
-    builder.positionAtEnd(entry); 
+    func.addBlock("entry");
 
-    let val = builder.BuildAdd(ty.arg(0), ty.arg(1));
+    let val = func.BuildAdd(ty.arg(0), ty.arg(1));
     
-    builder.BuildRet( val );
+    func.BuildRet( val );
 
     module.verify()?;
 

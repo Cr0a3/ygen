@@ -95,3 +95,15 @@ impl Block {
 pub fn Block(name: &str, func: &Function) -> Block {
     Block::new(name, func)
 }
+
+/// Describes the block 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BlockId {
+    pub(crate) name: String,
+}
+
+pub(crate) fn BlockId(name: String) -> BlockId {
+    BlockId {
+        name: name
+    }
+}

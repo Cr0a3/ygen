@@ -5,8 +5,6 @@ use ygen::{prelude::*, Support::ColorProfile, Target::initializeAllTargets};
 pub fn main() -> Result<(), Box<dyn Error>> {
     let mut module = Module();
 
-    let mut builder = IRBuilder();
-
     let ty = FnTy(vec![TypeMetadata::i32, TypeMetadata::i32], TypeMetadata::i32);
     
     let func = module.add(
@@ -15,12 +13,11 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
     func.extrn();
 
-    let entry = func.addBlock("entry");
-    builder.positionAtEnd(entry); 
+    func.addBlock("entry");
 
-    let val = builder.BuildAdd(ty.arg(0), ty.arg(1));
+    let val = func.BuildAdd(ty.arg(0), ty.arg(1));
     
-    builder.BuildRet( val );
+    func.BuildRet( val );
 
     module.verify()?;
 

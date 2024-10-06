@@ -58,7 +58,7 @@ impl CompilationHelper {
         self.var_types = self.alloc.var_types.to_owned();
     }
 
-    fn get_vars_to_save_for_call(&self, node: &crate::prelude::Call<crate::prelude::Function, Vec<crate::prelude::Var>, crate::prelude::Var>) -> Vec<(String, VarLocation)> {
+    fn get_vars_to_save_for_call(&self, node: &crate::prelude::Call<crate::prelude::FuncId, Vec<crate::prelude::Var>, crate::prelude::Var>) -> Vec<(String, VarLocation)> {
         let vars = self.alloc.scoped_vars_before_node(Box::new( node.clone() ));
     
         let mut with_name = vec![];

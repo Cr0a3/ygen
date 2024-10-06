@@ -3,7 +3,8 @@ use std::path::PathBuf;
 
 use crate::prelude::{Alloca, Cmp, CmpMode, DebugNode, Ir, Load, Phi, Store};
 use crate::Obj::Linkage;
-use crate::IR::{ir, Block, Const, FnTy, Function, Type, TypeMetadata, Var};
+use crate::IR::block::BlockId;
+use crate::IR::{ir, Block, Const, FnTy, Type, TypeMetadata, Var};
 
 use super::lexer::{Loc, Token, TokenType};
 use super::IrError;
@@ -595,11 +596,9 @@ impl IrParser {
             self.input.pop_front();
         }
 
-        Ok(ir::Call::new(Function { 
+        Ok(ir::Call::new(crate::IR::FuncId {
             ty: FnTy(vec![], func_ty),
-            name: target, 
-            linkage: Linkage::External, 
-            blocks: VecDeque::new(), 
+            name: target,
         }, args, out))
     }
 
@@ -614,11 +613,7 @@ impl IrParser {
 
                 self.input.pop_front();
 
-                Ok(ir::Br::new(Box::from(Block { 
-                    name: block, 
-                    nodes: vec![], 
-                    varCount: 0
-                })))
+                Ok(ir::Br::new( BlockId(block) ))
             },
             TokenType::Cond => {
                 self.input.pop_front(); // cond
@@ -655,15 +650,10 @@ impl IrParser {
                 Ok(ir::BrCond::new(Var {
                     name: var,
                     ty: TypeMetadata::Void,
-                }, Block {
-                    name: iftrue,
-                    nodes: vec![],
-                    varCount: 0,
-                }, Block {
-                    name: iffalse,
-                    nodes: vec![],
-                    varCount: 0,
-                }))
+                }, 
+                BlockId(iftrue), 
+                BlockId(iffalse)
+                ))
             },
             _ => Err(IrError::UnexpectedToken(self.current_token()?.clone())),
         }

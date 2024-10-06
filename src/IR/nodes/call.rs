@@ -1,6 +1,8 @@
+use crate::IR::func::FuncId;
+
 use super::*;
 
-impl Ir for Call<Function, Vec<Var>, Var> {
+impl Ir for Call<FuncId, Vec<Var>, Var> {
     fn dump(&self) -> String {
         let mut fmt = String::new();
         
@@ -105,9 +107,9 @@ pub trait BuildCall<T, U> {
     /// builds a function call
     fn BuildCall(&mut self, func: T, args: U) -> Var;
 }
-impl BuildCall<&Function, Vec<Var>> for IRBuilder<'_> {
-    fn BuildCall(&mut self, func: &Function, args: Vec<Var>) -> Var {
-        let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
+impl BuildCall<&FuncId, Vec<Var>> for Function {
+    fn BuildCall(&mut self, func: &FuncId, args: Vec<Var>) -> Var {
+        let block = self.blocks.get_mut(self.blocks.len() - 1).expect("the IRBuilder needs to have an current block\nConsider creating one");
         
         let out = Var::new(block, func.ty.ret);
 
