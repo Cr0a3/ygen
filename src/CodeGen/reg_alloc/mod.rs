@@ -180,6 +180,8 @@ impl RegAlloc {
             
             matcher.case(TypeId::of::<Phi>(), 37);
             matcher.case(TypeId::of::<Switch>(), 38);
+
+            matcher.case(TypeId::of::<Neg<Var, Var>>(), 39);
         }
         if let Some(switched) = matcher.switch(node.as_any().type_id()) {
             match *switched {
@@ -197,8 +199,7 @@ impl RegAlloc {
                 12 => self.prep(node.as_any().downcast_ref::<Return<Type>>().unwrap()),
                 13 => self.prep(node.as_any().downcast_ref::<Return<Var>>().unwrap()),
                 14 => self.prep(node.as_any().downcast_ref::<Store<Var, Var>>().unwrap()),
-                15 => self.prep(node.as_any().downcast_ref::<Store<Var, Type>>().unwrap()),
-                
+                15 => self.prep(node.as_any().downcast_ref::<Store<Var, Type>>().unwrap()),        
                 16 => self.prep(node.as_any().downcast_ref::<Add<Var, Var, Var>>().unwrap()),
                 17 => self.prep(node.as_any().downcast_ref::<Add<Var, Type, Var>>().unwrap()),
                 18 => self.prep(node.as_any().downcast_ref::<Add<Type, Type, Var>>().unwrap()),
@@ -222,6 +223,7 @@ impl RegAlloc {
                 36 => self.prep(node.as_any().downcast_ref::<Div<Type, Type, Var>>().unwrap()),
                 37 => {}, // handeled before
                 38 => {}, // switch does not allocate anything
+                39 => self.prep(node.as_any().downcast_ref::<Neg<Var, Var>>().unwrap()),
                 _ => todo!(),
             }
         } else {

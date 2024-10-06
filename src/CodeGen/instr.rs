@@ -112,6 +112,7 @@ pub enum MachineMnemonic {
     Or,
     Sub,
     Xor,
+    Neg,
 
     BrCond(/*if yes*/String, /*if no*/String),
     Compare(CmpMode),
@@ -177,6 +178,7 @@ impl MachineMnemonic {
             MachineMnemonic::CallStackRedo =>       "callspred",
             MachineMnemonic::AdrMove =>             "adrmov",    
             MachineMnemonic::Switch(_) =>           "switch",
+            MachineMnemonic::Neg =>                 "neg",
         }.to_string()
     }
 }

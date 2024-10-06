@@ -203,6 +203,8 @@ impl<'a> IrSemnatic<'a> {
                     }
                 } else if let Some(node) = any.downcast_ref::<Switch>() {
                     self.analyze_switch(func, &mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Neg<Var, Var>>() {
+                    self.analyze_neg(&mut vars, node, loc)?;
                 } else {
                     todo!("implement node: {}", node.inst.dump());
                 }
@@ -562,6 +564,27 @@ impl<'a> IrSemnatic<'a> {
                 })?
             }
         }
+
+        Ok(())
+    }
+
+    fn analyze_neg(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &Neg<Var, Var>, loc: Loc) -> Result<(), IrError> {
+        if !vars.contains_key(&node.inner1.name) {
+            Err(IrError::Unkown { 
+                what: "variable".into(), 
+                name: node.inner1.name.to_owned(), 
+                loc: loc.clone() 
+            })?
+        }
+
+        if vars.contains_key(&node.inner2.name) {
+            Err(IrError::DefinedTwice { 
+                name: node.inner1.name.to_owned(), 
+                loc: loc.clone() 
+            })?
+        }
+
+        vars.insert(node.inner2.name.to_owned(), node.inner2.ty);
 
         Ok(())
     }

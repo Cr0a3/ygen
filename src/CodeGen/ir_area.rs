@@ -254,6 +254,11 @@ impl IrCodeGenHelper {
         "Loweres the switch node", 
         ir::Switch
     );
+    ir_codegen_wrap!(
+        compile_neg, 
+        "Loweres the neg node", 
+        ir::Neg<Var, Var>
+    );
 }
 
 impl Into<Vec<MachineInstr>> for IrCodeGenHelper {

@@ -285,3 +285,5 @@ compile_func!(compile_store_ty, compile_store_ty, Store<Var, Type>);
 compile_func!(compile_load, compile_load, Load<Var, Var, TypeMetadata>);
 
 compile_func!(compile_switch, compile_switch, Switch);
+
+compile_func!(compile_neg, compile_neg, Neg<Var, Var>);

@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::path::PathBuf;
 
-use crate::prelude::{Alloca, Cmp, CmpMode, DebugNode, Ir, Load, Phi, Store, Switch};
+use crate::prelude::{Alloca, Cmp, CmpMode, DebugNode, Ir, Load, Neg, Phi, Store, Switch};
 use crate::Obj::Linkage;
 use crate::IR::block::BlockId;
 use crate::IR::{ir, Block, Const, FnTy, Type, TypeMetadata, Var};
@@ -432,6 +432,7 @@ impl IrParser {
                         "alloca" => self.parse_alloca(name)?,
                         "load" => self.parse_load(name)?,
                         "phi" => self.parse_phi(name)?,
+                        "neg" => self.parse_neg(name)?,
                         _ => {
                             let ty = self.parse_type()?;
                             self.input.pop_front(); // the type
@@ -1048,6 +1049,29 @@ impl IrParser {
         self.input.pop_front();
 
         Ok(Box::new( Switch::new(var, cases, BlockId(default)) ))
+    }
+
+    fn parse_neg(&mut self, var: String) -> Result<Box<dyn Ir>, IrError> {
+        self.input.pop_front(); // neg
+
+        let typ = self.parse_type()?;
+        self.input.pop_front();
+
+        let out = Var {
+            name: var,
+            ty: typ
+        };
+
+        self.expect(TokenType::Var(String::new()))?;
+        let var = if let TokenType::Var(var) = &self.current_token()?.typ {
+            Var {
+                name: var.to_owned(),
+                ty: typ
+            }
+        } else { unreachable!() };
+        self.input.pop_front();
+
+        Ok( Neg::new(var, out) )
     }
 }
 

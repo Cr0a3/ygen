@@ -16,6 +16,7 @@ mod load;
 mod debug;
 mod phi;
 mod switch;
+mod neg;
 
 pub use assign::*;
 pub use call::*;
@@ -128,6 +129,8 @@ IrTypeWith3!(BrCond, T, U, Z);
 IrTypeWith2!(Alloca, T, U);
 IrTypeWith2!(Store, T, U);
 IrTypeWith3!(Load, T, U, Z);
+
+IrTypeWith2!(Neg, T, U);
 
 /// The cmp node is used to compare values
 #[derive(Debug, Clone, PartialEq, Eq)]

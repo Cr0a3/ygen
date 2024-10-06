@@ -22,6 +22,8 @@ mod load;
 
 mod switch;
 
+mod neg;
+
 /// helps with compilation
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CompilationHelper {

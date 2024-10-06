@@ -56,6 +56,7 @@ pub(crate) fn x64_lower_instr(conv: CallConv, sink: &mut Vec<X64MCInstr>, instr:
         },
         MachineMnemonic::AdrMove => x64_lower_adrm(sink, &instr),
         MachineMnemonic::Switch(cases) => x64_lower_switch(sink, &instr, cases),
+        MachineMnemonic::Neg => x64_lower_neg(sink, &instr),
     }
 }
 
@@ -714,5 +715,44 @@ fn x64_lower_switch(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr, cases: &Ve
         sink.push(
             X64MCInstr::with1(Mnemonic::Link, Operand::BlockLinkDestination(block.name.to_owned(), -4))
         );
+    }
+}
+
+fn x64_lower_neg(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
+    let out = instr.out.expect("neg expectes output");
+    let op = instr.operands.get(0).expect("neg expectes operand");
+
+    let out: Operand = out.into();
+    let op: Operand = (*op).into();
+
+    if op == out {
+        sink.push(X64MCInstr::with1(Mnemonic::Neg, out));
+        return;
+    }
+
+    if let Operand::Mem(_) = op {
+        if let Operand::Reg(_) = out {
+            sink.push(X64MCInstr::with2(Mnemonic::Mov, out.clone(), op));
+            sink.push(X64MCInstr::with1(Mnemonic::Neg, out));
+        } else {
+            sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), op));
+            sink.push(X64MCInstr::with2(Mnemonic::Mov, out.clone(), Operand::Reg(x64Reg::Rax)));
+            sink.push(X64MCInstr::with1(Mnemonic::Neg, out));
+        }
+    } else {
+        sink.push(X64MCInstr::with2(Mnemonic::Mov, out.clone(), op));
+        sink.push(X64MCInstr::with1(Mnemonic::Neg, out));
+    }
+}
+
+impl From<MachineOperand> for Operand {
+    fn from(value: MachineOperand) -> Self {
+        match value {
+            MachineOperand::Stack(stack) => x64_stack!(stack as u32),
+            MachineOperand::Imm(imm) => Operand::Imm(imm),
+            MachineOperand::Reg(reg) => match reg {
+                crate::CodeGen::Reg::x64(x64_reg) => Operand::Reg(x64_reg),
+            },
+        }
     }
 }

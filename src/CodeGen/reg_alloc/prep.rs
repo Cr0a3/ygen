@@ -5,6 +5,7 @@ mod cast;
 mod cmp;
 mod load;
 mod math;
+mod neg;
 mod ret;
 mod store;
 

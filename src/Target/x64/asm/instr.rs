@@ -430,6 +430,34 @@ impl X64MCInstr {
 
                 (buildOpcode(None, rex, op), None)
             }
+            Mnemonic::Neg => {
+                let mut mandatory = None;
+                let mut rex = RexPrefix::none();
+                let mut op = vec![];
+
+                if let Some(Operand::Reg(reg)) = &self.op1 {
+                    if reg.is_gr8() { op.push(0xF6); }
+                    else { op.push(0xF7); }
+
+                    rex.b = reg.extended();
+
+                    if reg.is_gr16() { mandatory = Some(MandatoryPrefix::t16BitOps); }
+
+                    op.extend_from_slice(&ModRm::regWimm(3, *reg));
+                } else if let Some(Operand::Mem(mem)) = &self.op1 {
+                    op.push(0xF7);
+
+                    rex = mem.rex(true);
+                    let (mod_, encoded) = mem.encode(None);
+                    
+                    if mem.index.is_some() {
+                        op.push(mod_ << 6 | 0b100);
+                    }
+                    op.extend_from_slice( &encoded );
+                } else { todo!() }
+
+                (buildOpcode(mandatory, rex.option(), op), None)
+            }
         })
     }
 
@@ -538,6 +566,14 @@ impl X64MCInstr {
 
                 if let Some(Operand::Imm(_)) = self.op1 {
                     Err(InstrEncodingError::InvalidVariant(self.to_owned(), "set.. requires one operand of either register or memory".to_owned()))?
+                }
+            }
+            Mnemonic::Neg => {
+                if !(self.op1.is_some() && self.op2.is_none()) {
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "neg r/m.. is required for neg".into()))?
+                }
+                if let Some(Operand::Imm(_)) = self.op1 {
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "neg r/m.. is required for neg".into()))?
                 }
             }
         };
@@ -708,6 +744,9 @@ pub enum Mnemonic {
     Or,
     Xor,
     Sub,
+
+    Neg,
+
     Cmp,
 
     Lea,
@@ -776,6 +815,7 @@ impl FromStr for Mnemonic {
             "setl" => Ok(Mnemonic::Setl),
             "setge" => Ok(Mnemonic::Setge),
             "setle" => Ok(Mnemonic::Setle),
+            "neg" => Ok(Mnemonic::Neg),
             _ => Err(()),
         }
     }
@@ -814,6 +854,7 @@ impl Display for Mnemonic {
             Mnemonic::Setge => "setge",
             Mnemonic::Setle => "setle",
             Mnemonic::Setne => "setne",
+            Mnemonic::Neg => "neg",
         })
     }
 }

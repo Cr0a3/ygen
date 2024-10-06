@@ -341,7 +341,7 @@ impl IrLexer {
 
             'a'..='z' | 'A'..='Z' | '_' => ty = Some(self.scan_ident()?),
 
-            '0'..='9' => ty = Some(self.scan_num()?),
+            '0'..='9' | '-' => ty = Some(self.scan_num()?),
 
             '@' => ty = Some(self.scan_func()?),
 
@@ -489,6 +489,11 @@ impl IrLexer {
 
     fn scan_num(&mut self) -> Result<TokenType, IrError> {
         let mut string = String::new();
+
+        if let Some('-') = self.peek() {
+            string.push('-');
+            self.advance()?;
+        }
 
         let mut looping = true;
 
