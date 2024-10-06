@@ -56,7 +56,7 @@ impl JitMap {
                 linker.add_label(&name, data.to_owned());
             }
         }
-
+        
         for reloc in &self.relocs {
             linker.add_reloc(reloc.to_owned());
         }

@@ -40,92 +40,62 @@ impl JitLinker {
 
     /// Links the code into a `Vec<u8>`
     pub fn link(&mut self) -> Vec<u8> {
-        let mut ret: Vec<u8> = vec![];
-        let mut ret_hash: HashMap<&String, Vec<u8>> = HashMap::new();
+        let mut out = vec![];
 
-        let mut funcs_p: HashMap<&String, (&Vec<u8>, usize)> = HashMap::new();
+        let mut positions = HashMap::new();
 
-        let cloned = self.funcs.clone();
+        for (func, (data, entry)) in &self.funcs {
+            if !*entry { continue }
 
-        for func in &cloned {
-            if func.1.1 { // func is first
-                let code = &func.1.0;
-    
-                for byte in code {
-                    ret.push(*byte);
-                }
-    
-                ret_hash.insert(&func.0, code.to_vec());
-    
-                let offset = ret.len() as isize - code.len() as isize;
-                let offset = offset as usize;
-    
-                funcs_p.insert(&func.0, (&code, offset));
-            }
+            // WE NOW HAVE THE ENTRY FUNCTION
+
+            positions.insert(func.as_str(), out.len());
+
+            out.extend_from_slice(&data);
+        }
+        
+        for (func, (data, entry)) in &self.funcs {
+            if *entry { continue } // we already added the entry function
+
+            positions.insert(func.as_str(), out.len());
+
+            out.extend_from_slice(&data);
         }
 
-        for func in &cloned {
-            if func.1.1 { continue; } // func allready added
-            let code = &func.1.0;
-
-            for byte in code {
-                ret.push(*byte);
-            }
-
-            ret_hash.insert(func.0, code.to_vec());
-
-            let offset = ret.len() as isize - code.len() as isize;
-            let offset = offset as usize;
-
-            funcs_p.insert(func.0, (&code, offset));
+        for (label, data) in &self.labels {
+            positions.insert(label.as_str(), out.len());
+            out.extend_from_slice(&data);
         }
 
-        ret.push(0xC3); // ret so code | labels are split
+        for reloc in &self.relocs {
+            let from = *positions.get(reloc.from.as_str()).expect(&format!("Unkown symbol: {}", reloc.from));
+            let mut to = *positions.get(&reloc.to.as_str()).expect(&format!("Unkown symbol: {}", reloc.to));
+        
+            println!("from: {}", from);
+            println!("to: {}", to);
 
-        for label in &self.labels {
-            for byte in label.1 {
-                ret.push(*byte);
-            }
+            let offset = reloc.at + from;
+            let offset = offset as i64 + reloc.addend;
 
-            ret_hash.insert(&label.0, label.1.to_vec());
+            to -= from + reloc.at + 1;
+            //to -= (reloc.at as i64) as usize;
+            //to += 2;
+            let to = to.to_be_bytes();
 
-            let offset = ret.len() as isize - label.1.len() as isize;
-            let offset = offset as usize;
+            let mut set_byte = |idx: i64, to: u8| {
+                println!("setting byte {:?} (pos: {}) to {}", out.get(idx as usize), idx, to);
+                *out.get_mut(idx as usize).unwrap() = to;
+            };
 
-            funcs_p.insert(&label.0, (&label.1, offset));
+            set_byte(offset + 1, to[7]);
+            set_byte(offset + 2, to[6]);
+            set_byte(offset + 3, to[5]);
+            set_byte(offset + 4, to[4]);
         }
 
-        for link in self.relocs.iter() {
-            let offset = funcs_p.get(&link.from).unwrap().1;
-            let target = funcs_p.get(&link.to).unwrap();
+        println!("out: {:02x?}", out);
 
-
-            let at = (offset + link.at) as i64;
-
-            let mut pos: Vec<u8> = vec![];
-
-            
-            let _pos = target.1 as i32;
-            let _pos = _pos - -link.addend as i32;
-            let _pos = _pos - at as i32;
-            //let _pos  = _pos + 1;
-            
-            let _pos = _pos.to_le_bytes();
-
-            for i in 0..(-link.addend - 1) {
-                let given = _pos.get(i as usize);
-                match given {
-                    Some(x) => pos.push(*x),
-                    None => pos.push(0),
-                }
-            }
-            
-            for b in 0..(-link.addend - 1) {
-                ret[(at + b) as usize] = pos[b as usize];
-            }
-        }
-
-        ret
+        out
     }
 
     /// Links the code and puts it into a page aligned `JitFunction`

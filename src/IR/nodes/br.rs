@@ -150,11 +150,11 @@ pub trait BuildBrCond<T, U, Z> {
     /// Builds a br condition node
     /// 
     /// Jumps to iftrue if the value is not 0 else to iffalse
-    fn BuildBr(&mut self, val: T, iftrue: U, iffalse: Z);
+    fn BuildBrCond(&mut self, val: T, iftrue: U, iffalse: Z);
 }
 
 impl BuildBrCond<Var, &Block, &Block> for IRBuilder<'_> {
-    fn BuildBr(&mut self, val: Var, iftrue: &Block, iffalse: &Block) {
+    fn BuildBrCond(&mut self, val: Var, iftrue: &Block, iffalse: &Block) {
         let block = self.blocks.get_mut(self.curr).expect("the IRBuilder needs to have an current block\nConsider creating one");
 
         block.push_ir( BrCond::new(val, Block {

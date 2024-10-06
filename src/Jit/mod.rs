@@ -39,6 +39,9 @@ impl Module {
             }
         }
 
+        for reloc in &obj.links {
+            map.reloc(reloc.to_owned());
+        }
         Ok(map)
     }
 }

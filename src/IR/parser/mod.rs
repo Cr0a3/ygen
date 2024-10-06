@@ -343,3 +343,38 @@ impl Module {
         Ok(gen.module())
     }
 }
+
+/// Allows you to inline ir:
+/// ```no-run
+/// ygen::ir!(
+///     "
+/// define i32 @add(i32 %0, i32 %1) {
+///   entry:
+///     %2 = add i32 %0, %1
+///     ret i32 %2    
+/// }
+///     "
+/// )
+/// ```
+#[macro_export]
+macro_rules! ir {
+    ($input:expr) => {
+        {
+        let input = $input.to_string();
+
+        let mut lexer = ygen::IR::parser::lexer::IrLexer::new(input);
+        lexer.lex().expect("your specified ir contains errors");
+
+        let mut parser = ygen::IR::parser::parser::IrParser::new(lexer.out);
+        parser.parse().expect("your specified ir contains errors");
+
+        crate::parser::semnatic::IrSemnatic::new(&parser.out).verify().expect("your specified ir contains errors");
+
+        let mut gen = ygen::IR::parser::gen::IrGen::new(parser.out);
+
+        gen.gen();
+
+        gen.module()
+        }
+    };
+}
