@@ -44,14 +44,17 @@ pub fn call() -> Result<(), Box<dyn Error>> {
     let add_ty = FnTy(vec![TypeMetadata::i32, TypeMetadata::i32], TypeMetadata::i32);
 
     let add = module.add("add", &add_ty);
+    add.addBlock("entry");
+
     let ret = add.BuildAdd(add_ty.arg(0), add_ty.arg(1));
     add.BuildRet(ret);
 
     let add = add.id();
 
     let test = module.add("test", &test_ty);
+    test.addBlock("entry");
 
-    let out = test.BuildCall(&add, vec![test_ty.arg(0), test_ty.arg(1)]);
+    let out = test.BuildCall(&add, vec![test_ty.arg(0), test_ty.arg(0)]);
     test.BuildRet(out);
 
     let mut funcs = module.jitMap(&mut initializeAllTargets(Triple::host())? )?;

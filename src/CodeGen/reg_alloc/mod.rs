@@ -143,9 +143,9 @@ impl RegAlloc {
             matcher.case(TypeId::of::<Assign<Var, Type>>(), 2);
             matcher.case(TypeId::of::<Assign<Var, Var>>(), 3);
             matcher.case(TypeId::of::<Assign<Var, Const>>(), 4);
-            matcher.case(TypeId::of::<Br<Box<Block>>>(), 5);
-            matcher.case(TypeId::of::<BrCond<Var, Block, Block>>(), 6);
-            matcher.case(TypeId::of::<Call<Function, Vec<Var>, Var>>(), 7);
+            matcher.case(TypeId::of::<Br<BlockId>>(), 5);
+            matcher.case(TypeId::of::<BrCond<Var, BlockId, BlockId>>(), 6);
+            matcher.case(TypeId::of::<Call<FuncId, Vec<Var>, Var>>(), 7);
             matcher.case(TypeId::of::<Cast<Var, TypeMetadata, Var>>(), 8);
             matcher.case(TypeId::of::<Cmp>(), 9);
             matcher.case(TypeId::of::<DebugNode>(), 10);
@@ -186,9 +186,9 @@ impl RegAlloc {
                 2 => self.prep(node.as_any().downcast_ref::<Assign<Var, Type>>().unwrap()),
                 3 => self.prep(node.as_any().downcast_ref::<Assign<Var, Var>>().unwrap()),
                 4 => self.prep(node.as_any().downcast_ref::<Assign<Var, Const>>().unwrap()),
-                5 => self.prep(node.as_any().downcast_ref::<Br<Box<Block>>>().unwrap()),
-                6 => self.prep(node.as_any().downcast_ref::<BrCond<Var, Block, Block>>().unwrap()),
-                7 => self.prep(node.as_any().downcast_ref::<Call<Function, Vec<Var>, Var>>().unwrap()),
+                5 => {}, // nothing to prepare
+                6 => {}, // nothing to prepare
+                7 => self.prep(node.as_any().downcast_ref::<Call<FuncId, Vec<Var>, Var>>().unwrap()),
                 8 => self.prep(node.as_any().downcast_ref::<Cast<Var, TypeMetadata, Var>>().unwrap()),
                 9 => self.prep(node.as_any().downcast_ref::<Cmp>().unwrap()),
                 10 => {}, // doesn't add or use any variables

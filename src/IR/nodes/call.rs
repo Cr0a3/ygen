@@ -109,7 +109,7 @@ pub trait BuildCall<T, U> {
 }
 impl BuildCall<&FuncId, Vec<Var>> for Function {
     fn BuildCall(&mut self, func: &FuncId, args: Vec<Var>) -> Var {
-        let block = self.blocks.get_mut(self.blocks.len() - 1).expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
         
         let out = Var::new(block, func.ty.ret);
 

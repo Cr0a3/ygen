@@ -86,7 +86,7 @@ impl Ir for Phi {
 impl Function {
     /// Builds the phi node which recives variables from different blocks
     pub fn BuildPhi(&mut self, typ: TypeMetadata, recipients: Vec<(&Block, Var)>) -> Var {
-        let block = self.blocks.get_mut(self.blocks.len() - 1).expect("expected valid current block.\nConsider creating one");
+        let block = self.blocks.back_mut().expect("expected valid current block.\nConsider creating one");
         
         let mut owned_recipients = Vec::new();
 

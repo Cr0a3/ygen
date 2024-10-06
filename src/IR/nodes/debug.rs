@@ -70,7 +70,7 @@ impl Ir for DebugNode {
 impl Function {
     /// Sets the source location for debugging (all of the ir nodes will respond to the location till an new location is set)
     pub fn BuildDebug(&mut self, line: i64, coloumn: i64, file: PathBuf) {
-        let block = self.blocks.get_mut(self.blocks.len() - 1).expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
        
         block.push_ir( Box::new( DebugNode { 
             line: line, 

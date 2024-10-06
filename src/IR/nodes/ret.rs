@@ -130,14 +130,14 @@ pub trait BuildReturn<T> {
 
 impl BuildReturn<Type> for Function {
     fn BuildRet(&mut self, val: Type) {
-        self.blocks.get_mut(self.blocks.len() - 1).expect("the IRBuilder needs to have an current block\nConsider creating one")
+        self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one")
             .push_ir(Return::new(val))
     }
 }
 
 impl BuildReturn<Var> for Function {
     fn BuildRet(&mut self, var: Var) {
-        self.blocks.get_mut(self.blocks.len() - 1).expect("the IRBuilder needs to have an current block\nConsider creating one")
+        self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one")
             .push_ir(Return::new(var))
     }
 }

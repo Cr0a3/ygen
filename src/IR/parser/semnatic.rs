@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, HashMap};
 
 use crate::Obj::Linkage;
-use crate::IR::{Block, Const, FnTy, Function, FunctionType, Type, TypeMetadata, Var};
+use crate::IR::{BlockId, Const, FnTy, FuncId, FunctionType, Type, TypeMetadata, Var};
 
 use crate::prelude::ir::*;
 
@@ -135,9 +135,9 @@ impl<'a> IrSemnatic<'a> {
                     self.analiyze_assign_var(&mut vars, node, loc)?;
                 } else if let Some(node) = any.downcast_ref::<Assign<Var, Type>>() {
                     self.analiyze_assign_type(&mut vars, node, loc)?;
-                } else if let Some(node) = any.downcast_ref::<Call<Function, Vec<Var>, Var>>() {
+                } else if let Some(node) = any.downcast_ref::<Call<FuncId, Vec<Var>, Var>>() {
                     self.analyize_call(&mut vars, node, loc)?;
-                } else if let Some(node) = any.downcast_ref::<Br<Box<Block>>>() {
+                } else if let Some(node) = any.downcast_ref::<Br<BlockId>>() {
                     self.analiyze_block(func, node, loc)?;
                 } else if let Some(node) = any.downcast_ref::<Add<Var, Type, Var>>() {
                     self.analaysiz_add_var_ty(&mut vars, node, loc)?;
@@ -183,7 +183,7 @@ impl<'a> IrSemnatic<'a> {
                     self.analaysiz_div_var_var(&mut vars, node, loc)?;
                 } else if let Some(node) = any.downcast_ref::<Cast<Var, TypeMetadata, Var>>() {
                     self.analaysiz_cast(&mut vars, node, loc)?;
-                } else if let Some(node) = any.downcast_ref::<BrCond<Var, Block, Block>>() {
+                } else if let Some(node) = any.downcast_ref::<BrCond<Var, BlockId, BlockId>>() {
                     self.analaysiz_br_cond(func, &mut vars, node, loc)?;
                 } else if let Some(node) = any.downcast_ref::<Cmp>() {
                     self.analaysiz_cmp(&mut vars, node, loc)?;
@@ -201,6 +201,8 @@ impl<'a> IrSemnatic<'a> {
                     } else {
                         vars.insert(node.out.name.to_owned(), node.typ);
                     }
+                } else {
+                    todo!("implement node: {}", node.inst.dump());
                 }
             }
         }
@@ -312,7 +314,7 @@ impl<'a> IrSemnatic<'a> {
         Ok(())
     }
 
-    fn analyize_call(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &Call<Function, Vec<Var>, Var>, loc: Loc) -> Result<(), IrError> {
+    fn analyize_call(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &Call<FuncId, Vec<Var>, Var>, loc: Loc) -> Result<(), IrError> {
         let name = &node.inner1.name;
         let mut sig = node.inner1.ty.to_owned();
 
@@ -390,7 +392,7 @@ impl<'a> IrSemnatic<'a> {
         Ok(())
     }
 
-    fn analiyze_block(&mut self, func: &String, node: &Br<Box<Block>>, loc: Loc) -> Result<(), IrError> {
+    fn analiyze_block(&mut self, func: &String, node: &Br<BlockId>, loc: Loc) -> Result<(), IrError> {
         let br_block = &node.inner1.name;
 
         let (_, _, blocks) = self.func_sigs.get(func).unwrap();
@@ -406,7 +408,7 @@ impl<'a> IrSemnatic<'a> {
         Ok(())
     }
 
-    fn analaysiz_br_cond(&mut self, func: &String, vars: &mut HashMap<String, TypeMetadata>, node: &BrCond<Var, Block, Block>, loc: Loc) -> Result<(), IrError> {
+    fn analaysiz_br_cond(&mut self, func: &String, vars: &mut HashMap<String, TypeMetadata>, node: &BrCond<Var, BlockId, BlockId>, loc: Loc) -> Result<(), IrError> {
         let (_, _, blocks) = self.func_sigs.get(func).unwrap();
 
         if !blocks.contains(&node.inner2.name) {

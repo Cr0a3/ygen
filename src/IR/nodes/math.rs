@@ -10,7 +10,7 @@ macro_rules! MathIrNode {
 
         impl $buildTraitName<Type, Type> for Function {
             fn $buildFuncName(&mut self, op0: Type, op1: Type)  -> Var {
-                let block = self.blocks.get_mut(self.blocks.len() - 1).expect("the IRBuilder needs to have an current block\nConsider creating one");
+                let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
                 
                 let op0Ty: TypeMetadata = op0.into();
 
@@ -25,7 +25,7 @@ macro_rules! MathIrNode {
 
         impl $buildTraitName<Var, Var> for Function {
             fn $buildFuncName(&mut self, op0: Var, op1: Var)  -> Var {
-                let block = self.blocks.get_mut(self.blocks.len() - 1).expect("the IRBuilder needs to have an current block\nConsider creating one");
+                let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
                 
                 let op0Ty: TypeMetadata = op0.ty.into();
 
@@ -40,7 +40,7 @@ macro_rules! MathIrNode {
 
         impl $buildTraitName<Var, Type> for Function {
             fn $buildFuncName(&mut self, op0: Var, op1: Type)  -> Var {
-                let block = self.blocks.get_mut(self.blocks.len() - 1).expect("the IRBuilder needs to have an current block\nConsider creating one");
+                let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
                 
                 let op0Ty: TypeMetadata = op0.ty.into();
 

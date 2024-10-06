@@ -49,7 +49,7 @@ impl FunctionType {
             index += 1;
         }
 
-        todo!("display error that var doesn't exists")
+        panic!("the func has {} but argument {} wants to get accesed", self.args.len(), num)
     }
 }
 
