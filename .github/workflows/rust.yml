@@ -21,7 +21,7 @@ jobs:
       run: rustup update --no-self-update stable
 
     - name: Build
-      run: cargo build --all
+      run: cargo build --all --features jit
 
     - name: Run tests
-      run: cargo test --all
+      run: cargo test --all --features jit
