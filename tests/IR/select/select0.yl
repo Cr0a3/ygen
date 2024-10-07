@@ -1,0 +1,16 @@
+# RUN:
+cargo run -p ylc -- -in=%s -o=out.o
+gcc out.o -o a.exe
+./a.exe
+# IN:
+
+define i32 @main() {
+  entry:
+    %a = i32 5
+    %b = i32 1
+
+    %ret = select i32 %a, i32 5, i32 %b
+    ret i32 %ret
+}
+
+# EXIT_CODE=1

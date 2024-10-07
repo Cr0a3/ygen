@@ -15,6 +15,7 @@ mod ret;
 mod stack;
 mod switch;
 mod zext;
+mod cmov;
 
 use super::{instr::{Mnemonic, Operand, X64MCInstr}, x64Reg};
 
@@ -69,6 +70,8 @@ pub(crate) fn x64_lower_instr(conv: CallConv, sink: &mut Vec<X64MCInstr>, instr:
         MachineMnemonic::AdrMove =>                                      adr::x64_lower_adrm(sink, &instr),
         MachineMnemonic::Switch(cases) =>         switch::x64_lower_switch(sink, &instr, cases),
         MachineMnemonic::Neg =>                                          math::x64_lower_neg(sink, &instr),
+        MachineMnemonic::MovIfZero =>                                    cmov::x64_lower_cmov_zero(sink, &instr),
+        MachineMnemonic::MovIfNotZero =>                                 cmov::x64_lower_cmov_not_zero(sink, &instr),
     }
 }
 

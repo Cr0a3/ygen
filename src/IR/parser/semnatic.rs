@@ -205,6 +205,14 @@ impl<'a> IrSemnatic<'a> {
                     self.analyze_switch(func, &mut vars, node, loc)?;
                 } else if let Some(node) = any.downcast_ref::<Neg<Var, Var>>() {
                     self.analyze_neg(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Select<Var, Var>>() {
+                    self.analyze_selectvv(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Select<Var, Type>>() {
+                    self.analyze_selectvt(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Select<Type, Var>>() {
+                    self.analyze_selecttv(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Select<Type, Type>>() {
+                    self.analyze_selecttt(&mut vars, node, loc)?;
                 } else {
                     todo!("implement node: {}", node.inst.dump());
                 }
@@ -585,6 +593,122 @@ impl<'a> IrSemnatic<'a> {
         }
 
         vars.insert(node.inner2.name.to_owned(), node.inner2.ty);
+
+        Ok(())
+    }
+
+    fn analyze_selectvv(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &Select<Var, Var>, loc: Loc) -> Result<(), IrError> {
+        if !vars.contains_key(&node.yes.name) {
+            Err(IrError::Unkown { 
+                what: "variable".into(), 
+                name: node.yes.name.to_owned(), 
+                loc: loc.clone()
+            })?
+        }
+
+        if !vars.contains_key(&node.no.name) {
+            Err(IrError::Unkown {
+                what: "variable".into(), 
+                name: node.no.name.to_owned(), 
+                loc: loc.clone()
+            })?
+        }
+
+        if !vars.contains_key(&node.cond.name) {
+            Err(IrError::Unkown {
+                what: "variable".into(), 
+                name: node.cond.name.to_owned(), 
+                loc: loc.clone()
+            })?
+        }
+
+        if vars.contains_key(&node.out.name) {
+            Err(IrError::DefinedTwice {
+                name: node.out.name.to_owned(), 
+                loc: loc.clone()
+            })?
+        }
+
+        vars.insert(node.out.name.clone(), node.out.ty);
+
+        Ok(())
+    }
+    
+    fn analyze_selecttv(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &Select<Type, Var>, loc: Loc) -> Result<(), IrError> {
+        if !vars.contains_key(&node.no.name) {
+            Err(IrError::Unkown {
+                what: "variable".into(), 
+                name: node.no.name.to_owned(), 
+                loc: loc.clone()
+            })?
+        }
+
+        if !vars.contains_key(&node.cond.name) {
+            Err(IrError::Unkown {
+                what: "variable".into(), 
+                name: node.cond.name.to_owned(), 
+                loc: loc.clone()
+            })?
+        }
+
+        if vars.contains_key(&node.out.name) {
+            Err(IrError::DefinedTwice {
+                name: node.out.name.to_owned(), 
+                loc: loc.clone()
+            })?
+        }
+
+        vars.insert(node.out.name.clone(), node.out.ty);
+
+        Ok(())
+    }
+    
+    fn analyze_selectvt(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &Select<Var, Type>, loc: Loc) -> Result<(), IrError> {
+        if !vars.contains_key(&node.yes.name) {
+            Err(IrError::Unkown { 
+                what: "variable".into(), 
+                name: node.yes.name.to_owned(), 
+                loc: loc.clone()
+            })?
+        }
+
+        if !vars.contains_key(&node.cond.name) {
+            Err(IrError::Unkown {
+                what: "variable".into(), 
+                name: node.cond.name.to_owned(), 
+                loc: loc.clone()
+            })?
+        }
+
+        if vars.contains_key(&node.out.name) {
+            Err(IrError::DefinedTwice {
+                name: node.out.name.to_owned(), 
+                loc: loc.clone()
+            })?
+        }
+
+        vars.insert(node.out.name.clone(), node.out.ty);
+
+        Ok(())
+    }
+
+    fn analyze_selecttt(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &Select<Type, Type>, loc: Loc) -> Result<(), IrError> {
+        if !vars.contains_key(&node.cond.name) {
+            Err(IrError::Unkown {
+                what: "variable".into(), 
+                name: node.cond.name.to_owned(), 
+                loc: loc.clone()
+            })?
+        }
+
+        if vars.contains_key(&node.out.name) {
+            Err(IrError::DefinedTwice {
+                name: node.out.name.to_owned(), 
+                loc: loc.clone()
+            })?
+        }
+
+        vars.insert(node.out.name.clone(), node.out.ty);
 
         Ok(())
     }

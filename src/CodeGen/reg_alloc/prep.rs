@@ -7,6 +7,7 @@ mod load;
 mod math;
 mod neg;
 mod ret;
+mod select;
 mod store;
 
 pub(crate) trait RegAllocPrep<T> {

@@ -145,6 +145,16 @@ pub enum MachineMnemonic {
     AdrMove,
 
     Switch(Vec<(Type, BlockId)>),
+
+    /// out: out
+    /// op0: variable
+    /// op1: thingy to get moved
+    MovIfZero,
+
+    /// out: out
+    /// op0: variable
+    /// op1: thingy to get moved
+    MovIfNotZero,
 }
 
 impl MachineMnemonic {
@@ -179,6 +189,8 @@ impl MachineMnemonic {
             MachineMnemonic::AdrMove =>             "adrmov",    
             MachineMnemonic::Switch(_) =>           "switch",
             MachineMnemonic::Neg =>                 "neg",
+            MachineMnemonic::MovIfZero =>           "cmovz",
+            MachineMnemonic::MovIfNotZero =>           "cmovnz",
         }.to_string()
     }
 }

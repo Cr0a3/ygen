@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::path::PathBuf;
 
-use crate::prelude::{Alloca, Cmp, CmpMode, DebugNode, Ir, Load, Neg, Phi, Store, Switch};
+use crate::prelude::{Alloca, Cmp, CmpMode, DebugNode, Ir, Load, Neg, Phi, Select, Store, Switch};
 use crate::Obj::Linkage;
 use crate::IR::block::BlockId;
 use crate::IR::{ir, Block, Const, FnTy, Type, TypeMetadata, Var};
@@ -433,6 +433,7 @@ impl IrParser {
                         "load" => self.parse_load(name)?,
                         "phi" => self.parse_phi(name)?,
                         "neg" => self.parse_neg(name)?,
+                        "select" => self.parse_select(name)?,
                         _ => {
                             let ty = self.parse_type()?;
                             self.input.pop_front(); // the type
@@ -1072,6 +1073,122 @@ impl IrParser {
         self.input.pop_front();
 
         Ok( Neg::new(var, out) )
+    }
+
+    fn parse_select(&mut self, var: String) -> Result<Box<dyn Ir>, IrError> {
+        self.input.pop_front(); // select
+
+        let ty = self.parse_type()?;
+        self.input.pop_front(); // type
+
+        let out = Var {
+            name: var,
+            ty: ty
+        };
+
+        self.expect(TokenType::Var(String::new()))?;
+        let cond = if let TokenType::Var(cond) = &self.current_token()?.typ {
+            Var {
+                name: cond.to_owned(),
+                ty: ty,
+            }
+        } else { unreachable!() };
+        self.input.pop_front(); // cond
+
+        self.expect(TokenType::Comma)?;
+        self.input.pop_front(); // ,
+
+        let _op1_ty = self.parse_type()?;
+        self.input.pop_front(); // ty
+
+        let current = self.current_token()?;
+
+        if let TokenType::Var(op1) = &current.typ {
+            let op1 = Var {
+                name: op1.to_owned(),
+                ty: ty
+            };
+
+            self.input.pop_front(); // var1
+            self.expect(TokenType::Comma)?;
+            self.input.pop_front(); // ,
+
+            //self.parse_type()?;
+            self.input.pop_front();
+
+            let current = self.current_token()?;
+
+            if let TokenType::Var(op2) = &current.typ {
+                let op2 = Var {
+                    name: op2.to_owned(),
+                    ty: ty
+                };
+
+                self.input.pop_front();
+
+                Ok(Box::new(Select {
+                    out: out,
+                    cond: cond,
+                    yes: op1,
+                    no: op2,
+                }))
+            } else if let TokenType::Int(op2) = &current.typ {
+                let op2 = Type::from_int(ty, *op2);
+
+                self.input.pop_front();
+
+                Ok(Box::new(Select {
+                    out: out,
+                    cond: cond,
+                    yes: op1,
+                    no: op2,
+                }))
+            } else {
+                Err(IrError::UnexpectedToken(current.clone()))
+            }
+        } else if let TokenType::Int(imm) = &current.typ {
+            let op1 = Type::from_int(ty, *imm);
+            self.input.pop_front();
+
+            self.expect(TokenType::Comma)?;
+            self.input.pop_front();
+
+            self.parse_type()?;
+            self.input.pop_front();
+
+            let current = self.current_token()?;
+
+            if let TokenType::Var(op2) = &current.typ {
+                let op2 = Var {
+                    name: op2.to_owned(),
+                    ty: ty
+                };
+
+                self.input.pop_front();
+
+                Ok(Box::new(Select {
+                    out: out,
+                    cond: cond,
+                    yes: op1,
+                    no: op2,
+                }))
+            } else if let TokenType::Int(op2) = &current.typ {
+                let op2 = Type::from_int(ty, *op2);
+
+                self.input.pop_front();
+
+                Ok(Box::new(Select {
+                    out: out,
+                    cond: cond,
+                    yes: op1,
+                    no: op2,
+                }))
+            } else {
+                Err(IrError::UnexpectedToken(current.clone()))
+            }
+        } else {
+            Err(IrError::UnexpectedToken(current.clone()))
+        }
     }
 }
 

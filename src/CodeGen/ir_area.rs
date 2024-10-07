@@ -259,6 +259,26 @@ impl IrCodeGenHelper {
         "Loweres the neg node", 
         ir::Neg<Var, Var>
     );
+    ir_codegen_wrap!(
+        compile_select_tt, 
+        "Loweres the select ty ty node", 
+        ir::Select<Type, Type>
+    );
+    ir_codegen_wrap!(
+        compile_select_vt, 
+        "Loweres the select var ty node", 
+        ir::Select<Var, Type>
+    );
+    ir_codegen_wrap!(
+        compile_select_tv, 
+        "Loweres the select ty var node", 
+        ir::Select<Type, Var>
+    );
+    ir_codegen_wrap!(
+        compile_select_vv, 
+        "Loweres the select var var node", 
+        ir::Select<Var, Var>
+    );
 }
 
 impl Into<Vec<MachineInstr>> for IrCodeGenHelper {

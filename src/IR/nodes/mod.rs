@@ -17,6 +17,7 @@ mod debug;
 mod phi;
 mod switch;
 mod neg;
+mod select;
 
 pub use assign::*;
 pub use call::*;
@@ -28,6 +29,7 @@ pub use cmp::*;
 pub use store::*;
 pub use debug::*;
 pub use switch::*;
+pub use select::*;
 
 macro_rules! IrTypeWith3 {
     ($name:tt, $param1:tt, $param2:tt, $param3:tt) => {
@@ -172,6 +174,26 @@ impl Phi {
             typ: typ
         }
     }
+}
+
+/// The select ir node
+/// ````no-run
+/// if cond != 0 {
+///     out = yes
+/// } else {
+///     out = no
+/// }
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Select<T, U> 
+    where T: Debug + Clone + PartialEq + Eq,
+          U: Debug + Clone + PartialEq + Eq,
+{
+    pub(crate) out: Var,
+    pub(crate) cond: Var,
+
+    pub(crate) yes: T,
+    pub(crate) no: U,
 }
 
 use crate::Support::{ColorClass, ColorProfile};

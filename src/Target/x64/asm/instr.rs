@@ -458,6 +458,35 @@ impl X64MCInstr {
 
                 (buildOpcode(mandatory, rex.option(), op), None)
             }
+            Mnemonic::Cmove | Mnemonic::Cmovne => {
+                let mut op = match self.mnemonic {
+                    Mnemonic::Cmove => vec![0x0F, 0x44],
+                    Mnemonic::Cmovne => vec![0x0F, 0x45],
+                    _ => unreachable!(),
+                };
+
+                let mut mandatory = None;
+                let mut rex = RexPrefix::none();
+
+                let op1 = match self.op1.clone().unwrap() { Operand::Reg(reg) => reg, _ => unreachable!() };
+
+                rex.w = op1.is_gr64();
+                rex.r = op1.extended();
+
+                if let Some(Operand::Reg(op2)) = &self.op2 {
+                    rex.x = op2.extended();
+
+                    if op2.is_gr16() { mandatory = Some(MandatoryPrefix::t16BitOps); }
+                    
+                    op.extend_from_slice(&ModRm::reg2(*op2, op1));
+                } else if let Some(Operand::Mem(op2)) = &self.op2 {
+                    rex = rex.sync(op2.rex(false));
+                    
+                    op.extend_from_slice(&ModRm::regM(op1, op2.clone()));
+                } else { todo!() }
+
+                (buildOpcode(mandatory, rex.option(), op), None)
+            }
         })
     }
 
@@ -574,6 +603,17 @@ impl X64MCInstr {
                 }
                 if let Some(Operand::Imm(_)) = self.op1 {
                     Err(InstrEncodingError::InvalidVariant(self.clone(), "neg r/m.. is required for neg".into()))?
+                }
+            }
+            Mnemonic::Cmove | Mnemonic::Cmovne  => {
+                if let Some(Operand::Reg(_)) = &self.op1 {
+                    if let Some(Operand::Imm(_)) = &self.op2 {
+                        Err(InstrEncodingError::InvalidVariant(self.clone(), "cmov expects r, r/m".into()))?
+                    } else if self.op2.is_none() {
+                        Err(InstrEncodingError::InvalidVariant(self.clone(), "cmov expects r, r/m".into()))?
+                    }
+                } else {
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "cmov expects r, r/m".into()))?
                 }
             }
         };
@@ -782,6 +822,9 @@ pub enum Mnemonic {
     Setl,
     Setge,
     Setle,
+
+    Cmove,
+    Cmovne,
 }
 
 impl FromStr for Mnemonic {
@@ -816,6 +859,8 @@ impl FromStr for Mnemonic {
             "setge" => Ok(Mnemonic::Setge),
             "setle" => Ok(Mnemonic::Setle),
             "neg" => Ok(Mnemonic::Neg),
+            "cmove" => Ok(Mnemonic::Cmove),
+            "cmovne" => Ok(Mnemonic::Cmovne),
             _ => Err(()),
         }
     }
@@ -855,6 +900,8 @@ impl Display for Mnemonic {
             Mnemonic::Setle => "setle",
             Mnemonic::Setne => "setne",
             Mnemonic::Neg => "neg",
+            Mnemonic::Cmove => "cmove",
+            Mnemonic::Cmovne => "cmovne",
         })
     }
 }
