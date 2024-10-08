@@ -23,6 +23,7 @@ PrepMvv!(Sub);
 PrepMvv!(Xor);
 PrepMvv!(Rem);
 PrepMvv!(Shl);
+PrepMvv!(Lshr);
 
 macro_rules! PrepMvt {
     ($name:ident) => {
@@ -45,6 +46,7 @@ PrepMvt!(Sub);
 PrepMvt!(Xor);
 PrepMvt!(Rem);
 PrepMvt!(Shl);
+PrepMvt!(Lshr);
 
 macro_rules! PrepMtt {
     ($name:ident) => {
@@ -68,3 +70,4 @@ PrepMtt!(Sub);
 PrepMtt!(Xor);
 PrepMtt!(Rem);
 PrepMtt!(Shl);
+PrepMtt!(Lshr);

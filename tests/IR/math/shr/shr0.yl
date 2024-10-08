@@ -1,0 +1,12 @@
+# RUN: 
+cargo run -p ylc -- -in=%s -o=out.o
+gcc out.o -o a.exe
+./a.exe
+# IN:
+define i32 @main() {
+ entry:
+    %1 = lshr i32 114, 4
+    ret u32 %1
+}
+
+# EXIT_CODE=7

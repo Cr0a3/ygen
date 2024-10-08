@@ -489,9 +489,10 @@ impl X64MCInstr {
 
                 (buildOpcode(mandatory, rex.option(), op), None)
             }
-            Mnemonic::Sal => {
+            Mnemonic::Sal | Mnemonic::Shr => {
                 let (mut op, i) = match self.mnemonic {
                     Mnemonic::Sal => (0xD3, 4),
+                    Mnemonic::Shr => (0xD3, 5),
                     _ => unreachable!(),
                 };
 
@@ -646,14 +647,14 @@ impl X64MCInstr {
                     Err(InstrEncodingError::InvalidVariant(self.clone(), "cmov expects r, r/m".into()))?
                 }
             }
-            Mnemonic::Sal => {
+            Mnemonic::Sal | Mnemonic::Shr => {
                 if self.op1.is_none() || self.op2.is_none() {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "sal expects r/m, cl".into()))?
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "sal/shr expects r/m, cl".into()))?
                 }
 
                 if let Some(Operand::Reg(reg)) = &self.op2 {
                     if x64Reg::Cl != *reg {
-                        Err(InstrEncodingError::InvalidVariant(self.clone(), "sal expects r/m, cl".into()))?
+                        Err(InstrEncodingError::InvalidVariant(self.clone(), "sal/shr expects r/m, cl".into()))?
                     }
                 }
             }
@@ -871,6 +872,7 @@ pub enum Mnemonic {
     Cmovne,
 
     Sal,
+    Shr,
 }
 
 impl FromStr for Mnemonic {
@@ -910,6 +912,7 @@ impl FromStr for Mnemonic {
             "div" => Ok(Mnemonic::Div),
             "idiv" => Ok(Mnemonic::Idiv),
             "sal" => Ok(Mnemonic::Sal),
+            "shr" => Ok(Mnemonic::Shr),
             _ => Err(()),
         }
     }
@@ -954,6 +957,7 @@ impl Display for Mnemonic {
             Mnemonic::Div => "div",
             Mnemonic::Idiv => "idiv",
             Mnemonic::Sal => "sal",
+            Mnemonic::Shr => "shr",
         })
     }
 }
