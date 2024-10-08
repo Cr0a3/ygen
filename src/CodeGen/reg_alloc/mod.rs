@@ -186,6 +186,10 @@ impl RegAlloc {
             matcher.case(TypeId::of::<Select<Type, Var>>(), 41);
             matcher.case(TypeId::of::<Select<Var, Type>>(), 42);
             matcher.case(TypeId::of::<Select<Var, Var>>(), 43);
+            
+            matcher.case(TypeId::of::<Rem<Var, Var, Var>>(), 44);
+            matcher.case(TypeId::of::<Rem<Var, Type, Var>>(), 45);
+            matcher.case(TypeId::of::<Rem<Type, Type, Var>>(), 46);
         }
         if let Some(switched) = matcher.switch(node.as_any().type_id()) {
             match *switched {
@@ -232,6 +236,9 @@ impl RegAlloc {
                 41 => self.prep(node.as_any().downcast_ref::<Select<Type, Var>>().unwrap()),
                 42 => self.prep(node.as_any().downcast_ref::<Select<Var, Type>>().unwrap()),
                 43 => self.prep(node.as_any().downcast_ref::<Select<Var, Var>>().unwrap()),
+                44 => self.prep(node.as_any().downcast_ref::<Rem<Var, Var, Var>>().unwrap()),
+                45 => self.prep(node.as_any().downcast_ref::<Rem<Var, Type, Var>>().unwrap()),
+                46 => self.prep(node.as_any().downcast_ref::<Rem<Type, Type, Var>>().unwrap()),
                 _ => todo!(),
             }
         } else {

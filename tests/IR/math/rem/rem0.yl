@@ -1,0 +1,12 @@
+# RUN: 
+cargo run -p ylc -- -in=%s -o=out.o
+gcc out.o -o a.exe
+./a.exe
+# IN:
+define i32 @main() {
+ entry:
+    %1 = rem i32 12, 5
+    ret u32 %1
+}
+
+# EXIT_CODE=2

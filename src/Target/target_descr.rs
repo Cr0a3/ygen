@@ -246,6 +246,7 @@ compile_func!(compile_mul_var_var, compile_mul_var_var, Mul<Var, Var, Var>);
 compile_func!(compile_or_var_var,  compile_or_var_var,  Or<Var, Var, Var>);
 compile_func!(compile_sub_var_var, compile_sub_var_var, Sub<Var, Var, Var>);
 compile_func!(compile_xor_var_var, compile_xor_var_var, Xor<Var, Var, Var>);
+compile_func!(compile_rem_var_var, compile_rem_var_var, Rem<Var, Var, Var>);
 
 compile_func!(compile_add_var_type, compile_add_var_type, Add<Var, Type, Var>);
 compile_func!(compile_and_var_type, compile_and_var_type, And<Var, Type, Var>);
@@ -254,6 +255,7 @@ compile_func!(compile_mul_var_type, compile_mul_var_type, Mul<Var, Type, Var>);
 compile_func!(compile_or_var_type,  compile_or_var_type,  Or<Var, Type, Var>);
 compile_func!(compile_sub_var_type,  compile_sub_var_type,  Sub<Var, Type, Var>);
 compile_func!(compile_xor_var_type, compile_xor_var_type, Xor<Var, Type, Var>);
+compile_func!(compile_rem_var_type, compile_rem_var_type, Rem<Var, Type, Var>);
 
 compile_func!(compile_add_type_type, compile_add_type_type, Add<Type, Type, Var>);
 compile_func!(compile_and_type_type, compile_and_type_type, And<Type, Type, Var>);
@@ -262,6 +264,7 @@ compile_func!(compile_mul_type_type, compile_mul_type_type, Mul<Type, Type, Var>
 compile_func!(compile_or_type_type,  compile_or_type_type,  Or<Type, Type, Var>);
 compile_func!(compile_sub_type_type, compile_sub_type_type, Sub<Type, Type, Var>);
 compile_func!(compile_xor_type_type, compile_xor_type_type, Xor<Type, Type, Var>);
+compile_func!(compile_rem_type_type, compile_rem_type_type, Rem<Type, Type, Var>);
 
 compile_func!(compile_ret_ty, compile_ret_ty, Return<Type>);
 compile_func!(compile_ret_var, compile_ret_var, Return<Var>);

@@ -31,6 +31,7 @@ pub(crate) fn x64_lower_instr(conv: CallConv, sink: &mut Vec<X64MCInstr>, instr:
         MachineMnemonic::Add =>                                           math::x64_lower_add(sink, &instr),
         MachineMnemonic::And =>                                           math::x64_lower_and(sink, &instr),
         MachineMnemonic::Div =>                                           math::x64_lower_div(sink, &instr),
+        MachineMnemonic::Rem =>                                           math::x64_lower_rem(sink, &instr),
         MachineMnemonic::Mul =>                                           math::x64_lower_mul(sink, &instr),
         MachineMnemonic::Or =>                                            math::x64_lower_or(sink, &instr),
         MachineMnemonic::Sub =>                                           math::x64_lower_sub(sink, &instr),

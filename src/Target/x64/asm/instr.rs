@@ -342,10 +342,12 @@ impl X64MCInstr {
                 }
             }
             Mnemonic::Debug | Mnemonic::StartOptimization | Mnemonic::EndOptimization => (vec![], None),
-            Mnemonic::Imul | Mnemonic::Mul => {
+            Mnemonic::Imul | Mnemonic::Mul | Mnemonic::Div | Mnemonic::Idiv => {
                 let i = match self.mnemonic {
                     Mnemonic::Imul => 5,
                     Mnemonic::Mul => 4,
+                    Mnemonic::Idiv => 7,
+                    Mnemonic::Div => 6,
                     _ => unreachable!(),
                 };
 
@@ -572,14 +574,14 @@ impl X64MCInstr {
                     Err(InstrEncodingError::InvalidVariant(self.clone(), "endbr64 can't have operands".to_string()))?
                 }
             }
-            Mnemonic::Mul | Mnemonic::Imul => {
+            Mnemonic::Mul | Mnemonic::Imul | Mnemonic::Div | Mnemonic::Idiv => {
                 if !(self.op1 != None && self.op2 == None) {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "mul/imul need on operand of type r/m".into()))?
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "mul/imul/div/idiv need on operand of type r/m".into()))?
                 }
 
                 if let Some(Operand::Imm(_)) = self.op1  {
                     Err(InstrEncodingError::InvalidVariant(self.clone(), 
-                        "mul/imul need one operand of type r/m".into()
+                        "mul/imul/div/idiv need one operand of type r/m".into()
                     ))?
                 }
             }
@@ -799,6 +801,9 @@ pub enum Mnemonic {
     Imul,
     Mul,
 
+    Idiv,
+    Div,
+
     Call,
     Jmp,
 
@@ -861,6 +866,8 @@ impl FromStr for Mnemonic {
             "neg" => Ok(Mnemonic::Neg),
             "cmove" => Ok(Mnemonic::Cmove),
             "cmovne" => Ok(Mnemonic::Cmovne),
+            "div" => Ok(Mnemonic::Div),
+            "idiv" => Ok(Mnemonic::Idiv),
             _ => Err(()),
         }
     }
@@ -902,6 +909,8 @@ impl Display for Mnemonic {
             Mnemonic::Neg => "neg",
             Mnemonic::Cmove => "cmove",
             Mnemonic::Cmovne => "cmovne",
+            Mnemonic::Div => "div",
+            Mnemonic::Idiv => "idiv",
         })
     }
 }

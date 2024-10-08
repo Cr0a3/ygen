@@ -112,6 +112,7 @@ pub enum MachineMnemonic {
     Or,
     Sub,
     Xor,
+    Rem,
     Neg,
 
     BrCond(/*if yes*/String, /*if no*/String),
@@ -169,6 +170,7 @@ impl MachineMnemonic {
             MachineMnemonic::Or =>                  "or",
             MachineMnemonic::Sub =>                 "sub",
             MachineMnemonic::Xor =>                 "xor",
+            MachineMnemonic::Rem =>                 "rem",
             MachineMnemonic::Zext =>                "zext",
             MachineMnemonic::Downcast =>            "dwcast",
             MachineMnemonic::Call(_) =>             "call",

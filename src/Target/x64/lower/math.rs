@@ -1,6 +1,7 @@
 use crate::CodeGen::MachineInstr;
 use crate::Target::x64Reg;
 use crate::Target::x64::asm::instr::*;
+use crate::IR::TypeMetadata;
 
 macro_rules! LowerSimpleMath {
     ($func:ident, $mnemonic:expr) => {
@@ -28,10 +29,6 @@ LowerSimpleMath!(x64_lower_or, Mnemonic::Or);
 LowerSimpleMath!(x64_lower_sub, Mnemonic::Sub);
 LowerSimpleMath!(x64_lower_xor, Mnemonic::Xor);
 
-pub(crate) fn x64_lower_div(_sink: &mut Vec<X64MCInstr>, _instr: &MachineInstr) {
-    todo!()
-}
-
 pub(crate) fn x64_lower_mul(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     let op1 = instr.operands.get(0).expect("expected a first operand");
     let op2 = instr.operands.get(1).expect("expected a second operand");
@@ -50,12 +47,6 @@ pub(crate) fn x64_lower_mul(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     if out != Operand::Reg(x64Reg::Rdx.sub_ty(instr.meta)) {
         sink.push( X64MCInstr::with1(Mnemonic::Push, Operand::Reg(x64Reg::Rdx)).into() );
     }
-
-    // MUL node here:
-    // mov rax, op1
-    // mul/imul op2
-    // mov out, rax
-    // RDX = is upper slice which will just get destroyed
 
     let rax = || Operand::Reg(x64Reg::Rax.sub_ty(instr.meta));
 
@@ -103,5 +94,152 @@ pub(crate) fn x64_lower_neg(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     } else {
         sink.push(X64MCInstr::with2(Mnemonic::Mov, out.clone(), op));
         sink.push(X64MCInstr::with1(Mnemonic::Neg, out));
+    }
+}
+
+pub(crate) fn x64_lower_div(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
+    let op1 = instr.operands.get(0).expect("expected a first operand");
+    let op2 = instr.operands.get(1).expect("expected a second operand");
+    let out = instr.out.expect("expected a output operand");
+
+    let mut op1 = (*op1).into();
+    let mut op2 = (*op2).into();
+    let out: Operand = out.into();
+
+    let mnemonic = if instr.meta.signed() {
+        Mnemonic::Idiv
+    } else {
+        Mnemonic::Div
+    };
+
+    if out != Operand::Reg(x64Reg::Rdx.sub_ty(instr.meta)) {
+        sink.push( X64MCInstr::with1(Mnemonic::Push, Operand::Reg(x64Reg::Rdx)).into() );
+    }
+
+    let mut pop_rcx = false;
+    let mut pop_rsi = false;
+
+    if let Operand::Reg(reg) = op1 {
+        if x64Reg::Rdx == reg.sub_ty(TypeMetadata::i64) {
+            sink.push( X64MCInstr::with1(Mnemonic::Push, Operand::Reg(x64Reg::Rcx.sub_ty(instr.meta))));
+            sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rcx.sub_ty(instr.meta)), op1) );
+            op1 = Operand::Reg( x64Reg::Rcx.sub_ty(instr.meta) );
+
+            pop_rcx = true;
+        }
+    } 
+    if let Operand::Reg(reg) = op2 {
+        if x64Reg::Rdx == reg.sub_ty(TypeMetadata::i64) {
+            sink.push( X64MCInstr::with1(Mnemonic::Push, Operand::Reg(x64Reg::Rsi.sub_ty(instr.meta))) );
+            sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rsi.sub_ty(instr.meta)), op2) );
+            op2 = Operand::Reg( x64Reg::Rsi.sub_ty(instr.meta) );
+
+            pop_rsi = true;
+        }
+    }
+
+    sink.push( X64MCInstr::with2(Mnemonic::Xor, Operand::Reg(x64Reg::Rdx), Operand::Reg(x64Reg::Rdx)) );
+
+    let rax = || Operand::Reg(x64Reg::Rax.sub_ty(instr.meta));
+
+    sink.push(X64MCInstr::with2(Mnemonic::Mov, rax(), op1.clone()));
+    
+    // mul/imul only accept r/m
+    if let Operand::Imm(_) = op2 {
+        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rbx.sub_ty(instr.meta)), op2.clone()));
+        sink.push(X64MCInstr::with1(mnemonic, Operand::Reg(x64Reg::Rbx.sub_ty(instr.meta))));
+    } else if let Operand::Mem(_) = op2 {
+        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rbx.sub_ty(instr.meta)), op2.clone()));
+        sink.push(X64MCInstr::with1(mnemonic, Operand::Reg(x64Reg::Rbx.sub_ty(instr.meta))));
+    } else {
+        sink.push(X64MCInstr::with1(mnemonic, op2.clone()));
+    }
+
+    if pop_rsi {
+        sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(x64Reg::Rsi.sub_ty(instr.meta))));
+    }
+
+    if pop_rcx {
+        sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(x64Reg::Rcx.sub_ty(instr.meta))));
+    }
+
+    
+    sink.push(X64MCInstr::with2(Mnemonic::Mov, out.to_owned(), rax()));
+
+    if out != Operand::Reg(x64Reg::Rdx.sub_ty(instr.meta)) {
+        sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(x64Reg::Rdx)).into() );
+    }
+}
+
+pub(crate) fn x64_lower_rem(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
+        let op1 = instr.operands.get(0).expect("expected a first operand");
+    let op2 = instr.operands.get(1).expect("expected a second operand");
+    let out = instr.out.expect("expected a output operand");
+
+    let mut op1 = (*op1).into();
+    let mut op2 = (*op2).into();
+    let out: Operand = out.into();
+
+    let mnemonic = if instr.meta.signed() {
+        Mnemonic::Idiv
+    } else {
+        Mnemonic::Div
+    };
+
+    if out != Operand::Reg(x64Reg::Rdx.sub_ty(instr.meta)) {
+        sink.push( X64MCInstr::with1(Mnemonic::Push, Operand::Reg(x64Reg::Rdx)).into() );
+    }
+
+    let mut pop_rcx = false;
+    let mut pop_rsi = false;
+
+    if let Operand::Reg(reg) = op1 {
+        if x64Reg::Rdx == reg.sub_ty(TypeMetadata::i64) {
+            sink.push( X64MCInstr::with1(Mnemonic::Push, Operand::Reg(x64Reg::Rcx.sub_ty(instr.meta))));
+            sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rcx.sub_ty(instr.meta)), op1) );
+            op1 = Operand::Reg( x64Reg::Rcx.sub_ty(instr.meta) );
+
+            pop_rcx = true;
+        }
+    } 
+    if let Operand::Reg(reg) = op2 {
+        if x64Reg::Rdx == reg.sub_ty(TypeMetadata::i64) {
+            sink.push( X64MCInstr::with1(Mnemonic::Push, Operand::Reg(x64Reg::Rsi.sub_ty(instr.meta))) );
+            sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rsi.sub_ty(instr.meta)), op2) );
+            op2 = Operand::Reg( x64Reg::Rsi.sub_ty(instr.meta) );
+
+            pop_rsi = true;
+        }
+    }
+
+    sink.push( X64MCInstr::with2(Mnemonic::Xor, Operand::Reg(x64Reg::Rdx), Operand::Reg(x64Reg::Rdx)) );
+
+    let rax = || Operand::Reg(x64Reg::Rax.sub_ty(instr.meta));
+
+    sink.push(X64MCInstr::with2(Mnemonic::Mov, rax(), op1.clone()));
+    
+    // mul/imul only accept r/m
+    if let Operand::Imm(_) = op2 {
+        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rbx.sub_ty(instr.meta)), op2.clone()));
+        sink.push(X64MCInstr::with1(mnemonic, Operand::Reg(x64Reg::Rbx.sub_ty(instr.meta))));
+    } else if let Operand::Mem(_) = op2 {
+        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rbx.sub_ty(instr.meta)), op2.clone()));
+        sink.push(X64MCInstr::with1(mnemonic, Operand::Reg(x64Reg::Rbx.sub_ty(instr.meta))));
+    } else {
+        sink.push(X64MCInstr::with1(mnemonic, op2.clone()));
+    }
+
+    if pop_rsi {
+        sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(x64Reg::Rsi.sub_ty(instr.meta))));
+    }
+    
+    if pop_rcx {
+        sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(x64Reg::Rcx.sub_ty(instr.meta))));
+    }
+
+    sink.push(X64MCInstr::with2(Mnemonic::Mov, out.to_owned(), Operand::Reg(x64Reg::Rdx.sub_ty(instr.meta))));
+
+    if out != Operand::Reg(x64Reg::Rdx.sub_ty(instr.meta)) {
+        sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(x64Reg::Rdx)).into() );
     }
 }

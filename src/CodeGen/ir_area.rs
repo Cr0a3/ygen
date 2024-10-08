@@ -110,6 +110,11 @@ impl IrCodeGenHelper {
         ir::Xor<Var, Var, Var>
     );
     ir_codegen_wrap!(
+        compile_rem_var_var, 
+        "Loweres the rem node", 
+        ir::Rem<Var, Var, Var>
+    );
+    ir_codegen_wrap!(
         compile_add_var_type, 
         "Loweres the add node", 
         ir::Add<Var, Type, Var>
@@ -145,6 +150,11 @@ impl IrCodeGenHelper {
         ir::Xor<Var, Type, Var>
     );
     ir_codegen_wrap!(
+        compile_rem_var_type, 
+        "Loweres the rem node", 
+        ir::Rem<Var, Type, Var>
+    );
+    ir_codegen_wrap!(
         compile_add_type_type, 
         "Loweres the add node", 
         ir::Add<Type, Type, Var>
@@ -178,6 +188,11 @@ impl IrCodeGenHelper {
         compile_xor_type_type, 
         "Loweres the xor node", 
         ir::Xor<Type, Type, Var>
+    );
+    ir_codegen_wrap!(
+        compile_rem_type_type, 
+        "Loweres the rem node", 
+        ir::Rem<Type, Type, Var>
     );
     ir_codegen_wrap!(
         compile_alloca, 

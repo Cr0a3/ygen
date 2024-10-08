@@ -42,7 +42,6 @@ fn construct_whitelist() -> WhiteList {
     // everything is allowed by default
     // so only add illegal stuff here
 
-    whitelist.forbid(MachineMnemonic::Div);
     whitelist.forbid(MachineMnemonic::Downcast);
 
     whitelist
