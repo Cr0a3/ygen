@@ -27,7 +27,7 @@ keywords = ["compiler", "codegen", "llvm"]
 rustdoc-args = ["--allow", "warnings"]
 
 [dependencies]
-gimli = { version = "0.31.0", features = ["write"] }
+gimli = { version = "0.31.1", features = ["write"] }
 logos = "0.14.2"
 object = { version = "0.36.5", features = ["write"] }
 proc = { workspace = true }
