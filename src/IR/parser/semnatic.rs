@@ -155,6 +155,8 @@ impl<'a> IrSemnatic<'a> {
                     self.analaysiz_div_var_ty(&mut vars, node, loc)?;
                 } else if let Some(node) = any.downcast_ref::<Rem<Var, Type, Var>>() {
                     self.analaysiz_rem_var_ty(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Shl<Var, Type, Var>>() {
+                    self.analaysiz_shl_var_ty(&mut vars, node, loc)?;
                 } else if let Some(node) = any.downcast_ref::<Add<Type, Type, Var>>() {
                     self.analaysiz_add_ty_ty(&mut vars, node, loc)?;
                 } else if let Some(node) = any.downcast_ref::<Sub<Type, Type, Var>>() {
@@ -171,6 +173,8 @@ impl<'a> IrSemnatic<'a> {
                     self.analaysiz_div_ty_ty(&mut vars, node, loc)?;
                 } else if let Some(node) = any.downcast_ref::<Rem<Type, Type, Var>>() {
                     self.analaysiz_rem_ty_ty(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Shl<Type, Type, Var>>() {
+                    self.analaysiz_shl_ty_ty(&mut vars, node, loc)?;
                 } else if let Some(node) = any.downcast_ref::<Add<Var, Var, Var>>() {
                     self.analaysiz_add_var_var(&mut vars, node, loc)?;
                 } else if let Some(node) = any.downcast_ref::<Sub<Var, Var, Var>>() {
@@ -187,6 +191,8 @@ impl<'a> IrSemnatic<'a> {
                     self.analaysiz_div_var_var(&mut vars, node, loc)?;
                 } else if let Some(node) = any.downcast_ref::<Rem<Var, Var, Var>>() {
                     self.analaysiz_rem_var_var(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<Shl<Var, Var, Var>>() {
+                    self.analaysiz_shl_var_var(&mut vars, node, loc)?;
                 } else if let Some(node) = any.downcast_ref::<Cast<Var, TypeMetadata, Var>>() {
                     self.analaysiz_cast(&mut vars, node, loc)?;
                 } else if let Some(node) = any.downcast_ref::<BrCond<Var, BlockId, BlockId>>() {
@@ -756,6 +762,7 @@ SemnaticImplMathVarTy!(analaysiz_and_var_ty, And);
 SemnaticImplMathVarTy!(analaysiz_mul_var_ty, Mul);
 SemnaticImplMathVarTy!(analaysiz_div_var_ty, Div);
 SemnaticImplMathVarTy!(analaysiz_rem_var_ty, Rem);
+SemnaticImplMathVarTy!(analaysiz_shl_var_ty, Shl);
 
 macro_rules! SemnaticImplMathTyTy {
     ($func:ident, $node:ident) => {
@@ -784,6 +791,7 @@ SemnaticImplMathTyTy!(analaysiz_and_ty_ty, And);
 SemnaticImplMathTyTy!(analaysiz_mul_ty_ty, Mul);
 SemnaticImplMathTyTy!(analaysiz_div_ty_ty, Div);
 SemnaticImplMathTyTy!(analaysiz_rem_ty_ty, Rem);
+SemnaticImplMathTyTy!(analaysiz_shl_ty_ty, Shl);
 
 macro_rules! SemnaticImplMathVarVar {
     ($func:ident, $node:ident) => {
@@ -832,3 +840,4 @@ SemnaticImplMathVarVar!(analaysiz_and_var_var, And);
 SemnaticImplMathVarVar!(analaysiz_mul_var_var, Mul);
 SemnaticImplMathVarVar!(analaysiz_div_var_var, Div);
 SemnaticImplMathVarVar!(analaysiz_rem_var_var, Rem);
+SemnaticImplMathVarVar!(analaysiz_shl_var_var, Shl);

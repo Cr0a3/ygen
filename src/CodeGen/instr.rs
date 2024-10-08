@@ -114,6 +114,7 @@ pub enum MachineMnemonic {
     Xor,
     Rem,
     Neg,
+    Shl,
 
     BrCond(/*if yes*/String, /*if no*/String),
     Compare(CmpMode),
@@ -192,7 +193,8 @@ impl MachineMnemonic {
             MachineMnemonic::Switch(_) =>           "switch",
             MachineMnemonic::Neg =>                 "neg",
             MachineMnemonic::MovIfZero =>           "cmovz",
-            MachineMnemonic::MovIfNotZero =>           "cmovnz",
+            MachineMnemonic::MovIfNotZero =>        "cmovnz",
+            MachineMnemonic::Shl =>                 "shl",
         }.to_string()
     }
 }

@@ -243,3 +243,44 @@ pub(crate) fn x64_lower_rem(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
         sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(x64Reg::Rdx)).into() );
     }
 }
+
+pub(crate) fn x64_lower_shl(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
+    let out = instr.out.expect("expected output for valid shl instruction");
+    let op1 = instr.operands.get(0).expect("expected 2 operands for valid shl instruction");
+    let op2 = instr.operands.get(1).expect("expected 2 operands for valid shl instruction");
+
+    let out: Operand = out.into();
+
+    let op1: Operand = (*op1).into();
+    let op2: Operand = (*op2).into();
+
+    if let Operand::Reg(reg) = out {
+        if x64Reg::Rcx != reg.sub_ty(TypeMetadata::i64) {
+            sink.push( X64MCInstr::with1(Mnemonic::Push, Operand::Reg(x64Reg::Rcx)));
+        }
+    }
+
+    let mut else_clause = true;
+
+    if let Operand::Reg(reg) = op1 {
+        if reg.sub64() == x64Reg::Rcx {
+            sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), op1.clone()));
+            sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rcx.sub_ty(instr.meta)), op2.clone()));
+            else_clause = false;
+        }
+    } 
+    
+    if else_clause {
+        sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rcx.sub_ty(instr.meta)), op2));
+        sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), op1));
+    }
+
+    sink.push( X64MCInstr::with2(Mnemonic::Sal, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), Operand::Reg(x64Reg::Cl)));
+    sink.push( X64MCInstr::with2(Mnemonic::Mov, out.clone(), Operand::Reg(x64Reg::Rax.sub_ty(instr.meta))));
+
+    if let Operand::Reg(reg) = out {
+        if x64Reg::Rcx != reg.sub_ty(TypeMetadata::i64) {
+            sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(x64Reg::Rcx)));
+        }
+    }
+}

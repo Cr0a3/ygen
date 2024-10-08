@@ -125,6 +125,7 @@ IrTypeWith3!(And, T, U, Z);
 IrTypeWith3!(Mul, T, U, Z);
 IrTypeWith3!(Div, T, U, Z);
 IrTypeWith3!(Rem, T, U, Z);
+IrTypeWith3!(Shl, T, U, Z);
 
 IrTypeWith1!(Br, T);
 IrTypeWith3!(BrCond, T, U, Z);

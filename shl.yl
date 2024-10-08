@@ -1,0 +1,6 @@
+
+define i32 @main() {
+ entry:
+    %1 = shl i32 4, 1
+    ret u32 %1
+}

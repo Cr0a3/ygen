@@ -296,4 +296,5 @@ MathIrNode!(And,    compile_and_var_var,   compile_and_var_type, compile_and_typ
 MathIrNode!(Mul,    compile_mul_var_var,   compile_mul_var_type, compile_mul_type_type, BuildMul, BuildMul, "mul", *);
 MathIrNode!(Div,    compile_div_var_var,   compile_div_var_type, compile_div_type_type, BuildDiv, BuildDiv, "div", /);
 MathIrNode!(Rem,    compile_rem_var_var,   compile_rem_var_type, compile_rem_type_type, BuildRem, BuildRem, "rem", %);
+MathIrNode!(Shl,    compile_shl_var_var,   compile_shl_var_type, compile_shl_type_type, BuildShl, BuildShl, "shl", <<);
 

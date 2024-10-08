@@ -489,6 +489,34 @@ impl X64MCInstr {
 
                 (buildOpcode(mandatory, rex.option(), op), None)
             }
+            Mnemonic::Sal => {
+                let (mut op, i) = match self.mnemonic {
+                    Mnemonic::Sal => (0xD3, 4),
+                    _ => unreachable!(),
+                };
+
+                let mut encoded = Vec::new();
+
+                let mut mandatory = None;
+                let mut rex = RexPrefix::none();
+
+                if let Some(Operand::Reg(reg)) = &self.op1 {
+                    rex.w = reg.is_gr64();
+                    rex.r = reg.extended();
+                    if reg.is_gr16() { mandatory = Some(MandatoryPrefix::t16BitOps); }
+                    if reg.is_gr8() { op -= 1; }
+
+                    encoded.push(op);
+                    encoded.extend_from_slice(&ModRm::regWimm(i, *reg));
+                } else if let Some(Operand::Mem(mem)) = &self.op1 {
+                    rex = mem.rex(true);
+
+                    encoded.push(op);
+                    encoded.extend_from_slice(&ModRm::imMem(i, mem.clone()));
+                }
+
+                (buildOpcode(mandatory, rex.option(), encoded), None)
+            }
         })
     }
 
@@ -616,6 +644,17 @@ impl X64MCInstr {
                     }
                 } else {
                     Err(InstrEncodingError::InvalidVariant(self.clone(), "cmov expects r, r/m".into()))?
+                }
+            }
+            Mnemonic::Sal => {
+                if self.op1.is_none() || self.op2.is_none() {
+                    Err(InstrEncodingError::InvalidVariant(self.clone(), "sal expects r/m, cl".into()))?
+                }
+
+                if let Some(Operand::Reg(reg)) = &self.op2 {
+                    if x64Reg::Cl != *reg {
+                        Err(InstrEncodingError::InvalidVariant(self.clone(), "sal expects r/m, cl".into()))?
+                    }
                 }
             }
         };
@@ -830,6 +869,8 @@ pub enum Mnemonic {
 
     Cmove,
     Cmovne,
+
+    Sal,
 }
 
 impl FromStr for Mnemonic {
@@ -868,6 +909,7 @@ impl FromStr for Mnemonic {
             "cmovne" => Ok(Mnemonic::Cmovne),
             "div" => Ok(Mnemonic::Div),
             "idiv" => Ok(Mnemonic::Idiv),
+            "sal" => Ok(Mnemonic::Sal),
             _ => Err(()),
         }
     }
@@ -911,6 +953,7 @@ impl Display for Mnemonic {
             Mnemonic::Cmovne => "cmovne",
             Mnemonic::Div => "div",
             Mnemonic::Idiv => "idiv",
+            Mnemonic::Sal => "sal",
         })
     }
 }
