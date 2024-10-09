@@ -37,7 +37,7 @@ pub(crate) fn x64_lower_instr(conv: CallConv, sink: &mut Vec<X64MCInstr>, instr:
         MachineMnemonic::Sub =>                                           math::x64_lower_sub(sink, &instr),
         MachineMnemonic::Xor =>                                           math::x64_lower_xor(sink, &instr),
         MachineMnemonic::Shl =>                                           math::x64_lower_shl(sink, &instr),
-        MachineMnemonic::Lshr =>                                          math::x64_lower_lshr(sink, &instr),
+        MachineMnemonic::Shr =>                                           math::x64_lower_shr(sink, &instr),
         MachineMnemonic::Zext =>                                          zext::x64_lower_zext(sink, &instr),
         MachineMnemonic::Downcast =>                                      downcast::x64_lower_downcast(sink, &instr),
         MachineMnemonic::Call(to) =>                             call::x64_lower_call(conv, sink, &instr, to),

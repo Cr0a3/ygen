@@ -248,7 +248,7 @@ compile_func!(compile_sub_var_var, compile_sub_var_var, Sub<Var, Var, Var>);
 compile_func!(compile_xor_var_var, compile_xor_var_var, Xor<Var, Var, Var>);
 compile_func!(compile_rem_var_var, compile_rem_var_var, Rem<Var, Var, Var>);
 compile_func!(compile_shl_var_var, compile_shl_var_var, Shl<Var, Var, Var>);
-compile_func!(compile_lshr_var_var, compile_lshr_var_var, Lshr<Var, Var, Var>);
+compile_func!(compile_shr_var_var, compile_shr_var_var, Shr<Var, Var, Var>);
 
 compile_func!(compile_add_var_type, compile_add_var_type, Add<Var, Type, Var>);
 compile_func!(compile_and_var_type, compile_and_var_type, And<Var, Type, Var>);
@@ -259,7 +259,7 @@ compile_func!(compile_sub_var_type,  compile_sub_var_type,  Sub<Var, Type, Var>)
 compile_func!(compile_xor_var_type, compile_xor_var_type, Xor<Var, Type, Var>);
 compile_func!(compile_rem_var_type, compile_rem_var_type, Rem<Var, Type, Var>);
 compile_func!(compile_shl_var_type, compile_shl_var_type, Shl<Var, Type, Var>);
-compile_func!(compile_lshr_var_type, compile_lshr_var_type, Lshr<Var, Type, Var>);
+compile_func!(compile_shr_var_type, compile_shr_var_type, Shr<Var, Type, Var>);
 
 compile_func!(compile_add_type_type, compile_add_type_type, Add<Type, Type, Var>);
 compile_func!(compile_and_type_type, compile_and_type_type, And<Type, Type, Var>);
@@ -270,7 +270,7 @@ compile_func!(compile_sub_type_type, compile_sub_type_type, Sub<Type, Type, Var>
 compile_func!(compile_xor_type_type, compile_xor_type_type, Xor<Type, Type, Var>);
 compile_func!(compile_rem_type_type, compile_rem_type_type, Rem<Type, Type, Var>);
 compile_func!(compile_shl_type_type, compile_shl_type_type, Shl<Type, Type, Var>);
-compile_func!(compile_lshr_type_type, compile_lshr_type_type, Lshr<Type, Type, Var>);
+compile_func!(compile_shr_type_type, compile_shr_type_type, Shr<Type, Type, Var>);
 
 compile_func!(compile_ret_ty, compile_ret_ty, Return<Type>);
 compile_func!(compile_ret_var, compile_ret_var, Return<Var>);

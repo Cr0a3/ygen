@@ -195,9 +195,9 @@ impl RegAlloc {
             matcher.case(TypeId::of::<Shl<Var, Type, Var>>(), 48);
             matcher.case(TypeId::of::<Shl<Type, Type, Var>>(), 49);
             
-            matcher.case(TypeId::of::<Lshr<Var, Var, Var>>(), 50);
-            matcher.case(TypeId::of::<Lshr<Var, Type, Var>>(), 51);
-            matcher.case(TypeId::of::<Lshr<Type, Type, Var>>(), 52);
+            matcher.case(TypeId::of::<Shr<Var, Var, Var>>(), 50);
+            matcher.case(TypeId::of::<Shr<Var, Type, Var>>(), 51);
+            matcher.case(TypeId::of::<Shr<Type, Type, Var>>(), 52);
         }
         if let Some(switched) = matcher.switch(node.as_any().type_id()) {
             match *switched {
@@ -250,9 +250,9 @@ impl RegAlloc {
                 47 => self.prep(node.as_any().downcast_ref::<Shl<Var, Var, Var>>().unwrap()),
                 48 => self.prep(node.as_any().downcast_ref::<Shl<Var, Type, Var>>().unwrap()),
                 49 => self.prep(node.as_any().downcast_ref::<Shl<Type, Type, Var>>().unwrap()),
-                50 => self.prep(node.as_any().downcast_ref::<Lshr<Var, Var, Var>>().unwrap()),
-                51 => self.prep(node.as_any().downcast_ref::<Lshr<Var, Type, Var>>().unwrap()),
-                52 => self.prep(node.as_any().downcast_ref::<Lshr<Type, Type, Var>>().unwrap()),
+                50 => self.prep(node.as_any().downcast_ref::<Shr<Var, Var, Var>>().unwrap()),
+                51 => self.prep(node.as_any().downcast_ref::<Shr<Var, Type, Var>>().unwrap()),
+                52 => self.prep(node.as_any().downcast_ref::<Shr<Type, Type, Var>>().unwrap()),
                 _ => todo!(),
             }
         } else {

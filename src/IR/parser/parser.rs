@@ -436,7 +436,7 @@ impl IrParser {
                         "select" => self.parse_select(name)?,
                         "rem" => self.parse_rem(name)?,
                         "shl" => self.parse_shl(name)?,
-                        "lshr" => self.parse_lshr(name)?,
+                        "shr" => self.parse_shr(name)?,
                         _ => {
                             let ty = self.parse_type()?;
                             self.input.pop_front(); // the type
@@ -1295,4 +1295,4 @@ ParserImplParseMath!(parse_mul, Mul);
 ParserImplParseMath!(parse_div, Div);
 ParserImplParseMath!(parse_rem, Rem);
 ParserImplParseMath!(parse_shl, Shl);
-ParserImplParseMath!(parse_lshr, Lshr);
+ParserImplParseMath!(parse_shr, Shr);

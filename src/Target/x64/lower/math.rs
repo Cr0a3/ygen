@@ -285,7 +285,7 @@ pub(crate) fn x64_lower_shl(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     }
 }
 
-pub(crate) fn x64_lower_lshr(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
+pub(crate) fn x64_lower_shr(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     let out = instr.out.expect("expected output for valid shl instruction");
     let op1 = instr.operands.get(0).expect("expected 2 operands for valid shl instruction");
     let op2 = instr.operands.get(1).expect("expected 2 operands for valid shl instruction");
@@ -303,6 +303,11 @@ pub(crate) fn x64_lower_lshr(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
 
     let mut else_clause = true;
 
+    let mne = match instr.meta.signed() {
+        true => Mnemonic::Sar,
+        false => Mnemonic::Shr,
+    };
+
     if let Operand::Reg(reg) = op1 {
         if reg.sub64() == x64Reg::Rcx {
             sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), op1.clone()));
@@ -316,7 +321,7 @@ pub(crate) fn x64_lower_lshr(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
         sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), op1));
     }
 
-    sink.push( X64MCInstr::with2(Mnemonic::Shr, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), Operand::Reg(x64Reg::Cl)));
+    sink.push( X64MCInstr::with2(mne, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), Operand::Reg(x64Reg::Cl)));
     sink.push( X64MCInstr::with2(Mnemonic::Mov, out.clone(), Operand::Reg(x64Reg::Rax.sub_ty(instr.meta))));
 
     if let Operand::Reg(reg) = out {

@@ -55,7 +55,7 @@ MathVarVar!(compile_sub_var_var, Sub, MachineMnemonic::Sub);
 MathVarVar!(compile_xor_var_var, Xor, MachineMnemonic::Xor);
 MathVarVar!(compile_rem_var_var, Rem, MachineMnemonic::Rem);
 MathVarVar!(compile_shl_var_var, Shl, MachineMnemonic::Shl);
-MathVarVar!(compile_lshr_var_var, Lshr, MachineMnemonic::Lshr);
+MathVarVar!(compile_shr_var_var, Shr, MachineMnemonic::Shr);
 
 macro_rules! MathVarType {
     ($func:ident, $node:ident, $mnemonic:expr) => {
@@ -97,7 +97,7 @@ MathVarType!(compile_sub_var_type, Sub, MachineMnemonic::Sub);
 MathVarType!(compile_xor_var_type, Xor, MachineMnemonic::Xor);
 MathVarType!(compile_rem_var_type, Rem, MachineMnemonic::Rem);
 MathVarType!(compile_shl_var_type, Shl, MachineMnemonic::Shl);
-MathVarType!(compile_lshr_var_type, Lshr, MachineMnemonic::Lshr);
+MathVarType!(compile_shr_var_type, Shr, MachineMnemonic::Shr);
 
 macro_rules! MathTypeType {
     ($func:ident, $node:ident, $mnemonic:expr) => {
@@ -134,4 +134,4 @@ MathTypeType!(compile_sub_type_type, Sub, MachineMnemonic::Sub);
 MathTypeType!(compile_xor_type_type, Xor, MachineMnemonic::Xor);
 MathTypeType!(compile_rem_type_type, Rem, MachineMnemonic::Rem);
 MathTypeType!(compile_shl_type_type, Shl, MachineMnemonic::Shl);
-MathTypeType!(compile_lshr_type_type, Lshr, MachineMnemonic::Lshr);
+MathTypeType!(compile_shr_type_type, Shr, MachineMnemonic::Shr);

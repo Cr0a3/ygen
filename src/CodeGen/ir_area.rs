@@ -120,9 +120,9 @@ impl IrCodeGenHelper {
         ir::Shl<Var, Var, Var>
     );
     ir_codegen_wrap!(
-        compile_lshr_var_var, 
-        "Loweres the lshr node", 
-        ir::Lshr<Var, Var, Var>
+        compile_shr_var_var, 
+        "Loweres the shr node", 
+        ir::Shr<Var, Var, Var>
     );
     ir_codegen_wrap!(
         compile_add_var_type, 
@@ -170,9 +170,9 @@ impl IrCodeGenHelper {
         ir::Shl<Var, Type, Var>
     );
     ir_codegen_wrap!(
-        compile_lshr_var_type, 
-        "Loweres the lshr node", 
-        ir::Lshr<Var, Type, Var>
+        compile_shr_var_type, 
+        "Loweres the shr node", 
+        ir::Shr<Var, Type, Var>
     );
     ir_codegen_wrap!(
         compile_add_type_type, 
@@ -220,9 +220,9 @@ impl IrCodeGenHelper {
         ir::Shl<Type, Type, Var>
     );
     ir_codegen_wrap!(
-        compile_lshr_type_type, 
-        "Loweres the lshr node", 
-        ir::Lshr<Type, Type, Var>
+        compile_shr_type_type, 
+        "Loweres the shr node", 
+        ir::Shr<Type, Type, Var>
     );
     ir_codegen_wrap!(
         compile_alloca, 
