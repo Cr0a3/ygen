@@ -5,7 +5,7 @@ gcc out.o -o a.exe
 # IN:
 define i32 @main() {
  entry:
-    %1 = lshr i32 114, 4
+    %1 = shr i32 114, 4
     ret u32 %1
 }
 

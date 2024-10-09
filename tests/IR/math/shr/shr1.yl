@@ -8,7 +8,7 @@ define i32 @main() {
     %0 = i32 56
     %1 = i32 2
 
-    %2 = lshr i32 %0, %1
+    %2 = shr i32 %0, %1
 
     ret i32 %2
 }
