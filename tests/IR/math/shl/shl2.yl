@@ -8,7 +8,9 @@ define i32 @main() {
     %0 = i32 32
     %1 = shl i32 %0, 4
 
-    ret i32 %1
+    %2 = sub i32 %1, 500
+
+    ret i32 %2
 }
 
-# EXIT_CODE=512
+# EXIT_CODE=12
