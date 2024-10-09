@@ -493,7 +493,7 @@ impl X64MCInstr {
                 let (mut op, i) = match self.mnemonic {
                     Mnemonic::Sal => (0xD3, 4),
                     Mnemonic::Shr => (0xD3, 5),
-                    Mnemonic::Sar => (0xD1, 7),
+                    Mnemonic::Sar => (0xD2, 7),
                     _ => unreachable!(),
                 };
 
