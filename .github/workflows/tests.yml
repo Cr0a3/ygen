@@ -19,10 +19,6 @@ jobs:
         run: |
           rustup update --no-self-update stable
 
-      - name: Install python
-        run: |
-         pip3 install colorama
-
       - name: Build
         run: cargo build --all
 
