@@ -17,7 +17,7 @@ pub struct Loc {
 }
 
 /// The token type for parsing ir
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub enum TokenType {
     /// :
     Dot,
@@ -62,7 +62,7 @@ pub enum TokenType {
     String(String),
 
     /// 1234
-    Int(i64),
+    Int(f64),
 
     /// declare
     Declare,
@@ -85,6 +85,23 @@ pub enum TokenType {
     /// ^abc (till line end)
     UnIdent(String),
 }
+
+impl PartialEq for TokenType {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Var(l0), Self::Var(r0)) => l0 == r0,
+            (Self::Ident(l0), Self::Ident(r0)) => l0 == r0,
+            (Self::String(l0), Self::String(r0)) => l0 == r0,
+            (Self::Int(l0), Self::Int(r0)) => l0 == r0,
+            (Self::Func(l0), Self::Func(r0)) => l0 == r0,
+            (Self::Block(l0), Self::Block(r0)) => l0 == r0,
+            (Self::UnIdent(l0), Self::UnIdent(r0)) => l0 == r0,
+            _ => core::mem::discriminant(self) == core::mem::discriminant(other),
+        }
+    }
+}
+
+impl Eq for TokenType {}
 
 impl TokenType {
     pub(crate) fn name(&self) -> String {
@@ -542,7 +559,7 @@ impl IrLexer {
 
         self.no_pop = true;
 
-        Ok(TokenType::Int(out))
+        Ok(TokenType::Int(out as f64))
     }
 
     fn scan_func(&mut self) -> Result<TokenType, IrError> {

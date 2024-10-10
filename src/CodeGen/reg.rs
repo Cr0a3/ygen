@@ -46,4 +46,11 @@ impl Reg {
             }
         }  
     }
+
+    /// Returns if the specified register is an fp register
+    pub fn is_fp(&self) -> bool {
+        match self {
+            Reg::x64(x64) => x64.is_xmm(),
+        }
+    }
 }

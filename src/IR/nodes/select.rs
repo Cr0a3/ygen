@@ -51,7 +51,7 @@ impl Ir for Select<Type, Type> {
 
     fn maybe_inline(&self, const_values: &std::collections::HashMap<String, Type>) -> Option<Box<dyn Ir>> {
         if let Some(cond) = const_values.get(&self.cond.name) {
-            if cond.val() == 0 {
+            if cond.val() == 0.0 {
                 return Some(Assign::new(self.out.clone(), self.yes));
             } else {
                 return Some(Assign::new(self.out.clone(), self.no));

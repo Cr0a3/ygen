@@ -24,6 +24,11 @@ pub enum x64Reg {
     R13, R13d, R13w, R13b,
     R14, R14d, R14w, R14b,
     R15, R15d, R15w, R15b,
+
+    Xmm0, Xmm1, Xmm2, Xmm3,
+    Xmm4, Xmm5, Xmm6, Xmm7,
+    Xmm8, Xmm9, Xmm10, Xmm11,
+    Xmm12, Xmm13, Xmm14, Xmm15,
 }
 
 impl x64Reg {
@@ -49,6 +54,13 @@ impl x64Reg {
             "r13" => Some(R13), "r13d" => Some(R13d), "r13w" => Some(R13w), "r13b" => Some(R13b),
             "r14" => Some(R14), "r14d" => Some(R14d), "r14w" => Some(R14w), "r14b" => Some(R14b),
             "r15" => Some(R15), "r15d" => Some(R15d), "r15w" => Some(R15w), "r15b" => Some(R15b),
+
+            "xmm0" => Some(Xmm0), "xmm1" => Some(Xmm1), "xmm2" => Some(Xmm2),
+            "xmm3" => Some(Xmm3), "xmm4" => Some(Xmm4), "xmm5" => Some(Xmm5),
+            "xmm6" => Some(Xmm6), "xmm7" => Some(Xmm7), "xmm8" => Some(Xmm8),
+            "xmm9" => Some(Xmm9), "xmm10" => Some(Xmm10), "xmm11" => Some(Xmm11),
+            "xmm12" => Some(Xmm12), "xmm13" => Some(Xmm13), "xmm14" => Some(Xmm14),
+            "xmm15" => Some(Xmm15),
             
             _ => None,
         }
@@ -66,6 +78,9 @@ impl x64Reg {
             R13 | R13d | R13w | R13b |
             R14 | R14d | R14w | R14b |
             R15 | R15d | R15w | R15b  => true,
+
+            Xmm8 | Xmm9 | Xmm10 | Xmm11 |
+            Xmm12 | Xmm13 | Xmm14 | Xmm15  => true,
             _ => false,
         }
     }
@@ -92,6 +107,8 @@ impl x64Reg {
             R13 | R13d | R13w | R13b => R13,
             R14 | R14d | R14w | R14b => R14,
             R15 | R15d | R15w | R15b => R15,
+
+            _ => *self,
         }
     }
 
@@ -117,6 +134,8 @@ impl x64Reg {
             R13 | R13d | R13w | R13b => R13d,
             R14 | R14d | R14w | R14b => R14d,
             R15 | R15d | R15w | R15b => R15d,
+
+            _ => *self,
         }
     }
 
@@ -142,6 +161,8 @@ impl x64Reg {
             R13 | R13d | R13w | R13b => R13w,
             R14 | R14d | R14w | R14b => R14w,
             R15 | R15d | R15w | R15b => R15w,
+
+            _ => *self,
         }
     }
 
@@ -167,6 +188,8 @@ impl x64Reg {
             R13 | R13d | R13w | R13b => R13b,
             R14 | R14d | R14w | R14b => R14b,
             R15 | R15d | R15w | R15b => R15b,
+
+            _ => *self,
         }
     }
     
@@ -229,10 +252,23 @@ impl x64Reg {
             _ => false,
         }
     }
+    
+    /// Is the register a xmm register?
+    pub fn is_xmm(&self) -> bool {
+        use x64Reg::*;
+        match self {
+            Xmm0    | Xmm1  | Xmm2  | Xmm3  | Xmm4  |
+            Xmm5    | Xmm6  | Xmm7  | Xmm8  | Xmm9  |
+            Xmm10   | Xmm11 | Xmm12 | Xmm13 | Xmm14 |
+            Xmm15 => true,
+            _ => false,
+        }
+    }
 
     #[doc(hidden)]
     pub fn enc(&self) -> u8 {
         match self {
+            // GR
             x64Reg::Rax | x64Reg::Eax | x64Reg::Ax | x64Reg::Al => 0,
             x64Reg::Rcx | x64Reg::Ecx | x64Reg::Cx | x64Reg::Cl => 1,
             x64Reg::Rdx | x64Reg::Edx | x64Reg::Dx | x64Reg::Dl => 2,
@@ -242,7 +278,7 @@ impl x64Reg {
             x64Reg::Rsp | x64Reg::Esp | x64Reg::Sp | x64Reg::Spl => 4,
             x64Reg::Rdi | x64Reg::Edi | x64Reg::Di | x64Reg::Dil => 7,
 
-            // this here use a prefix
+            // here use a rex prefix
             x64Reg::R8 | x64Reg::R8d | x64Reg::R8w | x64Reg::R8b => 0,
             x64Reg::R9 | x64Reg::R9d | x64Reg::R9w | x64Reg::R9b => 1,
             x64Reg::R10 | x64Reg::R10d | x64Reg::R10w | x64Reg::R10b => 2,
@@ -251,6 +287,27 @@ impl x64Reg {
             x64Reg::R13 | x64Reg::R13d | x64Reg::R13w | x64Reg::R13b => 5,
             x64Reg::R14 | x64Reg::R14d | x64Reg::R14w | x64Reg::R14b => 6,
             x64Reg::R15 | x64Reg::R15d | x64Reg::R15w | x64Reg::R15b => 7,
+
+            // Xmm
+            x64Reg::Xmm0 => 0,
+            x64Reg::Xmm1 => 1,
+            x64Reg::Xmm2 => 2,
+            x64Reg::Xmm3 => 3,
+            x64Reg::Xmm4 => 4,
+            x64Reg::Xmm5 => 5,
+            x64Reg::Xmm6 => 6,
+            x64Reg::Xmm7 => 7,
+
+            // here use a rex prefix
+            x64Reg::Xmm8 => 0,
+            x64Reg::Xmm9 => 1,
+            x64Reg::Xmm10 => 2,
+            x64Reg::Xmm11 => 3,
+            x64Reg::Xmm12 => 4,
+            x64Reg::Xmm13 => 5,
+            x64Reg::Xmm14 => 6,
+            x64Reg::Xmm15 => 7,
+
         }
     }
     

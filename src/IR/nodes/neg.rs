@@ -36,9 +36,11 @@ impl Ir for Neg<Var, /*out*/Var> {
 
     fn maybe_inline(&self, const_values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
         if let Some(value) = const_values.get(&self.inner1.name) {
-            let ty = Type::from_int(self.inner1.ty, -(value.val() as i64));
-
-            Some(Assign::new(self.inner2.to_owned(), ty))
+            if self.inner1.ty != TypeMetadata::f32 || self.inner1.ty != TypeMetadata::f64 {
+                let ty = Type::from_int(self.inner1.ty, -(value.val() as i64) as f64);
+    
+                Some(Assign::new(self.inner2.to_owned(), ty))
+            } else { None}
         } else { None }
     }
 

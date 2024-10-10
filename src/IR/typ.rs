@@ -3,7 +3,7 @@ use std::fmt::Display;
 /// Stores a type and a value of that type
 /// 
 /// If you want an empty Type consider using `TypeMetadata`
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy)]
 pub enum Type {
     /// Just an u8 with a value
     u8(u8),
@@ -27,6 +27,39 @@ pub enum Type {
 
     /// Notype
     Void,
+
+    /// A f32
+    f32(f32),
+
+    /// A f64
+    f64(f64),
+}
+
+impl PartialEq for Type {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::u8(l0), Self::u8(r0)) => l0 == r0,
+            (Self::u16(l0), Self::u16(r0)) => l0 == r0,
+            (Self::u32(l0), Self::u32(r0)) => l0 == r0,
+            (Self::u64(l0), Self::u64(r0)) => l0 == r0,
+            (Self::i8(l0), Self::i8(r0)) => l0 == r0,
+            (Self::i16(l0), Self::i16(r0)) => l0 == r0,
+            (Self::i32(l0), Self::i32(r0)) => l0 == r0,
+            (Self::i64(l0), Self::i64(r0)) => l0 == r0,
+            (Self::ptr(l0), Self::ptr(r0)) => l0 == r0,
+            (Self::f32(l0), Self::f32(r0)) => l0 == r0,
+            (Self::f64(l0), Self::f64(r0)) => l0 == r0,
+            _ => core::mem::discriminant(self) == core::mem::discriminant(other),
+        }
+    }
+}
+
+impl Eq for Type {}
+
+impl std::hash::Hash for Type {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        core::mem::discriminant(self).hash(state);
+    }
 }
 
 /// Stores type metadata (just the type without data)
@@ -54,27 +87,35 @@ pub enum TypeMetadata {
 
     /// Notype
     Void,
+
+    /// f32
+    f32,
+
+    /// f64
+    f64,
 }
 
 impl Type {
     /// Returns the inner value
-    pub fn val(&self) -> u64 {
+    pub fn val(&self) -> f64 {
         match self {
-            Type::u16(val) => *val as u64,
-            Type::u32(val) => *val as u64,
-            Type::u64(val) => *val as u64,
-            Type::i16(val) => *val as u64,
-            Type::i32(val) => *val as u64,
-            Type::i64(val) => *val as u64,
-            Type::ptr(adr) => *adr as u64,
-            Type::Void => 0,
-            Type::u8(val) => *val as u64,
-            Type::i8(val) => *val as u64,
+            Type::u16(val) => *val as f64,
+            Type::u32(val) => *val as f64,
+            Type::u64(val) => *val as f64,
+            Type::i16(val) => *val as f64,
+            Type::i32(val) => *val as f64,
+            Type::i64(val) => *val as f64,
+            Type::ptr(adr) => *adr as f64,
+            Type::Void => 0.0,
+            Type::u8(val) => *val as f64,
+            Type::i8(val) => *val as f64,
+            Type::f32(val) => *val as f64,
+            Type::f64(val) => *val as f64,
         }
     }
 
     /// puts the intenger into a type respecting the type metadata
-    pub fn from_int(ty: TypeMetadata, value: i64) -> Self {
+    pub fn from_int(ty: TypeMetadata, value: f64) -> Self {
         match ty {
             TypeMetadata::u16 => Type::u16(value as u16),
             TypeMetadata::u32 => Type::u32(value as u32),
@@ -86,6 +127,8 @@ impl Type {
             TypeMetadata::Void => Type::Void,
             TypeMetadata::u8 => Type::u8(value as u8),
             TypeMetadata::i8 => Type::i8(value as i8),
+            TypeMetadata::f32 => Type::f32(value as f32),
+            TypeMetadata::f64 => Type::f64(value as f64),
         }
     }
 }
@@ -100,6 +143,9 @@ impl TypeMetadata {
             TypeMetadata::u64 | TypeMetadata::i64 => 64,
             TypeMetadata::ptr => 64,
             TypeMetadata::Void => 0,
+
+            TypeMetadata::f32 => 4,
+            TypeMetadata::f64 => 8,
         }
     }
 
@@ -140,6 +186,9 @@ impl TypeMetadata {
 
             "void" => Some(TypeMetadata::Void),
 
+            "f32" => Some(TypeMetadata::f32),
+            "f64" => Some(TypeMetadata::f64),
+
             _ => None,
         }
     }
@@ -160,6 +209,9 @@ impl Display for Type {
 
             Type::ptr(adr) => format!("ptr {:#04x}", adr),
             Type::Void => format!("void"),
+
+            Type::f32(i) => format!("f32 {}", i),
+            Type::f64(i) => format!("f64 {}", i),
         })
     }
 }
@@ -179,6 +231,9 @@ impl Display for TypeMetadata {
 
             TypeMetadata::ptr => "ptr",
             TypeMetadata::Void => "void",
+
+            TypeMetadata::f32 => "f32",
+            TypeMetadata::f64 => "f64",
         })
     }
 }
@@ -198,6 +253,9 @@ impl From<Type> for TypeMetadata {
 
             Type::ptr(_) => TypeMetadata::ptr,
             Type::Void => TypeMetadata::Void,
+
+            Type::f32(_) => TypeMetadata::f32,
+            Type::f64(_) => TypeMetadata::f64,
         }
     }
 }
@@ -217,6 +275,9 @@ impl From<TypeMetadata> for Type {
 
             TypeMetadata::ptr => Type::ptr(0),
             TypeMetadata::Void => Type::Void,
+
+            TypeMetadata::f32 => Type::f32(0.0),
+            TypeMetadata::f64 => Type::f64(0.0),
         }
     }
 }

@@ -97,7 +97,7 @@ impl Ir for Cmp {
             };
 
             Some(Assign::new(self.out.to_owned(), Type::from_int(
-                self.out.ty, yes
+                self.out.ty, yes as f64
             )))
         } else { None }
     }

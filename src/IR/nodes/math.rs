@@ -112,10 +112,12 @@ macro_rules! MathIrNode {
             }
             
             fn eval(&self) -> Option<Box<dyn Ir>> {
-                Some(Assign::new(
-                    self.inner3.to_owned(), Type::from_int
-                    (self.inner1.into(), (self.inner1.val() $op self.inner2.val()) as i64
-                )))
+                if TypeMetadata::f32 != self.inner1.into() && TypeMetadata::f64 != self.inner2.into() {
+                    Some(Assign::new(
+                        self.inner3.to_owned(), Type::from_int
+                        (self.inner1.into(), ((self.inner1.val() as i64) $op (self.inner2.val() as i64)) as f64
+                    )))
+                } else { None }
             }
     
             fn inputs(&self) -> Vec<Var> {
@@ -184,10 +186,12 @@ macro_rules! MathIrNode {
             fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
                 if let Some(lhs) = values.get(&self.inner1.name) {
                     if let Some(rhs) = values.get(&self.inner2.name) {
-                        Some(Assign::new(
-                            self.inner3.to_owned(), Type::from_int
-                            (self.inner1.ty, (lhs.val() $op rhs.val()) as i64
-                        )))
+                        if TypeMetadata::f32 != (*lhs).into() && TypeMetadata::f64 != (*rhs).into() {
+                            Some(Assign::new(
+                                self.inner3.to_owned(), Type::from_int
+                                (self.inner1.ty, ((lhs.val() as i64) $op (rhs.val() as i64)) as f64
+                            )))
+                        } else { None }
                     } else {
                         Some($name::new(self.inner2.to_owned(), *lhs, self.inner3.to_owned()))
                     }
@@ -265,10 +269,12 @@ macro_rules! MathIrNode {
 
             fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
                 if let Some(lhs) = values.get(&self.inner1.name) {
-                    Some(Assign::new(
-                        self.inner3.to_owned(), Type::from_int
-                        (self.inner1.ty, (lhs.val() $op self.inner2.val()) as i64
-                    )))
+                    if TypeMetadata::f32 != (*lhs).into() && TypeMetadata::f64 != self.inner2.into() {
+                        Some(Assign::new(
+                            self.inner3.to_owned(), Type::from_int
+                            (self.inner1.ty, ((lhs.val() as i64) $op (self.inner2.val() as i64)) as f64
+                        )))
+                    } else { None }
                 } else { None }
             }
             

@@ -458,7 +458,7 @@ impl IrParser {
                 self.expect_ident("dbg".to_owned())?;
                 self.input.pop_front();
 
-                self.expect(TokenType::Int(0))?;
+                self.expect(TokenType::Int(0.0))?;
                 let line = if let TokenType::Int(int) = &self.current_token()?.typ {
                     *int
                 } else { unreachable!() };
@@ -467,7 +467,7 @@ impl IrParser {
                 self.expect(TokenType::Dot)?;
                 self.input.pop_front();
 
-                self.expect(TokenType::Int(0))?;
+                self.expect(TokenType::Int(0.0))?;
                 let coloumn = if let TokenType::Int(int) = &self.current_token()?.typ {
                     *int
                 } else { unreachable!() };
@@ -483,8 +483,8 @@ impl IrParser {
                 self.input.pop_front();
 
                 Box::new(DebugNode {
-                    line: line,
-                    coloumn: coloumn,
+                    line: line as i64,
+                    coloumn: coloumn as i64,
                     file: PathBuf::from(&file),
                 })
             } else {
@@ -1033,7 +1033,7 @@ impl IrParser {
             let ty = self.parse_type()?;
             self.input.pop_front();
 
-            self.expect(TokenType::Int(0))?;
+            self.expect(TokenType::Int(0.0))?;
             let ty = if let TokenType::Int(int) = &self.current_token()?.typ {
                 Type::from_int(ty, *int)
             } else { unreachable!() };
@@ -1268,7 +1268,7 @@ macro_rules! ParserImplParseMath {
                         self.expect(TokenType::Comma)?;
                         self.input.pop_front(); // ,
 
-                        self.expect(TokenType::Int(0))?;
+                        self.expect(TokenType::Int(0.0))?;
                         let op2;
                         if let TokenType::Int(int) = &self.current_token()?.typ {
                             op2 = *int;
