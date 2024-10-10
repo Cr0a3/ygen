@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Type","TypeMetadata","VerifyError"],"fn":["Block","FnTy","Func","Module","Var"],"mod":["ir","parser"],"struct":["Block","BlockId","Const","FuncId","Function","FunctionType","Module","Var"]};
