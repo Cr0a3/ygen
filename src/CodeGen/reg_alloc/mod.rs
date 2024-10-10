@@ -198,6 +198,8 @@ impl RegAlloc {
             matcher.case(TypeId::of::<Shr<Var, Var, Var>>(), 50);
             matcher.case(TypeId::of::<Shr<Var, Type, Var>>(), 51);
             matcher.case(TypeId::of::<Shr<Type, Type, Var>>(), 52);
+
+            matcher.case(TypeId::of::<GetElemPtr>(), 53);
         }
         if let Some(switched) = matcher.switch(node.as_any().type_id()) {
             match *switched {
@@ -253,6 +255,7 @@ impl RegAlloc {
                 50 => self.prep(node.as_any().downcast_ref::<Shr<Var, Var, Var>>().unwrap()),
                 51 => self.prep(node.as_any().downcast_ref::<Shr<Var, Type, Var>>().unwrap()),
                 52 => self.prep(node.as_any().downcast_ref::<Shr<Type, Type, Var>>().unwrap()),
+                53 => self.prep(node.as_any().downcast_ref::<GetElemPtr>().unwrap()),
                 _ => todo!(),
             }
         } else {

@@ -9,6 +9,7 @@ mod neg;
 mod ret;
 mod select;
 mod store;
+mod extractelement;
 
 pub(crate) trait RegAllocPrep<T> {
     fn prep(&mut self, node: &T);

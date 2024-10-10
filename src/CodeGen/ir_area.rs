@@ -324,6 +324,11 @@ impl IrCodeGenHelper {
         "Loweres the select var var node", 
         ir::Select<Var, Var>
     );
+    ir_codegen_wrap!(
+        compile_getelemptr, 
+        "Loweres the getelemptr node", 
+        ir::GetElemPtr
+    );
 }
 
 impl Into<Vec<MachineInstr>> for IrCodeGenHelper {

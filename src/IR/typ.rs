@@ -220,3 +220,25 @@ impl From<TypeMetadata> for Type {
         }
     }
 }
+
+/*
+/// A vector type
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct VecType<T> 
+    where T: std::fmt::Debug + Clone + PartialEq + Eq
+{
+    /// the size of the vec
+    pub size: T,
+    /// if it is a constant vector, the values of the vec
+    pub elems: Vec<Type>,
+    /// the type of the values of the vec
+    pub ty: TypeMetadata,
+}
+
+impl<T> Display for VecType<T>
+  where T: std::fmt::Debug + Clone + PartialEq + Eq 
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        todo!()
+    }
+}*/

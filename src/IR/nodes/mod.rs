@@ -18,6 +18,7 @@ mod phi;
 mod switch;
 mod neg;
 mod select;
+mod getelemptr;
 
 pub use assign::*;
 pub use call::*;
@@ -30,6 +31,7 @@ pub use store::*;
 pub use debug::*;
 pub use switch::*;
 pub use select::*;
+pub use getelemptr::*;
 
 macro_rules! IrTypeWith3 {
     ($name:tt, $param1:tt, $param2:tt, $param3:tt) => {

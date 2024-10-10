@@ -231,6 +231,8 @@ impl<'a> IrSemnatic<'a> {
                     self.analyze_selecttv(&mut vars, node, loc)?;
                 } else if let Some(node) = any.downcast_ref::<Select<Type, Type>>() {
                     self.analyze_selecttt(&mut vars, node, loc)?;
+                } else if let Some(node) = any.downcast_ref::<GetElemPtr>() {
+                    self.analyze_getelemptr(&mut vars, node, loc)?;
                 } else {
                     todo!("implement node: {}", node.inst.dump());
                 }
@@ -727,6 +729,35 @@ impl<'a> IrSemnatic<'a> {
         }
 
         vars.insert(node.out.name.clone(), node.out.ty);
+
+        Ok(())
+    }
+
+    fn analyze_getelemptr(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &GetElemPtr, loc: Loc) -> Result<(), IrError> {
+        if vars.contains_key(&node.out.name) {
+            Err(IrError::DefinedTwice { 
+                loc: loc.clone(), 
+                name: node.out.name.to_owned()
+            })?
+        }
+
+        if !vars.contains_key(&node.ptr.name) {
+            Err(IrError::Unkown { 
+                what: "variable".into(), 
+                name: node.ptr.name.to_owned(), 
+                loc: loc.clone() 
+            })?
+        }
+
+        if !vars.contains_key(&node.index.name) {
+            Err(IrError::Unkown { 
+                what: "variable".into(), 
+                name: node.index.name.to_owned(), 
+                loc: loc.clone() 
+            })?
+        }
+
+        vars.insert(node.out.name.to_owned(), node.ty);
 
         Ok(())
     }

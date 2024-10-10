@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::path::PathBuf;
 
-use crate::prelude::{Alloca, Cmp, CmpMode, DebugNode, Ir, Load, Neg, Phi, Select, Store, Switch};
+use crate::prelude::{Alloca, Cmp, CmpMode, DebugNode, GetElemPtr, Ir, Load, Neg, Phi, Select, Store, Switch};
 use crate::Obj::Linkage;
 use crate::IR::block::BlockId;
 use crate::IR::{ir, Block, Const, FnTy, Type, TypeMetadata, Var};
@@ -437,6 +437,7 @@ impl IrParser {
                         "rem" => self.parse_rem(name)?,
                         "shl" => self.parse_shl(name)?,
                         "shr" => self.parse_shr(name)?,
+                        "getelemptr" => self.parse_getelemptr(name)?,
                         _ => {
                             let ty = self.parse_type()?;
                             self.input.pop_front(); // the type
@@ -1192,6 +1193,53 @@ impl IrParser {
         } else {
             Err(IrError::UnexpectedToken(current.clone()))
         }
+    }
+
+    fn parse_getelemptr(&mut self, var: String) -> Result<Box<dyn Ir>, IrError> {
+        self.input.pop_front();
+
+        let ptr_ty = self.parse_type()?;
+        self.input.pop_front();
+
+        self.expect(TokenType::Var(String::new()))?;
+        let ptr = if let TokenType::Var(ptr) = &self.current_token()?.typ {
+            Var {
+                name: ptr.to_owned(),
+                ty: ptr_ty
+            }
+        } else { unreachable!() };
+        self.input.pop_front();
+
+        self.expect(TokenType::Comma)?;
+        self.input.pop_front();
+
+        let index_ty = self.parse_type()?;
+        self.input.pop_front();
+
+        self.expect(TokenType::Var(String::new()))?;
+        let index = if let TokenType::Var(index) = &self.current_token()?.typ {
+            Var {
+                name: index.to_owned(),
+                ty: index_ty
+            }
+        } else { unreachable!() };
+        self.input.pop_front();
+
+        self.expect(TokenType::Comma)?;
+        self.input.pop_front();
+
+        let out_ty = self.parse_type()?;
+        self.input.pop_front();
+
+        Ok(GetElemPtr {
+            ptr: ptr,
+            ty: out_ty,
+            out: Var {
+                name: var,
+                ty: out_ty
+            },
+            index: index,
+        }.clone_box())
     }
 }
 

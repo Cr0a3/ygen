@@ -25,6 +25,7 @@ mod switch;
 mod neg;
 
 mod select;
+mod getelemptr;
 
 /// helps with compilation
 #[derive(Debug, Clone, PartialEq, Eq)]
