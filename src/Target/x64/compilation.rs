@@ -38,6 +38,7 @@ pub(crate) fn construct_compilation_helper(call_conv: CallConv) -> CompilationHe
     alloc.free_fpregs.push(Arch::X86_64, Reg::x64(x64Reg::Xmm12));
     alloc.free_fpregs.push(Arch::X86_64, Reg::x64(x64Reg::Xmm13));
     alloc.free_fpregs.push(Arch::X86_64, Reg::x64(x64Reg::Xmm14));
+    alloc.free_fpregs.reverse(Arch::X86_64);
     
     // Used as temporary storage
     // alloc.free_fpregs.push(Arch::X86_64, Reg::x64(x64Reg::Xmm15));

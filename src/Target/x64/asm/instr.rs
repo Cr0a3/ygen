@@ -674,6 +674,8 @@ impl X64MCInstr {
             Mnemonic::Mulsd  =>  todo!(),
             Mnemonic::Subss  =>  todo!(),
             Mnemonic::Subsd  =>  todo!(),
+            Mnemonic::Ucomiss  =>  todo!(),
+            Mnemonic::Ucomisd  =>  todo!(),
         };
 
         Ok(())
@@ -906,6 +908,9 @@ pub enum Mnemonic {
     Mulsd,
     Subss,
     Subsd,
+
+    Ucomiss,
+    Ucomisd,
 }
 
 impl FromStr for Mnemonic {
@@ -961,6 +966,8 @@ impl FromStr for Mnemonic {
             "mulsd" => Ok(Mnemonic::Mulsd),
             "subss" => Ok(Mnemonic::Subss),
             "subsd" => Ok(Mnemonic::Subsd),
+            "ucomiss" => Ok(Mnemonic::Ucomiss),
+            "ucomisd" => Ok(Mnemonic::Ucomisd),
             _ => Err(()),
         }
     }
@@ -1021,6 +1028,8 @@ impl Display for Mnemonic {
             Mnemonic::Mulsd => "mulsd",
             Mnemonic::Subss => "subss",
             Mnemonic::Subsd => "subsd",
+            Mnemonic::Ucomiss => "ucomiss",
+            Mnemonic::Ucomisd => "ucomisd",
         })
     }
 }
