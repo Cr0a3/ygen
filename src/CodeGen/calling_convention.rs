@@ -15,13 +15,19 @@ impl MachineCallingConvention {
         match self.call_conv {
             CallConv::WindowsFastCall => {
                 match arch {
-                    Arch::X86_64 => Reg::x64(x64Reg::Rax.sub_ty(ty)),
+                    Arch::X86_64 => match ty {
+                        TypeMetadata::f32 | TypeMetadata::f64 => Reg::x64(x64Reg::Xmm0),
+                        _ => Reg::x64(x64Reg::Rax.sub_ty(ty))
+                    },
                     _ => todo!()
                 }
             },
             CallConv::SystemV => {
                 match arch {
-                    Arch::X86_64 => Reg::x64(x64Reg::Rax.sub_ty(ty)),
+                    Arch::X86_64 => match ty {
+                        TypeMetadata::f32 | TypeMetadata::f64 => Reg::x64(x64Reg::Xmm0),
+                        _ => Reg::x64(x64Reg::Rax.sub_ty(ty))
+                    },
                     _ => todo!()
                 }
             },
@@ -31,9 +37,21 @@ impl MachineCallingConvention {
     }
     
     /// returns the args for the specifc architecture
-    pub fn args(&self, arch: Arch) -> Vec<Reg> {
+    pub fn args(&self, arch: Arch, ty: TypeMetadata) -> Vec<Reg> {
         match self.call_conv {
             CallConv::WindowsFastCall => {
+                if TypeMetadata::f32 == ty || TypeMetadata::f64 == ty {
+                    return match arch {
+                        Arch::X86_64 => vec![
+                            Reg::x64(x64Reg::Xmm0), Reg::x64(x64Reg::Xmm1), Reg::x64(x64Reg::Xmm2),
+                            Reg::x64(x64Reg::Xmm3), Reg::x64(x64Reg::Xmm4), Reg::x64(x64Reg::Xmm5),
+                            Reg::x64(x64Reg::Xmm6), Reg::x64(x64Reg::Xmm7)
+                        ],
+
+                        _ => todo!(),
+                    }
+                }
+
                 match arch {
                     Arch::X86_64 => vec![
                         Reg::x64(x64Reg::Rcx), Reg::x64(x64Reg::Rdx), 
@@ -43,6 +61,18 @@ impl MachineCallingConvention {
                 }
             },
             CallConv::SystemV => {
+                if TypeMetadata::f32 == ty || TypeMetadata::f64 == ty {
+                    return match arch {
+                        Arch::X86_64 => vec![
+                            Reg::x64(x64Reg::Xmm0), Reg::x64(x64Reg::Xmm1), Reg::x64(x64Reg::Xmm2),
+                            Reg::x64(x64Reg::Xmm3), Reg::x64(x64Reg::Xmm4), Reg::x64(x64Reg::Xmm5),
+                            Reg::x64(x64Reg::Xmm6), Reg::x64(x64Reg::Xmm7)
+                        ],
+
+                        _ => todo!(),
+                    }
+                }
+
                 match arch {
                     Arch::X86_64 => vec![
                         Reg::x64(x64Reg::Rdi), Reg::x64(x64Reg::Rsi), 
@@ -58,8 +88,8 @@ impl MachineCallingConvention {
     }
     
     /// returns how many arguments are stored in registers
-    pub fn num_reg_args(&self, arch: Arch) -> usize {
-        self.args(arch).len()
+    pub fn num_reg_args(&self, arch: Arch, ty: TypeMetadata) -> usize {
+        self.args(arch, ty).len()
     }
 
     /// returns the stack shadow space

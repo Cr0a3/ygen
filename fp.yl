@@ -1,0 +1,5 @@
+define f32 @add(f32 %0, f32 %1) {
+  entry:
+    %2 = add f32 %0, %1
+    ret f32 %2
+}

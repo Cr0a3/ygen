@@ -37,6 +37,32 @@ impl MachineInstr {
     pub fn set_out(&mut self, out: MachineOperand) {
         self.out = Some(out);
     }
+
+    /// turns the instruction into an floating point instruction if needed (ops are floats)
+    pub fn turn_into_float_if_needed(&mut self) {
+        let uses_fp = if 
+            self.meta == TypeMetadata::f32 || 
+            self.meta == TypeMetadata::f64 { true } else { false };
+
+        if uses_fp {
+            self.mnemonic = match self.mnemonic {
+                MachineMnemonic::Move => MachineMnemonic::FMove,
+                MachineMnemonic::Add => MachineMnemonic::FAdd,
+                MachineMnemonic::And => MachineMnemonic::FAnd,
+                MachineMnemonic::Div => MachineMnemonic::FDiv,
+                MachineMnemonic::Mul => MachineMnemonic::FMul,
+                MachineMnemonic::Or =>  MachineMnemonic::FOr,
+                MachineMnemonic::Sub => MachineMnemonic::FSub,
+                MachineMnemonic::Xor => MachineMnemonic::FXor,
+                MachineMnemonic::Rem => MachineMnemonic::FRem,
+                MachineMnemonic::Neg => MachineMnemonic::FNeg,
+                MachineMnemonic::Shl => MachineMnemonic::FShl,
+                MachineMnemonic::Shr => MachineMnemonic::FShr,
+                MachineMnemonic::Compare(mode) => MachineMnemonic::FCompare(mode),
+                _ => todo!("{}", self)
+            }
+        }
+    }
 }
 
 impl Display for MachineInstr {
@@ -116,6 +142,20 @@ pub enum MachineMnemonic {
     Neg,
     Shl,
     Shr,
+
+    FMove,
+    FAdd,
+    FAnd,
+    FDiv,
+    FMul,
+    FOr,
+    FSub,
+    FXor,
+    FRem,
+    FNeg,
+    FShl,
+    FShr,
+    FCompare(CmpMode),
 
     BrCond(/*if yes*/String, /*if no*/String),
     Compare(CmpMode),
@@ -197,6 +237,19 @@ impl MachineMnemonic {
             MachineMnemonic::MovIfNotZero =>        "cmovnz",
             MachineMnemonic::Shl =>                 "shl",
             MachineMnemonic::Shr =>                 "shr",
+            MachineMnemonic::FMove =>               "fmove",
+            MachineMnemonic::FAdd =>                "fadd",
+            MachineMnemonic::FAnd =>                "fand",
+            MachineMnemonic::FDiv =>                "fdiv",
+            MachineMnemonic::FMul =>                "fmul",
+            MachineMnemonic::FOr =>                 "for",
+            MachineMnemonic::FSub =>                "fsub",
+            MachineMnemonic::FXor =>                "fxor",
+            MachineMnemonic::FRem =>                "fren",
+            MachineMnemonic::FNeg =>                "fneg",
+            MachineMnemonic::FShl =>                "fshl",
+            MachineMnemonic::FShr =>                "fshr",
+            MachineMnemonic::FCompare(_) =>         "fcompare",
         }.to_string()
     }
 }

@@ -25,6 +25,7 @@ impl CompilationHelper {
             let mut instr = MachineInstr::new(MachineMnemonic::Move);
             instr.set_out((*phi_loc).into());
             instr.add_operand(location.into());
+
             mc_sink.push(instr);
         }
         
@@ -56,6 +57,7 @@ impl CompilationHelper {
             let mut instr = MachineInstr::new(MachineMnemonic::Move);
             instr.set_out((*phi_loc).into());
             instr.add_operand(location.into());
+
             mc_sink.push(instr);
         }
     }

@@ -195,6 +195,32 @@ impl x64Reg {
     
     /// gets the subvariant based on the type
     pub fn sub_ty(&self, ty: TypeMetadata) -> x64Reg {
+        if TypeMetadata::f32 == ty || TypeMetadata::f64 == ty {
+            use x64Reg::*;
+            return match self {
+                Rax | Eax | Ax | Al => Xmm0,
+                Rbx | Ebx | Bx | Bl => Xmm1,
+                Rcx | Ecx | Cx | Cl => Xmm2,
+                Rdx | Edx | Dx | Dl => Xmm3,
+                Rsi | Esi | Si | Sil => Xmm4,
+                Rdi | Edi | Di | Dil => Xmm5,
+    
+                Rsp | Esp | Sp | Spl => Xmm6,
+                Rbp | Ebp | Bp | Bpl => Xmm7,
+            
+                R8 | R8d | R8w | R8b => Xmm8,
+                R9 | R9d | R9w | R9b => Xmm9,
+                R10 | R10d | R10w | R10b => Xmm10,
+                R11 | R11d | R11w | R11b => Xmm11,
+                R12 | R12d | R12w | R12b => Xmm12,
+                R13 | R13d | R13w | R13b => Xmm13,
+                R14 | R14d | R14w | R14b => Xmm14,
+                R15 | R15d | R15w | R15b => Xmm15,
+
+                _ => self.to_owned(),
+            }
+        }
+
         match ty.byteSize() {
             8 => self.sub64(),
             4 => self.sub32(),

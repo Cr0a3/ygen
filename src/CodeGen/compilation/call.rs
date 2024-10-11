@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{prelude::Call, CodeGen::{MachineMnemonic, MachineOperand, Reg}, IR::FuncId};
+use crate::{prelude::Call, CodeGen::{MachineMnemonic, MachineOperand, Reg}, IR::{FuncId, TypeMetadata}};
 use crate::IR::{Block, Var};
 use super::{CompilationHelper, VarLocation};
 use crate::CodeGen::MachineInstr;
@@ -9,8 +9,10 @@ impl CompilationHelper {
     #[allow(missing_docs)]
     pub fn compile_call(&mut self, node: &Call<FuncId, Vec<Var>, Var>, mc_sink: &mut Vec<MachineInstr>, _: &Block) {
         let mut reg_args = 0;
+        let mut fp_reg_args = 0;
 
-        let args = self.call.args(self.arch);
+        let args = self.call.args(self.arch, TypeMetadata::i64);
+        let fp_args = self.call.args(self.arch, TypeMetadata::f64);
 
         let mut saved = HashMap::new();
         
@@ -44,7 +46,11 @@ impl CompilationHelper {
         for arg in &node.inner2 {
             let src = self.vars.get(&arg.name).expect(&format!("expected valid variable: {}", arg.name));
 
-            let arg_reg = args.get(reg_args);
+            let arg_reg = if TypeMetadata::f32 == arg.ty || TypeMetadata::f64 == arg.ty {
+                fp_args.get(fp_reg_args)
+            } else { 
+                args.get(reg_args)
+            };
 
             if let Some(reg) = arg_reg {
                 if !self.allocated_vars.contains(&arg.name) {
@@ -85,8 +91,12 @@ impl CompilationHelper {
                     mc_sink.push( instr );
                 }
             }
-
-            reg_args += 1;
+            
+            if TypeMetadata::f32 == arg.ty || TypeMetadata::f64 == arg.ty {
+                fp_reg_args += 1;
+            } else { 
+                reg_args += 1;
+            }
         }
 
         if !pushes.is_empty() {

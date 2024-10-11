@@ -519,6 +519,7 @@ impl X64MCInstr {
 
                 (buildOpcode(mandatory, rex.option(), encoded), None)
             }
+            _ => todo!(),
         })
     }
 
@@ -659,6 +660,20 @@ impl X64MCInstr {
                     }
                 }
             }
+            Mnemonic::Movq   =>  todo!(),
+            Mnemonic::Movd   =>  todo!(),
+            Mnemonic::Movss  =>  todo!(),
+            Mnemonic::Movsd  =>  todo!(),
+            Mnemonic::Movups =>  todo!(),
+            Mnemonic::Movupd =>  todo!(),
+            Mnemonic::Addss  =>  todo!(),
+            Mnemonic::Addsd  =>  todo!(),
+            Mnemonic::Divss  =>  todo!(),
+            Mnemonic::Divsd  =>  todo!(),
+            Mnemonic::Mulss  =>  todo!(),
+            Mnemonic::Mulsd  =>  todo!(),
+            Mnemonic::Subss  =>  todo!(),
+            Mnemonic::Subsd  =>  todo!(),
         };
 
         Ok(())
@@ -875,6 +890,22 @@ pub enum Mnemonic {
     Sal,
     Shr,
     Sar,
+
+    Movq,
+    Movd,
+    Movss,
+    Movsd,
+    Movups,
+    Movupd,
+
+    Addss,
+    Addsd,
+    Divss,
+    Divsd,
+    Mulss,
+    Mulsd,
+    Subss,
+    Subsd,
 }
 
 impl FromStr for Mnemonic {
@@ -916,6 +947,20 @@ impl FromStr for Mnemonic {
             "sal" => Ok(Mnemonic::Sal),
             "shr" => Ok(Mnemonic::Shr),
             "sar" => Ok(Mnemonic::Sar),
+            "movq" => Ok(Mnemonic::Movq),
+            "movd" => Ok(Mnemonic::Movd),
+            "movss" => Ok(Mnemonic::Movss),
+            "movsd" => Ok(Mnemonic::Movsd),
+            "movups" => Ok(Mnemonic::Movups),
+            "movupd" => Ok(Mnemonic::Movupd),
+            "addss" => Ok(Mnemonic::Addss),
+            "addsd" => Ok(Mnemonic::Addsd),
+            "divss" => Ok(Mnemonic::Divss),
+            "divsd" => Ok(Mnemonic::Divsd),
+            "mulss" => Ok(Mnemonic::Mulss),
+            "mulsd" => Ok(Mnemonic::Mulsd),
+            "subss" => Ok(Mnemonic::Subss),
+            "subsd" => Ok(Mnemonic::Subsd),
             _ => Err(()),
         }
     }
@@ -962,6 +1007,20 @@ impl Display for Mnemonic {
             Mnemonic::Sal => "sal",
             Mnemonic::Shr => "shr",
             Mnemonic::Sar => "sar",
+            Mnemonic::Movq => "movq",
+            Mnemonic::Movd => "movd",
+            Mnemonic::Movss=> "movss",
+            Mnemonic::Movsd=> "movss",
+            Mnemonic::Movups=> "movups",
+            Mnemonic::Movupd => "movupd",
+            Mnemonic::Addss => "addss",
+            Mnemonic::Addsd => "addsd",
+            Mnemonic::Divss => "divss",
+            Mnemonic::Divsd => "divsd",
+            Mnemonic::Mulss => "mulss",
+            Mnemonic::Mulsd => "mulsd",
+            Mnemonic::Subss => "subss",
+            Mnemonic::Subsd => "subsd",
         })
     }
 }

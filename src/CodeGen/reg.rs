@@ -53,4 +53,11 @@ impl Reg {
             Reg::x64(x64) => x64.is_xmm(),
         }
     }
+
+    /// Returns if the specified register is an gr register
+    pub fn is_gr(&self) -> bool {
+        match self {
+            Reg::x64(x64) => x64.sub64().is_gr64(),
+        }
+    }
 }

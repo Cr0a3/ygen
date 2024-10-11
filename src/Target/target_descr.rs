@@ -37,7 +37,14 @@ macro_rules! compile_func {
             pub(crate) fn $name(&mut self, node: &$($node)*) {
                 if let Some(helper) = &mut self.helper {
                     if let Some(block) = &self.block {
-                        helper.$func(node, &mut self.sink, block);
+                        let mut vsink = Vec::new();
+                        helper.$func(node, &mut vsink, block);
+
+                        for inst in &mut vsink {
+                            inst.turn_into_float_if_needed();
+                        }
+
+                        self.sink.extend_from_slice(&vsink);
                     } else {
                         todo!("no current block");
                     }

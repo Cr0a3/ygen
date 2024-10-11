@@ -13,6 +13,7 @@ mod prep;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RegAlloc {
     pub free_registers: RegVec,
+    pub free_fpregs: RegVec,
     pub arch: Arch,
     pub call: MachineCallingConvention,
     pub stack_off: i64,
@@ -35,6 +36,7 @@ impl RegAlloc {
 
         Self {
             free_registers: RegVec::new(),
+            free_fpregs: RegVec::new(),
             arch: arch,
             call: call,
             stack_off: call.align(arch),
@@ -56,7 +58,7 @@ impl RegAlloc {
 
         for ty in &func.args {
             let location = {
-                if let Some(reg) = self.call.args(self.arch).get(num) {
+                if let Some(reg) = self.call.args(self.arch, *ty).get(num) {
                     VarLocation::Reg(match reg {
                         Reg::x64(x64) => Reg::x64(x64.sub_ty(*ty)),
                     })
@@ -265,7 +267,17 @@ impl RegAlloc {
     }
 
     fn alloc_rv(&mut self, ty: TypeMetadata) -> VarLocation {
-        if let Some(reg) = self.free_registers.pop(self.arch) {
+        let mut reg  = None;
+
+        if TypeMetadata::f32 == ty || TypeMetadata::f64 == ty {
+            if let Some(fpreg) = self.free_fpregs.pop(self.arch) {
+                reg = Some(fpreg);
+            }
+        } else if let Some(grreg) = self.free_registers.pop(self.arch) {
+            reg = Some(grreg);
+        }
+
+        if let Some(reg) = reg {
             VarLocation::Reg( match reg {
                 Reg::x64(x64_reg) => Reg::x64( x64_reg.sub_ty(ty) ),
             } )

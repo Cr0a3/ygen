@@ -68,6 +68,10 @@ macro_rules! ir_codegen_wrap {
 
             self.helper.$func(node, &mut area.compiled, block);
 
+            for inst in &mut area.compiled {
+                inst.turn_into_float_if_needed();
+            }
+
             self.compiled.push(area);
         }
     };

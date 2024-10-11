@@ -23,6 +23,25 @@ pub(crate) fn construct_compilation_helper(call_conv: CallConv) -> CompilationHe
     alloc.free_registers.push(Arch::X86_64, Reg::x64(x64Reg::R14));
     alloc.free_registers.push(Arch::X86_64, Reg::x64(x64Reg::R15));
 
+    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(x64Reg::Xmm0));
+    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(x64Reg::Xmm1));
+    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(x64Reg::Xmm2));
+    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(x64Reg::Xmm3));
+    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(x64Reg::Xmm4));
+    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(x64Reg::Xmm5));
+    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(x64Reg::Xmm6));
+    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(x64Reg::Xmm7));
+    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(x64Reg::Xmm8));
+    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(x64Reg::Xmm9));
+    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(x64Reg::Xmm10));
+    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(x64Reg::Xmm11));
+    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(x64Reg::Xmm12));
+    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(x64Reg::Xmm13));
+    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(x64Reg::Xmm14));
+    
+    // Used as temporary storage
+    // alloc.free_fpregs.push(Arch::X86_64, Reg::x64(x64Reg::Xmm15));
+
     alloc.free_registers.reverse(Arch::X86_64);
 
     let mut helper = CompilationHelper::new(

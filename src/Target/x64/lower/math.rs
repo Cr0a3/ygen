@@ -14,11 +14,11 @@ macro_rules! LowerSimpleMath {
             let op2 =(*op2).into();
             let out = out.into();
 
-            let tmp = || Operand::Reg(x64Reg::Rax.sub_ty(instr.meta));
+            let rax = || Operand::Reg(x64Reg::Rax.sub_ty(instr.meta));
 
-            sink.push( X64MCInstr::with2(Mnemonic::Mov, tmp(), op1).into() );
-            sink.push( X64MCInstr::with2($mnemonic, tmp(), op2).into() );
-            sink.push( X64MCInstr::with2(Mnemonic::Mov, out, tmp()).into() );
+            sink.push( X64MCInstr::with2(Mnemonic::Mov, rax(), op1).into() );
+            sink.push( X64MCInstr::with2($mnemonic, rax(), op2).into() );
+            sink.push( X64MCInstr::with2(Mnemonic::Mov, out, rax()).into() );
         }
     };
 }

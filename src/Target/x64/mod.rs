@@ -14,6 +14,7 @@ pub(crate) mod call;
 mod asm;
 mod lower;
 
+
 pub use asm::*;
 
 use crate::{CodeGen::MachineMnemonic, Target::Compiler};
@@ -42,7 +43,13 @@ fn construct_whitelist() -> WhiteList {
     // everything is allowed by default
     // so only add illegal stuff here
 
-    whitelist.forbid(MachineMnemonic::Downcast);
+    whitelist.forbid(MachineMnemonic::FAnd);
+    whitelist.forbid(MachineMnemonic::FNeg);
+    whitelist.forbid(MachineMnemonic::FOr);
+    whitelist.forbid(MachineMnemonic::FXor);
+    whitelist.forbid(MachineMnemonic::FRem);
+    whitelist.forbid(MachineMnemonic::FShl);
+    whitelist.forbid(MachineMnemonic::FShr);
 
     whitelist
 }

@@ -169,6 +169,16 @@ impl TypeMetadata {
         }
     }
 
+    /// Returns if it is a float type
+    pub fn float(&self) -> bool {
+        match self {
+            TypeMetadata::f32 => true,
+            TypeMetadata::f64 => true,
+
+            _ => false,
+        }
+    }
+
     /// returns the parsed typemetadata
     pub fn parse(string: String) -> Option<Self> {
         match string.as_str() {
