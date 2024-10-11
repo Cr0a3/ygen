@@ -1,6 +1,6 @@
-use crate::{Optimizations::Optimize, Target::x64Reg};
+use crate::Optimizations::Optimize;
 
-use super::instr::{X64MCInstr, Mnemonic, Operand};
+use super::instr::*;
 
 impl Optimize<X64MCInstr> for Vec<X64MCInstr> {
     fn optimize(&mut self) -> Vec<X64MCInstr> {
@@ -9,8 +9,6 @@ impl Optimize<X64MCInstr> for Vec<X64MCInstr> {
         let mut optimize = true;
 
         for instr in self.iter() {
-            let mut optimized = false;
-
             if instr.mnemonic == Mnemonic::StartOptimization {
                 optimize = true;
             } else if instr.mnemonic == Mnemonic::EndOptimization {
@@ -22,64 +20,8 @@ impl Optimize<X64MCInstr> for Vec<X64MCInstr> {
                 continue;
             }
 
-            let last = out.last().cloned();
-            if let Some(last) = &last {
-                if last.mnemonic == Mnemonic::Mov && instr.mnemonic == Mnemonic::Add {
-                    if last.op1 == instr.op1 {
-                        if let Some(Operand::Reg(op0)) = &last.op2 {
-                            if let Some(Operand::Reg(op2)) = &instr.op2 {
-                                if let Some(Operand::Reg(reg)) = &instr.op1 {
-                                    out.pop();
-                                    out.push(
-                                        X64MCInstr::with2(
-                                            Mnemonic::Lea, 
-                                            Operand::Reg(reg.clone()), 
-                                            Operand::Mem(*op0.as_any().downcast_ref::<x64Reg>().unwrap() 
-                                                + 
-                                                *op2.as_any().downcast_ref::<x64Reg>().unwrap()
-                                            ) 
-                                        ));
-                                    optimized = true;
-                                }
-                            }
-                        }
-                    }
-                } 
-                if instr.op1 == instr.op2 {
-                    if instr.mnemonic == Mnemonic::Mov {
-                        optimized = true;
-                    }
-                }
-                if instr.op1 == last.op1 && instr.mnemonic == Mnemonic::Mov && last.mnemonic == Mnemonic::Mov {
-                    if let Some(Operand::Reg(_)) = instr.op1 {
-                        out.pop();
-                    }
-                }
-                if instr.op2 == last.op1 && instr.mnemonic == Mnemonic::Mov && last.mnemonic == Mnemonic::Mov {
-                    optimized = true;
-                }
-                if instr.mnemonic == Mnemonic::Ret && last.mnemonic == Mnemonic::Call {
-                    out.pop();
-                    out.push(X64MCInstr::with1(Mnemonic::Jmp, instr.op1.clone().expect("call needs to have one op")));
-                    optimized = true;
-                } 
-                if instr.mnemonic == Mnemonic::Ret {
-                    out.push(instr.clone());
-                    break;
-                }
 
-                if !optimized {
-                    if instr.invert_of(last) {
-                        out.pop();
-                    } else if !instr.empty() {
-                        out.push(instr.to_owned()) 
-                    }
-                }
-            } else { 
-                if !instr.empty() {
-                    out.push(instr.to_owned()) 
-                }
-            }
+            // RUN OPTIMIZATIONS HERE
         }
 
         out
