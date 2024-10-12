@@ -1,5 +1,6 @@
 use crate::prelude::{Store, Var, Type, Block};
 use crate::CodeGen::{MachineInstr, MachineMnemonic, MachineOperand};
+use crate::IR::TypeMetadata;
 
 use super::CompilationHelper;
 
@@ -23,6 +24,8 @@ impl CompilationHelper {
         instr.set_out( ptr );
         instr.add_operand(in_var);
 
+        instr.meta = node.inner2.ty;
+
         mc_sink.push( instr );
     }
     
@@ -38,6 +41,8 @@ impl CompilationHelper {
 
         instr.set_out( ptr );
         instr.add_operand(MachineOperand::Imm(node.inner2.val() as i64));
+
+        instr.meta = TypeMetadata::ptr;
 
         mc_sink.push( instr );
     }
