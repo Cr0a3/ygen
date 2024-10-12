@@ -48,7 +48,8 @@ fn main() {
 
     let parsed = parse(buf);
 
-    let path_str = "./tmp.yl";
+    let path_str = "./tmp";
+    let path2_str = "./tmp2";
 
     let path = std::path::PathBuf::from(path_str);
 
@@ -73,6 +74,30 @@ fn main() {
             },
         }
     }
+    
+    let path2 = std::path::PathBuf::from(path2_str);
+
+    if path2.exists() {
+        let _ = std::fs::remove_file(&path2);
+    }
+
+    if let Some(input) = parsed.input2 {
+        let mut file = match File::options().write(true).create(true).open(&path2) {
+            Ok(file) => file,
+            Err(err) => {
+                println!("{}: {}", "Error".red().bold(), err);
+                exit(-1)
+            },
+        };
+    
+        match file.write_all(input.as_bytes()) {
+            Ok(_) => {},
+            Err(err) => {
+                println!("{}: {}", "Error".red().bold(), err);
+                exit(-1)
+            },
+        }
+    }
 
     let mut found = String::new();
     let mut found_stderr = String::new();
@@ -80,7 +105,8 @@ fn main() {
     let mut code = 0;
 
     for cmd in parsed.cmd {
-        let args = cmd.replace("%s", path_str);
+        let args = cmd  .replace("%s", path_str)
+                                .replace("%s2", path2_str);
         let args = unescaper::unescape(&args).unwrap();
         let args = args.trim();
         let mut args = args.split(" ").collect::<Vec<&str>>();

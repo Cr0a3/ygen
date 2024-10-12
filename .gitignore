@@ -5,7 +5,7 @@ dev-guide/book
 *.o
 *.exe
 *.out
-tmp.yl
+tmp*
 
 web/node_modules
 web/.pnp

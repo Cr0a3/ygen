@@ -2,6 +2,7 @@
 pub struct Parsed {
     pub cmd: Vec<String>,
     pub input: Option<String>,
+    pub input2: Option<String>,
     pub expected_out: Option<String>,
     pub expected_stderr: Option<String>,
     pub expected_code: Option<i32>,
@@ -12,6 +13,7 @@ pub fn parse(input: String) -> Parsed {
     let mut out = Parsed {
         cmd: Vec::new(),
         input: None,
+        input2: None,
         expected_out: None,
         expected_code: None,
         expected_stderr: None,
@@ -24,6 +26,8 @@ pub fn parse(input: String) -> Parsed {
     let mut stderr = false;
     let mut run = false;
 
+    let mut input2 = false;
+
     for line in input.lines() {
         append = true;
 
@@ -32,6 +36,7 @@ pub fn parse(input: String) -> Parsed {
             stdout = false;
             stderr = false;
             run = true;
+            input2 = false;
         }
         
         if line.trim().starts_with("# STDOUT:") {
@@ -39,6 +44,7 @@ pub fn parse(input: String) -> Parsed {
             stdout = true;
             stderr = false;
             run = false;
+            input2 = false;
         }
 
         if line.trim().starts_with("# STDERR:") {
@@ -46,6 +52,15 @@ pub fn parse(input: String) -> Parsed {
             stdout = true;
             stderr = true;
             run = false;
+            input2 = false;
+        }
+
+        if line.trim().starts_with("# IN2:") {
+            append = false;
+            stdout = false;
+            stderr = false;
+            run = false;
+            input2 = true;
         }
 
         if line.trim().starts_with("# IN:") {
@@ -53,6 +68,7 @@ pub fn parse(input: String) -> Parsed {
             stdout = false;
             stderr = false;
             run = false;
+            input2 = false;
         }
 
         if line.trim().starts_with("# EXPECT_FAIL") {
@@ -90,10 +106,18 @@ pub fn parse(input: String) -> Parsed {
                     out.expected_stderr = Some(format!("{line}\n"));
                 }
             } else {
-                if let Some(input) = &mut out.input {
-                    input.push_str(&format!("{line}\n"));
+                if input2 {
+                    if let Some(input) = &mut out.input2 {
+                        input.push_str(&format!("{line}\n"));
+                    } else {
+                        out.input2 = Some(format!("{line}\n"));
+                    }
                 } else {
-                    out.input = Some(format!("{line}\n"));
+                    if let Some(input) = &mut out.input {
+                        input.push_str(&format!("{line}\n"));
+                    } else {
+                        out.input = Some(format!("{line}\n"));
+                    }
                 }
             }
         }
