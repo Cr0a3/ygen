@@ -41,6 +41,8 @@ impl CompilationHelper {
         cmp.add_operand(src);
         cmp.add_operand(MachineOperand::Imm(0));
         
+        cmp.meta = node.inner1.ty;
+
         mc_sink.push( cmp );
     }
 }

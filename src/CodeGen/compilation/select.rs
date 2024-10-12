@@ -20,6 +20,8 @@ impl CompilationHelper {
         yes_instr.add_operand(cond);
         yes_instr.add_operand(no);
 
+        yes_instr.meta = node.yes.into();
+
         mc_sink.push(yes_instr);
         
         let mut no_instr = MachineInstr::new(MachineMnemonic::MovIfNotZero);
@@ -27,6 +29,8 @@ impl CompilationHelper {
         no_instr.set_out(out);
         no_instr.add_operand(cond);
         no_instr.add_operand(yes);
+        
+        no_instr.meta = node.no.into();
 
         mc_sink.push(no_instr);
     }
@@ -50,6 +54,8 @@ impl CompilationHelper {
         yes_instr.add_operand(cond);
         yes_instr.add_operand(yes);
 
+        yes_instr.meta = node.yes.into();
+
         mc_sink.push(yes_instr);
 
         let mut no_instr = MachineInstr::new(MachineMnemonic::MovIfNotZero);
@@ -57,6 +63,8 @@ impl CompilationHelper {
         no_instr.set_out(out);
         no_instr.add_operand(cond);
         no_instr.add_operand(no);
+
+        no_instr.meta = node.no.ty;
 
         mc_sink.push(no_instr);
     }
@@ -79,6 +87,8 @@ impl CompilationHelper {
         yes_instr.set_out(out);
         yes_instr.add_operand(cond);
         yes_instr.add_operand(no);
+    
+        yes_instr.meta = node.yes.ty;
 
         mc_sink.push(yes_instr);
         
@@ -87,6 +97,8 @@ impl CompilationHelper {
         no_instr.set_out(out);
         no_instr.add_operand(cond);
         no_instr.add_operand(yes);
+
+        no_instr.meta = node.no.into();
 
         mc_sink.push(no_instr);
     }
@@ -110,6 +122,8 @@ impl CompilationHelper {
         yes_instr.add_operand(cond);
         yes_instr.add_operand(no);
 
+        yes_instr.meta = node.yes.ty;
+
         mc_sink.push(yes_instr);
 
         let mut no_instr = MachineInstr::new(MachineMnemonic::MovIfNotZero);
@@ -117,6 +131,8 @@ impl CompilationHelper {
         no_instr.set_out(out);
         no_instr.add_operand(cond);
         no_instr.add_operand(yes);
+
+        no_instr.meta = node.no.ty;
 
         mc_sink.push(no_instr);
     }

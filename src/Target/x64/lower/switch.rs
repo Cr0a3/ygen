@@ -9,10 +9,10 @@ pub(crate) fn x64_lower_switch(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr,
 
     if let Operand::Mem(_) = var {
         sink.push(
-            X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), var)
+            X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), var)
         );
 
-        var = Operand::Reg(x64Reg::Rax);
+        var = Operand::Reg(x64Reg::Rax.sub_ty(instr.meta));
     }
 
     for (case_type, block) in cases {

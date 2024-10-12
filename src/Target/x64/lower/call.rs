@@ -9,6 +9,6 @@ pub(crate) fn x64_lower_call(conv: CallConv, sink: &mut Vec<X64MCInstr>, _: &Mac
         sink.push( X64MCInstr::with2(Mnemonic::Xor, Operand::Reg(x64Reg::Eax), Operand::Reg(x64Reg::Eax)) );
     }
 
-    sink.push( X64MCInstr::with1(Mnemonic::Call, Operand::Imm(0)).into() );
+    sink.push( X64MCInstr::with1(Mnemonic::Call, Operand::Imm(5)).into() );
     sink.push( X64MCInstr::with1(Mnemonic::Link, Operand::LinkDestination(func.to_string(), -4)).into() );
 }

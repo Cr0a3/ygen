@@ -2,17 +2,17 @@
 cargo run -p ylc -- -in=%s -O -fmt -passes=cp
 # IN:
 
-define i32 @main() {
+define u8 @main() {
   entry:
     %0 = i32 456
     %2 = cmp le i32 %0, %0
-    ret i32 %2
+    ret u8 %2
 }
 
 # STDERR:
-define i32 @main() {
+define u8 @main() {
   entry:
     %0 = i32 456
-    %2 = i32 0
-    ret i32 0
+    %2 = u8 0
+    ret u8 0
 }

@@ -25,13 +25,13 @@ pub(crate) fn x64_lower_zext(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     }
 
     if movxz {
-        let tmp = Operand::Reg(x64Reg::Rax.sub_ty(instr.meta));
+        let tmp = Operand::Reg(x64Reg::Rax.sub_ty(instr.meta).sub_ty(instr.meta));
 
         sink.push(X64MCInstr::with2(Mnemonic::Mov, tmp.clone(), op1));
         sink.push(X64MCInstr::with2(Mnemonic::Movzx, tmp.clone(), op2));
         sink.push(X64MCInstr::with2(Mnemonic::Mov, out, tmp));
     } else {
-        let tmp = Operand::Reg(x64Reg::Rax.sub_ty(instr.meta));
+        let tmp = Operand::Reg(x64Reg::Rax.sub_ty(instr.meta).sub_ty(instr.meta));
 
         if op1 == out {
             sink.push(X64MCInstr::with2(Mnemonic::Mov, op1,  op2));

@@ -29,12 +29,17 @@ impl CompilationHelper {
         
         self.allocated_vars.push(node.inner1.name.to_owned());
 
+        instr.meta = TypeMetadata::ptr;
+
         mc_sink.push(instr);
 
         if let Some(phi_loc) = self.alloc.phi_vars.get(&node.inner1.name) {
             let mut instr = MachineInstr::new(MachineMnemonic::Move);
             instr.set_out((*phi_loc).into());
             instr.add_operand(out.into());
+            
+            instr.meta = TypeMetadata::ptr;
+
             mc_sink.push(instr);
         }
     }

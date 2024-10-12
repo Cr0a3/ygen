@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use crate::Support::ColorClass;
-use crate::IR::{Function, Type, Var, VerifyError};
+use crate::IR::{Function, Type, TypeMetadata, Var, VerifyError};
 
 use super::{Assign, Cmp, Ir};
 
@@ -121,7 +121,7 @@ impl BuildCmp for Function {
     fn BuildCmp(&mut self, mode: CmpMode, ls: Var, rs: Var) -> Var {
         let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
         
-        let out = Var::new(block, ls.ty);
+        let out = Var::new(block, TypeMetadata::i8);
 
         block.push_ir( Cmp::new(mode, ls, rs, out.to_owned()) );
 

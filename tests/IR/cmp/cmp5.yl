@@ -3,13 +3,13 @@ cargo run -p ylc -- -in=%s -o=out.o
 gcc out.o -o a.exe
 ./a.exe
 # IN:
-define u32 @is_smaller_or_equal(u32 %0, u32 %1) {
+define u8 @is_smaller_or_equal(u32 %0, u32 %1) {
   entry:
     %2 = cmp lte u32 %0, %1
-    ret u32 %2
+    ret u8 %2
 }
 
-define u32 @main() {
+define u8 @main() {
   entry:
     %0 = u32 5
     %1 = u32 5
@@ -20,9 +20,9 @@ define u32 @main() {
 
     %5 = call u32 is_smaller_or_equal u32 %3 u32 %4
 
-    %6 = add u32 %2, %5
+    %6 = add u8 %2, %5
 
-    ret u32 %6
+    ret u8 %6
 }
 
 # EXIT_CODE=2

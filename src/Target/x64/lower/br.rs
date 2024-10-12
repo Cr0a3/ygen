@@ -24,8 +24,8 @@ pub(crate) fn x64_lower_cond_br(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr
     let value = (*value).into();
 
     if let Operand::Mem(_) = src {
-        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), src));
-        sink.push(X64MCInstr::with2(Mnemonic::Cmp, Operand::Reg(x64Reg::Rax), value));
+        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), src));
+        sink.push(X64MCInstr::with2(Mnemonic::Cmp, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), value));
     } else {
         sink.push(X64MCInstr::with2(Mnemonic::Cmp, src, value));
     }

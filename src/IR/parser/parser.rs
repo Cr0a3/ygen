@@ -912,7 +912,7 @@ impl IrParser {
             ty: ty 
         }, Var {
             name: var,
-            ty: ty
+            ty: TypeMetadata::u8
         }))
     }
 

@@ -14,7 +14,7 @@ pub(crate) fn x64_lower_salloc(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr)
     let out = out.into();
 
     if let Operand::Mem(_) = out {
-        let tmp = || Operand::Reg( x64Reg::Rax );
+        let tmp = || Operand::Reg( x64Reg::Rax.sub_ty(instr.meta) );
 
         sink.push(
             X64MCInstr::with2(Mnemonic::Lea, tmp(), Operand::Mem(x64Reg::Rbp - offset as u32))
@@ -49,7 +49,7 @@ pub(crate) fn x64_lower_store(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) 
             )
         } else {
             sink.push(
-                X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), value)
+                X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), value)
             );
             sink.push( 
                 X64MCInstr::with2(Mnemonic::Mov, Operand::Mem(MemOp {
@@ -58,16 +58,16 @@ pub(crate) fn x64_lower_store(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) 
                     scale: 1,
                     displ: 0,
                     rip: false,
-                }), Operand::Reg(x64Reg::Rax))
+                }), Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)))
             )
         }
     } else {
         sink.push( 
-            X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), value)
+            X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), value)
         );
     
         sink.push( 
-            X64MCInstr::with2(Mnemonic::Mov, ptr, Operand::Reg(x64Reg::Rax))
+            X64MCInstr::with2(Mnemonic::Mov, ptr, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)))
         );
     }
 
@@ -94,7 +94,7 @@ pub(crate) fn x64_lower_load(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
             )
         } else {
             sink.push( 
-                X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), Operand::Mem(MemOp {
+                X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta).sub_ty(instr.meta)), Operand::Mem(MemOp {
                     base: Some(ptr),
                     index: None,
                     scale: 1,
@@ -104,16 +104,16 @@ pub(crate) fn x64_lower_load(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
             );
 
             sink.push(
-                X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)))
+                X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta).sub_ty(instr.meta)))
             );
         }
     } else {
         sink.push( 
-            X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), ptr)
+            X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta).sub_ty(instr.meta)), ptr)
         );
     
         sink.push( 
-            X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)))
+            X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta).sub_ty(instr.meta)))
         );
     }
 

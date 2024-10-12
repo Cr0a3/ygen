@@ -121,7 +121,7 @@ pub(crate) fn x64_lower_div(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
 
     if let Operand::Reg(reg) = op1 {
         if x64Reg::Rdx == reg.sub_ty(TypeMetadata::i64) {
-            sink.push( X64MCInstr::with1(Mnemonic::Push, Operand::Reg(x64Reg::Rcx.sub_ty(instr.meta))));
+            sink.push( X64MCInstr::with1(Mnemonic::Push, Operand::Reg(x64Reg::Rcx)));
             sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rcx.sub_ty(instr.meta)), op1) );
             op1 = Operand::Reg( x64Reg::Rcx.sub_ty(instr.meta) );
 
@@ -130,7 +130,7 @@ pub(crate) fn x64_lower_div(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     } 
     if let Operand::Reg(reg) = op2 {
         if x64Reg::Rdx == reg.sub_ty(TypeMetadata::i64) {
-            sink.push( X64MCInstr::with1(Mnemonic::Push, Operand::Reg(x64Reg::Rsi.sub_ty(instr.meta))) );
+            sink.push( X64MCInstr::with1(Mnemonic::Push, Operand::Reg(x64Reg::Rsi)) );
             sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rsi.sub_ty(instr.meta)), op2) );
             op2 = Operand::Reg( x64Reg::Rsi.sub_ty(instr.meta) );
 
@@ -156,11 +156,11 @@ pub(crate) fn x64_lower_div(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     }
 
     if pop_rsi {
-        sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(x64Reg::Rsi.sub_ty(instr.meta))));
+        sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(x64Reg::Rsi)));
     }
 
     if pop_rcx {
-        sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(x64Reg::Rcx.sub_ty(instr.meta))));
+        sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(x64Reg::Rcx)));
     }
 
     
@@ -195,7 +195,7 @@ pub(crate) fn x64_lower_rem(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
 
     if let Operand::Reg(reg) = op1 {
         if x64Reg::Rdx == reg.sub_ty(TypeMetadata::i64) {
-            sink.push( X64MCInstr::with1(Mnemonic::Push, Operand::Reg(x64Reg::Rcx.sub_ty(instr.meta))));
+            sink.push( X64MCInstr::with1(Mnemonic::Push, Operand::Reg(x64Reg::Rcx)));
             sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rcx.sub_ty(instr.meta)), op1) );
             op1 = Operand::Reg( x64Reg::Rcx.sub_ty(instr.meta) );
 
@@ -204,7 +204,7 @@ pub(crate) fn x64_lower_rem(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     } 
     if let Operand::Reg(reg) = op2 {
         if x64Reg::Rdx == reg.sub_ty(TypeMetadata::i64) {
-            sink.push( X64MCInstr::with1(Mnemonic::Push, Operand::Reg(x64Reg::Rsi.sub_ty(instr.meta))) );
+            sink.push( X64MCInstr::with1(Mnemonic::Push, Operand::Reg(x64Reg::Rsi)) );
             sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rsi.sub_ty(instr.meta)), op2) );
             op2 = Operand::Reg( x64Reg::Rsi.sub_ty(instr.meta) );
 
@@ -230,11 +230,11 @@ pub(crate) fn x64_lower_rem(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     }
 
     if pop_rsi {
-        sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(x64Reg::Rsi.sub_ty(instr.meta))));
+        sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(x64Reg::Rsi)));
     }
     
     if pop_rcx {
-        sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(x64Reg::Rcx.sub_ty(instr.meta))));
+        sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(x64Reg::Rcx)));
     }
 
     sink.push(X64MCInstr::with2(Mnemonic::Mov, out.to_owned(), Operand::Reg(x64Reg::Rdx.sub_ty(instr.meta))));

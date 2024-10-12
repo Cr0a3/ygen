@@ -25,6 +25,8 @@ impl CompilationHelper {
 
         instr.meta = node.inner3;
 
+        instr.meta = node.inner3;
+
         mc_sink.push( instr );
 
         if let Some(phi_loc) = self.alloc.phi_vars.get(&node.inner1.name) {

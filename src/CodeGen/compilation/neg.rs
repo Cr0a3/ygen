@@ -22,6 +22,9 @@ impl CompilationHelper {
             let mut instr = MachineInstr::new(MachineMnemonic::Move);
             instr.set_out((*phi_loc).into());
             instr.add_operand(out.into());
+
+            instr.meta = node.inner2.ty;
+            
             mc_sink.push(instr);
         }
         

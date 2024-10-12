@@ -1,4 +1,4 @@
-use crate::{prelude::Cmp, CodeGen::{MachineInstr, MachineMnemonic, MachineOperand}, IR::Block};
+use crate::{prelude::Cmp, CodeGen::{MachineInstr, MachineMnemonic, MachineOperand}, IR::{Block, TypeMetadata}};
 
 use super::CompilationHelper;
 
@@ -30,12 +30,17 @@ impl CompilationHelper {
 
         cmp.set_out(out);
 
+        cmp.meta = TypeMetadata::u8;
+
         mc_sink.push( cmp );
 
         if let Some(phi_loc) = self.alloc.phi_vars.get(&node.out.name) {
             let mut instr = MachineInstr::new(MachineMnemonic::Move);
             instr.set_out((*phi_loc).into());
             instr.add_operand(out.into());
+
+            instr.meta = TypeMetadata::u8;
+
             mc_sink.push(instr);
         }
     }

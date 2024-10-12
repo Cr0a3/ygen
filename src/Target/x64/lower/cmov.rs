@@ -20,22 +20,22 @@ pub(crate) fn x64_lower_cmov_zero(sink: &mut Vec<X64MCInstr>, instr: &MachineIns
     if let Operand::Reg(_) = out {
         if let Operand::Imm(_) = value {
             sink.extend_from_slice(&cmp);
-            sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), value));
-            sink.push( X64MCInstr::with2(Mnemonic::Cmove, out, Operand::Reg(x64Reg::Rax)));
+            sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), value));
+            sink.push( X64MCInstr::with2(Mnemonic::Cmove, out, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta))));
         } else {
             sink.extend_from_slice(&cmp);
             sink.push( X64MCInstr::with2(Mnemonic::Cmove, out, value));
         }
     } else {
         if let Operand::Imm(_) = value {
-            sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), value));
+            sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), value));
             sink.extend_from_slice(&cmp);
-            sink.push( X64MCInstr::with2(Mnemonic::Cmove, Operand::Reg(x64Reg::Rax), Operand::Reg(x64Reg::Rax)));
+            sink.push( X64MCInstr::with2(Mnemonic::Cmove, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), Operand::Reg(x64Reg::Rax.sub_ty(instr.meta))));
         } else {
             sink.extend_from_slice(&cmp);
-            sink.push( X64MCInstr::with2(Mnemonic::Cmove, Operand::Reg(x64Reg::Rax), value));
+            sink.push( X64MCInstr::with2(Mnemonic::Cmove, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), value));
         }
-        sink.push( X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(x64Reg::Rax)));
+        sink.push( X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta))));
     }
 }  
 
@@ -59,21 +59,21 @@ pub(crate) fn x64_lower_cmov_not_zero(sink: &mut Vec<X64MCInstr>, instr: &Machin
     if let Operand::Reg(_) = out {
         if let Operand::Imm(_) = value {
             sink.extend_from_slice(&cmp);
-            sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), value));
-            sink.push( X64MCInstr::with2(Mnemonic::Cmovne, out, Operand::Reg(x64Reg::Rax)));
+            sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), value));
+            sink.push( X64MCInstr::with2(Mnemonic::Cmovne, out, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta))));
         } else {
             sink.extend_from_slice(&cmp);
             sink.push( X64MCInstr::with2(Mnemonic::Cmovne, out, value));
         }
     } else {
         if let Operand::Imm(_) = value {
-            sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), value));
+            sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), value));
             sink.extend_from_slice(&cmp);
-            sink.push( X64MCInstr::with2(Mnemonic::Cmovne, Operand::Reg(x64Reg::Rax), Operand::Reg(x64Reg::Rax)));
+            sink.push( X64MCInstr::with2(Mnemonic::Cmovne, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), Operand::Reg(x64Reg::Rax.sub_ty(instr.meta))));
         } else {
             sink.extend_from_slice(&cmp);
-            sink.push( X64MCInstr::with2(Mnemonic::Cmovne, Operand::Reg(x64Reg::Rax), value));
+            sink.push( X64MCInstr::with2(Mnemonic::Cmovne, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), value));
         }
-        sink.push( X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(x64Reg::Rax)));
+        sink.push( X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta))));
     }
 }  
