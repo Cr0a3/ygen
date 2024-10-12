@@ -51,7 +51,14 @@ impl CompilationHelper {
             } else { 
                 args.get(reg_args)
             };
+            let mut arg_reg = arg_reg.cloned();
 
+            if let Some(reg) = arg_reg {
+                arg_reg = Some(match reg {
+                    Reg::x64(x64) => Reg::x64(x64.sub_ty(arg.ty)),
+                })
+            }
+            
             if let Some(reg) = arg_reg {
                 if !self.allocated_vars.contains(&arg.name) {
                     let mut instr = MachineInstr::new(MachineMnemonic::Move);
@@ -62,14 +69,20 @@ impl CompilationHelper {
                         op = MachineOperand::Stack(*save);
                     }
     
-                    instr.set_out(MachineOperand::Reg(*reg));
+                    instr.set_out(MachineOperand::Reg(reg));
                     instr.add_operand(op);
+
+                    instr.meta = arg.ty;
+
                     mc_sink.push( instr );
                 } else {
                     let mut instr = MachineInstr::new(MachineMnemonic::AdrMove);
 
-                    instr.set_out(MachineOperand::Reg(*reg));
+                    instr.set_out(MachineOperand::Reg(reg));
                     instr.add_operand(src.into());
+
+                    instr.meta = arg.ty;
+
                     mc_sink.push( instr );
                 }
             } else {
@@ -91,7 +104,7 @@ impl CompilationHelper {
                     mc_sink.push( instr );
                 }
             }
-            
+
             if TypeMetadata::f32 == arg.ty || TypeMetadata::f64 == arg.ty {
                 fp_reg_args += 1;
             } else { 

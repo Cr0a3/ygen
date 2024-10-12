@@ -360,6 +360,14 @@ impl<'a> IrSemnatic<'a> {
             })?
         }
 
+        if sig.ret != node.inner1.ty.ret {
+            Err(IrError::FuncWrongReturnTyoe { 
+                expected: sig.ret, 
+                found: node.inner1.ty.ret, 
+                loc: loc.to_owned() 
+            })?
+        }
+
         let name = node.inner3.name.to_owned();
 
         if vars.contains_key(&name) {
