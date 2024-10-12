@@ -96,15 +96,7 @@ pub(crate) fn x64_lower(conv: CallConv, instrs: Vec<MachineInstr>) -> Vec<Box<dy
     ];
 
     for instr in instrs {
-        let mut lowered = Vec::new();
-
-        x64_lower_instr(conv, &mut lowered, instr.clone());
-
-        for inst in &lowered {
-            println!("{}", inst);
-        }
-
-        out.extend_from_slice(&lowered);
+        x64_lower_instr(conv, &mut out, instr.clone());
     }
 
     out.optimize();
