@@ -786,18 +786,130 @@ impl X64MCInstr {
                     } else { todo!() }
                 } else { todo!() }
             },
-            Mnemonic::Movss => todo!(),
-            Mnemonic::Movsd => todo!(),
-            Mnemonic::Movups => todo!(),
-            Mnemonic::Movupd => todo!(),
-            Mnemonic::Addss => todo!(),
-            Mnemonic::Addsd => todo!(),
-            Mnemonic::Divss => todo!(),
-            Mnemonic::Divsd => todo!(),
-            Mnemonic::Mulss => todo!(),
-            Mnemonic::Mulsd => todo!(),
-            Mnemonic::Subss => todo!(),
-            Mnemonic::Subsd => todo!(),
+            Mnemonic::Movss => {
+                if let Some(Operand::Reg(op1)) = &self.op1 {
+                    if let Some(Operand::Reg(op2))  = &self.op2 {
+                        Instruction::with2::<Register, Register>(Code::Movss_xmmm32_xmm, (*op1).into(), (*op2).into())?
+                    } else if let Some(Operand::Mem(op2))  = &self.op2 {
+                        Instruction::with2::<Register, MemoryOperand>(Code::Movss_xmm_xmmm32, (*op1).into(), op2.into())?
+                    } else { todo!() }
+                } else if let Some(Operand::Mem(op1)) = &self.op1 {
+                    if let Some(Operand::Reg(op2))  = &self.op2 {
+                        Instruction::with2::<MemoryOperand, Register>(Code::Movss_xmmm32_xmm, op1.into(), (*op2).into())?
+                    } else { todo!() } 
+                } else { todo!() }
+            },
+            Mnemonic::Movsd => {
+                if let Some(Operand::Reg(op1)) = &self.op1 {
+                    if let Some(Operand::Reg(op2))  = &self.op2 {
+                        Instruction::with2::<Register, Register>(Code::Movsd_xmmm64_xmm, (*op1).into(), (*op2).into())?
+                    } else if let Some(Operand::Mem(op2))  = &self.op2 {
+                        Instruction::with2::<Register, MemoryOperand>(Code::Movsd_xmm_xmmm64, (*op1).into(), op2.into())?
+                    } else { todo!() }
+                } else if let Some(Operand::Mem(op1)) = &self.op1 {
+                    if let Some(Operand::Reg(op2))  = &self.op2 {
+                        Instruction::with2::<MemoryOperand, Register>(Code::Movsd_xmmm64_xmm, op1.into(), (*op2).into())?
+                    } else { todo!() } 
+                } else { todo!() }
+            },
+            Mnemonic::Movups => {
+                if let Some(Operand::Reg(op1)) = &self.op1 {
+                    if let Some(Operand::Reg(op2))  = &self.op2 {
+                        Instruction::with2::<Register, Register>(Code::Movups_xmm_xmmm128, (*op1).into(), (*op2).into())?
+                    } else if let Some(Operand::Mem(op2))  = &self.op2 {
+                        Instruction::with2::<Register, MemoryOperand>(Code::Movups_xmm_xmmm128, (*op1).into(), op2.into())?
+                    } else { todo!() }
+                } else if let Some(Operand::Mem(op1)) = &self.op1 {
+                    if let Some(Operand::Reg(op2))  = &self.op2 {
+                        Instruction::with2::<MemoryOperand, Register>(Code::Movups_xmmm128_xmm, op1.into(), (*op2).into())?
+                    } else { todo!() } 
+                } else { todo!() }
+            },
+            Mnemonic::Movupd => {
+                if let Some(Operand::Reg(op1)) = &self.op1 {
+                    if let Some(Operand::Reg(op2))  = &self.op2 {
+                        Instruction::with2::<Register, Register>(Code::Movupd_xmm_xmmm128, (*op1).into(), (*op2).into())?
+                    } else if let Some(Operand::Mem(op2))  = &self.op2 {
+                        Instruction::with2::<Register, MemoryOperand>(Code::Movupd_xmm_xmmm128, (*op1).into(), op2.into())?
+                    } else { todo!() }
+                } else if let Some(Operand::Mem(op1)) = &self.op1 {
+                    if let Some(Operand::Reg(op2))  = &self.op2 {
+                        Instruction::with2::<MemoryOperand, Register>(Code::Movupd_xmmm128_xmm, op1.into(), (*op2).into())?
+                    } else { todo!() } 
+                } else { todo!() }
+            },
+            Mnemonic::Addss => {
+                if let Some(Operand::Reg(op1)) = &self.op1 {
+                    if let Some(Operand::Reg(op2))  = &self.op2 {
+                        Instruction::with2::<Register, Register>(Code::Addss_xmm_xmmm32, (*op1).into(), (*op2).into())?
+                    } else if let Some(Operand::Mem(op2))  = &self.op2 {
+                        Instruction::with2::<Register, MemoryOperand>(Code::Addss_xmm_xmmm32, (*op1).into(), op2.into())?
+                    } else { todo!() }
+                } else { todo!() }
+            },
+            Mnemonic::Addsd => {
+                if let Some(Operand::Reg(op1)) = &self.op1 {
+                    if let Some(Operand::Reg(op2))  = &self.op2 {
+                        Instruction::with2::<Register, Register>(Code::Addsd_xmm_xmmm64, (*op1).into(), (*op2).into())?
+                    } else if let Some(Operand::Mem(op2))  = &self.op2 {
+                        Instruction::with2::<Register, MemoryOperand>(Code::Addsd_xmm_xmmm64, (*op1).into(), op2.into())?
+                    } else { todo!() }
+                } else { todo!() }
+            },
+            Mnemonic::Divss => {
+                if let Some(Operand::Reg(op1)) = &self.op1 {
+                    if let Some(Operand::Reg(op2))  = &self.op2 {
+                        Instruction::with2::<Register, Register>(Code::Divss_xmm_xmmm32, (*op1).into(), (*op2).into())?
+                    } else if let Some(Operand::Mem(op2))  = &self.op2 {
+                        Instruction::with2::<Register, MemoryOperand>(Code::Divss_xmm_xmmm32, (*op1).into(), op2.into())?
+                    } else { todo!() }
+                } else { todo!() }
+            },
+            Mnemonic::Divsd => {
+                if let Some(Operand::Reg(op1)) = &self.op1 {
+                    if let Some(Operand::Reg(op2))  = &self.op2 {
+                        Instruction::with2::<Register, Register>(Code::Divsd_xmm_xmmm64, (*op1).into(), (*op2).into())?
+                    } else if let Some(Operand::Mem(op2))  = &self.op2 {
+                        Instruction::with2::<Register, MemoryOperand>(Code::Divsd_xmm_xmmm64, (*op1).into(), op2.into())?
+                    } else { todo!() }
+                } else { todo!() }
+            },
+            Mnemonic::Mulss => {
+                if let Some(Operand::Reg(op1)) = &self.op1 {
+                    if let Some(Operand::Reg(op2))  = &self.op2 {
+                        Instruction::with2::<Register, Register>(Code::Mulss_xmm_xmmm32, (*op1).into(), (*op2).into())?
+                    } else if let Some(Operand::Mem(op2))  = &self.op2 {
+                        Instruction::with2::<Register, MemoryOperand>(Code::Mulss_xmm_xmmm32, (*op1).into(), op2.into())?
+                    } else { todo!() }
+                } else { todo!() }
+            },
+            Mnemonic::Mulsd => {
+                if let Some(Operand::Reg(op1)) = &self.op1 {
+                    if let Some(Operand::Reg(op2))  = &self.op2 {
+                        Instruction::with2::<Register, Register>(Code::Mulsd_xmm_xmmm64, (*op1).into(), (*op2).into())?
+                    } else if let Some(Operand::Mem(op2))  = &self.op2 {
+                        Instruction::with2::<Register, MemoryOperand>(Code::Mulsd_xmm_xmmm64, (*op1).into(), op2.into())?
+                    } else { todo!() }
+                } else { todo!() }
+            },
+            Mnemonic::Subss => {
+                if let Some(Operand::Reg(op1)) = &self.op1 {
+                    if let Some(Operand::Reg(op2))  = &self.op2 {
+                        Instruction::with2::<Register, Register>(Code::Subss_xmm_xmmm32, (*op1).into(), (*op2).into())?
+                    } else if let Some(Operand::Mem(op2))  = &self.op2 {
+                        Instruction::with2::<Register, MemoryOperand>(Code::Subss_xmm_xmmm32, (*op1).into(), op2.into())?
+                    } else { todo!() }
+                } else { todo!() }
+            },
+            Mnemonic::Subsd => {
+                if let Some(Operand::Reg(op1)) = &self.op1 {
+                    if let Some(Operand::Reg(op2))  = &self.op2 {
+                        Instruction::with2::<Register, Register>(Code::Subsd_xmm_xmmm64, (*op1).into(), (*op2).into())?
+                    } else if let Some(Operand::Mem(op2))  = &self.op2 {
+                        Instruction::with2::<Register, MemoryOperand>(Code::Subsd_xmm_xmmm64, (*op1).into(), op2.into())?
+                    } else { todo!() }
+                } else { todo!() }
+            },
             Mnemonic::Ucomiss => todo!(),
             Mnemonic::Ucomisd => todo!(),
         

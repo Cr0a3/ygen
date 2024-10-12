@@ -10,6 +10,8 @@ impl CompilationHelper {
         instr.set_out(MachineOperand::Reg(self.call.return_reg(self.arch, node.inner1.into())) );
         instr.add_operand(MachineOperand::Imm(node.inner1.val() as i64));
 
+        instr.meta = node.inner1.into();
+
         mc_sink.push( instr );
         
         mc_sink.push( MachineInstr::new(MachineMnemonic::Return) );
@@ -27,6 +29,8 @@ impl CompilationHelper {
             super::VarLocation::Reg(reg) => instr.add_operand(MachineOperand::Reg(reg)),
             super::VarLocation::Mem(stack) => instr.add_operand( MachineOperand::Stack(stack) ),
         }
+
+        instr.meta = node.inner1.ty;
 
         mc_sink.push(instr);
 
