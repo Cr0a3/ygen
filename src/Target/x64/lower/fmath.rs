@@ -18,9 +18,9 @@ macro_rules! FMathLowerImpl {
             let mut variant = FInstrVariant::Normal;
 
             if let Operand::Reg(op1) = op1 {
-                if let Operand::Reg(out) = out {
+                if let Operand::Reg(op2) = op2 {
                     if op1.is_xmm() {
-                        if out.is_xmm() {
+                        if op2.is_xmm() {
                             // mov xmm, xmm
                             variant = FInstrVariant::Fp;
                         } else {
@@ -28,7 +28,7 @@ macro_rules! FMathLowerImpl {
                             variant = FInstrVariant::RegFp;
                         }
                     } else {
-                        if out.is_xmm() {
+                        if op2.is_xmm() {
                             // mov xmm, r
                             variant = FInstrVariant::FpReg;
                         } else {
@@ -36,7 +36,7 @@ macro_rules! FMathLowerImpl {
                             variant = FInstrVariant::Normal;
                         }
                     }
-                } else if let Operand::Mem(_) = out {
+                } else if let Operand::Mem(_) = op2 {
                     if op1.is_xmm() {
                         // mov [mem], xmm
                         variant = FInstrVariant::MemFp;
@@ -44,22 +44,30 @@ macro_rules! FMathLowerImpl {
                         // mov [mem], r
                         variant = FInstrVariant::Normal;
                     }
+                } else if let Operand::Imm(_) = op2 {
+                    if op1.is_xmm() {
+                        // mov xmm, imm
+                        variant = FInstrVariant::FpImm;
+                    } else {
+                        // mov xmm, r
+                        variant = FInstrVariant::FpReg;
+                    }
                 }
             } else if let Operand::Mem(_) = op1 {
-                if let Operand::Reg(out) = out {
-                    if out.is_xmm() {
+                if let Operand::Reg(op2) = op2 {
+                    if op2.is_xmm() {
                         // mov xmm, [mem]
                         variant = FInstrVariant::FpMem;
                     } else {
                         // mov r, [mem]
                         variant = FInstrVariant::Normal;
                     }
-                } else if let Operand::Mem(_) = out {
+                } else if let Operand::Mem(_) = op2 {
                     variant = FInstrVariant::Normal;
                 }
             } else if let Operand::Imm(_) = op1 {
-                if let Operand::Reg(out) = out {
-                    if out.is_xmm() {
+                if let Operand::Reg(op2) = op2 {
+                    if op2.is_xmm() {
                         // mov xmm, imm
                         variant = FInstrVariant::FpImm;
                     } else {
@@ -71,47 +79,48 @@ macro_rules! FMathLowerImpl {
                 }
             }
 
-            
+        println!("{:?}", variant);
         if TypeMetadata::f32 == instr.meta { 
             // f32
             match variant {
                 FInstrVariant::Fp =>     {
-                    sink.push(X64MCInstr::with2(Mnemonic::Movsd, Operand::Reg(x64Reg::Xmm15), op1));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movss, Operand::Reg(x64Reg::Xmm15), op1));
                     sink.push(X64MCInstr::with2($f32m, Operand::Reg(x64Reg::Xmm15), op2));
-                    sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(x64Reg::Xmm15)));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movss, out, Operand::Reg(x64Reg::Xmm15)));
                 },
                 FInstrVariant::FpReg =>  {
                     sink.push(X64MCInstr::with2(Mnemonic::Movd, Operand::Reg(x64Reg::Xmm15), op1));
                     sink.push(X64MCInstr::with2($f32m, Operand::Reg(x64Reg::Xmm15), op2));
-                    sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(x64Reg::Xmm15)));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movss, out, Operand::Reg(x64Reg::Xmm15)));
                 },
                 FInstrVariant::RegFp =>  {
                     sink.push(X64MCInstr::with2(Mnemonic::Movd,     Operand::Reg(x64Reg::Xmm15), op1));
                     sink.push(X64MCInstr::with2($f32m, Operand::Reg(x64Reg::Xmm15), op2));
-                    sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(x64Reg::Xmm15)));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movss, out, Operand::Reg(x64Reg::Xmm15)));
                 },
                 FInstrVariant::FpMem =>  {
                     sink.push(X64MCInstr::with2(Mnemonic::Movss,    Operand::Reg(x64Reg::Xmm15), op1));
                     sink.push(X64MCInstr::with2($f32m, Operand::Reg(x64Reg::Xmm15), op2));
-                    sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(x64Reg::Xmm15)));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movss, out, Operand::Reg(x64Reg::Xmm15)));
                 },
                 FInstrVariant::MemFp =>  {
                     sink.push(X64MCInstr::with2(Mnemonic::Movss,    Operand::Reg(x64Reg::Xmm15), op1));
                     sink.push(X64MCInstr::with2($f32m, Operand::Reg(x64Reg::Xmm15), op2));
-                    sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(x64Reg::Xmm15)));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movss, out, Operand::Reg(x64Reg::Xmm15)));
                 },
                 FInstrVariant::FpImm =>  {
-                    sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), op1));
-                    sink.push(X64MCInstr::with2(Mnemonic::Movd, Operand::Reg(x64Reg::Xmm15), Operand::Reg(x64Reg::Rax)));
-                    sink.push(X64MCInstr::with2($f32m, Operand::Reg(x64Reg::Xmm15), op2));
-                    sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(x64Reg::Xmm15)));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movss,    Operand::Reg(x64Reg::Xmm15), op1));
+                    sink.push(X64MCInstr::with2(Mnemonic::Mov,      Operand::Reg(x64Reg::Eax), op2));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movd,     out.clone(), Operand::Reg(x64Reg::Eax)));
+                    sink.push(X64MCInstr::with2($f32m, Operand::Reg(x64Reg::Xmm15), out.clone()));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movss, out, Operand::Reg(x64Reg::Xmm15)));
                 },
                 FInstrVariant::Normal => {},
                 FInstrVariant::MemImm => {
                     sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), op1));
                     sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Xmm15), Operand::Reg(x64Reg::Rax)));
                     sink.push(X64MCInstr::with2($f32m, Operand::Reg(x64Reg::Xmm15), op2));
-                    sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(x64Reg::Xmm15)));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movss, out, Operand::Reg(x64Reg::Xmm15)));
                 },
             };
         } else {
@@ -123,12 +132,12 @@ macro_rules! FMathLowerImpl {
                     sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(x64Reg::Xmm15)));
                 },
                 FInstrVariant::FpReg =>  {
-                    sink.push(X64MCInstr::with2(Mnemonic::Movd, Operand::Reg(x64Reg::Xmm15), op1));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movq, Operand::Reg(x64Reg::Xmm15), op1));
                     sink.push(X64MCInstr::with2($f64m, Operand::Reg(x64Reg::Xmm15), op2));
                     sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(x64Reg::Xmm15)));
                 },
                 FInstrVariant::RegFp =>  {
-                    sink.push(X64MCInstr::with2(Mnemonic::Movd,     Operand::Reg(x64Reg::Xmm15), op1));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movq,     Operand::Reg(x64Reg::Xmm15), op1));
                     sink.push(X64MCInstr::with2($f64m, Operand::Reg(x64Reg::Xmm15), op2));
                     sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(x64Reg::Xmm15)));
                 },
@@ -138,14 +147,15 @@ macro_rules! FMathLowerImpl {
                     sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(x64Reg::Xmm15)));
                 },
                 FInstrVariant::MemFp =>  {
-                    sink.push(X64MCInstr::with2(Mnemonic::Movss,    Operand::Reg(x64Reg::Xmm15), op1));
-                    sink.push(X64MCInstr::with2($f64m, Operand::Reg(x64Reg::Xmm15), op2));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movsd,    Operand::Reg(x64Reg::Xmm15), op1));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movq,     out.clone(), op2));
+                    sink.push(X64MCInstr::with2($f64m, Operand::Reg(x64Reg::Xmm15), out.clone()));
                     sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(x64Reg::Xmm15)));
                 },
                 FInstrVariant::FpImm =>  {
-                    sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), op1));
-                    sink.push(X64MCInstr::with2(Mnemonic::Movd, Operand::Reg(x64Reg::Xmm15), Operand::Reg(x64Reg::Rax)));
-                    sink.push(X64MCInstr::with2($f64m, Operand::Reg(x64Reg::Xmm15), op2));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movss, Operand::Reg(x64Reg::Xmm15), op1));
+                    sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), op2));
+                    sink.push(X64MCInstr::with2($f64m, Operand::Reg(x64Reg::Xmm15), Operand::Reg(x64Reg::Rax)));
                     sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(x64Reg::Xmm15)));
                 },
                 FInstrVariant::Normal => {},

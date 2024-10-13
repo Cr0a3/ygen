@@ -529,6 +529,8 @@ impl IrLexer {
                 'x' => string.push('x'),
                 'b' => string.push('b'),
 
+                '.' => string.push('.'),
+
                 _ => looping = false,
             }
 
@@ -539,18 +541,25 @@ impl IrLexer {
 
         let mut negate = false;
 
-		let mut out = match if string.starts_with("0x") {
-			i64::from_str_radix(&string.replace("0x", ""), 16)
-		} else if string.starts_with("0b") {
-			i64::from_str_radix(&string.replace("0b", ""), 2)
-		} else if string.starts_with("-") {
-            negate = true;
-			string.replace("-", "").parse::<i64>()
-		} else {
-			string.parse()
-		} {
-            Ok(i) => i,
-            Err(err) => Err(IrError::Boxed{ err: Box::from(err), loc: self.loc.clone() })?,
+        let mut out = if string.contains('.') {
+            match string.parse::<f64>() {
+                Ok(i) => i,
+                Err(err) => Err(IrError::Boxed{ err: Box::from(err), loc: self.loc.clone() })?,
+            }
+        } else {
+            match if string.starts_with("0x") {
+                i64::from_str_radix(&string.replace("0x", ""), 16)
+            } else if string.starts_with("0b") {
+                i64::from_str_radix(&string.replace("0b", ""), 2)
+            } else if string.starts_with("-") {
+                negate = true;
+                string.replace("-", "").parse::<i64>()
+            } else {
+                string.parse()
+            } {
+                Ok(i) => i as f64,
+                Err(err) => Err(IrError::Boxed{ err: Box::from(err), loc: self.loc.clone() })?,
+            }
         };
 
         if negate {

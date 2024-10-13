@@ -30,7 +30,7 @@ impl CompilationHelper {
 
         cmp.set_out(out);
 
-        cmp.meta = TypeMetadata::u8;
+        cmp.meta = node.ls.ty;
 
         mc_sink.push( cmp );
 

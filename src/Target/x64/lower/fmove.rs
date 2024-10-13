@@ -95,11 +95,13 @@ pub(crate) fn x64_lower_fmove(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) 
             FInstrVariant::FpMem =>  sink.push(X64MCInstr::with2(Mnemonic::Movss,    out, op1)),
             FInstrVariant::MemFp =>  sink.push(X64MCInstr::with2(Mnemonic::Movss,    out, op1)),
             FInstrVariant::FpImm =>  {
-                sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), op1));
-                sink.push(X64MCInstr::with2(Mnemonic::Movd, out, Operand::Reg(x64Reg::Rax)));
+                // TODO
+                sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Eax), op1));
+                sink.push(X64MCInstr::with2(Mnemonic::Movd, out, Operand::Reg(x64Reg::Eax)));
             },
             FInstrVariant::Normal => sink.push(X64MCInstr::with2(Mnemonic::Mov, out, op1)),
             FInstrVariant::MemImm => {
+                // TODO
                 sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), op1));
                 sink.push(X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(x64Reg::Rax)));
             },
