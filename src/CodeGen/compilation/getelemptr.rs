@@ -3,7 +3,7 @@ use crate::{prelude::*, CodeGen::*};
 
 impl CompilationHelper {
     #[allow(missing_docs)]
-    pub fn compile_getelemptr(&mut self, node: &GetElemPtr, mc_sink: &mut Vec<MachineInstr>, _: &Block) {
+    pub fn compile_getelemptr(&mut self, node: &GetElemPtr, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
         let vec = self.vars.get(&node.ptr.name).unwrap().into();
         let out = self.vars.get(&node.out.name).unwrap().into();
         let index = self.vars.get(&node.index.name).unwrap().into();

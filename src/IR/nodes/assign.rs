@@ -33,8 +33,8 @@ impl Ir for Assign<Var, Type> {
         Box::new(self.clone())
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr) {
-        registry.compile_assign_var_type(&self)
+    fn compile(&self, registry: &mut TargetBackendDescr, module: &mut crate::prelude::Module) {
+        registry.compile_assign_var_type(&self, module)
     }
 
     fn uses(&self, var: &Var) -> bool {
@@ -42,8 +42,8 @@ impl Ir for Assign<Var, Type> {
         else { false }
     }
     
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
-        compiler.compile_assign_var_type(&self, &block)
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
+        compiler.compile_assign_var_type(&self, &block, module)
     }
 
     fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
@@ -96,8 +96,8 @@ impl Ir for Assign<Var, Var> {
         Box::new(self.clone())
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr) {
-        registry.compile_assign_var_var(&self)
+    fn compile(&self, registry: &mut TargetBackendDescr, module: &mut crate::prelude::Module) {
+        registry.compile_assign_var_var(&self, module)
     }
 
     fn uses(&self, var: &Var) -> bool {
@@ -106,8 +106,8 @@ impl Ir for Assign<Var, Var> {
         else { false }
     }
     
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
-        compiler.compile_assign_var_var(&self, &block)
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
+        compiler.compile_assign_var_var(&self, &block, module)
     }
     
     fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
@@ -154,8 +154,8 @@ impl Ir for Assign<Var, Const> {
         Box::new(self.clone())
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr) {
-        registry.compile_assign_var_const(&self)
+    fn compile(&self, registry: &mut TargetBackendDescr, module: &mut crate::prelude::Module) {
+        registry.compile_assign_var_const(&self, module)
     }
 
     fn uses(&self, var: &Var) -> bool {
@@ -163,8 +163,8 @@ impl Ir for Assign<Var, Const> {
         else { false }
     }
     
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
-        compiler.compile_assign_var_const(&self, &block)
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
+        compiler.compile_assign_var_const(&self, &block, module)
     }
     
     fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {

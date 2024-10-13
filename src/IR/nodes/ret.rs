@@ -33,12 +33,12 @@ impl Ir for Return<Type> {
         self
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr) {
-        registry.compile_ret_ty(&self)
+    fn compile(&self, registry: &mut TargetBackendDescr, module: &mut crate::prelude::Module) {
+        registry.compile_ret_ty(&self, module)
     }
     
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
-        compiler.compile_ret_ty(&self, block)
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
+        compiler.compile_ret_ty(&self, block, module)
     }
     
     fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
@@ -89,8 +89,8 @@ impl Ir for Return<Var> {
         self
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr) {
-        registry.compile_ret_var(&self)
+    fn compile(&self, registry: &mut TargetBackendDescr, module: &mut crate::prelude::Module) {
+        registry.compile_ret_var(&self, module)
     }
 
     fn uses(&self, var: &Var) -> bool {
@@ -98,8 +98,8 @@ impl Ir for Return<Var> {
         else { false }
     }
     
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
-        compiler.compile_ret_var(&self, &block)
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
+        compiler.compile_ret_var(&self, &block, module)
     }
     
     fn maybe_inline(&self, const_values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {

@@ -156,7 +156,7 @@ impl Module {
             obj.define(&consta.name, consta.data.clone());
         }
 
-        for (name, func) in &self.funcs {
+        for (name, func) in self.funcs.clone() {
             obj.decl( (&name, Decl::Function, func.linkage));
 
             let mut blocks: Vec<(String, (Vec<u8>, Vec<Link>))> = Vec::new();
@@ -166,10 +166,10 @@ impl Module {
             let mut comp = vec![];
 
             for block in &func.blocks {
-                let (compiled, links) = registry.buildMachineCodeForTarget(triple.arch, block, &func)?;
+                let (compiled, links) = registry.buildMachineCodeForTarget(triple.arch, &block, &func, self)?;
                 
                 if registry.requires_prolog(&func) && index == 0 {
-                    let mut helper = registry.getBackendForFuncOrFork(triple.arch, func).helper.expect("expected valid helper");
+                    let mut helper = registry.getBackendForFuncOrFork(triple.arch, &func).helper.expect("expected valid helper");
                     
                     let mut prolog = vec![];
 
@@ -196,7 +196,7 @@ impl Module {
                 }
 
                 if debug {
-                    let mut debug_info = registry.buildDebugInfo(triple.arch, block, &func)?;
+                    let mut debug_info = registry.buildDebugInfo(triple.arch, &block, &func, self)?;
 
                     for dbg in &mut debug_info {
                         dbg.adr += comp.len() as u64 + 1;
@@ -270,7 +270,7 @@ impl Module {
     }
 
     /// emits all function into one asm file
-    pub fn emitToAsmFile(&self, triple: Triple, registry: &mut TargetRegistry, path: &Path) -> Result<(), Box<dyn Error>> {
+    pub fn emitToAsmFile(&mut self, triple: Triple, registry: &mut TargetRegistry, path: &Path) -> Result<(), Box<dyn Error>> {
         let mut file = OpenOptions::new().create(true).write(true)
                                 .open(path)?;
 
@@ -283,22 +283,22 @@ impl Module {
 
     /// emits machine instrs for target
     /// note: machine instrs are portable over all platforms
-    pub fn emitMachineInstrs(&self, triple: Triple, registry: &mut TargetRegistry) -> Result<Vec<(String, Vec<MachineInstr>)>, Box<dyn Error>> {
+    pub fn emitMachineInstrs(&mut self, triple: Triple, registry: &mut TargetRegistry) -> Result<Vec<(String, Vec<MachineInstr>)>, Box<dyn Error>> {
         let mut out = Vec::new();
 
-        for (name, func) in &self.funcs {
+        for (name, func) in self.funcs.clone() {
             let mut instrs = vec![];
 
             for block in &func.blocks {
                 instrs.extend_from_slice(&
-                    registry.buildMachineInstrsForTarget(triple.arch, block, func)?
+                    registry.buildMachineInstrsForTarget(triple.arch, &block,  &func, self)?
                 );
             }
 
             if registry.requires_prolog(&func) {
                 let backup = instrs.clone();
                 
-                let mut helper = registry.getBackendForFuncOrFork(triple.arch, func).helper.expect("expected valid helper");
+                let mut helper = registry.getBackendForFuncOrFork(triple.arch, &func).helper.expect("expected valid helper");
 
                 let mut prolog = vec![];
 
@@ -315,25 +315,13 @@ impl Module {
     }
 
     /// emits all function into one asm string
-    pub fn emitAsm(&self, triple: Triple, registry: &mut TargetRegistry) -> Result<String, Box<dyn Error>> {
+    pub fn emitAsm(&mut self, triple: Triple, registry: &mut TargetRegistry) -> Result<String, Box<dyn Error>> {
         let mut lines = String::new();
         lines.push_str(&format!("// made using {} v{}\n", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION")));
         lines.push_str(&format!("// by {}\n\n", env!("CARGO_PKG_AUTHORS").replace(";", " ")));
-        lines.push_str("section .rodata\n\n");
-
-        for (_, consta) in &self.consts {
-            lines.push_str(&format!("{}: {:?} # {}\n", consta.name, consta.data, consta.data.iter()                                      
-                                                                                                .filter_map(|&byte| {
-                                                                                                    if byte >= 32 && byte <= 126 {
-                                                                                                        Some(byte as char)
-                                                                                                    } else {
-                                                                                                        None
-                                                                                                    }
-                                                                                                }).collect::<String>()));
-        }
         lines.push_str("section .text\n\n");
 
-        for (name, func) in &self.funcs {
+        for (name, func) in self.funcs.clone() {
             if func.linkage == Linkage::Extern {
                 lines += &format!("global {}\n", name);
                 continue;
@@ -350,10 +338,10 @@ impl Module {
             for block in &func.blocks {
                 lines += &format!(" {}:\n", block.name);
                 
-                let asm_lines = registry.buildAsmForTarget(triple.arch, block, func)?;
+                let asm_lines = registry.buildAsmForTarget(triple.arch, &block, &func, self)?;
                 
                 if registry.requires_prolog(&func) && index == 0 {
-                    let mut helper = registry.getBackendForFuncOrFork(triple.arch, func).helper.expect("expected valid helper");
+                    let mut helper = registry.getBackendForFuncOrFork(triple.arch, &func).helper.expect("expected valid helper");
 
                     let mut prolog = vec![];
 
@@ -378,6 +366,19 @@ impl Module {
             
                 index += 1;
             }
+        }
+
+        lines.push_str("section .rodata\n\n");
+
+        for (_, consta) in &self.consts {
+            lines.push_str(&format!("{}: {:?} # {}\n", consta.name, consta.data, consta.data.iter()                                      
+                                                                                                .filter_map(|&byte| {
+                                                                                                    if byte >= 32 && byte <= 126 {
+                                                                                                        Some(byte as char)
+                                                                                                    } else {
+                                                                                                        None
+                                                                                                    }
+                                                                                                }).collect::<String>()));
         }
 
         Ok(lines)

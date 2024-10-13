@@ -1,4 +1,4 @@
-use crate::{CodeGen::{calling_convention::MachineCallingConvention, compilation::CompilationHelper, reg_alloc::RegAlloc, Reg}, Target::{Arch, CallConv}};
+use crate::{CodeGen::{calling_convention::MachineCallingConvention, compilation::CompilationHelper, reg_alloc::RegAlloc, ConstImmRules, Reg}, Target::{Arch, CallConv}};
 
 use super::x64Reg;
 
@@ -53,6 +53,8 @@ pub(crate) fn construct_compilation_helper(call_conv: CallConv) -> CompilationHe
     );
 
     helper.lower = Some(super::lower::x64_lower);
+
+    helper.fp_imm = ConstImmRules::CreateConst;
 
     helper
 }

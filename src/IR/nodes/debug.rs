@@ -42,11 +42,11 @@ impl Ir for DebugNode {
         Box::from( self.clone() )
     }
 
-    fn compile(&self, _: &mut crate::Target::TargetBackendDescr) {
+    fn compile(&self, _: &mut crate::Target::TargetBackendDescr, _: &mut crate::prelude::Module) {
         // NOTHING TODO for an normal build        
     }
 
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, _: &crate::prelude::Block) {
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, _: &crate::prelude::Block, _: &mut crate::prelude::Module) {
         compiler.set_location_node(self)
     }
 

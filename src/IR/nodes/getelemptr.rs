@@ -51,12 +51,12 @@ impl Ir for GetElemPtr {
         Box::new( self.clone() )
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr) {
-        registry.compile_getelemptr(self)
+    fn compile(&self, registry: &mut TargetBackendDescr, module: &mut crate::prelude::Module) {
+        registry.compile_getelemptr(self, module)
     }
 
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
-        compiler.compile_getelemptr(self, block)
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
+        compiler.compile_getelemptr(self, block, module)
     }
 
     fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {

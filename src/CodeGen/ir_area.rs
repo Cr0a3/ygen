@@ -59,14 +59,14 @@ impl IrCodeGenHelper {
 macro_rules! ir_codegen_wrap {
     ($func:ident,  $comment:expr, $($node:tt)*) => {
         #[doc = $comment]
-        pub fn $func(&mut self, node: &$($node)*, block: &Block) {
+        pub fn $func(&mut self, node: &$($node)*, block: &Block, module: &mut crate::prelude::Module) {
             let mut area = IrCodeGenArea {
                 node: Some(node.clone_box()),
                 compiled: Vec::new(),
                 debug_info: self.get_location(),
             };
 
-            self.helper.$func(node, &mut area.compiled, block);
+            self.helper.$func(node, &mut area.compiled, block, module);
 
             for inst in &mut area.compiled {
                 inst.turn_into_float_if_needed();

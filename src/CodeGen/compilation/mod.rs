@@ -27,6 +27,17 @@ mod neg;
 mod select;
 mod getelemptr;
 
+/// handeles how constant imms are handeled (wether creating a const or just an instr op)
+/// 
+/// Default: `ConstImmRules::InstrOp`
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ConstImmRules {
+    /// uses the imm as the instr operand
+    InstrOp,
+    /// creates the value as an const and loads the adress
+    CreateConst,
+}
+
 /// helps with compilation
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CompilationHelper {
@@ -40,6 +51,8 @@ pub struct CompilationHelper {
     pub(crate) allocated_vars: Vec<String>,
 
     pub(crate) tmp_reg: Reg,
+
+    pub(crate) fp_imm: ConstImmRules, 
 
     pub(crate) alloc: RegAlloc,
 }
@@ -55,6 +68,7 @@ impl CompilationHelper {
             lower: None,
             alloc: alloc,
             tmp_reg: tmp,
+            fp_imm: ConstImmRules::InstrOp,
         }
     }
 

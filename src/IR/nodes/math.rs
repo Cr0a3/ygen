@@ -94,8 +94,8 @@ macro_rules! MathIrNode {
                 self
             }
         
-            fn compile(&self, registry: &mut TargetBackendDescr) {
-                registry.$compileFuncTyTy(&self)
+            fn compile(&self, registry: &mut TargetBackendDescr, module: &mut crate::prelude::Module) {
+                registry.$compileFuncTyTy(&self, module)
             }
         
             fn uses(&self, var: &Var) -> bool {
@@ -103,8 +103,8 @@ macro_rules! MathIrNode {
                 else { false }
             }
     
-            fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
-                compiler.$compileFuncTyTy(&self, &block)
+            fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
+                compiler.$compileFuncTyTy(&self, &block, module)
             }
     
             fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
@@ -170,8 +170,8 @@ macro_rules! MathIrNode {
                 self
             }
         
-            fn compile(&self, registry: &mut TargetBackendDescr) {
-                registry.$compileFuncVarVar(&self)
+            fn compile(&self, registry: &mut TargetBackendDescr, module: &mut crate::prelude::Module) {
+                registry.$compileFuncVarVar(&self, module)
             }
         
             fn uses(&self, var: &Var) -> bool {
@@ -179,8 +179,8 @@ macro_rules! MathIrNode {
                 else { false }
             }
     
-            fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
-                compiler.$compileFuncVarVar(&self, &block)
+            fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
+                compiler.$compileFuncVarVar(&self, &block, module)
             }
     
             fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
@@ -254,8 +254,8 @@ macro_rules! MathIrNode {
                 self
             }
         
-            fn compile(&self, registry: &mut TargetBackendDescr) {
-                registry.$compileFuncVarTy(&self)
+            fn compile(&self, registry: &mut TargetBackendDescr, module: &mut crate::prelude::Module) {
+                registry.$compileFuncVarTy(&self, module)
             }
         
             fn uses(&self, var: &Var) -> bool {
@@ -263,8 +263,8 @@ macro_rules! MathIrNode {
                 else { false }
             }
     
-            fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
-                compiler.$compileFuncVarTy(&self, &block)
+            fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
+                compiler.$compileFuncVarTy(&self, &block, module)
             }
 
             fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {

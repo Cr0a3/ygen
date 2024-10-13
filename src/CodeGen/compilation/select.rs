@@ -4,7 +4,7 @@ use crate::prelude::*;
 
 impl CompilationHelper {
     #[allow(missing_docs)]
-    pub fn compile_select_tt(&mut self, node: &Select<Type, Type>, mc_sink: &mut Vec<MachineInstr>, _: &Block) {
+    pub fn compile_select_tt(&mut self, node: &Select<Type, Type>, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
         let out = self.vars.get(&node.out.name).expect("expected valid variable");
         let cond = self.vars.get(&node.cond.name).expect("expected valid variable");
     
@@ -36,7 +36,7 @@ impl CompilationHelper {
     }
 
     #[allow(missing_docs)]
-    pub fn compile_select_tv(&mut self, node: &Select<Type, Var>, mc_sink: &mut Vec<MachineInstr>, _: &Block) {
+    pub fn compile_select_tv(&mut self, node: &Select<Type, Var>, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
         let out = self.vars.get(&node.out.name).expect("expected valid variable");
         let cond = self.vars.get(&node.cond.name).expect("expected valid variable");
         
@@ -70,7 +70,7 @@ impl CompilationHelper {
     }
 
     #[allow(missing_docs)]
-    pub fn compile_select_vt(&mut self, node: &Select<Var, Type>, mc_sink: &mut Vec<MachineInstr>, _: &Block) {
+    pub fn compile_select_vt(&mut self, node: &Select<Var, Type>, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
         let out = self.vars.get(&node.out.name).expect("expected valid variable");
         let cond = self.vars.get(&node.cond.name).expect("expected valid variable");
         
@@ -104,7 +104,7 @@ impl CompilationHelper {
     }
     
     #[allow(missing_docs)]
-    pub fn compile_select_vv(&mut self, node: &Select<Var, Var>, mc_sink: &mut Vec<MachineInstr>, _: &Block) {
+    pub fn compile_select_vv(&mut self, node: &Select<Var, Var>, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
         let out = self.vars.get(&node.out.name).expect("expected valid variable");
         let cond = self.vars.get(&node.cond.name).expect("expected valid variable");
         

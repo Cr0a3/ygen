@@ -41,12 +41,12 @@ impl Ir for Select<Type, Type> {
         Box::from( self.clone() )
     }
 
-    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr) {
-        registry.compile_select_tt(self)
+    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr, module: &mut crate::prelude::Module) {
+        registry.compile_select_tt(self, module)
     }
 
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
-        compiler.compile_select_tt(self, block)
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
+        compiler.compile_select_tt(self, block, module)
     }
 
     fn maybe_inline(&self, const_values: &std::collections::HashMap<String, Type>) -> Option<Box<dyn Ir>> {
@@ -116,12 +116,12 @@ impl Ir for Select<Var, Type> {
         Box::from( self.clone() )
     }
 
-    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr) {
-        registry.compile_select_vt(self)
+    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr, module: &mut crate::prelude::Module) {
+        registry.compile_select_vt(self, module)
     }
 
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
-        compiler.compile_select_vt(self, block)
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
+        compiler.compile_select_vt(self, block, module)
     }
 
     fn maybe_inline(&self, const_values: &std::collections::HashMap<String, Type>) -> Option<Box<dyn Ir>> {
@@ -188,12 +188,12 @@ impl Ir for Select<Type, Var> {
         Box::from( self.clone() )
     }
 
-    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr) {
-        registry.compile_select_tv(self)
+    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr, module: &mut crate::prelude::Module) {
+        registry.compile_select_tv(self, module)
     }
 
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
-        compiler.compile_select_tv(self, block)
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
+        compiler.compile_select_tv(self, block, module)
     }
 
     fn maybe_inline(&self, const_values: &std::collections::HashMap<String, Type>) -> Option<Box<dyn Ir>> {
@@ -258,12 +258,12 @@ impl Ir for Select<Var, Var> {
         Box::from( self.clone() )
     }
 
-    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr) {
-        registry.compile_select_vv(self)
+    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr, module: &mut crate::prelude::Module) {
+        registry.compile_select_vv(self, module)
     }
 
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
-        compiler.compile_select_vv(self, block)
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
+        compiler.compile_select_vv(self, block, module)
     }
 
     fn maybe_inline(&self, _: &std::collections::HashMap<String, Type>) -> Option<Box<dyn Ir>> {

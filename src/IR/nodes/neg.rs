@@ -26,12 +26,12 @@ impl Ir for Neg<Var, /*out*/Var> {
         Box::new( self.clone() )
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr) {
-        registry.compile_neg(self)
+    fn compile(&self, registry: &mut TargetBackendDescr, module: &mut crate::prelude::Module) {
+        registry.compile_neg(self, module)
     }
 
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
-        compiler.compile_neg(self, block)
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
+        compiler.compile_neg(self, block, module)
     }
 
     fn maybe_inline(&self, const_values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {

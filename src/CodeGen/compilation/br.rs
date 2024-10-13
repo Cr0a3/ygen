@@ -6,7 +6,7 @@ use super::CompilationHelper;
 
 impl CompilationHelper {
     #[allow(missing_docs)]
-    pub fn compile_br(&mut self, node: &Br<crate::IR::BlockId>, mc_sink: &mut Vec<MachineInstr>, _: &Block) {
+    pub fn compile_br(&mut self, node: &Br<crate::IR::BlockId>, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
         let block = node.inner1.name.to_owned();
 
         let instr = MachineInstr::new(
@@ -17,7 +17,7 @@ impl CompilationHelper {
     }
 
     #[allow(missing_docs)]
-    pub fn compile_br_cond(&mut self, node: &BrCond<Var, crate::IR::BlockId, crate::IR::BlockId>, mc_sink: &mut Vec<MachineInstr>, _: &Block) {
+    pub fn compile_br_cond(&mut self, node: &BrCond<Var, crate::IR::BlockId, crate::IR::BlockId>, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
         // COMPILES TO:
         // if node.inner1 == 0 {
         //     goto node.inner2;

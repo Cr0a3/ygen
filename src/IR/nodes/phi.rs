@@ -46,14 +46,14 @@ impl Ir for Phi {
         Box::from( self.clone() )
     }
 
-    fn compile(&self, _registry: &mut crate::Target::TargetBackendDescr) {
+    fn compile(&self, _registry: &mut crate::Target::TargetBackendDescr, _: &mut crate::prelude::Module) {
         // phi mostly influences the register allocator
         // so we don't need to call any `compile_phi` func
 
         // registry.compile_phi(self)
     }
 
-    fn compile_dir(&self, _compiler: &mut crate::CodeGen::IrCodeGenHelper, _: &crate::prelude::Block) {
+    fn compile_dir(&self, _compiler: &mut crate::CodeGen::IrCodeGenHelper, _: &crate::prelude::Block, _: &mut crate::prelude::Module) {
         // phi mostly influences the register allocator
         // so we don't need to call any `compile_phi` func
 

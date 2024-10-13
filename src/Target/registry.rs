@@ -1,6 +1,6 @@
 use std::{collections::HashMap, error::Error, fmt::Display};
 
-use crate::{debug::DebugLocation, prelude::Function, CodeGen::MachineInstr, Obj::Link, IR::Block};
+use crate::{debug::DebugLocation, prelude::Function, CodeGen::MachineInstr, Obj::Link, IR::{Block, Module}};
 
 use super::{Arch, CallConv, TargetBackendDescr, Triple};
 
@@ -70,7 +70,7 @@ impl TargetRegistry {
     /// emits machine instrs for target <br>
     /// **note**: machine instrs are portable over all platforms <br>
     /// **warning**: Does not add a prolog
-    pub fn buildMachineInstrsForTarget(&mut self, arch: Arch, block: &Block, funct: &Function) -> Result<Vec<MachineInstr>, Box<dyn Error>> {
+    pub fn buildMachineInstrsForTarget(&mut self, arch: Arch, block: &Block, funct: &Function, module: &mut Module) -> Result<Vec<MachineInstr>, Box<dyn Error>> {
         let triple = self.triple;
 
         let run_alloc = if let Some(_) = self.funcs.get(&funct.name) { false } else { true };
@@ -84,7 +84,7 @@ impl TargetRegistry {
         }
 
         backend.block = Some(block.clone());
-        let instrs = backend.build_instrs(&triple);
+        let instrs = backend.build_instrs(&triple, module);
 
         if backend.epilog {
             if !self.epilogs.contains_key(&funct.name) {
@@ -99,7 +99,7 @@ impl TargetRegistry {
 
     /// Builds the ir of the given triple into text assembly code <br>
     /// **warning**: Does not add a prolog
-    pub fn buildAsmForTarget(&mut self, arch: Arch, block: &Block, funct: &Function) -> Result<Vec<String>, Box<dyn Error>> {
+    pub fn buildAsmForTarget(&mut self, arch: Arch, block: &Block, funct: &Function, module: &mut Module) -> Result<Vec<String>, Box<dyn Error>> {
        let triple = self.triple;
 
        let run_alloc = if let Some(_) = self.funcs.get(&funct.name) { false } else { true };
@@ -114,7 +114,7 @@ impl TargetRegistry {
 
         backend.block = Some(block.clone());
 
-        let instrs = backend.build_instrs_with_ir_debug(&triple);
+        let instrs = backend.build_instrs_with_ir_debug(&triple, module);
         let instrs = backend.lower_debug(instrs)?;
 
         let mut asm = vec![];
@@ -140,7 +140,7 @@ impl TargetRegistry {
 
     /// Builds the ir of the given triple into machine code <br>
     /// **warning**: Does not add a prolog
-    pub fn buildMachineCodeForTarget(&mut self, arch: Arch, block: &Block, funct: &Function) -> Result<(Vec<u8>, Vec<Link>), Box<dyn Error>> {
+    pub fn buildMachineCodeForTarget(&mut self, arch: Arch, block: &Block, funct: &Function, module: &mut Module) -> Result<(Vec<u8>, Vec<Link>), Box<dyn Error>> {
         let triple = self.triple;
 
         let run_alloc = if let Some(_) = self.funcs.get(&funct.name) { false } else { true };
@@ -155,7 +155,7 @@ impl TargetRegistry {
 
         backend.block = Some(block.clone());
 
-        let instrs = backend.build_instrs(&triple);
+        let instrs = backend.build_instrs(&triple, module);
         let instrs = backend.lower(instrs)?;
 
         let mut res = vec![];
@@ -198,7 +198,7 @@ impl TargetRegistry {
     }
 
     /// build the debugging information for an function
-    pub fn buildDebugInfo(&mut self, arch: Arch, block: &Block, funct: &Function) -> Result<Vec<DebugLocation>, Box<dyn Error>> {
+    pub fn buildDebugInfo(&mut self, arch: Arch, block: &Block, funct: &Function, module: &mut Module) -> Result<Vec<DebugLocation>, Box<dyn Error>> {
         let triple = self.triple;
 
         let run_alloc = if let Some(_) = self.funcs.get(&funct.name) { false } else { true };
@@ -213,7 +213,7 @@ impl TargetRegistry {
 
         backend.block = Some(block.clone());
 
-        let instrs = backend.build_instrs_with_ir_debug(&triple);
+        let instrs = backend.build_instrs_with_ir_debug(&triple, module);
         let instrs = backend.lower_debug(instrs)?;
 
         let mut dbgs = vec![];

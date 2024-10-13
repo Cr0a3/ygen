@@ -220,10 +220,10 @@ pub trait Ir: Debug + Any {
 
     /// Compiles the node based on the given target
     #[allow(dead_code)]
-    fn compile(&self, registry: &mut TargetBackendDescr);
+    fn compile(&self, registry: &mut TargetBackendDescr, module: &mut crate::prelude::Module);
 
     /// Compiles the node with node information to the given target
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block);
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module);
 
     /// Returns if the node uses the variable
     fn uses(&self, _: &Var) -> bool {

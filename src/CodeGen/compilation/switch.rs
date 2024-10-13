@@ -4,7 +4,7 @@ use super::CompilationHelper;
 
 impl CompilationHelper {
     #[allow(missing_docs)]
-    pub fn compile_switch(&mut self, node: &Switch, mc_sink: &mut Vec<MachineInstr>, _: &Block) {
+    pub fn compile_switch(&mut self, node: &Switch, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
         let mut cases = Vec::new();
 
         for (case_type, case_node) in &node.cases {

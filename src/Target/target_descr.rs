@@ -3,7 +3,7 @@ use crate::debug::DebugLocation;
 use crate::prelude::{ir::*, Block, Var};
 use crate::CodeGen::{IrCodeGenArea, IrCodeGenHelper, MCDocInstr, MCInstr};
 use crate::CodeGen::{compilation::CompilationHelper, MachineInstr};
-use crate::IR::{BlockId, Const, FuncId, Type, TypeMetadata};
+use crate::IR::{BlockId, Const, FuncId, Module, Type, TypeMetadata};
 
 use super::{Triple, WhiteList};
 use super::{CallConv, Compiler, Lexer};
@@ -34,14 +34,15 @@ macro_rules! compile_func {
         impl TargetBackendDescr { 
             /// gets the callback for compiling the  ir node into asm
             #[allow(unused)]
-            pub(crate) fn $name(&mut self, node: &$($node)*) {
+            pub(crate) fn $name(&mut self, node: &$($node)*, module: &mut Module) {
                 if let Some(helper) = &mut self.helper {
                     if let Some(block) = &self.block {
                         let mut vsink = Vec::new();
-                        helper.$func(node, &mut vsink, block);
+                        helper.$func(node, &mut vsink, block, module);
 
                         for inst in &mut vsink {
                             inst.turn_into_float_if_needed();
+                            inst.fix_const_imm(module);
                         }
 
                         self.sink.extend_from_slice(&vsink);
@@ -82,8 +83,8 @@ impl TargetBackendDescr {
     }
 
     /// builds all ir nodes of the current block into a vector of MachineInstr
-    pub fn build_instrs(&mut self, triple: &Triple) -> Vec<MachineInstr> {
-        let areas = self.build_instrs_with_ir_debug(triple);
+    pub fn build_instrs(&mut self, triple: &Triple, module: &mut Module) -> Vec<MachineInstr> {
+        let areas = self.build_instrs_with_ir_debug(triple, module);
 
         let mut merged = vec![];
 
@@ -95,7 +96,7 @@ impl TargetBackendDescr {
     }
 
     /// builds the instruction with ir debug metadata
-    pub fn build_instrs_with_ir_debug(&mut self, triple: &Triple) -> Vec<IrCodeGenArea> {
+    pub fn build_instrs_with_ir_debug(&mut self, triple: &Triple, module: &mut Module) -> Vec<IrCodeGenArea> {
         let helper = if let Some(helper) = &mut self.helper { helper }
         else { panic!("no current compilation helper"); };
 
@@ -125,7 +126,7 @@ impl TargetBackendDescr {
             }
 
             if let Some(node) = node.as_any().downcast_ref::<Return<Type>>() {
-                ir_helper.compile_ret_ty(node, &block);
+                ir_helper.compile_ret_ty(node, &block, module);
 
                 if self.epilog {
                     let mut epilog_instrs = vec![];
@@ -139,7 +140,7 @@ impl TargetBackendDescr {
 
                 }
             } else if let Some(node) = node.as_any().downcast_ref::<Return<Var>>() {
-                ir_helper.compile_ret_var(node, &block);
+                ir_helper.compile_ret_var(node, &block, module);
 
                 if self.epilog {
                     let mut epilog_instrs = vec![];
@@ -152,7 +153,7 @@ impl TargetBackendDescr {
                     } else { unreachable!() }
                 }
             } else {
-                node.compile_dir(&mut ir_helper, &block);
+                node.compile_dir(&mut ir_helper, &block, module);
             }
         }
 

@@ -63,6 +63,11 @@ impl MachineInstr {
             }
         }
     }
+
+    /// Fixes the instruction imm based on the rules
+    pub fn fix_const_imm(&mut self, module: &mut crate::prelude::Module) {
+        todo!()
+    }
 }
 
 impl Display for MachineInstr {

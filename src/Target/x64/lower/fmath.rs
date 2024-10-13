@@ -79,7 +79,6 @@ macro_rules! FMathLowerImpl {
                 }
             }
 
-        println!("{:?}", variant);
         if TypeMetadata::f32 == instr.meta { 
             // f32
             match variant {

@@ -31,8 +31,8 @@ impl Ir for Load<Var, Var, TypeMetadata> {
         Box::new( self.clone() )
     }
 
-    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr) {
-        registry.compile_load(self)
+    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr, module: &mut crate::prelude::Module) {
+        registry.compile_load(self, module)
     }
 
     fn uses(&self, var: &Var) -> bool {
@@ -43,8 +43,8 @@ impl Ir for Load<Var, Var, TypeMetadata> {
         }
     }
     
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
-        compiler.compile_load(&self, &block)
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
+        compiler.compile_load(&self, &block, module)
     }
     fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
         None

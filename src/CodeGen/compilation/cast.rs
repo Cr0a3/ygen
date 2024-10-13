@@ -5,7 +5,7 @@ use crate::CodeGen::{MachineInstr, MachineMnemonic, MachineOperand};
 
 impl CompilationHelper {
     #[allow(missing_docs)]
-    pub fn compile_cast(&mut self, node: &Cast<Var, TypeMetadata, Var>, mc_sink: &mut Vec<MachineInstr>, _: &Block) {
+    pub fn compile_cast(&mut self, node: &Cast<Var, TypeMetadata, Var>, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
         let src1 = *self.vars.get(&node.inner1.name).expect("expected valid variable");
 
         let out = *self.vars.get(&node.inner3.name).unwrap();

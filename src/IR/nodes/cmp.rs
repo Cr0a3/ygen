@@ -67,8 +67,8 @@ impl Ir for Cmp {
         Box::new( self.clone() )
     }
 
-    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr) {
-        registry.compile_cmp(self)
+    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr, module: &mut crate::prelude::Module) {
+        registry.compile_cmp(self, module)
     }
 
     fn uses(&self, other: &Var) -> bool {
@@ -77,8 +77,8 @@ impl Ir for Cmp {
         else { false }
     }
     
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
-        compiler.compile_cmp(&self, &block)
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
+        compiler.compile_cmp(&self, &block, module)
     }
     
     fn maybe_inline(&self, _: &std::collections::HashMap<String, crate::prelude::Type>) -> Option<Box<dyn Ir>> {

@@ -5,7 +5,7 @@ use super::CompilationHelper;
 
 impl CompilationHelper {
     #[allow(missing_docs)]
-    pub fn compile_load(&mut self, node: &Load<Var, Var, TypeMetadata>, mc_sink: &mut Vec<MachineInstr>, _: &Block) {
+    pub fn compile_load(&mut self, node: &Load<Var, Var, TypeMetadata>, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
         let ptr = *self.vars.get(&node.inner2.name).expect("expected valid variable");
         let ptr = match ptr {
             super::VarLocation::Reg(reg) => MachineOperand::Reg(reg),

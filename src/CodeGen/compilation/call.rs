@@ -7,7 +7,7 @@ use crate::CodeGen::MachineInstr;
 
 impl CompilationHelper {
     #[allow(missing_docs)]
-    pub fn compile_call(&mut self, node: &Call<FuncId, Vec<Var>, Var>, mc_sink: &mut Vec<MachineInstr>, _: &Block) {
+    pub fn compile_call(&mut self, node: &Call<FuncId, Vec<Var>, Var>, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
         let mut reg_args = 0;
         let mut fp_reg_args = 0;
 

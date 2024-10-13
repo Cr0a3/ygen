@@ -32,8 +32,8 @@ impl Ir for Br<BlockId> {
         Box::from( self.clone() )
     }
 
-    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr) {
-        registry.compile_br(self)
+    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr, module: &mut crate::prelude::Module) {
+        registry.compile_br(self, module)
     }
     
     fn uses(&self, _: &crate::prelude::Var) -> bool {
@@ -44,8 +44,8 @@ impl Ir for Br<BlockId> {
         other.dump() == self.dump()
     }
     
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
-        compiler.compile_br(&self, &block)
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
+        compiler.compile_br(&self, &block, module)
     }
     
     fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
@@ -94,8 +94,8 @@ impl Ir for BrCond<Var, BlockId, BlockId> {
         Box::from( self.clone() )
     }
 
-    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr) {
-       registry.compile_br_cond(self)
+    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr, module: &mut crate::prelude::Module) {
+       registry.compile_br_cond(self, module)
     }
 
     fn uses(&self, var: &Var) -> bool {
@@ -106,8 +106,8 @@ impl Ir for BrCond<Var, BlockId, BlockId> {
         }
     }
     
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block) {
-        compiler.compile_br_cond(&self, &block)
+    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
+        compiler.compile_br_cond(&self, &block, module)
     }
 
     fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
