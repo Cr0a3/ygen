@@ -82,7 +82,12 @@ impl MachineInstr {
 
                 let constant = module.addConst(&format!(".cimm{}", index));
                 constant.private();
-                constant.data = Vec::from(imm.to_ne_bytes());
+
+                if self.meta == TypeMetadata::f32 {
+                    constant.data = Vec::from((imm as f32).to_bits().to_be_bytes());
+                } else { // f64
+                    constant.data = Vec::from(imm.to_bits().to_le_bytes());
+                }
 
                 let stack_off = helper.alloc.alloc_stack(self.meta);
 
@@ -92,6 +97,14 @@ impl MachineInstr {
                 adrm.meta = TypeMetadata::ptr;
 
                 out.push(adrm);
+
+                let mut load = MachineInstr::new(MachineMnemonic::Load);
+                load.set_out(stack_off.into());
+                load.add_operand(stack_off.into());
+
+                load.meta = TypeMetadata::i64;
+
+                out.push(load);
 
                 *operand = stack_off.into();
 

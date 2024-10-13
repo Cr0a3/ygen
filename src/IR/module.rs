@@ -373,7 +373,7 @@ impl Module {
         lines.push_str("section .rodata\n\n");
 
         for (_, consta) in &self.consts {
-            lines.push_str(&format!("{}: {:?} # {}\n", consta.name, consta.data, consta.data.iter()                                      
+            lines.push_str(&format!("{}: {:02X?} # {}\n", consta.name, consta.data, consta.data.iter()                                      
                                                                                                 .filter_map(|&byte| {
                                                                                                     if byte >= 32 && byte <= 126 {
                                                                                                         Some(byte as char)

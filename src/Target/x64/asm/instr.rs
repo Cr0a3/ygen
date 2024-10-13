@@ -1556,6 +1556,10 @@ impl Into<MemoryOperand> for MemOp {
             displ_size = 1;
         }
 
+        if self.rip {
+            base = Register::RIP;
+        }
+
         MemoryOperand::new(
             base, 
             index, 
