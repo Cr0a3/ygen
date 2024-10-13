@@ -8,7 +8,7 @@ impl CompilationHelper {
         let mut instr = MachineInstr::new(MachineMnemonic::Move);
 
         instr.set_out(MachineOperand::Reg(self.call.return_reg(self.arch, node.inner1.into())) );
-        instr.add_operand(MachineOperand::Imm(node.inner1.val() as i64));
+        instr.add_operand(MachineOperand::Imm(node.inner1.val()));
 
         instr.meta = node.inner1.into();
 

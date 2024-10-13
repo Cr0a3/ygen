@@ -40,12 +40,13 @@ macro_rules! compile_func {
                         let mut vsink = Vec::new();
                         helper.$func(node, &mut vsink, block, module);
 
+                        let mut vsink2 = Vec::new();
                         for inst in &mut vsink {
                             inst.turn_into_float_if_needed();
-                            inst.fix_const_imm(module);
+                            vsink2.extend_from_slice(&inst.fix_const_imm(helper, module));
                         }
 
-                        self.sink.extend_from_slice(&vsink);
+                        self.sink.extend_from_slice(&vsink2);
                     } else {
                         todo!("no current block");
                     }

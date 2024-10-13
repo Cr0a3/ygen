@@ -40,7 +40,7 @@ impl CompilationHelper {
         let mut instr = MachineInstr::new(MachineMnemonic::Store);
 
         instr.set_out( ptr );
-        instr.add_operand(MachineOperand::Imm(node.inner2.val() as i64));
+        instr.add_operand(MachineOperand::Imm(node.inner2.val()));
 
         instr.meta = TypeMetadata::ptr;
 

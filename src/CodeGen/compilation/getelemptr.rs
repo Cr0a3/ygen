@@ -11,7 +11,7 @@ impl CompilationHelper {
         let mut indexcalc_instr = MachineInstr::new( MachineMnemonic::Mul );
         indexcalc_instr.set_out(out);
         indexcalc_instr.add_operand(index);
-        indexcalc_instr.add_operand(MachineOperand::Imm(node.ty.byteSize() as i64));
+        indexcalc_instr.add_operand(MachineOperand::Imm(node.ty.byteSize() as f64));
 
         indexcalc_instr.meta = TypeMetadata::ptr;
 

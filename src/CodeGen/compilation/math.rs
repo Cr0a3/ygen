@@ -72,7 +72,7 @@ macro_rules! MathVarType {
                     VarLocation::Mem(stack) => instr.add_operand( MachineOperand::Stack(stack) ),
                 }
         
-                instr.add_operand(MachineOperand::Imm(node.inner2.val() as i64));
+                instr.add_operand(MachineOperand::Imm(node.inner2.val()));
 
                 match out {
                     VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
@@ -108,9 +108,9 @@ macro_rules! MathTypeType {
         
                 let mut instr = MachineInstr::new($mnemonic);
         
-                instr.add_operand(MachineOperand::Imm(node.inner1.val() as i64));
+                instr.add_operand(MachineOperand::Imm(node.inner1.val()));
         
-                instr.add_operand(MachineOperand::Imm(node.inner2.val() as i64));
+                instr.add_operand(MachineOperand::Imm(node.inner2.val()));
 
                 match out {
                     VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),

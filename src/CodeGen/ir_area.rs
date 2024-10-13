@@ -68,9 +68,16 @@ macro_rules! ir_codegen_wrap {
 
             self.helper.$func(node, &mut area.compiled, block, module);
 
+            let mut fixed = Vec::new();
+
             for inst in &mut area.compiled {
                 inst.turn_into_float_if_needed();
+                fixed.extend_from_slice(
+                    &inst.fix_const_imm(&mut self.helper, module)
+                );
             }
+
+            area.compiled = fixed;
 
             self.compiled.push(area);
         }

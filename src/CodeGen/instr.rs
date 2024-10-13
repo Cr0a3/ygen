@@ -6,7 +6,7 @@ use crate::Obj::Link;
 use crate::IR::{BlockId, Type, TypeMetadata};
 
 use super::reg::Reg;
-use super::VarLocation;
+use super::{CompilationHelper, VarLocation};
 
 /// a low level instruction which is portable over platforms
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -65,8 +65,43 @@ impl MachineInstr {
     }
 
     /// Fixes the instruction imm based on the rules
-    pub fn fix_const_imm(&mut self, module: &mut crate::prelude::Module) {
-        todo!()
+    /// 
+    /// Returns the fixed machine instr (maybe some got added so)
+    pub fn fix_const_imm(&mut self, helper: &mut CompilationHelper, module: &mut crate::prelude::Module) -> Vec<MachineInstr> {
+        if !self.meta.float() {
+            return vec![self.to_owned()];
+        }
+
+        let mut out = Vec::new();
+
+        let mut index = 0;
+
+        for operand in &mut self.operands {
+            if let MachineOperand::Imm(imm) = operand {
+                let imm = *imm;
+
+                let constant = module.addConst(&format!(".cimm{}", index));
+                constant.private();
+                constant.data = Vec::from(imm.to_ne_bytes());
+
+                let stack_off = helper.alloc.alloc_stack(self.meta);
+
+                let mut adrm = MachineInstr::new(MachineMnemonic::AdressLoad(constant.name.to_owned()));
+                adrm.set_out(stack_off.into());
+
+                adrm.meta = TypeMetadata::ptr;
+
+                out.push(adrm);
+
+                *operand = stack_off.into();
+
+                index += 1;
+            }
+        }
+
+        out.push(self.to_owned());
+        
+        out
     }
 }
 
@@ -95,14 +130,33 @@ impl Display for MachineInstr {
 
 
 /// a low level operand which is portable over platforms
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy)]
 pub enum MachineOperand {
     /// a number
-    Imm(i64),
+    Imm(f64),
     /// a register
     Reg(Reg),
     /// stack offset
     Stack(i64),
+}
+
+impl PartialEq for MachineOperand {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Imm(l0), Self::Imm(r0)) => l0 == r0,
+            (Self::Reg(l0), Self::Reg(r0)) => l0 == r0,
+            (Self::Stack(l0), Self::Stack(r0)) => l0 == r0,
+            _ => false,
+        }
+    }
+}
+
+impl Eq for MachineOperand {}
+
+impl std::hash::Hash for MachineOperand {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        core::mem::discriminant(self).hash(state);
+    }
 }
 
 impl Display for MachineOperand {

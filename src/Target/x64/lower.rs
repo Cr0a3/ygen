@@ -114,7 +114,7 @@ impl From<MachineOperand> for Operand {
     fn from(value: MachineOperand) -> Self {
         match value {
             MachineOperand::Stack(stack) => x64_stack!(stack as u32),
-            MachineOperand::Imm(imm) => Operand::Imm(imm),
+            MachineOperand::Imm(imm) => Operand::Imm(imm as i64),
             MachineOperand::Reg(reg) => match reg {
                 crate::CodeGen::Reg::x64(x64_reg) => Operand::Reg(x64_reg),
             },

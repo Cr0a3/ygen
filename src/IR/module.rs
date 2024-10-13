@@ -151,11 +151,6 @@ impl Module {
     pub fn emitMachineCode(&mut self, triple: Triple, registry: &mut TargetRegistry, debug: bool) -> Result<(ObjectBuilder, Option<DebugRegistry>), Box<dyn Error>> {
         let mut obj = ObjectBuilder::new(triple);
 
-        for (_, consta) in &self.consts {
-            obj.decl((consta.name.as_str(), Decl::Constant, consta.linkage));
-            obj.define(&consta.name, consta.data.clone());
-        }
-
         for (name, func) in self.funcs.clone() {
             obj.decl( (&name, Decl::Function, func.linkage));
 
@@ -264,6 +259,13 @@ impl Module {
             }
 
             obj.define(&name, comp);
+        }
+
+        // NOT CHANGE THE ORDER CUZ FOR SOME ARCHS (LIKE X86) FPs ARE MADE USING CONSTS
+        // WHICH WOULD LEED TO A PANIC
+        for (_, consta) in &self.consts {
+            obj.decl((consta.name.as_str(), Decl::Constant, consta.linkage));
+            obj.define(&consta.name, consta.data.clone());
         }
 
         Ok((obj, self.dbg_registry.to_owned()))

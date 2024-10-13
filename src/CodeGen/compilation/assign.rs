@@ -15,7 +15,7 @@ impl CompilationHelper {
             VarLocation::Mem(stack) => instr.set_out( MachineOperand::Stack(stack) ),
         }
 
-        instr.add_operand(MachineOperand::Imm(node.inner2.val() as i64));
+        instr.add_operand(MachineOperand::Imm(node.inner2.val()));
 
         instr.meta = node.inner1.ty;
 

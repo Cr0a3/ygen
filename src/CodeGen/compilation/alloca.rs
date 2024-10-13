@@ -25,7 +25,7 @@ impl CompilationHelper {
         let mut instr = MachineInstr::new(MachineMnemonic::StackAlloc);
 
         instr.set_out(out);
-        instr.add_operand(MachineOperand::Imm(off));
+        instr.add_operand(MachineOperand::Imm(off as f64));
         
         self.allocated_vars.push(node.inner1.name.to_owned());
 

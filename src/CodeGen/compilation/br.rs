@@ -39,7 +39,7 @@ impl CompilationHelper {
             MachineMnemonic::BrCond(iftrue, iffalse)
         );
         cmp.add_operand(src);
-        cmp.add_operand(MachineOperand::Imm(0));
+        cmp.add_operand(MachineOperand::Imm(0.0));
         
         cmp.meta = node.inner1.ty;
 

@@ -11,8 +11,8 @@ impl CompilationHelper {
         let out = (*out).into();
         let cond = (*cond).into();
 
-        let yes = MachineOperand::Imm(node.yes.val() as i64);
-        let no = MachineOperand::Imm(node.no.val() as i64);
+        let yes = MachineOperand::Imm(node.yes.val());
+        let no = MachineOperand::Imm(node.no.val());
 
         let mut yes_instr = MachineInstr::new(MachineMnemonic::MovIfZero);
         
@@ -46,7 +46,7 @@ impl CompilationHelper {
         let cond = (*cond).into();
         let no = (*no).into();
 
-        let yes = MachineOperand::Imm(node.yes.val() as i64);
+        let yes = MachineOperand::Imm(node.yes.val());
 
         let mut yes_instr = MachineInstr::new(MachineMnemonic::MovIfZero);
         
@@ -80,7 +80,7 @@ impl CompilationHelper {
         let cond = (*cond).into();
         let yes = (*yes).into();
 
-        let no = MachineOperand::Imm(node.no.val() as i64);
+        let no = MachineOperand::Imm(node.no.val());
 
         let mut yes_instr = MachineInstr::new(MachineMnemonic::MovIfZero);
         
