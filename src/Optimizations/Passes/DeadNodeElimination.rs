@@ -9,7 +9,7 @@ pub(crate) struct DeadNodeElimination {
 /// Creates a new DeadNodeElimination pass which is heap allocated
 pub fn DeadNodeElimination() -> Box<dyn Pass> {
     Box::from( DeadNodeElimination {
-        recursion_steps: 1, // for other values we get errors--+
+        recursion_steps: 1, // for other values we get errors
     } )
 }
 
