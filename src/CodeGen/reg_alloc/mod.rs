@@ -266,7 +266,7 @@ impl RegAlloc {
 
     }
 
-    fn alloc_rv(&mut self, ty: TypeMetadata) -> VarLocation {
+    pub(crate) fn alloc_rv(&mut self, ty: TypeMetadata) -> VarLocation {
         let mut reg  = None;
 
         if TypeMetadata::f32 == ty || TypeMetadata::f64 == ty {

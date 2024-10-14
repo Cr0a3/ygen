@@ -48,8 +48,8 @@ fn main() {
 
     let parsed = parse(buf);
 
-    let path_str = "./tmp";
-    let path2_str = "./tmp2";
+    let path_str = "./tmp.yl";
+    let path2_str = "./tmp2.c";
 
     let path = std::path::PathBuf::from(path_str);
 
@@ -106,7 +106,7 @@ fn main() {
 
     for cmd in parsed.cmd {
         let args = cmd  .replace("%s", path_str)
-                                .replace("%s2", path2_str);
+                                .replace("%c", path2_str);
         let args = unescaper::unescape(&args).unwrap();
         let args = args.trim();
         let mut args = args.split(" ").collect::<Vec<&str>>();

@@ -89,24 +89,26 @@ impl MachineInstr {
                     constant.data = Vec::from(imm.to_bits().to_le_bytes());
                 }
 
-                let stack_off = helper.alloc.alloc_stack(self.meta);
+                let location = helper.alloc.alloc_rv(TypeMetadata::ptr);
 
                 let mut adrm = MachineInstr::new(MachineMnemonic::AdressLoad(constant.name.to_owned()));
-                adrm.set_out(stack_off.into());
+                adrm.set_out(location.into());
 
                 adrm.meta = TypeMetadata::ptr;
 
                 out.push(adrm);
 
-                let mut load = MachineInstr::new(MachineMnemonic::Load);
-                load.set_out(stack_off.into());
-                load.add_operand(stack_off.into());
+                let float = helper.alloc.alloc_rv(self.meta);
 
-                load.meta = TypeMetadata::i64;
+                let mut load = MachineInstr::new(MachineMnemonic::Load);
+                load.set_out(float.into());
+                load.add_operand(float.into());
+
+                load.meta = TypeMetadata::f64;
 
                 out.push(load);
 
-                *operand = stack_off.into();
+                *operand = float.into();
 
                 index += 1;
             }
