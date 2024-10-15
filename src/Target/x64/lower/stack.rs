@@ -78,8 +78,6 @@ pub(crate) fn x64_lower_load(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     let out = instr.out.expect("stack stores need a output");
     let ptr = instr.operands.get(0).expect("stack stores need one operand");
 
-    println!("ptr: {:?}", ptr);
-
     let ptr: Operand = (*ptr).into();
     
     let out = out.into();

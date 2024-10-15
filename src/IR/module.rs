@@ -12,6 +12,9 @@ pub struct Module {
     pub(crate) funcs: HashMap<String, Function>,
     pub(crate) consts: HashMap<String, Const>,
     pub(crate) dbg_registry: Option<DebugRegistry>,
+
+    /// The number of current constants
+    pub(crate) const_index: usize,
 }
 
 impl Module {
@@ -21,6 +24,7 @@ impl Module {
             funcs: HashMap::new(),
             consts: HashMap::new(),
             dbg_registry: None,
+            const_index: 0,
         }
     }
 

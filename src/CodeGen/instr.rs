@@ -74,13 +74,11 @@ impl MachineInstr {
 
         let mut out = Vec::new();
 
-        let mut index = 0;
-
         for operand in &mut self.operands {
             if let MachineOperand::Imm(imm) = operand {
                 let imm = *imm;
 
-                let constant = module.addConst(&format!(".cimm{}", index));
+                let constant = module.addConst(&format!(".cimm{}", module.const_index));
                 constant.private();
 
                 if self.meta == TypeMetadata::f32 {
@@ -116,7 +114,7 @@ impl MachineInstr {
 
                 *operand = float.into();
 
-                index += 1;
+                module.const_index += 1;
             }
         }
 

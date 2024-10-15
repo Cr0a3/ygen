@@ -5,7 +5,7 @@ use object::{Architecture, BinaryFormat, Endianness, FileFlags, RelocationEncodi
 
 use crate::debug::DebugRegistry;
 use crate::prelude::Triple;
-use crate::Target::{self, Arch, CallConv};
+use crate::Target::{self, Arch};
 use std::collections::BTreeMap;
 use std::fmt::Display;
 use std::fs::File;
@@ -344,7 +344,7 @@ impl ObjectBuilder {
 
         for link in &self.links {
             let (_, off, _, _, _, _) = syms.get(&link.from).expect("expectd valid link source");
-            let (_, _, to_sym, ty, _, _) = syms.get(&link.to).expect("expected valid link destination");
+            let (_, _, to_sym, _, _, _) = syms.get(&link.to).expect("expected valid link destination");
 
             let addend = 0;
             let offset = -3;
