@@ -529,7 +529,7 @@ impl X64MCInstr {
                     Instruction::with1::<MemoryOperand>(Code::Pop_rm64, op1.into())?
                 } else { todo!() }
             },
-            Mnemonic::Ret => Instruction::with(Code::Retnw),
+            Mnemonic::Ret => Instruction::with(Code::Retnq),
             Mnemonic::Imul => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
                     if op1.is_gr64() {

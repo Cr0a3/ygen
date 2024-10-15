@@ -84,7 +84,13 @@ impl MachineInstr {
                 constant.private();
 
                 if self.meta == TypeMetadata::f32 {
-                    constant.data = Vec::from((imm as f32).to_bits().to_be_bytes());
+                    let mut vec = Vec::new();
+                    vec.extend_from_slice(&(imm as f32).to_bits().to_le_bytes());
+                    
+                    
+                    vec.extend_from_slice(&vec![0, 0, 0, 0]);
+
+                    constant.data = vec;
                 } else { // f64
                     constant.data = Vec::from(imm.to_bits().to_le_bytes());
                 }
@@ -102,9 +108,9 @@ impl MachineInstr {
 
                 let mut load = MachineInstr::new(MachineMnemonic::Load);
                 load.set_out(float.into());
-                load.add_operand(float.into());
+                load.add_operand(location.into());
 
-                load.meta = TypeMetadata::f64;
+                load.meta = self.meta;
 
                 out.push(load);
 

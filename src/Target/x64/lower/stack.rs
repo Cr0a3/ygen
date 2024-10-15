@@ -78,6 +78,8 @@ pub(crate) fn x64_lower_load(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     let out = instr.out.expect("stack stores need a output");
     let ptr = instr.operands.get(0).expect("stack stores need one operand");
 
+    println!("ptr: {:?}", ptr);
+
     let ptr: Operand = (*ptr).into();
     
     let out = out.into();
@@ -119,7 +121,7 @@ pub(crate) fn x64_lower_load(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
             } else { // xmm now should have a f64 cuz of check for f32
                 if let Operand::Reg(ptr) = ptr {
                     sink.push( 
-                        X64MCInstr::with2(Mnemonic::Movd, out, Operand::Mem(MemOp {
+                        X64MCInstr::with2(Mnemonic::Movq, out, Operand::Mem(MemOp {
                             base: Some(ptr),
                             index: None,
                             scale: 1,
@@ -129,7 +131,7 @@ pub(crate) fn x64_lower_load(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
                     )
                 } else {
                     sink.push( 
-                        X64MCInstr::with2(Mnemonic::Movd, out, ptr)
+                        X64MCInstr::with2(Mnemonic::Movq, out, ptr)
                     );
                 }
             }
@@ -138,9 +140,19 @@ pub(crate) fn x64_lower_load(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     else {
         if instr.meta.float() {
             if instr.meta == TypeMetadata::f32 {
-
+                sink.push( 
+                    X64MCInstr::with2(Mnemonic::Movd, Operand::Reg(x64Reg::Xmm0), ptr)
+                );
+                sink.push(
+                    X64MCInstr::with2(Mnemonic::Movd, out, Operand::Reg(x64Reg::Xmm0))
+                );
             } else {
-                
+                sink.push( 
+                    X64MCInstr::with2(Mnemonic::Movq, Operand::Reg(x64Reg::Xmm0), ptr)
+                );
+                sink.push(
+                    X64MCInstr::with2(Mnemonic::Movq, out, Operand::Reg(x64Reg::Xmm0))
+                );
             }
         } else {
             sink.push( 

@@ -268,7 +268,7 @@ impl ObjectBuilder {
                     match decl {
                         Decl::Function => SymbolKind::Text,
                         Decl::Data => SymbolKind::Data,
-                        Decl::Constant => SymbolKind::Label,
+                        Decl::Constant => SymbolKind::Data,
                     }
                 },
                 scope: {
@@ -330,7 +330,7 @@ impl ObjectBuilder {
                     match decl {
                         Decl::Function => SymbolKind::Text,
                         Decl::Data => SymbolKind::Data,
-                        Decl::Constant => SymbolKind::Label,
+                        Decl::Constant => SymbolKind::Data,
                     }
                 },
                 scope: SymbolScope::Dynamic,
@@ -346,22 +346,8 @@ impl ObjectBuilder {
             let (_, off, _, _, _, _) = syms.get(&link.from).expect("expectd valid link source");
             let (_, _, to_sym, ty, _, _) = syms.get(&link.to).expect("expected valid link destination");
 
-            let mut addend = 0;
-            let mut offset = 0;
-
-            if self.triple.getCallConv() == Ok(CallConv::WindowsFastCall) {
-                addend = match ty {
-                    Decl::Function => 0,
-                    _ => -1,
-                };
-                offset = -3;
-            } else if self.triple.getCallConv() == Ok(CallConv::SystemV) {
-                addend = match ty {
-                    Decl::Function => 0,
-                    _ => -1,
-                };
-                offset = -3;
-            }
+            let addend = 0;
+            let offset = -3;
 
             obj.add_relocation(secText, Relocation {
                 offset: (link.at as i64 + offset) as u64 + {if let Some(off) = off { *off } else { 0 }},

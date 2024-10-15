@@ -89,7 +89,7 @@ pub(crate) fn x64_lower_fmove(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) 
     if TypeMetadata::f32 == instr.meta { 
         // f32
         match variant {
-            FInstrVariant::Fp =>     sink.push(X64MCInstr::with2(Mnemonic::Movups,   out, op1)),
+            FInstrVariant::Fp =>     sink.push(X64MCInstr::with2(Mnemonic::Movss,   out, op1)),
             FInstrVariant::FpReg =>  sink.push(X64MCInstr::with2(Mnemonic::Movd,     out, op1)),
             FInstrVariant::RegFp =>  sink.push(X64MCInstr::with2(Mnemonic::Movd,     out, op1)),
             FInstrVariant::FpMem =>  sink.push(X64MCInstr::with2(Mnemonic::Movss,    out, op1)),
@@ -109,7 +109,7 @@ pub(crate) fn x64_lower_fmove(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) 
     } else {
         // f64
         match variant {
-            FInstrVariant::Fp =>     sink.push(X64MCInstr::with2(Mnemonic::Movupd,   out, op1)),
+            FInstrVariant::Fp =>     sink.push(X64MCInstr::with2(Mnemonic::Movsd,   out, op1)),
             FInstrVariant::FpReg =>  sink.push(X64MCInstr::with2(Mnemonic::Movq,     out, op1)),
             FInstrVariant::RegFp =>  sink.push(X64MCInstr::with2(Mnemonic::Movq,     out, op1)),
             FInstrVariant::FpMem =>  sink.push(X64MCInstr::with2(Mnemonic::Movsd,    out, op1)),
