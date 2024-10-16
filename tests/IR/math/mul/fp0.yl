@@ -1,0 +1,20 @@
+# RUN:
+cargo run -p ylc -- -in=%s -o=out.o
+gcc out.o %c -o a.exe
+./a.exe
+# IN:
+
+define f32 @mul(f32 %0, f32 %1) {
+  entry:
+    %ret = mul f32 %0, %1
+    ret i32 %ret
+}
+
+# IN2:
+extern float mul(float, float);
+
+int main() {
+    return (int)add(2.5f, 5f);
+}
+
+# EXIT_CODE=12

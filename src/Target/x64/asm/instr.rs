@@ -77,7 +77,7 @@ impl X64MCInstr {
                             Instruction::with2::<Register, Register>(Code::Add_rm32_r32, (*op1).into(), (*op2).into())?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, Register>(Code::Add_rm64_r64, (*op1).into(), (*op2).into())?
-                        } else { todo!() }
+                        } else { todo!("{}", self) }
                     } else if let Some(Operand::Mem(op2)) = &self.op2 {
                         if op1.is_gr8() {
                             Instruction::with2::<Register, MemoryOperand>(Code::Add_r8_rm8, (*op1).into(), op2.into())?
@@ -87,7 +87,7 @@ impl X64MCInstr {
                             Instruction::with2::<Register, MemoryOperand>(Code::Add_r32_rm32, (*op1).into(), op2.into())?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, MemoryOperand>(Code::Add_r64_rm64, (*op1).into(), op2.into())?
-                        } else { todo!() }
+                        } else { todo!("{}", self) }
                     } else if let Some(Operand::Imm(imm)) = &self.op2 {
                         if op1.is_gr8() {
                             Instruction::with2::<Register, i32>(Code::Add_rm8_imm8, (*op1).into(), *imm as i32)?
@@ -97,8 +97,8 @@ impl X64MCInstr {
                             Instruction::with2::<Register, i32>(Code::Add_rm32_imm32, (*op1).into(), *imm as i32)?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, i32>(Code::Add_rm64_imm32, (*op1).into(), *imm as i32)?
-                        } else { todo!() }
-                    } else { todo!() }
+                        } else { todo!("{}", self) }
+                    } else { todo!("{}", self) }
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     if let Some(Operand::Reg(op2)) = &self.op2 {
                         if op2.is_gr8() {
@@ -109,9 +109,9 @@ impl X64MCInstr {
                             Instruction::with2::<MemoryOperand, Register>(Code::Add_rm32_r32, op1.into(), (*op2).into())?
                         } else if op2.is_gr64() {
                             Instruction::with2::<MemoryOperand, Register>(Code::Add_rm64_r64, op1.into(), (*op2).into())?
-                        } else { todo!() }
-                    } else { todo!() }
-                } else { todo!() }
+                        } else { todo!("{}", self) }
+                    } else { todo!("{}", self) }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Adc => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -124,7 +124,7 @@ impl X64MCInstr {
                             Instruction::with2::<Register, Register>(Code::Adc_rm32_r32, (*op1).into(), (*op2).into())?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, Register>(Code::Adc_rm64_r64, (*op1).into(), (*op2).into())?
-                        } else { todo!() }
+                        } else { todo!("{}", self) }
                     } else if let Some(Operand::Mem(op2)) = &self.op2 {
                         if op1.is_gr8() {
                             Instruction::with2::<Register, MemoryOperand>(Code::Adc_r8_rm8, (*op1).into(), op2.into())?
@@ -134,7 +134,7 @@ impl X64MCInstr {
                             Instruction::with2::<Register, MemoryOperand>(Code::Adc_r32_rm32, (*op1).into(), op2.into())?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, MemoryOperand>(Code::Adc_r64_rm64, (*op1).into(), op2.into())?
-                        } else { todo!() }
+                        } else { todo!("{}", self) }
                     } else if let Some(Operand::Imm(imm)) = &self.op2 {
                         if op1.is_gr8() {
                             Instruction::with2::<Register, i32>(Code::Adc_rm8_imm8, (*op1).into(), *imm as i32)?
@@ -144,8 +144,8 @@ impl X64MCInstr {
                             Instruction::with2::<Register, i32>(Code::Adc_rm32_imm32, (*op1).into(), *imm as i32)?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, i32>(Code::Adc_rm64_imm32, (*op1).into(), *imm as i32)?
-                        } else { todo!() }
-                    } else { todo!() }
+                        } else { todo!("{}", self) }
+                    } else { todo!("{}", self) }
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     if let Some(Operand::Reg(op2)) = &self.op2 {
                         if op2.is_gr8() {
@@ -156,9 +156,9 @@ impl X64MCInstr {
                             Instruction::with2::<MemoryOperand, Register>(Code::Adc_rm32_r32, op1.into(), (*op2).into())?
                         } else if op2.is_gr64() {
                             Instruction::with2::<MemoryOperand, Register>(Code::Adc_rm64_r64, op1.into(), (*op2).into())?
-                        } else { todo!() }
-                    } else { todo!() }
-                } else { todo!() }
+                        } else { todo!("{}", self) }
+                    } else { todo!("{}", self) }
+                } else { todo!("{}", self) }
             },
             Mnemonic::And => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -171,7 +171,7 @@ impl X64MCInstr {
                             Instruction::with2::<Register, Register>(Code::And_rm32_r32, (*op1).into(), (*op2).into())?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, Register>(Code::And_rm64_r64, (*op1).into(), (*op2).into())?
-                        } else { todo!() }
+                        } else { todo!("{}", self) }
                     } else if let Some(Operand::Mem(op2)) = &self.op2 {
                         if op1.is_gr8() {
                             Instruction::with2::<Register, MemoryOperand>(Code::And_r8_rm8, (*op1).into(), op2.into())?
@@ -181,7 +181,7 @@ impl X64MCInstr {
                             Instruction::with2::<Register, MemoryOperand>(Code::And_r32_rm32, (*op1).into(), op2.into())?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, MemoryOperand>(Code::And_r64_rm64, (*op1).into(), op2.into())?
-                        } else { todo!() }
+                        } else { todo!("{}", self) }
                     } else if let Some(Operand::Imm(imm)) = &self.op2 {
                         if op1.is_gr8() {
                             Instruction::with2::<Register, i32>(Code::And_rm8_imm8, (*op1).into(), *imm as i32)?
@@ -191,8 +191,8 @@ impl X64MCInstr {
                             Instruction::with2::<Register, i32>(Code::And_rm32_imm32, (*op1).into(), *imm as i32)?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, i32>(Code::And_rm64_imm32, (*op1).into(), *imm as i32)?
-                        } else { todo!() }
-                    } else { todo!() }
+                        } else { todo!("{}", self) }
+                    } else { todo!("{}", self) }
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     if let Some(Operand::Reg(op2)) = &self.op2 {
                         if op2.is_gr8() {
@@ -203,9 +203,9 @@ impl X64MCInstr {
                             Instruction::with2::<MemoryOperand, Register>(Code::And_rm32_r32, op1.into(), (*op2).into())?
                         } else if op2.is_gr64() {
                             Instruction::with2::<MemoryOperand, Register>(Code::And_rm64_r64, op1.into(), (*op2).into())?
-                        } else { todo!() }
-                    } else { todo!() }
-                } else { todo!() }
+                        } else { todo!("{}", self) }
+                    } else { todo!("{}", self) }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Or => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -218,7 +218,7 @@ impl X64MCInstr {
                             Instruction::with2::<Register, Register>(Code::Or_rm32_r32, (*op1).into(), (*op2).into())?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, Register>(Code::Or_rm64_r64, (*op1).into(), (*op2).into())?
-                        } else { todo!() }
+                        } else { todo!("{}", self) }
                     } else if let Some(Operand::Mem(op2)) = &self.op2 {
                         if op1.is_gr8() {
                             Instruction::with2::<Register, MemoryOperand>(Code::Or_r8_rm8, (*op1).into(), op2.into())?
@@ -228,7 +228,7 @@ impl X64MCInstr {
                             Instruction::with2::<Register, MemoryOperand>(Code::Or_r32_rm32, (*op1).into(), op2.into())?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, MemoryOperand>(Code::Or_r64_rm64, (*op1).into(), op2.into())?
-                        } else { todo!() }
+                        } else { todo!("{}", self) }
                     } else if let Some(Operand::Imm(imm)) = &self.op2 {
                         if op1.is_gr8() {
                             Instruction::with2::<Register, i32>(Code::Or_rm8_imm8, (*op1).into(), *imm as i32)?
@@ -238,8 +238,8 @@ impl X64MCInstr {
                             Instruction::with2::<Register, i32>(Code::Or_rm32_imm32, (*op1).into(), *imm as i32)?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, i32>(Code::Or_rm64_imm32, (*op1).into(), *imm as i32)?
-                        } else { todo!() }
-                    } else { todo!() }
+                        } else { todo!("{}", self) }
+                    } else { todo!("{}", self) }
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     if let Some(Operand::Reg(op2)) = &self.op2 {
                         if op2.is_gr8() {
@@ -250,9 +250,9 @@ impl X64MCInstr {
                             Instruction::with2::<MemoryOperand, Register>(Code::Or_rm32_r32, op1.into(), (*op2).into())?
                         } else if op2.is_gr64() {
                             Instruction::with2::<MemoryOperand, Register>(Code::Or_rm64_r64, op1.into(), (*op2).into())?
-                        } else { todo!() }
-                    } else { todo!() }
-                } else { todo!() }
+                        } else { todo!("{}", self) }
+                    } else { todo!("{}", self) }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Xor => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -265,7 +265,7 @@ impl X64MCInstr {
                             Instruction::with2::<Register, Register>(Code::Xor_rm32_r32, (*op1).into(), (*op2).into())?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, Register>(Code::Xor_rm64_r64, (*op1).into(), (*op2).into())?
-                        } else { todo!() }
+                        } else { todo!("{}", self) }
                     } else if let Some(Operand::Mem(op2)) = &self.op2 {
                         if op1.is_gr8() {
                             Instruction::with2::<Register, MemoryOperand>(Code::Xor_r8_rm8, (*op1).into(), op2.into())?
@@ -275,7 +275,7 @@ impl X64MCInstr {
                             Instruction::with2::<Register, MemoryOperand>(Code::Xor_r32_rm32, (*op1).into(), op2.into())?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, MemoryOperand>(Code::Xor_r64_rm64, (*op1).into(), op2.into())?
-                        } else { todo!() }
+                        } else { todo!("{}", self) }
                     } else if let Some(Operand::Imm(imm)) = &self.op2 {
                         if op1.is_gr8() {
                             Instruction::with2::<Register, i32>(Code::Xor_rm8_imm8, (*op1).into(), *imm as i32)?
@@ -285,8 +285,8 @@ impl X64MCInstr {
                             Instruction::with2::<Register, i32>(Code::Xor_rm32_imm32, (*op1).into(), *imm as i32)?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, i32>(Code::Xor_rm64_imm32, (*op1).into(), *imm as i32)?
-                        } else { todo!() }
-                    } else { todo!() }
+                        } else { todo!("{}", self) }
+                    } else { todo!("{}", self) }
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     if let Some(Operand::Reg(op2)) = &self.op2 {
                         if op2.is_gr8() {
@@ -297,9 +297,9 @@ impl X64MCInstr {
                             Instruction::with2::<MemoryOperand, Register>(Code::Xor_rm32_r32, op1.into(), (*op2).into())?
                         } else if op2.is_gr64() {
                             Instruction::with2::<MemoryOperand, Register>(Code::Xor_rm64_r64, op1.into(), (*op2).into())?
-                        } else { todo!() }
-                    } else { todo!() }
-                } else { todo!() }
+                        } else { todo!("{}", self) }
+                    } else { todo!("{}", self) }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Sub => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -312,7 +312,7 @@ impl X64MCInstr {
                             Instruction::with2::<Register, Register>(Code::Sub_rm32_r32, (*op1).into(), (*op2).into())?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, Register>(Code::Sub_rm64_r64, (*op1).into(), (*op2).into())?
-                        } else { todo!() }
+                        } else { todo!("{}", self) }
                     } else if let Some(Operand::Mem(op2)) = &self.op2 {
                         if op1.is_gr8() {
                             Instruction::with2::<Register, MemoryOperand>(Code::Sub_r8_rm8, (*op1).into(), op2.into())?
@@ -322,7 +322,7 @@ impl X64MCInstr {
                             Instruction::with2::<Register, MemoryOperand>(Code::Sub_r32_rm32, (*op1).into(), op2.into())?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, MemoryOperand>(Code::Sub_r64_rm64, (*op1).into(), op2.into())?
-                        } else { todo!() }
+                        } else { todo!("{}", self) }
                     } else if let Some(Operand::Imm(imm)) = &self.op2 {
                         if op1.is_gr8() {
                             Instruction::with2::<Register, i32>(Code::Sub_rm8_imm8, (*op1).into(), *imm as i32)?
@@ -332,8 +332,8 @@ impl X64MCInstr {
                             Instruction::with2::<Register, i32>(Code::Sub_rm32_imm32, (*op1).into(), *imm as i32)?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, i32>(Code::Sub_rm64_imm32, (*op1).into(), *imm as i32)?
-                        } else { todo!() }
-                    } else { todo!() }
+                        } else { todo!("{}", self) }
+                    } else { todo!("{}", self) }
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     if let Some(Operand::Reg(op2)) = &self.op2 {
                         if op2.is_gr8() {
@@ -344,9 +344,9 @@ impl X64MCInstr {
                             Instruction::with2::<MemoryOperand, Register>(Code::Sub_rm32_r32, op1.into(), (*op2).into())?
                         } else if op2.is_gr64() {
                             Instruction::with2::<MemoryOperand, Register>(Code::Sub_rm64_r64, op1.into(), (*op2).into())?
-                        } else { todo!() }
-                    } else { todo!() }
-                } else { todo!() }
+                        } else { todo!("{}", self) }
+                    } else { todo!("{}", self) }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Neg => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -358,10 +358,10 @@ impl X64MCInstr {
                         Instruction::with1::<Register>(Code::Neg_rm16, (*op1).into())?
                     } else if op1.is_gr8() {
                         Instruction::with1::<Register>(Code::Neg_rm8, (*op1).into())?
-                    } else { todo!() }
+                    } else { todo!("{}", self) }
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     Instruction::with1::<MemoryOperand>(Code::Neg_rm64, op1.into())?
-                } else { todo!() }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Cmp => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -374,7 +374,7 @@ impl X64MCInstr {
                             Instruction::with2::<Register, Register>(Code::Cmp_rm32_r32, (*op1).into(), (*op2).into())?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, Register>(Code::Cmp_rm64_r64, (*op1).into(), (*op2).into())?
-                        } else { todo!() }
+                        } else { todo!("{}", self) }
                     } else if let Some(Operand::Mem(op2)) = &self.op2 {
                         if op1.is_gr8() {
                             Instruction::with2::<Register, MemoryOperand>(Code::Cmp_r8_rm8, (*op1).into(), op2.into())?
@@ -384,7 +384,7 @@ impl X64MCInstr {
                             Instruction::with2::<Register, MemoryOperand>(Code::Cmp_r32_rm32, (*op1).into(), op2.into())?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, MemoryOperand>(Code::Cmp_r64_rm64, (*op1).into(), op2.into())?
-                        } else { todo!() }
+                        } else { todo!("{}", self) }
                     } else if let Some(Operand::Imm(imm)) = &self.op2 {
                         if op1.is_gr8() {
                             Instruction::with2::<Register, i32>(Code::Cmp_rm8_imm8, (*op1).into(), *imm as i32)?
@@ -394,8 +394,8 @@ impl X64MCInstr {
                             Instruction::with2::<Register, i32>(Code::Cmp_rm32_imm32, (*op1).into(), *imm as i32)?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, i32>(Code::Cmp_rm64_imm32, (*op1).into(), *imm as i32)?
-                        } else { todo!() }
-                    } else { todo!() }
+                        } else { todo!("{}", self) }
+                    } else { todo!("{}", self) }
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     if let Some(Operand::Reg(op2)) = &self.op2 {
                         if op2.is_gr8() {
@@ -406,9 +406,9 @@ impl X64MCInstr {
                             Instruction::with2::<MemoryOperand, Register>(Code::Cmp_rm32_r32, op1.into(), (*op2).into())?
                         } else if op2.is_gr64() {
                             Instruction::with2::<MemoryOperand, Register>(Code::Cmp_rm64_r64, op1.into(), (*op2).into())?
-                        } else { todo!() }
-                    } else { todo!() }
-                } else { todo!() }
+                        } else { todo!("{}", self) }
+                    } else { todo!("{}", self) }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Lea => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -419,9 +419,9 @@ impl X64MCInstr {
                             Instruction::with2::<Register, MemoryOperand>(Code::Lea_r32_m, (*op1).into(), op2.into())?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, MemoryOperand>(Code::Lea_r64_m, (*op1).into(), op2.into())?
-                        } else { todo!() }
-                    } else { todo!() }
-                } else { todo!() }
+                        } else { todo!("{}", self) }
+                    } else { todo!("{}", self) }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Mov => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -434,7 +434,7 @@ impl X64MCInstr {
                             Instruction::with2::<Register, Register>(Code::Mov_rm32_r32, (*op1).into(), (*op2).into())?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, Register>(Code::Mov_rm64_r64, (*op1).into(), (*op2).into())?
-                        } else { todo!() }
+                        } else { todo!("{}", self) }
                     } else if let Some(Operand::Mem(op2)) = &self.op2 {
                         if op1.is_gr8() {
                             Instruction::with2::<Register, MemoryOperand>(Code::Mov_r8_rm8, (*op1).into(), op2.into())?
@@ -444,7 +444,7 @@ impl X64MCInstr {
                             Instruction::with2::<Register, MemoryOperand>(Code::Mov_r32_rm32, (*op1).into(), op2.into())?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, MemoryOperand>(Code::Mov_r64_rm64, (*op1).into(), op2.into())?
-                        } else { todo!() }
+                        } else { todo!("{}", self) }
                     } else if let Some(Operand::Imm(imm)) = &self.op2 {
                         if op1.is_gr8() {
                             Instruction::with2::<Register, i32>(Code::Mov_rm8_imm8, (*op1).into(), *imm as i32)?
@@ -454,8 +454,8 @@ impl X64MCInstr {
                             Instruction::with2::<Register, i32>(Code::Mov_rm32_imm32, (*op1).into(), *imm as i32)?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, i32>(Code::Mov_rm64_imm32, (*op1).into(), *imm as i32)?
-                        } else { todo!() }
-                    } else { todo!() }
+                        } else { todo!("{}", self) }
+                    } else { todo!("{}", self) }
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     if let Some(Operand::Reg(op2)) = &self.op2 {
                         if op2.is_gr8() {
@@ -466,9 +466,9 @@ impl X64MCInstr {
                             Instruction::with2::<MemoryOperand, Register>(Code::Mov_rm32_r32, op1.into(), (*op2).into())?
                         } else if op2.is_gr64() {
                             Instruction::with2::<MemoryOperand, Register>(Code::Mov_rm64_r64, op1.into(), (*op2).into())?
-                        } else { todo!() }
-                    } else { todo!() }
-                } else { todo!() }
+                        } else { todo!("{}", self) }
+                    } else { todo!("{}", self) }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Movzx => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -478,20 +478,20 @@ impl X64MCInstr {
                                 Instruction::with2::<Register, Register>(Code::Movzx_r64_rm16, (*op1).into(), (*op2).into())?
                             } else if op2.is_gr8() {
                                 Instruction::with2::<Register, Register>(Code::Movzx_r64_rm8, (*op1).into(), (*op2).into())?
-                            } else { todo!() }
+                            } else { todo!("{}", self) }
                         } else if op1.is_gr32() {
                             if op2.is_gr16() {
                                 Instruction::with2::<Register, Register>(Code::Movzx_r32_rm16, (*op1).into(), (*op2).into())?
                             } else if op2.is_gr8() {
                                 Instruction::with2::<Register, Register>(Code::Movzx_r32_rm8, (*op1).into(), (*op2).into())?
-                            } else { todo!() }
+                            } else { todo!("{}", self) }
                         } else if op1.is_gr16() {
                             if op2.is_gr16() {
                                 Instruction::with2::<Register, Register>(Code::Movzx_r32_rm16, (*op1).into(), (*op2).into())?
                             } else if op2.is_gr8() {
                                 Instruction::with2::<Register, Register>(Code::Movzx_r32_rm8, (*op1).into(), (*op2).into())?
-                            } else { todo!() }
-                        } else { todo!()}
+                            } else { todo!("{}", self) }
+                        } else { todo!("{}", self)}
                     } else if let Some(Operand::Mem(op2)) = &self.op2 {
                         if op1.is_gr64() {
                             Instruction::with2::<Register, MemoryOperand>(Code::Movzx_r64_rm16, (*op1).into(), op2.into())?
@@ -499,9 +499,9 @@ impl X64MCInstr {
                             Instruction::with2::<Register, MemoryOperand>(Code::Movzx_r32_rm16, (*op1).into(), op2.into())?
                         } else if op1.is_gr16() {
                             Instruction::with2::<Register, MemoryOperand>(Code::Movzx_r16_rm16, (*op1).into(), op2.into())?
-                        } else {todo!() } 
-                    } else { todo!()}
-                } else { todo!() }
+                        } else {todo!("{}", self) } 
+                    } else { todo!("{}", self)}
+                } else { todo!("{}", self) }
             },
             Mnemonic::Push => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -509,12 +509,12 @@ impl X64MCInstr {
                         Instruction::with1::<Register>(Code::Push_r64, (*op1).into())?
                     } else if op1.is_gr16() {
                         Instruction::with1::<Register>(Code::Push_r16, (*op1).into())?
-                    } else { todo!()}
+                    } else { todo!("{}", self)}
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     Instruction::with1::<MemoryOperand>(Code::Push_rm64, op1.into())?
                 } else if let Some(Operand::Imm(imm)) = &self.op1 {
                     Instruction::with1(Code::Pushd_imm32, *imm as i32)?
-                } else { todo!() }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Pop => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -524,10 +524,10 @@ impl X64MCInstr {
                         Instruction::with1::<Register>(Code::Pop_r32, (*op1).into())?
                     } else if op1.is_gr16() {
                         Instruction::with1::<Register>(Code::Pop_r16, (*op1).into())?
-                    } else { todo!()}
+                    } else { todo!("{}", self)}
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     Instruction::with1::<MemoryOperand>(Code::Pop_rm64, op1.into())?
-                } else { todo!() }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Ret => Instruction::with(Code::Retnq),
             Mnemonic::Imul => {
@@ -540,10 +540,10 @@ impl X64MCInstr {
                         Instruction::with1::<Register>(Code::Imul_rm16, (*op1).into())?
                     } else if op1.is_gr8() {
                         Instruction::with1::<Register>(Code::Imul_rm8, (*op1).into())?
-                    } else { todo!()}
+                    } else { todo!("{}", self)}
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     Instruction::with1::<MemoryOperand>(Code::Imul_rm64, op1.into())?
-                } else { todo!() }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Mul => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -555,10 +555,10 @@ impl X64MCInstr {
                         Instruction::with1::<Register>(Code::Mul_rm16, (*op1).into())?
                     } else if op1.is_gr8() {
                         Instruction::with1::<Register>(Code::Mul_rm8, (*op1).into())?
-                    } else { todo!()}
+                    } else { todo!("{}", self)}
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     Instruction::with1::<MemoryOperand>(Code::Mul_rm64, op1.into())?
-                } else { todo!() }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Idiv => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -570,10 +570,10 @@ impl X64MCInstr {
                         Instruction::with1::<Register>(Code::Idiv_rm16, (*op1).into())?
                     } else if op1.is_gr8() {
                         Instruction::with1::<Register>(Code::Idiv_rm8, (*op1).into())?
-                    } else { todo!()}
+                    } else { todo!("{}", self)}
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     Instruction::with1::<MemoryOperand>(Code::Idiv_rm64, op1.into())?
-                } else { todo!() }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Div => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -585,10 +585,10 @@ impl X64MCInstr {
                         Instruction::with1::<Register>(Code::Div_rm16, (*op1).into())?
                     } else if op1.is_gr8() {
                         Instruction::with1::<Register>(Code::Div_rm8, (*op1).into())?
-                    } else { todo!()}
+                    } else { todo!("{}", self)}
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     Instruction::with1::<MemoryOperand>(Code::Div_rm64, op1.into())?
-                } else { todo!() }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Call => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -598,12 +598,12 @@ impl X64MCInstr {
                         Instruction::with1::<Register>(Code::Call_rm32, (*op1).into())?
                     } else if op1.is_gr16() {
                         Instruction::with1::<Register>(Code::Call_rm16, (*op1).into())?
-                    } else { todo!() }
+                    } else { todo!("{}", self) }
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     Instruction::with1::<MemoryOperand>(Code::Call_rm64, op1.into())?
                 } else if let Some(Operand::Imm(op1)) = &self.op1 {
                     Instruction::with_branch(Code::Call_rel32_64, *op1 as u64)?
-                } else { todo!() }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Jmp => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -613,22 +613,22 @@ impl X64MCInstr {
                         Instruction::with1::<Register>(Code::Jmp_rm32, (*op1).into())?
                     } else if op1.is_gr16() {
                         Instruction::with1::<Register>(Code::Jmp_rm16, (*op1).into())?
-                    } else { todo!() }
+                    } else { todo!("{}", self) }
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     Instruction::with1::<MemoryOperand>(Code::Jmp_rm64, op1.into())?
                 } else if let Some(Operand::Imm(op1)) = &self.op1 {
                     Instruction::with_branch(Code::Jmp_rel32_64, *op1 as u64)?
-                } else { todo!() }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Jne => {
                 if let Some(Operand::Imm(op1)) = &self.op1 {
                     Instruction::with_branch(Code::Jne_rel32_64, *op1 as u64)?
-                } else { todo!() }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Je => {
                 if let Some(Operand::Imm(op1)) = &self.op1 {
                     Instruction::with_branch(Code::Je_rel32_64, *op1 as u64)?
-                } else { todo!() }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Endbr64 => Instruction::with(Code::Endbr64),
             Mnemonic::Sete => {
@@ -636,42 +636,42 @@ impl X64MCInstr {
                     Instruction::with1::<Register>(Code::Sete_rm8, (*op1).into())?
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     Instruction::with1::<MemoryOperand>(Code::Sete_rm8, op1.into())?
-                } else { todo!() }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Setne => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
                     Instruction::with1::<Register>(Code::Setne_rm8, (*op1).into())?
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     Instruction::with1::<MemoryOperand>(Code::Setne_rm8, op1.into())?
-                } else { todo!() }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Setg => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
                     Instruction::with1::<Register>(Code::Setg_rm8, (*op1).into())?
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     Instruction::with1::<MemoryOperand>(Code::Setg_rm8, op1.into())?
-                } else { todo!() }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Setl => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
                     Instruction::with1::<Register>(Code::Setl_rm8, (*op1).into())?
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     Instruction::with1::<MemoryOperand>(Code::Setl_rm8, op1.into())?
-                } else { todo!() }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Setge => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
                     Instruction::with1::<Register>(Code::Setge_rm8, (*op1).into())?
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     Instruction::with1::<MemoryOperand>(Code::Setge_rm8, op1.into())?
-                } else { todo!() }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Setle => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
                     Instruction::with1::<Register>(Code::Setle_rm8, (*op1).into())?
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     Instruction::with1::<MemoryOperand>(Code::Setle_rm8, op1.into())?
-                } else { todo!() }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Cmove => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -682,7 +682,7 @@ impl X64MCInstr {
                             Instruction::with2::<Register, Register>(Code::Cmove_r32_rm32, (*op1).into(), (*op2).into())?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, Register>(Code::Cmove_r64_rm64, (*op1).into(), (*op2).into())?
-                        } else { todo!() }
+                        } else { todo!("{}", self) }
                     } else if let Some(Operand::Mem(op2)) = &self.op2 {
                         if op1.is_gr16() {
                             Instruction::with2::<Register, MemoryOperand>(Code::Cmove_r16_rm16, (*op1).into(), op2.into())?
@@ -690,9 +690,9 @@ impl X64MCInstr {
                             Instruction::with2::<Register, MemoryOperand>(Code::Cmove_r32_rm32, (*op1).into(), op2.into())?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, MemoryOperand>(Code::Cmove_r64_rm64, (*op1).into(), op2.into())?
-                        } else { todo!() }
-                    } else { todo!() }
-                } else { todo!() }
+                        } else { todo!("{}", self) }
+                    } else { todo!("{}", self) }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Cmovne => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -703,7 +703,7 @@ impl X64MCInstr {
                             Instruction::with2::<Register, Register>(Code::Cmovne_r32_rm32, (*op1).into(), (*op2).into())?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, Register>(Code::Cmovne_r64_rm64, (*op1).into(), (*op2).into())?
-                        } else { todo!() }
+                        } else { todo!("{}", self) }
                     } else if let Some(Operand::Mem(op2)) = &self.op2 {
                         if op1.is_gr16() {
                             Instruction::with2::<Register, MemoryOperand>(Code::Cmovne_r16_rm16, (*op1).into(), op2.into())?
@@ -711,9 +711,9 @@ impl X64MCInstr {
                             Instruction::with2::<Register, MemoryOperand>(Code::Cmovne_r32_rm32, (*op1).into(), op2.into())?
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, MemoryOperand>(Code::Cmovne_r64_rm64, (*op1).into(), op2.into())?
-                        } else { todo!() }
-                    } else { todo!() }
-                } else { todo!() }
+                        } else { todo!("{}", self) }
+                    } else { todo!("{}", self) }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Sal => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -725,10 +725,10 @@ impl X64MCInstr {
                         Instruction::with2::<Register, Register>(Code::Sal_rm32_CL, (*op1).into(), Register::CL)?
                     } else if op1.is_gr64() {
                         Instruction::with2::<Register, Register>(Code::Sal_rm64_CL, (*op1).into(), Register::CL)?
-                    } else { todo!() }
+                    } else { todo!("{}", self) }
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     Instruction::with2::<MemoryOperand, Register>(Code::Sal_rm64_CL, op1.into(), Register::CL)?
-                } else { todo!() }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Shr => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -740,10 +740,10 @@ impl X64MCInstr {
                         Instruction::with2::<Register, Register>(Code::Shr_rm32_CL, (*op1).into(), Register::CL)?
                     } else if op1.is_gr64() {
                         Instruction::with2::<Register, Register>(Code::Shr_rm64_CL, (*op1).into(), Register::CL)?
-                    } else { todo!() }
+                    } else { todo!("{}", self) }
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     Instruction::with2::<MemoryOperand, Register>(Code::Shr_rm64_CL, op1.into(), Register::CL)?
-                } else { todo!() }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Sar => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -755,10 +755,10 @@ impl X64MCInstr {
                         Instruction::with2::<Register, Register>(Code::Sar_rm32_CL, (*op1).into(), Register::CL)?
                     } else if op1.is_gr64() {
                         Instruction::with2::<Register, Register>(Code::Sar_rm64_CL, (*op1).into(), Register::CL)?
-                    } else { todo!() }
+                    } else { todo!("{}", self) }
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     Instruction::with2::<MemoryOperand, Register>(Code::Sar_rm64_CL, op1.into(), Register::CL)?
-                } else { todo!() }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Movq => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -774,12 +774,12 @@ impl X64MCInstr {
                         } else {
                             Instruction::with2::<Register, Register>(Code::Movq_rm64_xmm, (*op1).into(), (*op2).into())?
                         }
-                    } else { todo!() }
+                    } else { todo!("{}", self) }
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     if let Some(Operand::Reg(op2)) = &self.op2 {
                         Instruction::with2::<MemoryOperand, Register>(Code::Movq_rm64_xmm, op1.into(), (*op2).into())?
-                    } else { todo!() }
-                } else { todo!() }
+                    } else { todo!("{}", self) }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Movd => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -795,12 +795,12 @@ impl X64MCInstr {
                         } else {
                             Instruction::with2::<Register, Register>(Code::Movd_rm32_xmm, (*op1).into(), (*op2).into())?
                         }
-                    } else { todo!() }
+                    } else { todo!("{}", self) }
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     if let Some(Operand::Reg(op2)) = &self.op2 {
                         Instruction::with2::<MemoryOperand, Register>(Code::Movd_rm32_xmm, op1.into(), (*op2).into())?
-                    } else { todo!() }
-                } else { todo!() }
+                    } else { todo!("{}", self) }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Movss => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -808,12 +808,12 @@ impl X64MCInstr {
                         Instruction::with2::<Register, Register>(Code::Movss_xmmm32_xmm, (*op1).into(), (*op2).into())?
                     } else if let Some(Operand::Mem(op2))  = &self.op2 {
                         Instruction::with2::<Register, MemoryOperand>(Code::Movss_xmm_xmmm32, (*op1).into(), op2.into())?
-                    } else { todo!() }
+                    } else { todo!("{}", self) }
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     if let Some(Operand::Reg(op2))  = &self.op2 {
                         Instruction::with2::<MemoryOperand, Register>(Code::Movss_xmmm32_xmm, op1.into(), (*op2).into())?
-                    } else { todo!() } 
-                } else { todo!() }
+                    } else { todo!("{}", self) } 
+                } else { todo!("{}", self) }
             },
             Mnemonic::Movsd => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -821,12 +821,12 @@ impl X64MCInstr {
                         Instruction::with2::<Register, Register>(Code::Movsd_xmmm64_xmm, (*op1).into(), (*op2).into())?
                     } else if let Some(Operand::Mem(op2))  = &self.op2 {
                         Instruction::with2::<Register, MemoryOperand>(Code::Movsd_xmm_xmmm64, (*op1).into(), op2.into())?
-                    } else { todo!() }
+                    } else { todo!("{}", self) }
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     if let Some(Operand::Reg(op2))  = &self.op2 {
                         Instruction::with2::<MemoryOperand, Register>(Code::Movsd_xmmm64_xmm, op1.into(), (*op2).into())?
-                    } else { todo!() } 
-                } else { todo!() }
+                    } else { todo!("{}", self) } 
+                } else { todo!("{}", self) }
             },
             Mnemonic::Movups => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -834,12 +834,12 @@ impl X64MCInstr {
                         Instruction::with2::<Register, Register>(Code::Movups_xmm_xmmm128, (*op1).into(), (*op2).into())?
                     } else if let Some(Operand::Mem(op2))  = &self.op2 {
                         Instruction::with2::<Register, MemoryOperand>(Code::Movups_xmm_xmmm128, (*op1).into(), op2.into())?
-                    } else { todo!() }
+                    } else { todo!("{}", self) }
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     if let Some(Operand::Reg(op2))  = &self.op2 {
                         Instruction::with2::<MemoryOperand, Register>(Code::Movups_xmmm128_xmm, op1.into(), (*op2).into())?
-                    } else { todo!() } 
-                } else { todo!() }
+                    } else { todo!("{}", self) } 
+                } else { todo!("{}", self) }
             },
             Mnemonic::Movupd => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -847,12 +847,12 @@ impl X64MCInstr {
                         Instruction::with2::<Register, Register>(Code::Movupd_xmm_xmmm128, (*op1).into(), (*op2).into())?
                     } else if let Some(Operand::Mem(op2))  = &self.op2 {
                         Instruction::with2::<Register, MemoryOperand>(Code::Movupd_xmm_xmmm128, (*op1).into(), op2.into())?
-                    } else { todo!() }
+                    } else { todo!("{}", self) }
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     if let Some(Operand::Reg(op2))  = &self.op2 {
                         Instruction::with2::<MemoryOperand, Register>(Code::Movupd_xmmm128_xmm, op1.into(), (*op2).into())?
-                    } else { todo!() } 
-                } else { todo!() }
+                    } else { todo!("{}", self) } 
+                } else { todo!("{}", self) }
             },
             Mnemonic::Addss => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -861,7 +861,7 @@ impl X64MCInstr {
                     } else if let Some(Operand::Mem(op2))  = &self.op2 {
                         Instruction::with2::<Register, MemoryOperand>(Code::Addss_xmm_xmmm32, (*op1).into(), op2.into())?
                     } else { todo!("{}", self) }
-                } else { todo!() }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Addsd => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -869,8 +869,8 @@ impl X64MCInstr {
                         Instruction::with2::<Register, Register>(Code::Addsd_xmm_xmmm64, (*op1).into(), (*op2).into())?
                     } else if let Some(Operand::Mem(op2))  = &self.op2 {
                         Instruction::with2::<Register, MemoryOperand>(Code::Addsd_xmm_xmmm64, (*op1).into(), op2.into())?
-                    } else { todo!() }
-                } else { todo!() }
+                    } else { todo!("{}", self) }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Divss => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -878,8 +878,8 @@ impl X64MCInstr {
                         Instruction::with2::<Register, Register>(Code::Divss_xmm_xmmm32, (*op1).into(), (*op2).into())?
                     } else if let Some(Operand::Mem(op2))  = &self.op2 {
                         Instruction::with2::<Register, MemoryOperand>(Code::Divss_xmm_xmmm32, (*op1).into(), op2.into())?
-                    } else { todo!() }
-                } else { todo!() }
+                    } else { todo!("{}", self) }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Divsd => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -887,8 +887,8 @@ impl X64MCInstr {
                         Instruction::with2::<Register, Register>(Code::Divsd_xmm_xmmm64, (*op1).into(), (*op2).into())?
                     } else if let Some(Operand::Mem(op2))  = &self.op2 {
                         Instruction::with2::<Register, MemoryOperand>(Code::Divsd_xmm_xmmm64, (*op1).into(), op2.into())?
-                    } else { todo!() }
-                } else { todo!() }
+                    } else { todo!("{}", self) }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Mulss => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -896,8 +896,8 @@ impl X64MCInstr {
                         Instruction::with2::<Register, Register>(Code::Mulss_xmm_xmmm32, (*op1).into(), (*op2).into())?
                     } else if let Some(Operand::Mem(op2))  = &self.op2 {
                         Instruction::with2::<Register, MemoryOperand>(Code::Mulss_xmm_xmmm32, (*op1).into(), op2.into())?
-                    } else { todo!() }
-                } else { todo!() }
+                    } else { todo!("{}", self) }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Mulsd => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -905,8 +905,8 @@ impl X64MCInstr {
                         Instruction::with2::<Register, Register>(Code::Mulsd_xmm_xmmm64, (*op1).into(), (*op2).into())?
                     } else if let Some(Operand::Mem(op2))  = &self.op2 {
                         Instruction::with2::<Register, MemoryOperand>(Code::Mulsd_xmm_xmmm64, (*op1).into(), op2.into())?
-                    } else { todo!() }
-                } else { todo!() }
+                    } else { todo!("{}", self) }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Subss => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -914,8 +914,8 @@ impl X64MCInstr {
                         Instruction::with2::<Register, Register>(Code::Subss_xmm_xmmm32, (*op1).into(), (*op2).into())?
                     } else if let Some(Operand::Mem(op2))  = &self.op2 {
                         Instruction::with2::<Register, MemoryOperand>(Code::Subss_xmm_xmmm32, (*op1).into(), op2.into())?
-                    } else { todo!() }
-                } else { todo!() }
+                    } else { todo!("{}", self) }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Subsd => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -923,8 +923,8 @@ impl X64MCInstr {
                         Instruction::with2::<Register, Register>(Code::Subsd_xmm_xmmm64, (*op1).into(), (*op2).into())?
                     } else if let Some(Operand::Mem(op2))  = &self.op2 {
                         Instruction::with2::<Register, MemoryOperand>(Code::Subsd_xmm_xmmm64, (*op1).into(), op2.into())?
-                    } else { todo!() }
-                } else { todo!() }
+                    } else { todo!("{}", self) }
+                } else { todo!("{}", self) }
             },
             Mnemonic::Ucomiss => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
@@ -1022,7 +1022,7 @@ impl X64MCInstr {
                     Err(InstrEncodingError::InvalidVariant(self.clone(), "ret isn't allowed to have operands".into()))?
                 }
             },
-            Mnemonic::Movzx => todo!(),
+            Mnemonic::Movzx => todo!("{}", self),
             Mnemonic::Call | Mnemonic::Jmp => {
                 if self.op2 != None {
                     Err(InstrEncodingError::InvalidVariant(self.clone(), "call/jmp only needs one operand".into()))?
@@ -1095,22 +1095,22 @@ impl X64MCInstr {
                     }
                 }
             }
-            Mnemonic::Movq   =>  todo!(),
-            Mnemonic::Movd   =>  todo!(),
-            Mnemonic::Movss  =>  todo!(),
-            Mnemonic::Movsd  =>  todo!(),
-            Mnemonic::Movups =>  todo!(),
-            Mnemonic::Movupd =>  todo!(),
-            Mnemonic::Addss  =>  todo!(),
-            Mnemonic::Addsd  =>  todo!(),
-            Mnemonic::Divss  =>  todo!(),
-            Mnemonic::Divsd  =>  todo!(),
-            Mnemonic::Mulss  =>  todo!(),
-            Mnemonic::Mulsd  =>  todo!(),
-            Mnemonic::Subss  =>  todo!(),
-            Mnemonic::Subsd  =>  todo!(),
-            Mnemonic::Ucomiss  =>  todo!(),
-            Mnemonic::Ucomisd  =>  todo!(),
+            Mnemonic::Movq   =>  todo!("{}", self),
+            Mnemonic::Movd   =>  todo!("{}", self),
+            Mnemonic::Movss  =>  todo!("{}", self),
+            Mnemonic::Movsd  =>  todo!("{}", self),
+            Mnemonic::Movups =>  todo!("{}", self),
+            Mnemonic::Movupd =>  todo!("{}", self),
+            Mnemonic::Addss  =>  todo!("{}", self),
+            Mnemonic::Addsd  =>  todo!("{}", self),
+            Mnemonic::Divss  =>  todo!("{}", self),
+            Mnemonic::Divsd  =>  todo!("{}", self),
+            Mnemonic::Mulss  =>  todo!("{}", self),
+            Mnemonic::Mulsd  =>  todo!("{}", self),
+            Mnemonic::Subss  =>  todo!("{}", self),
+            Mnemonic::Subsd  =>  todo!("{}", self),
+            Mnemonic::Ucomiss  =>  todo!("{}", self),
+            Mnemonic::Ucomisd  =>  todo!("{}", self),
         };*/
 
         Ok(())

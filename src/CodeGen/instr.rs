@@ -3,6 +3,7 @@ use std::fmt::{Debug, Display};
 use std::any::Any;
 use crate::prelude::CmpMode;
 use crate::Obj::Link;
+use crate::Target::x64::instr::Mnemonic;
 use crate::IR::{BlockId, Type, TypeMetadata};
 
 use super::reg::Reg;
@@ -45,21 +46,21 @@ impl MachineInstr {
             self.meta == TypeMetadata::f64 { true } else { false };
 
         if uses_fp {
-            self.mnemonic = match self.mnemonic {
-                MachineMnemonic::Move => MachineMnemonic::FMove,
-                MachineMnemonic::Add => MachineMnemonic::FAdd,
-                MachineMnemonic::And => MachineMnemonic::FAnd,
-                MachineMnemonic::Div => MachineMnemonic::FDiv,
-                MachineMnemonic::Mul => MachineMnemonic::FMul,
-                MachineMnemonic::Or =>  MachineMnemonic::FOr,
-                MachineMnemonic::Sub => MachineMnemonic::FSub,
-                MachineMnemonic::Xor => MachineMnemonic::FXor,
-                MachineMnemonic::Rem => MachineMnemonic::FRem,
-                MachineMnemonic::Neg => MachineMnemonic::FNeg,
-                MachineMnemonic::Shl => MachineMnemonic::FShl,
-                MachineMnemonic::Shr => MachineMnemonic::FShr,
-                MachineMnemonic::Compare(mode) => MachineMnemonic::FCompare(mode),
-                _ => todo!("{}", self)
+            match self.mnemonic {
+                MachineMnemonic::Move => self.mnemonic = MachineMnemonic::FMove,
+                MachineMnemonic::Add => self.mnemonic = MachineMnemonic::FAdd,
+                MachineMnemonic::And => self.mnemonic = MachineMnemonic::FAnd,
+                MachineMnemonic::Div => self.mnemonic = MachineMnemonic::FDiv,
+                MachineMnemonic::Mul => self.mnemonic = MachineMnemonic::FMul,
+                MachineMnemonic::Or =>  self.mnemonic = MachineMnemonic::FOr,
+                MachineMnemonic::Sub => self.mnemonic = MachineMnemonic::FSub,
+                MachineMnemonic::Xor => self.mnemonic = MachineMnemonic::FXor,
+                MachineMnemonic::Rem => self.mnemonic = MachineMnemonic::FRem,
+                MachineMnemonic::Neg => self.mnemonic = MachineMnemonic::FNeg,
+                MachineMnemonic::Shl => self.mnemonic = MachineMnemonic::FShl,
+                MachineMnemonic::Shr => self.mnemonic = MachineMnemonic::FShr,
+                MachineMnemonic::Compare(mode) => self.mnemonic = MachineMnemonic::FCompare(mode),
+                _ => {}
             }
         }
     }

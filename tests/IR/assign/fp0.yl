@@ -1,0 +1,19 @@
+# RUN: 
+cargo run -p ylc -- -in=%s -o=out.o
+gcc out.o %c -o a.exe
+./a.exe
+# IN:
+define f32 @test() {
+ entry:
+    %return_value = f32 5.0
+    ret f32 5
+}
+
+# IN2:
+extern float test();
+
+int main() {
+    return (int)test();
+}
+
+# EXIT_CODE=5

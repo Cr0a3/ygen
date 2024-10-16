@@ -1,0 +1,30 @@
+# RUN:
+cargo run -p ylc -- -in=%s -o=out.o
+gcc out.o -o a.exe
+./a.exe
+
+# IN:
+
+define i32 @main() {
+  entry:
+	%1 = alloca f32
+	%2 = add f32 2.5, 7.5
+    store f32 %2, %1
+
+	%3 = load f32 %1
+    %4 = sub f32 %3, 3.0  
+
+    %5 = f32 7.0
+
+    %6 = cmp eq f32 %4, %5
+
+    br cond %6 eq, ne
+
+  eq:
+    ret i32 2
+
+  ne:
+    ret i32 1
+}
+
+# EXIT_CODE=2

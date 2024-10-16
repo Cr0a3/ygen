@@ -1,0 +1,20 @@
+# RUN:
+cargo run -p ylc -- -in=%s -o=out.o
+gcc out.o %c -o a.exe
+./a.exe
+# IN:
+
+define f32 @sub(f32 %0, f32 %1) {
+  entry:
+    %ret = sub f32 %0, %1
+    ret f32 %ret
+}
+
+# IN2:
+extern float sub(float, float);
+
+int main() {
+    return (int)sub(69.5f, 68.5f);
+}
+
+# EXIT_CODE=1
