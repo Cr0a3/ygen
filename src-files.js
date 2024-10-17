@@ -1,0 +1,9 @@
+var srcIndex = new Map(JSON.parse('[\
+["proc",["",[],["proc.rs"]]],\
+["simplelang",["",[],["ast.rs","codegen.rs","lexer.rs","macros.rs","main.rs","parser.rs","semnatic.rs"]]],\
+["ygen",["",[["CodeGen",[["compilation",[],["alloca.rs","assign.rs","br.rs","call.rs","cast.rs","cmp.rs","getelemptr.rs","load.rs","math.rs","mod.rs","neg.rs","prolog.rs","ret.rs","select.rs","store.rs","switch.rs"]],["reg_alloc",[["prep",[],["alloca.rs","assign.rs","call.rs","cast.rs","cmp.rs","extractelement.rs","load.rs","math.rs","neg.rs","ret.rs","select.rs","store.rs"]]],["mod.rs","prep.rs"]]],["calling_convention.rs","instr.rs","ir_area.rs","mod.rs","reg.rs","reg_vec.rs","settings.rs"]],["IR",[["nodes",[],["alloca.rs","assign.rs","br.rs","call.rs","cast.rs","cmp.rs","debug.rs","getelemptr.rs","load.rs","math.rs","mod.rs","neg.rs","phi.rs","ret.rs","select.rs","store.rs","switch.rs"]],["parser",[],["gen.rs","lexer.rs","mod.rs","parser.rs","semnatic.rs"]]],["block.rs","constant.rs","func.rs","mod.rs","module.rs","typ.rs","var.rs"]],["Obj",[],["dll.rs","exe.rs","mod.rs","wrapper.rs"]],["Optimizations",[["Passes",[],["ConstantEvaluation.rs","DeadNodeElimination.rs","mod.rs"]]],["mngr.rs","mod.rs","template.rs"]],["Support",[],["cli.rs","color.rs","error.rs","mod.rs","pad.rs","profile.rs","srcmngr.rs","tokmngr.rs","type_switch.rs"]],["Target",[["x64",[["asm",[],["instr.rs","lexer.rs","mod.rs","optimizer.rs","parser.rs"]],["lower",[],["adr.rs","br.rs","call.rs","cmov.rs","cmp.rs","downcast.rs","fcmp.rs","fmath.rs","fmove.rs","math.rs","mov.rs","prolog.rs","push.rs","ret.rs","stack.rs","switch.rs","zext.rs"]]],["call.rs","compilation.rs","lower.rs","mod.rs","reg.rs"]]],["compiler.rs","lexer.rs","mod.rs","registry.rs","target_descr.rs","triple.rs","whitelist.rs"]]],["debug.rs","lib.rs"]]],\
+["ygen_mc",["",[],["main.rs"]]],\
+["ylc",["",[],["main.rs"]]],\
+["ytest",["",[],["main.rs","parse.rs"]]]\
+]'));
+createSrcSidebar();
