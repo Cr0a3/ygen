@@ -3,7 +3,6 @@ use std::fmt::{Debug, Display};
 use std::any::Any;
 use crate::prelude::CmpMode;
 use crate::Obj::Link;
-use crate::Target::x64::instr::Mnemonic;
 use crate::IR::{BlockId, Type, TypeMetadata};
 
 use super::reg::Reg;

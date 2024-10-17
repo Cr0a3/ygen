@@ -38,38 +38,82 @@ pub(crate) fn x64_lower_store(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) 
     let value = (*value).into();
 
     if let Operand::Reg(ptr) = ptr {
+        let ptr = Operand::Mem(MemOp {
+            base: Some(ptr),
+            index: None,
+            scale: 1,
+            displ: 0,
+            rip: false,
+        }); 
+
         if let Operand::Reg(_) = value {
-            sink.push( 
-                X64MCInstr::with2(Mnemonic::Mov, Operand::Mem(MemOp {
-                    base: Some(ptr),
-                    index: None,
-                    scale: 1,
-                    displ: 0,
-                    rip: false,
-                }), value)
-            )
+            if instr.meta.float() {
+                if instr.meta == TypeMetadata::f32 {
+                    sink.push(
+                        X64MCInstr::with2(Mnemonic::Movd, ptr, value)
+                    );
+                } else { // needs to be f64
+                    sink.push(
+                        X64MCInstr::with2(Mnemonic::Movq, ptr, value)
+                    );
+                }
+            } else {
+                sink.push( 
+                    X64MCInstr::with2(Mnemonic::Mov, ptr, value)
+                )
+            }
         } else {
-            sink.push(
-                X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), value)
-            );
-            sink.push( 
-                X64MCInstr::with2(Mnemonic::Mov, Operand::Mem(MemOp {
-                    base: Some(ptr),
-                    index: None,
-                    scale: 1,
-                    displ: 0,
-                    rip: false,
-                }), Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)))
-            )
+            if instr.meta.float() {
+                if instr.meta == TypeMetadata::f32 {
+                    sink.push(
+                        X64MCInstr::with2(Mnemonic::Movd, Operand::Reg(x64Reg::Xmm0), value)
+                    );
+                    sink.push(
+                        X64MCInstr::with2(Mnemonic::Movd, ptr, Operand::Reg(x64Reg::Xmm0))
+                    );
+                } else { // needs to be f64
+                    sink.push(
+                        X64MCInstr::with2(Mnemonic::Movq, Operand::Reg(x64Reg::Xmm0), value)
+                    );
+                    sink.push(
+                        X64MCInstr::with2(Mnemonic::Movq, ptr, Operand::Reg(x64Reg::Xmm0))
+                    );
+                }
+            } else {
+                sink.push(
+                    X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), value)
+                );
+                sink.push( 
+                    X64MCInstr::with2(Mnemonic::Mov, ptr, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)))
+                )
+            }
         }
     } else {
-        sink.push( 
-            X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), value)
-        );
-    
-        sink.push( 
-            X64MCInstr::with2(Mnemonic::Mov, ptr, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)))
-        );
+        if instr.meta.float() {
+            if instr.meta == TypeMetadata::f32 {
+                sink.push(
+                    X64MCInstr::with2(Mnemonic::Movd, Operand::Reg(x64Reg::Xmm0), value)
+                );
+                sink.push(
+                    X64MCInstr::with2(Mnemonic::Movd, ptr, Operand::Reg(x64Reg::Xmm0))
+                );
+            } else { // needs to be f64
+                sink.push(
+                    X64MCInstr::with2(Mnemonic::Movq, Operand::Reg(x64Reg::Xmm0), value)
+                );
+                sink.push(
+                    X64MCInstr::with2(Mnemonic::Movq, ptr, Operand::Reg(x64Reg::Xmm0))
+                );
+            }
+        } else {
+            sink.push( 
+                X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), value)
+            );
+        
+            sink.push( 
+                X64MCInstr::with2(Mnemonic::Mov, ptr, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)))
+            );
+        }
     }
 
 }
