@@ -669,12 +669,15 @@ impl IrParser {
     fn parse_cast(&mut self, var: String) -> Result<Box<dyn Ir>, IrError> {
         self.input.pop_front();
 
+        let ty = self.parse_type()?;
+        self.input.pop_front();
+
         self.expect(TokenType::Var(String::new()))?;
 
         let in_var = if let TokenType::Var(name) = &self.current_token()?.typ {
             Var {
                 name: name.to_owned(),
-                ty: TypeMetadata::i32,
+                ty: ty,
             }
         } else { unreachable!() };
 

@@ -234,6 +234,7 @@ pub enum MachineMnemonic {
     FShl,
     FShr,
     FCompare(CmpMode),
+    FCast(/*from type*/TypeMetadata),
 
     BrCond(/*if yes*/String, /*if no*/String),
     Compare(CmpMode),
@@ -328,6 +329,7 @@ impl MachineMnemonic {
             MachineMnemonic::FShl =>                "fshl",
             MachineMnemonic::FShr =>                "fshr",
             MachineMnemonic::FCompare(_) =>         "fcompare",
+            MachineMnemonic::FCast(_) =>            "fcast",
         }.to_string()
     }
 }

@@ -20,6 +20,7 @@ mod cmov;
 mod fmath;
 mod fcmp;
 mod fmove;
+mod fcast;
 
 use super::{instr::{Mnemonic, Operand, X64MCInstr}, x64Reg};
 
@@ -85,6 +86,7 @@ pub(crate) fn x64_lower_instr(conv: CallConv, sink: &mut Vec<X64MCInstr>, instr:
         MachineMnemonic::FMul =>                                         fmath::x64_lower_fmul(sink, &instr),
         MachineMnemonic::FSub =>                                         fmath::x64_lower_fsub(sink, &instr),
         MachineMnemonic::FCompare(mode) =>                     fcmp::x64_lower_fcmp(sink, &instr, mode),
+        MachineMnemonic::FCast(input_type) =>             fcast::X64_lower_fcast(sink, &instr, *input_type),
         _ => todo!("TDOD: {}", instr.mnemonic),
     }
 }

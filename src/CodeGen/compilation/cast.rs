@@ -11,15 +11,15 @@ impl CompilationHelper {
         let out = *self.vars.get(&node.inner3.name).unwrap();
 
         let op = {
-
-        if node.inner1.ty.bitSize() > node.inner2.bitSize() {
-            MachineMnemonic::Zext
-        } else if node.inner1.ty.bitSize() < node.inner2.bitSize(){
-            MachineMnemonic::Downcast
-        } else {
-            return;
-        }
-        
+            if node.inner1.ty.float() {
+                MachineMnemonic::FCast(node.inner1.ty)
+            } else if node.inner1.ty.bitSize() > node.inner2.bitSize() {
+                MachineMnemonic::Zext
+            } else if node.inner1.ty.bitSize() < node.inner2.bitSize(){
+                MachineMnemonic::Downcast
+            } else {
+                return;
+            }  
         };
 
         let mut instr = MachineInstr::new(op);

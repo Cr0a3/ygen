@@ -2,13 +2,14 @@ use super::*;
 
 impl Ir for Cast<Var, TypeMetadata, Var> {
     fn dump(&self) -> String {
-        format!("{} = cast {} to {}", self.inner3.name, self.inner1.name, self.inner2)
+        format!("{} = cast {} {} to {}", self.inner3.name, self.inner1.ty, self.inner1.name, self.inner2)
     }
 
     fn dumpColored(&self, profile: ColorProfile) -> String {
-        format!("{} = {} {} {} {}", 
+        format!("{} = {} {} {} {} {}", 
             profile.markup(&self.inner3.name, ColorClass::Var), 
             profile.markup(&"cast", ColorClass::Instr),
+            profile.markup(&self.inner1.ty.to_string(), ColorClass::Ty), 
             profile.markup(&self.inner1.name, ColorClass::Var), 
             profile.markup(&"to", ColorClass::Instr),
             profile.markup(&self.inner2.to_string(), ColorClass::Ty),

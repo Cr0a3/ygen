@@ -944,6 +944,66 @@ impl X64MCInstr {
                     } else { todo!("{}", self) }
                 } else { todo!("{}", self) }
             },
+            Mnemonic::Cvtss2si => {
+                if let Some(Operand::Reg(op1)) = &self.op1 {
+                    if let Some(Operand::Reg(op2)) = &self.op2 {
+                        if op1.is_gr32() {
+                            Instruction::with2::<Register, Register>(Code::Cvtss2si_r32_xmmm32, (*op1).into(), (*op2).into())?
+                        } else if op1.is_gr64() {
+                            Instruction::with2::<Register, Register>(Code::Cvtss2si_r64_xmmm32, (*op1).into(), (*op2).into())?
+                        } else { todo!("{}", self) }
+                    } else if let Some(Operand::Mem(op2)) = &self.op2 {
+                        if op1.is_gr32() {
+                            Instruction::with2::<Register, MemoryOperand>(Code::Cvtss2si_r32_xmmm32, (*op1).into(), op2.into())?
+                        } else if op1.is_gr64() {
+                            Instruction::with2::<Register, MemoryOperand>(Code::Cvtss2si_r64_xmmm32, (*op1).into(), op2.into())?
+                        } else { todo!("{}", self) }
+                    } else { todo!("{}", self) }
+                } else { todo!("{}", self) }
+            },
+            Mnemonic::Cvtsd2si => {
+                if let Some(Operand::Reg(op1)) = &self.op1 {
+                    if let Some(Operand::Reg(op2)) = &self.op2 {
+                        if op1.is_gr32() {
+                            Instruction::with2::<Register, Register>(Code::Cvtsd2si_r32_xmmm64, (*op1).into(), (*op2).into())?
+                        } else if op1.is_gr64() {
+                            Instruction::with2::<Register, Register>(Code::Cvtsd2si_r64_xmmm64, (*op1).into(), (*op2).into())?
+                        } else { todo!("{}", self) }
+                    } else if let Some(Operand::Mem(op2)) = &self.op2 {
+                        if op1.is_gr32() {
+                            Instruction::with2::<Register, MemoryOperand>(Code::Cvtsd2si_r32_xmmm64, (*op1).into(), op2.into())?
+                        } else if op1.is_gr64() {
+                            Instruction::with2::<Register, MemoryOperand>(Code::Cvtsd2si_r64_xmmm64, (*op1).into(), op2.into())?
+                        } else { todo!("{}", self) }
+                    } else { todo!("{}", self) }
+                } else { todo!("{}", self) }
+            },
+            Mnemonic::Cvtss2sd => {
+                if let Some(Operand::Reg(op1)) = &self.op1 {
+                    if let Some(Operand::Reg(op2)) = &self.op2 {
+                        if op1.is_xmm() {
+                            Instruction::with2::<Register, Register>(Code::Cvtss2sd_xmm_xmmm32, (*op1).into(), (*op2).into())?
+                        } else { todo!("{}", self) }
+                    } else if let Some(Operand::Mem(op2)) = &self.op2 {
+                        if op1.is_xmm() {
+                            Instruction::with2::<Register, MemoryOperand>(Code::Cvtss2sd_xmm_xmmm32, (*op1).into(), op2.into())?
+                        } else { todo!("{}", self) }
+                    } else { todo!("{}", self) }
+                } else { todo!("{}", self) }
+            },
+            Mnemonic::Cvtsd2ss => {
+                if let Some(Operand::Reg(op1)) = &self.op1 {
+                    if let Some(Operand::Reg(op2)) = &self.op2 {
+                        if op1.is_xmm() {
+                            Instruction::with2::<Register, Register>(Code::Cvtsd2ss_xmm_xmmm64, (*op1).into(), (*op2).into())?
+                        } else { todo!("{}", self) }
+                    } else if let Some(Operand::Mem(op2)) = &self.op2 {
+                        if op1.is_xmm() {
+                            Instruction::with2::<Register, MemoryOperand>(Code::Cvtsd2ss_xmm_xmmm64, (*op1).into(), op2.into())?
+                        } else { todo!("{}", self) }
+                    } else { todo!("{}", self) }
+                } else { todo!("{}", self) }
+            },
         
         };
         
@@ -1294,6 +1354,11 @@ pub enum Mnemonic {
 
     Ucomiss,
     Ucomisd,
+
+    Cvtss2si,
+    Cvtsd2si,
+    Cvtss2sd,
+    Cvtsd2ss,
 }
 
 impl FromStr for Mnemonic {
@@ -1351,6 +1416,10 @@ impl FromStr for Mnemonic {
             "subsd" => Ok(Mnemonic::Subsd),
             "ucomiss" => Ok(Mnemonic::Ucomiss),
             "ucomisd" => Ok(Mnemonic::Ucomisd),
+            "cvtss2si"  => Ok(Mnemonic::Cvtss2si),
+            "cvtsd2si"  => Ok(Mnemonic::Cvtsd2si),
+            "cvtss2sd"  => Ok(Mnemonic::Cvtss2sd),
+            "cvtsd2ss"  => Ok(Mnemonic::Cvtsd2ss),
             _ => Err(()),
         }
     }
@@ -1413,6 +1482,10 @@ impl Display for Mnemonic {
             Mnemonic::Subsd => "subsd",
             Mnemonic::Ucomiss => "ucomiss",
             Mnemonic::Ucomisd => "ucomisd",
+            Mnemonic::Cvtss2si => "cvtss2si",
+            Mnemonic::Cvtsd2si => "cvtsd2si",
+            Mnemonic::Cvtss2sd => "cvtss2sd",
+            Mnemonic::Cvtsd2ss => "cvtsd2ss",
         })
     }
 }
