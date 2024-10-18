@@ -66,17 +66,17 @@ pub(crate) fn x64_lower_store(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) 
             if instr.meta.float() {
                 if instr.meta == TypeMetadata::f32 {
                     sink.push(
-                        X64MCInstr::with2(Mnemonic::Movd, Operand::Reg(x64Reg::Xmm0), value)
+                        X64MCInstr::with2(Mnemonic::Movd, Operand::Reg(x64Reg::Xmm15), value)
                     );
                     sink.push(
-                        X64MCInstr::with2(Mnemonic::Movd, ptr, Operand::Reg(x64Reg::Xmm0))
+                        X64MCInstr::with2(Mnemonic::Movd, ptr, Operand::Reg(x64Reg::Xmm15))
                     );
                 } else { // needs to be f64
                     sink.push(
-                        X64MCInstr::with2(Mnemonic::Movq, Operand::Reg(x64Reg::Xmm0), value)
+                        X64MCInstr::with2(Mnemonic::Movq, Operand::Reg(x64Reg::Xmm15), value)
                     );
                     sink.push(
-                        X64MCInstr::with2(Mnemonic::Movq, ptr, Operand::Reg(x64Reg::Xmm0))
+                        X64MCInstr::with2(Mnemonic::Movq, ptr, Operand::Reg(x64Reg::Xmm15))
                     );
                 }
             } else {
@@ -92,17 +92,17 @@ pub(crate) fn x64_lower_store(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) 
         if instr.meta.float() {
             if instr.meta == TypeMetadata::f32 {
                 sink.push(
-                    X64MCInstr::with2(Mnemonic::Movd, Operand::Reg(x64Reg::Xmm0), value)
+                    X64MCInstr::with2(Mnemonic::Movd, Operand::Reg(x64Reg::Xmm15), value)
                 );
                 sink.push(
-                    X64MCInstr::with2(Mnemonic::Movd, ptr, Operand::Reg(x64Reg::Xmm0))
+                    X64MCInstr::with2(Mnemonic::Movd, ptr, Operand::Reg(x64Reg::Xmm15))
                 );
             } else { // needs to be f64
                 sink.push(
-                    X64MCInstr::with2(Mnemonic::Movq, Operand::Reg(x64Reg::Xmm0), value)
+                    X64MCInstr::with2(Mnemonic::Movq, Operand::Reg(x64Reg::Xmm15), value)
                 );
                 sink.push(
-                    X64MCInstr::with2(Mnemonic::Movq, ptr, Operand::Reg(x64Reg::Xmm0))
+                    X64MCInstr::with2(Mnemonic::Movq, ptr, Operand::Reg(x64Reg::Xmm15))
                 );
             }
         } else {
@@ -183,17 +183,17 @@ pub(crate) fn x64_lower_load(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
         if instr.meta.float() {
             if instr.meta == TypeMetadata::f32 {
                 sink.push( 
-                    X64MCInstr::with2(Mnemonic::Movd, Operand::Reg(x64Reg::Xmm0), ptr)
+                    X64MCInstr::with2(Mnemonic::Movd, Operand::Reg(x64Reg::Xmm15), ptr)
                 );
                 sink.push(
-                    X64MCInstr::with2(Mnemonic::Movd, out, Operand::Reg(x64Reg::Xmm0))
+                    X64MCInstr::with2(Mnemonic::Movd, out, Operand::Reg(x64Reg::Xmm15))
                 );
             } else {
                 sink.push( 
-                    X64MCInstr::with2(Mnemonic::Movq, Operand::Reg(x64Reg::Xmm0), ptr)
+                    X64MCInstr::with2(Mnemonic::Movq, Operand::Reg(x64Reg::Xmm15), ptr)
                 );
                 sink.push(
-                    X64MCInstr::with2(Mnemonic::Movq, out, Operand::Reg(x64Reg::Xmm0))
+                    X64MCInstr::with2(Mnemonic::Movq, out, Operand::Reg(x64Reg::Xmm15))
                 );
             }
         } else {

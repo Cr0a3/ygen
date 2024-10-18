@@ -1,4 +1,4 @@
-use crate::{prelude::Switch, CodeGen::{MachineInstr, MachineMnemonic}, IR::Block};
+use crate::{prelude::Switch, CodeGen::{MachineInstr, MachineMnemonic}, IR::{Block, TypeMetadata}};
 
 use super::CompilationHelper;
 
@@ -12,7 +12,7 @@ impl CompilationHelper {
         }
 
         let mut instr = MachineInstr::new(MachineMnemonic::Switch(
-            cases
+            cases.to_owned()
         ));
 
         instr.add_operand(
@@ -20,6 +20,10 @@ impl CompilationHelper {
             .expect("expected valid variable")
             .into()
         );
+
+        instr.meta = if let Some((ty, _)) = &cases.get(0) {
+            (*ty).into()
+        } else { TypeMetadata::i32 };
 
         mc_sink.push(instr);
 

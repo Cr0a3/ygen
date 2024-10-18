@@ -135,6 +135,7 @@ impl Type {
 
 impl TypeMetadata {
     /// Returns the size of the type in bits
+    #[inline]
     pub fn bitSize(&self) -> usize {
         match self {
             TypeMetadata::u8 | TypeMetadata::i8 => 8,
@@ -150,6 +151,7 @@ impl TypeMetadata {
     }
 
     /// Returns the size of the type in bytes
+    #[inline]
     pub fn byteSize(&self) -> usize {
         if *self != TypeMetadata::Void {
             self.bitSize() / 8
@@ -159,6 +161,7 @@ impl TypeMetadata {
     }
 
     /// Returns if it is a signed type
+    #[inline]
     pub fn signed(&self) -> bool {
         match self {
             TypeMetadata::i16 => true,
@@ -170,16 +173,17 @@ impl TypeMetadata {
     }
 
     /// Returns if it is a float type
+    #[inline]
     pub fn float(&self) -> bool {
         match self {
-            TypeMetadata::f32 => true,
-            TypeMetadata::f64 => true,
+            TypeMetadata::f32 | TypeMetadata::f64 => true,
 
             _ => false,
         }
     }
 
     /// returns the parsed typemetadata
+    #[inline]
     pub fn parse(string: String) -> Option<Self> {
         match string.as_str() {
             "u8" => Some(TypeMetadata::u8),
