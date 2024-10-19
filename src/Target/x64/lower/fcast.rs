@@ -20,7 +20,7 @@ pub(crate) fn X64_lower_fcast(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr, 
             
             TypeMetadata::f32 => sink.push(X64MCInstr::with2(Mnemonic::Movss, Operand::Reg(output_reg), input)),
             TypeMetadata::f64 => sink.push(X64MCInstr::with2(Mnemonic::Cvtss2sd, Operand::Reg(output_reg), input)),
-            _ => panic!("fcast can only cast from f32/f64 to i32/i64/f32/f64")
+            _ => panic!("fcast can only cast from f32 to i32/i64/f32/f64")
         }
     } else if input_type == TypeMetadata::f64 {
         match instr.meta {
@@ -29,9 +29,17 @@ pub(crate) fn X64_lower_fcast(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr, 
             
             TypeMetadata::f32 => sink.push(X64MCInstr::with2(Mnemonic::Cvtsd2ss, Operand::Reg(output_reg), input)),
             TypeMetadata::f64 => sink.push(X64MCInstr::with2(Mnemonic::Cvtsd2ss, Operand::Reg(output_reg), input)),
-            _ => panic!("fcast can only cast from f32/f64 to i32/i64/f32/f64")
+            _ => panic!("fcast can only cast from f64 to i32/i64/f32/f64")
         }
-    } else { panic!("fcast expect that the input type is a float") }
+    } else if input_type == TypeMetadata::i32 || input_type ==  TypeMetadata::i64 {
+        match instr.meta {
+            TypeMetadata::f32 => sink.push(X64MCInstr::with2(Mnemonic::Cvtsi2ss, Operand::Reg(output_reg), input)),
+            TypeMetadata::f64 => sink.push(X64MCInstr::with2(Mnemonic::Cvtsi2sd, Operand::Reg(output_reg), input)),
+            _ => panic!("fcast can only cast from i32 to f32/f64")
+        }
+    } else {
+        panic!("fcast expects the input type to be either f32/f64/i32/i64")
+    }
 
     if let Operand::Mem(out) = &out {
         sink.push(if instr.meta == TypeMetadata::f32 {

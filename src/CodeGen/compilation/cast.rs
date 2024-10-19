@@ -11,7 +11,7 @@ impl CompilationHelper {
         let out = *self.vars.get(&node.inner3.name).unwrap();
 
         let op = {
-            if node.inner1.ty.float() {
+            if node.inner1.ty.float() || node.inner2.float() {
                 MachineMnemonic::FCast(node.inner1.ty)
             } else if node.inner1.ty.bitSize() > node.inner2.bitSize() {
                 MachineMnemonic::Zext
