@@ -131,12 +131,16 @@ impl Parser {
             }
 
             ret = match tystring.as_str() {
+                "u8" => Some(TypeMetadata::u8),
                 "u16" => Some(TypeMetadata::u16),
                 "u32" => Some(TypeMetadata::u32),
                 "u64" => Some(TypeMetadata::u64),
+                "i8" => Some(TypeMetadata::i8),
                 "i16" => Some(TypeMetadata::i16),
                 "i32" => Some(TypeMetadata::i32),
                 "i64" => Some(TypeMetadata::i64),
+                "f64" => Some(TypeMetadata::f64),
+                "f32" => Some(TypeMetadata::f32),
                 "string" => Some(TypeMetadata::ptr),
                 "void" => Some(TypeMetadata::Void),
                 any => {
@@ -211,16 +215,21 @@ impl Parser {
             } else { return None; }
     
             ty = Some(match tystring.as_str() {
+                "u8" => Some(TypeMetadata::u8),
                 "u16" => Some(TypeMetadata::u16),
                 "u32" => Some(TypeMetadata::u32),
                 "u64" => Some(TypeMetadata::u64),
+                "i8" => Some(TypeMetadata::i8),
                 "i16" => Some(TypeMetadata::i16),
                 "i32" => Some(TypeMetadata::i32),
                 "i64" => Some(TypeMetadata::i64),
+                "f64" => Some(TypeMetadata::f64),
+                "f32" => Some(TypeMetadata::f32),
                 "string" => Some(TypeMetadata::ptr),
+                "void" => Some(TypeMetadata::Void),
                 any => {
                     err!(self.error, "unknown type: {}", any);
-                    None
+                    None?
                 },
             }?);
         }
