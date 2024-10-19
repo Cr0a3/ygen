@@ -239,8 +239,8 @@ pub enum MachineMnemonic {
     BrCond(/*if yes*/String, /*if no*/String),
     Compare(CmpMode),
 
-    Zext,
-    Downcast,
+    Zext(/*from type*/TypeMetadata),
+    Downcast(/*from type*/TypeMetadata),
 
     Call(String),
     Br(String),
@@ -292,8 +292,8 @@ impl MachineMnemonic {
             MachineMnemonic::Sub =>                 "sub",
             MachineMnemonic::Xor =>                 "xor",
             MachineMnemonic::Rem =>                 "rem",
-            MachineMnemonic::Zext =>                "zext",
-            MachineMnemonic::Downcast =>            "dwcast",
+            MachineMnemonic::Zext(_) =>                "zext",
+            MachineMnemonic::Downcast(_) =>            "dwcast",
             MachineMnemonic::Call(_) =>             "call",
             MachineMnemonic::Return =>              "return",
             MachineMnemonic::AdressLoad(_) =>       "adrload",

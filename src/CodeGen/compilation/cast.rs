@@ -12,7 +12,7 @@ impl CompilationHelper {
 
         let op = {
             if node.inner1.ty.float() || node.inner2.float() {
-                MachineMnemonic::FCast(node.inner1.ty)
+                MachineMnemonic::FCast
             } else if node.inner1.ty.bitSize() > node.inner2.bitSize() {
                 MachineMnemonic::Zext
             } else if node.inner1.ty.bitSize() < node.inner2.bitSize(){
@@ -20,7 +20,7 @@ impl CompilationHelper {
             } else {
                 return;
             }  
-        };
+        }(node.inner1.ty);
 
         let mut instr = MachineInstr::new(op);
 
