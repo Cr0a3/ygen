@@ -1,6 +1,7 @@
 mod triple;
 mod target_descr;
 pub mod x64;
+pub mod wasm;
 mod registry;
 mod whitelist;
 pub use x64::{x64Reg, initializeX64Target, Token};
@@ -19,6 +20,7 @@ pub fn initializeAllTargets(triple: Triple) -> Result<TargetRegistry, triple::Tr
     let mut registry = TargetRegistry::new(triple);
 
     registry.add( Arch::X86_64, initializeX64Target(triple.getCallConv()?) );
+    registry.add( Arch::Wasm64, wasm::initializeWasmTarget(triple.getCallConv()?) );
 
     Ok(registry)
 }

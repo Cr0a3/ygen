@@ -74,6 +74,7 @@ impl RegAlloc {
                     if let Some(reg) = self.call.args(self.arch, *ty).get(num) {
                         VarLocation::Reg(match reg {
                             Reg::x64(x64) => Reg::x64(x64.sub_ty(*ty)),
+                            Reg::wasm(i) => Reg::wasm(*i),
                         })
                     } else {
                         todo!("The new system currently doesn't support memory")
@@ -303,6 +304,7 @@ impl RegAlloc {
         if let Some(reg) = reg {
             VarLocation::Reg( match reg {
                 Reg::x64(x64_reg) => Reg::x64( x64_reg.sub_ty(ty) ),
+                Reg::wasm(i) => Reg::wasm(i),
             } )
         } else {
             self.alloc_stack(ty)

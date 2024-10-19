@@ -181,6 +181,7 @@ impl Triple {
                 "hermitCore" => OS::HermitCore,
                 "hurd" => OS::Hurd,
                 "wasi" => OS::Wasi, 
+                "unkown" => OS::Unknown,
                 _ => Err( TripleError::UnknownOs(osstr.to_string()) )?
             };
         }

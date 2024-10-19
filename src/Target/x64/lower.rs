@@ -119,6 +119,7 @@ impl From<MachineOperand> for Operand {
             MachineOperand::Imm(imm) => Operand::Imm(imm as i64),
             MachineOperand::Reg(reg) => match reg {
                 crate::CodeGen::Reg::x64(x64_reg) => Operand::Reg(x64_reg),
+                _ => panic!("the x64 backend expects the register to be x64 registers and not any other")
             },
         }
     }

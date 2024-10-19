@@ -5,6 +5,8 @@ use crate::Target::{x64Reg, Arch};
 pub enum Reg {
     /// a register of the x64 platform
     x64(x64Reg),
+    /// a wasm variable
+    wasm(i32),
 }
 
 impl Reg {
@@ -12,6 +14,7 @@ impl Reg {
     pub fn arch(&self) -> Arch {
         match self {
             Reg::x64(_) => Arch::X86_64,
+            Reg::wasm(_) => Arch::Wasm64,
         }
     }
     
@@ -23,13 +26,7 @@ impl Reg {
         for vector_reg in vec {
             if seen { break; }
 
-            match vector_reg {
-                Reg::x64(x64_reg) => {
-                    match &reg {
-                        Reg::x64(reg) => seen = x64_reg.sub64() == reg.sub64(),
-                    }
-                }
-            }
+            seen = vector_reg.is(&reg);
         }
 
         seen
@@ -40,17 +37,25 @@ impl Reg {
     pub fn is(&self, other: &Reg) -> bool {
         match self {
             Reg::x64(x64_reg) => {
-                match other {
+                match &other {
                     Reg::x64(reg) => x64_reg.sub64() == reg.sub64(),
+                    _ => todo!(),
+                }
+            },
+            Reg::wasm(ls) => {
+                match &other {
+                    Reg::wasm(rs) =>  *ls == *rs,
+                    _ => todo!()
                 }
             }
-        }  
+        } 
     }
 
     /// Returns if the specified register is an fp register
     pub fn is_fp(&self) -> bool {
         match self {
             Reg::x64(x64) => x64.is_xmm(),
+            _ => false,
         }
     }
 
@@ -58,6 +63,7 @@ impl Reg {
     pub fn is_gr(&self) -> bool {
         match self {
             Reg::x64(x64) => x64.sub64().is_gr64(),
+            _ => false,
         }
     }
 }

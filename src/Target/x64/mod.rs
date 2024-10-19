@@ -1,4 +1,4 @@
-//! The x64 Target: used for compiling ir and inline asm into x64 machine code
+//! The x64 Target
 
 use std::collections::VecDeque;
 
