@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, error::Error, fmt::Display, str::FromStr};
+use std::{any::Any, collections::VecDeque, error::Error, fmt::Display, str::FromStr};
 
 use crate::{Support::ColorProfile, Target::{x64Reg, Compiler}};
 
@@ -154,8 +154,16 @@ impl x64Parser {
 }
 
 impl Compiler for x64Parser {
-    fn new(&self, tokens: Vec<Token>) -> Box<dyn Compiler> {
-        Box::from( x64Parser::new(tokens) )
+    fn new(&self, tokens: Vec<Box<dyn Any>>) -> Box<dyn Compiler> {
+        let mut casted = Vec::new();
+
+        for token in tokens {
+            casted.push(
+                *token.downcast::<Token>().expect("the x64 parser expects that the input tokens are also x64 tokens")
+            );
+        }
+
+        Box::from( x64Parser::new(casted) )
     }
 
     fn parse(&mut self) -> Result<(), Box<dyn Error>> {

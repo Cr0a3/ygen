@@ -13,6 +13,9 @@ pub fn initializeWasmTarget(_: CallConv) -> TargetBackendDescr {
 
     target.call = CallConv::WasmBasicCAbi;
     target.init = Some(initializeWasmTarget);
+
+    target.lexer = Some(Box::new( asm::lexer::wasmLexer {} ));
+    target.compile = Some(Box::new( asm::parser::wasmParser::new(Vec::new())));
     
     let mut compiler = CompilationHelper::new(
             Arch::Wasm64, 

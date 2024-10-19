@@ -6,7 +6,7 @@ use crate::Target::Lexer;
 
 /// An error which can occure during lexing
 #[derive(Default, Debug, Clone, PartialEq)]
-pub enum LexingError {
+pub(crate) enum LexingError {
     /// An invalid intenger
 	InvalidInteger(String),
 	#[default]
@@ -34,52 +34,38 @@ impl From<ParseIntError> for LexingError {
 }
 
 /// An assembly token
-#[derive(Logos, Debug, Clone, PartialEq, Eq)]
+#[derive(Logos, Debug, Clone)]
 #[logos(skip r"[ \t\n\f]+")]
 #[logos(error = LexingError)]
 #[doc(hidden)]
-pub enum Token {
-	#[regex("[a-zA-Z0-9_]+", priority = 5, callback = |lex| lex.slice().to_string())]
+pub(crate) enum Token {
+	#[regex("[a-zA-Z][a-zA-Z0-9_]*", priority = 5, callback = |lex| lex.slice().to_string())]
 	Ident(String),
 
-	#[regex(r"(0x[0-9a-fA-F]+|0b[01]+|\d+)", priority = 6, callback = |lex| {
-		let string = lex.slice();
-		if string.starts_with("0x") {
-			i64::from_str_radix(&string.replace("0x", ""), 16)
-		} else if string.starts_with("0b") {
-			i64::from_str_radix(&string.replace("0b", ""), 2)
-		} else if string.starts_with("-") {
-			Ok(-(string.replace("-", "").parse::<i64>()?))
-		} else {
-			string.parse()
-		}
-	})]
-	Num(i64),
+	#[regex(r"-?[0-9]+(\.[0-9]+)?", |lex| lex.slice().parse::<f64>().unwrap())]
+	Num(f64),
 
-    #[token(",")]
-    Comma,
-
-    #[token(":")]
-    DoubleDot,
-
-	#[token("[")]
-	L_Bracket,
-
-	#[token("]")]
-	R_Bracket,
-
-	#[token("+")]
-	Add,
-
-	#[token("-")]
-	Sub,
+	#[token(".")]
+	Dot,
 }
+
+impl PartialEq for Token {
+	fn eq(&self, other: &Self) -> bool {
+		match (self, other) {
+			(Self::Ident(l0), Self::Ident(r0)) => l0 == r0,
+			(Self::Num(l0), Self::Num(r0)) => l0 == r0,
+			_ => core::mem::discriminant(self) == core::mem::discriminant(other),
+		}
+	}
+}
+
+impl Eq for Token {}
 
 /// A temporary structure which implements the Lexer trait 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct x64Lexer {}
+pub(crate) struct wasmLexer {}
 
-impl Lexer for x64Lexer {
+impl Lexer for wasmLexer {
 	fn lex(&self, string: String) -> Result<Vec<Box<dyn Any>>, Box<dyn Error>> {
 		let mut tokens: Vec<Box<dyn Any>> = vec![];
 	

@@ -1,11 +1,9 @@
-use std::error::Error;
-
-use super::Token;
+use std::{any::Any, error::Error};
 
 /// The lexer trait
 pub trait Lexer {
     /// lexes the string
-    fn lex(&self, string: String) -> Result<Vec<Token>, Box<dyn Error>>;
+    fn lex(&self, string: String) -> Result<Vec<Box<dyn Any>>, Box<dyn Error>>;
 
     /// Returns self into a boxed lexer trait
     fn boxed(&self) -> Box<dyn Lexer>;
