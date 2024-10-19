@@ -5,7 +5,7 @@ cargo run -p ylc -- -in=%s -O -fmt -passes=cp
 define i32 @main() {
   entry:
     %0 = i32 5
-    %1 = cast %0 to i32
+    %1 = cast i32 %0 to i32
     ret i32 %1
 }
 
