@@ -8,7 +8,7 @@ pub(crate) fn construct_compilation_helper(call_conv: CallConv) -> CompilationHe
         call_conv: call_conv
     };
 
-    let mut alloc = RegAlloc::new(Arch::X86_64, call_conv);
+    let mut alloc = RegAlloc::new(Arch::X86_64, call_conv, false);
 
     alloc.free_registers.push(Arch::X86_64, Reg::x64(x64Reg::Rcx));
     alloc.free_registers.push(Arch::X86_64, Reg::x64(x64Reg::Rdx));

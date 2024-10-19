@@ -25,11 +25,17 @@ pub struct RegAlloc {
     pub(crate) scopes: HashMap<String, Vec<(Var, VarLocation)>>,
 
     pub(crate) processed_args: bool,
+
+    // USED BY WASM
+
+    pub(crate) jvars: Vec<i32>,
+    pub(crate) curr_index: i32,
+    pub(crate) just_vars: bool,
 }
 
 impl RegAlloc {
     /// Creates an new register allocator
-    pub fn new(arch: Arch, call: CallConv) -> Self {
+    pub fn new(arch: Arch, call: CallConv, just_vars: bool) -> Self {
         let call = MachineCallingConvention { 
             call_conv: call 
         };
@@ -48,6 +54,9 @@ impl RegAlloc {
             scopes: HashMap::new(),
 
             processed_args: false,
+            jvars: Vec::new(),
+            curr_index: 0,
+            just_vars: just_vars,
         }
     }
 
@@ -58,12 +67,17 @@ impl RegAlloc {
 
         for ty in &func.args {
             let location = {
-                if let Some(reg) = self.call.args(self.arch, *ty).get(num) {
-                    VarLocation::Reg(match reg {
-                        Reg::x64(x64) => Reg::x64(x64.sub_ty(*ty)),
-                    })
+                if self.just_vars {
+                    self.curr_index += 1;
+                    VarLocation::Mem((self.curr_index - 1) as i64)
                 } else {
-                    todo!("The new system currently doesn't support memory")
+                    if let Some(reg) = self.call.args(self.arch, *ty).get(num) {
+                        VarLocation::Reg(match reg {
+                            Reg::x64(x64) => Reg::x64(x64.sub_ty(*ty)),
+                        })
+                    } else {
+                        todo!("The new system currently doesn't support memory")
+                    }
                 }
             };
 
@@ -269,6 +283,15 @@ impl RegAlloc {
     pub(crate) fn alloc_rv(&mut self, ty: TypeMetadata) -> VarLocation {
         let mut reg  = None;
 
+        if self.just_vars {
+            if let Some(var) = self.jvars.pop() {
+                return VarLocation::Mem(var as i64);
+            } else {
+                self.curr_index += 1;
+                return VarLocation::Mem((self.curr_index - 1) as i64);
+            }
+        }
+
         if TypeMetadata::f32 == ty || TypeMetadata::f64 == ty {
             if let Some(fpreg) = self.free_fpregs.pop(self.arch) {
                 reg = Some(fpreg);
@@ -287,6 +310,15 @@ impl RegAlloc {
     }
 
     pub(crate) fn alloc_stack(&mut self, _: TypeMetadata) -> VarLocation {
+        if self.just_vars {
+            if let Some(var) = self.jvars.pop() {
+                return VarLocation::Mem(var as i64);
+            } else {
+                self.curr_index += 1;
+                return VarLocation::Mem((self.curr_index - 1) as i64);
+            }
+        }
+
         let ret = VarLocation::Mem(self.stack_off);
             
         self.stack_off += self.call.align(self.arch);
