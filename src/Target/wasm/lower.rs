@@ -9,34 +9,36 @@ mod cast;
 mod call;
 mod switch;
 
-use crate::{CodeGen::{MCInstr, MachineInstr}, Optimizations::Optimize, Target::CallConv};
+use crate::{CodeGen::{MCInstr, MachineInstr, MachineOperand}, Optimizations::Optimize, Target::CallConv, IR::TypeMetadata};
+
+use super::asm::{WasmOperand, WasmPrefix};
 
 pub(crate) fn wasm_lower_instr(sink: &mut Vec<super::asm::WasmMCInstr>, instr: MachineInstr) {
     match instr.mnemonic.to_owned() {
         crate::CodeGen::MachineMnemonic::Move => mov::wasm_lower_mov(sink, &instr),
         crate::CodeGen::MachineMnemonic::Add => math::wasm_lower_add(sink, &instr),
-        crate::CodeGen::MachineMnemonic::And => math::wasm_lower_and(sink, &instr),
+        crate::CodeGen::MachineMnemonic::And => todo!(), // math::wasm_lower_and(sink, &instr),
         crate::CodeGen::MachineMnemonic::Div => math::wasm_lower_div(sink, &instr),
         crate::CodeGen::MachineMnemonic::Mul => math::wasm_lower_mul(sink, &instr),
-        crate::CodeGen::MachineMnemonic::Or => math::wasm_lower_or(sink, &instr),
+        crate::CodeGen::MachineMnemonic::Or => todo!(), // math::wasm_lower_or(sink, &instr),
         crate::CodeGen::MachineMnemonic::Sub => math::wasm_lower_sub(sink, &instr),
-        crate::CodeGen::MachineMnemonic::Xor => math::wasm_lower_xor(sink, &instr),
+        crate::CodeGen::MachineMnemonic::Xor => todo!(), // math::wasm_lower_xor(sink, &instr),
         crate::CodeGen::MachineMnemonic::Rem => math::wasm_lower_rem(sink, &instr),
-        crate::CodeGen::MachineMnemonic::Neg => math::wasm_lower_neg(sink, &instr),
-        crate::CodeGen::MachineMnemonic::Shl => math::wasm_lower_shl(sink, &instr),
-        crate::CodeGen::MachineMnemonic::Shr => math::wasm_lower_shr(sink, &instr),
+        crate::CodeGen::MachineMnemonic::Neg => todo!(), // math::wasm_lower_neg(sink, &instr),
+        crate::CodeGen::MachineMnemonic::Shl => todo!(), // math::wasm_lower_shl(sink, &instr),
+        crate::CodeGen::MachineMnemonic::Shr => todo!(), // math::wasm_lower_shr(sink, &instr),
         crate::CodeGen::MachineMnemonic::FMove => mov::wasm_lower_mov(sink, &instr),
         crate::CodeGen::MachineMnemonic::FAdd => math::wasm_lower_add(sink, &instr),
-        crate::CodeGen::MachineMnemonic::FAnd => math::wasm_lower_and(sink, &instr),
+        crate::CodeGen::MachineMnemonic::FAnd => todo!(), // math::wasm_lower_and(sink, &instr),
         crate::CodeGen::MachineMnemonic::FDiv => math::wasm_lower_div(sink, &instr),
         crate::CodeGen::MachineMnemonic::FMul => math::wasm_lower_mul(sink, &instr),
-        crate::CodeGen::MachineMnemonic::FOr => math::wasm_lower_or(sink, &instr),
+        crate::CodeGen::MachineMnemonic::FOr => todo!(), // math::wasm_lower_or(sink, &instr),
         crate::CodeGen::MachineMnemonic::FSub => math::wasm_lower_sub(sink, &instr),
-        crate::CodeGen::MachineMnemonic::FXor => math::wasm_lower_xor(sink, &instr),
+        crate::CodeGen::MachineMnemonic::FXor => todo!(), // math::wasm_lower_xor(sink, &instr),
         crate::CodeGen::MachineMnemonic::FRem => math::wasm_lower_rem(sink, &instr),
-        crate::CodeGen::MachineMnemonic::FNeg => math::wasm_lower_neg(sink, &instr),
-        crate::CodeGen::MachineMnemonic::FShl => math::wasm_lower_shl(sink, &instr),
-        crate::CodeGen::MachineMnemonic::FShr => math::wasm_lower_shr(sink, &instr),
+        crate::CodeGen::MachineMnemonic::FNeg => todo!(), // math::wasm_lower_neg(sink, &instr),
+        crate::CodeGen::MachineMnemonic::FShl => todo!(), // math::wasm_lower_shl(sink, &instr),
+        crate::CodeGen::MachineMnemonic::FShr => todo!(), // math::wasm_lower_shr(sink, &instr),
         crate::CodeGen::MachineMnemonic::FCompare(cmp_mode) => cmp::wasm_lower_cmp(sink, &instr, cmp_mode),
         crate::CodeGen::MachineMnemonic::FCast(start_ty) => cast::wasm_lower_cast(sink, &instr, start_ty),
         crate::CodeGen::MachineMnemonic::BrCond(iftrue, iffalse) => br::wasm_lower_brcond(sink, &instr, iftrue, iffalse),
@@ -80,4 +82,36 @@ pub(crate) fn wasm_lower(_: CallConv, instrs: Vec<MachineInstr>) -> Vec<Box<dyn 
     }
 
     mc_instrs
+}
+
+impl Into<WasmOperand> for MachineOperand {
+    fn into(self) -> WasmOperand {
+        match self {
+            MachineOperand::Imm(imm) => WasmOperand::Const(imm),
+            MachineOperand::Reg(var) => match var {
+                crate::CodeGen::Reg::wasm(var) => WasmOperand::Var(var),
+                _ => panic!("the wasm backend expects that only wasm registers are used"),
+            },
+            MachineOperand::Stack(var) => WasmOperand::Var(var as i32),
+        }
+    }
+}
+
+impl Into<WasmOperand> for &MachineOperand { 
+    fn into(self) -> WasmOperand {
+        (*self).into()
+    }
+}
+
+impl Into<WasmPrefix> for TypeMetadata {
+    fn into(self) -> WasmPrefix {
+        match self {
+            TypeMetadata::i32 => WasmPrefix::i32,
+            TypeMetadata::i64 => WasmPrefix::i64,
+            TypeMetadata::ptr => WasmPrefix::i64,
+            TypeMetadata::f32 => WasmPrefix::f32,
+            TypeMetadata::f64 => WasmPrefix::f64,
+            _ => panic!("wasm only supports i32/i64/f32/f64 and ptrs")
+        }
+    }
 }

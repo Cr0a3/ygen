@@ -86,11 +86,14 @@ impl WasmMCInstr {
                     _ => unreachable!(),
                 };
 
-                while let Some(&last) = bytes.last() {
-                    if last == 0 {
-                        bytes.pop();
-                    } else {
-                        break;
+
+                if self.prefix.unwrap() != WasmPrefix::f32 && self.prefix.unwrap() != WasmPrefix::f64 {
+                    while let Some(&last) = bytes.last() {
+                        if last == 0 {
+                            bytes.pop();
+                        } else {
+                            break;
+                        }
                     }
                 }
 
@@ -102,18 +105,83 @@ impl WasmMCInstr {
                     encoded.push(0);
                 }
 
-                match bytes.len() {
-                    1 => encoded.push(0x01),
-                    2 => encoded.push(0x03),
-                    3 => encoded.push(0x07),
-                    4 => encoded.push(0x0f),
-                    5 => encoded.push(0x1f),
-                    6 => encoded.push(0x3f),
-                    7 => encoded.push(0x00),
-                    8 => encoded.push(0x0f),
-                    _ => {},
+                if self.prefix.unwrap() != WasmPrefix::f32 && self.prefix.unwrap() != WasmPrefix::f64 {
+                    match bytes.len() {
+                        1 => encoded.push(0x01),
+                        2 => encoded.push(0x03),
+                        3 => encoded.push(0x07),
+                        4 => encoded.push(0x0f),
+                        5 => encoded.push(0x1f),
+                        6 => encoded.push(0x3f),
+                        7 => encoded.push(0x00),
+                        8 => encoded.push(0x0f),
+                        _ => {},
+                    }
                 }
             }
+            WasmMnemonic::Add => {
+                encoded = vec![match self.prefix.expect("...add expects an prefix") {
+                    WasmPrefix::i32 => 0x6a,
+                    WasmPrefix::i64 => 0x7c,
+                    WasmPrefix::f32 => 0x92,
+                    WasmPrefix::f64 => 0xa0,
+                    _ => panic!("...add must have either i32, i64, f32 or f64 as its prefix")
+                }]
+            },
+            WasmMnemonic::Sub => {
+                encoded = vec![match self.prefix.expect("...sub expects an prefix") {
+                    WasmPrefix::i32 => 0x6b,
+                    WasmPrefix::i64 => 0x7d,
+                    WasmPrefix::f32 => 0x93,
+                    WasmPrefix::f64 => 0xa1,
+                    _ => panic!("...sub must have either i32, i64, f32 or f64 as its prefix")
+                }]
+            },
+            WasmMnemonic::Mul => {
+                encoded = vec![match self.prefix.expect("...mul expects an prefix") {
+                    WasmPrefix::i32 => 0x6c,
+                    WasmPrefix::i64 => 0x7e,
+                    WasmPrefix::f32 => 0x94,
+                    WasmPrefix::f64 => 0xa2,
+                    _ => panic!("...mul must have either i32, i64, f32 or f64 as its prefix")
+                }]
+            },
+            WasmMnemonic::Div => {
+                encoded = vec![match self.prefix.expect("...div expects an prefix") {
+                    WasmPrefix::f32 => 0x95,
+                    WasmPrefix::f64 => 0xa3,
+                    _ => panic!("...div only works for f32, f64 if you want to use i32/i64 take a look at divs and divu")
+                }]
+            },
+            WasmMnemonic::Divs => {
+                encoded = vec![match self.prefix.expect("...divs expects an prefix") {
+                    WasmPrefix::i32 => 0x6d,
+                    WasmPrefix::i64 => 0x7f,
+                    _ => panic!("...divs only works for i32, i64")
+                }]
+            },
+            WasmMnemonic::Divu => {
+                encoded = vec![match self.prefix.expect("...divu expects an prefix") {
+                    WasmPrefix::i32 => 0x6e,
+                    WasmPrefix::i64 => 0x80,
+                    _ => panic!("...divu only works for i32, i64")
+                }]
+            },
+            WasmMnemonic::Rems => {
+                encoded = vec![match self.prefix.expect("...rems expects an prefix") {
+                    WasmPrefix::i32 => 0x6f,
+                    WasmPrefix::i64 => 0x81,
+                    _ => panic!("...rems only works for i32, i64")
+                }]
+            },
+            WasmMnemonic::Remu => {
+                encoded = vec![match self.prefix.expect("...remu expects an prefix") {
+                    WasmPrefix::i32 => 0x70,
+                    WasmPrefix::i64 => 0x82,
+                    _ => panic!("...remu only works for i32, i64")
+                }]
+            },
+            WasmMnemonic::Return => encoded = vec![0x0f]
         }
 
         Ok((encoded, None))
@@ -128,6 +196,15 @@ pub enum WasmMnemonic {
     Get,
     Set,
     Const,
+    Add,
+    Mul,
+    Sub,
+    Div,
+    Divs,
+    Divu,
+    Rems,
+    Remu,
+    Return,
 }
 
 impl From<String> for WasmMnemonic {
@@ -136,6 +213,15 @@ impl From<String> for WasmMnemonic {
             "get" => WasmMnemonic::Get,
             "set" => WasmMnemonic::Set,
             "const" => WasmMnemonic::Const,
+            "add" => WasmMnemonic::Add,
+            "mul" => WasmMnemonic::Mul,
+            "sub" => WasmMnemonic::Sub,
+            "div" => WasmMnemonic::Div,
+            "div_s" => WasmMnemonic::Divs,
+            "div_u" => WasmMnemonic::Divu,
+            "rem_s" => WasmMnemonic::Rems,
+            "rem_u" => WasmMnemonic::Remu,
+            "return" => WasmMnemonic::Return,
             _ => panic!("unkown wasm mnemonic: {value}"),
         }
     }
@@ -147,6 +233,15 @@ impl Display for WasmMnemonic {
             WasmMnemonic::Get => "get",
             WasmMnemonic::Set => "set",
             WasmMnemonic::Const => "const",
+            WasmMnemonic::Add => "add",
+            WasmMnemonic::Mul => "mul",
+            WasmMnemonic::Sub => "sub",
+            WasmMnemonic::Div => "div",
+            WasmMnemonic::Divs => "div_s",
+            WasmMnemonic::Divu => "div_u",
+            WasmMnemonic::Rems => "rem_s",
+            WasmMnemonic::Remu => "rem_u",
+            WasmMnemonic::Return => "return",
         })
     }
 }
