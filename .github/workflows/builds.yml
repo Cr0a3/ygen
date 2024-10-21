@@ -11,7 +11,7 @@ env:
 
 jobs:
     release:
-        runs-on: ubuntu-latests
+        runs-on: ubuntu-latest
 
         steps:
             - name: Checkout repository
