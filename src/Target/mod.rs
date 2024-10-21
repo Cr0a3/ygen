@@ -4,7 +4,8 @@ pub mod x64;
 pub mod wasm;
 mod registry;
 mod whitelist;
-pub use x64::{x64Reg, initializeX64Target, Token};
+pub use x64::initializeX64Target;
+pub use wasm::initializeWasmTarget;
 pub use whitelist::*;
 pub use triple::Triple;
 pub use target_descr::TargetBackendDescr;
@@ -12,8 +13,10 @@ pub use registry::TargetRegistry;
 pub use registry::RegistryError;
 mod lexer;
 mod compiler;
+mod printer;
 pub use lexer::Lexer;
 pub use compiler::Compiler;
+pub use printer::AsmPrinter;
 
 /// Initializes all targets
 pub fn initializeAllTargets(triple: Triple) -> Result<TargetRegistry, triple::TripleError> {

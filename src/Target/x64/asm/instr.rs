@@ -4,7 +4,7 @@ use iced_x86::{BlockEncoder, BlockEncoderOptions, Code, Instruction, Instruction
 use crate::CodeGen::MCInstr;
 use crate::Obj::Link;
 use crate::Support::{ColorClass, ColorProfile};
-use crate::Target::x64::x64Reg;
+use crate::Target::x64::X64Reg;
 
 /// The target instruction
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1528,7 +1528,7 @@ pub enum Operand {
     /// A number operand
     Imm(i64),
     /// A register operand
-    Reg(x64Reg),
+    Reg(X64Reg),
     /// A memory displacement
     Mem(MemOp),
     /// A link destination
@@ -1569,9 +1569,9 @@ impl Display for Operand {
 #[derive(Eq)]
 pub struct MemOp {
     /// The base register
-    pub base: Option<x64Reg>,
+    pub base: Option<X64Reg>,
     /// The index register
-    pub index: Option<x64Reg>,
+    pub index: Option<X64Reg>,
     /// The scale
     pub scale: isize,
     /// The displacement
@@ -1683,110 +1683,110 @@ impl Into<MemoryOperand> for &MemOp {
     }
 }
 
-impl Into<Register> for x64Reg {
+impl Into<Register> for X64Reg {
     fn into(self) -> Register {
         match self {
-            x64Reg::Rax => Register::RAX,
-            x64Reg::Eax => Register::EAX,
-            x64Reg::Ax =>  Register::AX,
-            x64Reg::Al =>  Register::AL,
+            X64Reg::Rax => Register::RAX,
+            X64Reg::Eax => Register::EAX,
+            X64Reg::Ax =>  Register::AX,
+            X64Reg::Al =>  Register::AL,
 
-            x64Reg::Rbx => Register::RBX,
-            x64Reg::Ebx => Register::EBX,
-            x64Reg::Bx =>  Register::BX,
-            x64Reg::Bl =>  Register::BL,
+            X64Reg::Rbx => Register::RBX,
+            X64Reg::Ebx => Register::EBX,
+            X64Reg::Bx =>  Register::BX,
+            X64Reg::Bl =>  Register::BL,
 
-            x64Reg::Rcx => Register::RCX,
-            x64Reg::Ecx => Register::ECX,
-            x64Reg::Cx =>  Register::CX,
-            x64Reg::Cl =>  Register::CL,
+            X64Reg::Rcx => Register::RCX,
+            X64Reg::Ecx => Register::ECX,
+            X64Reg::Cx =>  Register::CX,
+            X64Reg::Cl =>  Register::CL,
 
-            x64Reg::Rdx => Register::RDX,
-            x64Reg::Edx => Register::EDX,
-            x64Reg::Dx =>  Register::DX,
-            x64Reg::Dl =>  Register::DL,
+            X64Reg::Rdx => Register::RDX,
+            X64Reg::Edx => Register::EDX,
+            X64Reg::Dx =>  Register::DX,
+            X64Reg::Dl =>  Register::DL,
 
-            x64Reg::Rsi => Register::RSI,
-            x64Reg::Esi => Register::ESI,
-            x64Reg::Si =>  Register::SI,
-            x64Reg::Sil => Register::SIL,
+            X64Reg::Rsi => Register::RSI,
+            X64Reg::Esi => Register::ESI,
+            X64Reg::Si =>  Register::SI,
+            X64Reg::Sil => Register::SIL,
 
-            x64Reg::Rdi => Register::RDI,
-            x64Reg::Edi => Register::EDI,
-            x64Reg::Di =>  Register::DI,
-            x64Reg::Dil => Register::DIL,
+            X64Reg::Rdi => Register::RDI,
+            X64Reg::Edi => Register::EDI,
+            X64Reg::Di =>  Register::DI,
+            X64Reg::Dil => Register::DIL,
 
-            x64Reg::Rsp => Register::RSP,
-            x64Reg::Esp => Register::ESP,
-            x64Reg::Sp =>  Register::SP,
-            x64Reg::Spl => Register::SPL,
+            X64Reg::Rsp => Register::RSP,
+            X64Reg::Esp => Register::ESP,
+            X64Reg::Sp =>  Register::SP,
+            X64Reg::Spl => Register::SPL,
 
-            x64Reg::Rbp => Register::RBP,
-            x64Reg::Ebp => Register::EBP,
-            x64Reg::Bp =>  Register::BP,
-            x64Reg::Bpl => Register::BPL,
+            X64Reg::Rbp => Register::RBP,
+            X64Reg::Ebp => Register::EBP,
+            X64Reg::Bp =>  Register::BP,
+            X64Reg::Bpl => Register::BPL,
 
-            x64Reg::R8 =>  Register::R8,
-            x64Reg::R8d => Register::R8D,
-            x64Reg::R8w => Register::R8W,
-            x64Reg::R8b => Register::R8L,
+            X64Reg::R8 =>  Register::R8,
+            X64Reg::R8d => Register::R8D,
+            X64Reg::R8w => Register::R8W,
+            X64Reg::R8b => Register::R8L,
 
-            x64Reg::R9 =>  Register::R9,
-            x64Reg::R9d => Register::R9D,
-            x64Reg::R9w => Register::R9W,
-            x64Reg::R9b => Register::R9L,
+            X64Reg::R9 =>  Register::R9,
+            X64Reg::R9d => Register::R9D,
+            X64Reg::R9w => Register::R9W,
+            X64Reg::R9b => Register::R9L,
 
-            x64Reg::R10 =>   Register::R10,
-            x64Reg::R10d =>  Register::R10D,
-            x64Reg::R10w =>  Register::R10W,
-            x64Reg::R10b =>  Register::R10L,
+            X64Reg::R10 =>   Register::R10,
+            X64Reg::R10d =>  Register::R10D,
+            X64Reg::R10w =>  Register::R10W,
+            X64Reg::R10b =>  Register::R10L,
 
-            x64Reg::R11 =>  Register::R11,
-            x64Reg::R11d => Register::R11D,
-            x64Reg::R11w => Register::R11W,
-            x64Reg::R11b => Register::R11L,
+            X64Reg::R11 =>  Register::R11,
+            X64Reg::R11d => Register::R11D,
+            X64Reg::R11w => Register::R11W,
+            X64Reg::R11b => Register::R11L,
 
-            x64Reg::R12 =>  Register::R12,
-            x64Reg::R12d => Register::R12D,
-            x64Reg::R12w => Register::R12W,
-            x64Reg::R12b => Register::R12L,
+            X64Reg::R12 =>  Register::R12,
+            X64Reg::R12d => Register::R12D,
+            X64Reg::R12w => Register::R12W,
+            X64Reg::R12b => Register::R12L,
 
-            x64Reg::R13 =>  Register::R13,
-            x64Reg::R13d => Register::R13D,
-            x64Reg::R13w => Register::R13W,
-            x64Reg::R13b => Register::R13L,
+            X64Reg::R13 =>  Register::R13,
+            X64Reg::R13d => Register::R13D,
+            X64Reg::R13w => Register::R13W,
+            X64Reg::R13b => Register::R13L,
 
-            x64Reg::R14 =>  Register::R14,
-            x64Reg::R14d => Register::R14D,
-            x64Reg::R14w => Register::R14W,
-            x64Reg::R14b => Register::R14L,
+            X64Reg::R14 =>  Register::R14,
+            X64Reg::R14d => Register::R14D,
+            X64Reg::R14w => Register::R14W,
+            X64Reg::R14b => Register::R14L,
 
-            x64Reg::R15 =>  Register::R15,
-            x64Reg::R15d => Register::R15D,
-            x64Reg::R15w => Register::R15W,
-            x64Reg::R15b => Register::R15L,
+            X64Reg::R15 =>  Register::R15,
+            X64Reg::R15d => Register::R15D,
+            X64Reg::R15w => Register::R15W,
+            X64Reg::R15b => Register::R15L,
 
-            x64Reg::Xmm0 => Register::XMM0,
-            x64Reg::Xmm1 => Register::XMM1,
-            x64Reg::Xmm2 => Register::XMM2,
-            x64Reg::Xmm3 => Register::XMM3,
-            x64Reg::Xmm4 => Register::XMM4,
-            x64Reg::Xmm5 => Register::XMM5,
-            x64Reg::Xmm6 => Register::XMM6,
-            x64Reg::Xmm7 => Register::XMM7,
-            x64Reg::Xmm8 => Register::XMM8,
-            x64Reg::Xmm9 => Register::XMM9,
-            x64Reg::Xmm10 => Register::XMM10,
-            x64Reg::Xmm11 => Register::XMM11,
-            x64Reg::Xmm12 => Register::XMM12,
-            x64Reg::Xmm13 => Register::XMM13,
-            x64Reg::Xmm14 => Register::XMM14,
-            x64Reg::Xmm15 => Register::XMM15,
+            X64Reg::Xmm0 => Register::XMM0,
+            X64Reg::Xmm1 => Register::XMM1,
+            X64Reg::Xmm2 => Register::XMM2,
+            X64Reg::Xmm3 => Register::XMM3,
+            X64Reg::Xmm4 => Register::XMM4,
+            X64Reg::Xmm5 => Register::XMM5,
+            X64Reg::Xmm6 => Register::XMM6,
+            X64Reg::Xmm7 => Register::XMM7,
+            X64Reg::Xmm8 => Register::XMM8,
+            X64Reg::Xmm9 => Register::XMM9,
+            X64Reg::Xmm10 => Register::XMM10,
+            X64Reg::Xmm11 => Register::XMM11,
+            X64Reg::Xmm12 => Register::XMM12,
+            X64Reg::Xmm13 => Register::XMM13,
+            X64Reg::Xmm14 => Register::XMM14,
+            X64Reg::Xmm15 => Register::XMM15,
         }
     }
 }
 
-impl Add<u32> for x64Reg {
+impl Add<u32> for X64Reg {
     type Output = MemOp;
 
     fn add(self, rhs: u32) -> Self::Output {
@@ -1800,10 +1800,10 @@ impl Add<u32> for x64Reg {
     }
 }
 
-impl Add<x64Reg> for x64Reg {
+impl Add<X64Reg> for X64Reg {
     type Output = MemOp;
 
-    fn add(self, rhs: x64Reg) -> Self::Output {
+    fn add(self, rhs: X64Reg) -> Self::Output {
         MemOp {
             base: Some(self),
             index: Some(rhs),
@@ -1814,7 +1814,7 @@ impl Add<x64Reg> for x64Reg {
     }
 }
 
-impl Sub<u32> for x64Reg {
+impl Sub<u32> for X64Reg {
     type Output = MemOp;
 
     fn sub(self, rhs: u32) -> Self::Output {

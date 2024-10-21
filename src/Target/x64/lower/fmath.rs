@@ -1,6 +1,6 @@
 use crate::CodeGen::MachineInstr;
 use crate::Target::x64::instr::*;
-use crate::Target::x64::x64Reg;
+use crate::Target::x64::X64Reg;
 use super::fmove::FInstrVariant;
 use crate::IR::TypeMetadata;
 
@@ -83,86 +83,86 @@ macro_rules! FMathLowerImpl {
             // f32
             match variant {
                 FInstrVariant::Fp =>     {
-                    sink.push(X64MCInstr::with2(Mnemonic::Movss, Operand::Reg(x64Reg::Xmm15), op1));
-                    sink.push(X64MCInstr::with2($f32m, Operand::Reg(x64Reg::Xmm15), op2));
-                    sink.push(X64MCInstr::with2(Mnemonic::Movss, out, Operand::Reg(x64Reg::Xmm15)));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movss, Operand::Reg(X64Reg::Xmm15), op1));
+                    sink.push(X64MCInstr::with2($f32m, Operand::Reg(X64Reg::Xmm15), op2));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movss, out, Operand::Reg(X64Reg::Xmm15)));
                 },
                 FInstrVariant::FpReg =>  {
-                    sink.push(X64MCInstr::with2(Mnemonic::Movd, Operand::Reg(x64Reg::Xmm15), op1));
-                    sink.push(X64MCInstr::with2($f32m, Operand::Reg(x64Reg::Xmm15), op2));
-                    sink.push(X64MCInstr::with2(Mnemonic::Movss, out, Operand::Reg(x64Reg::Xmm15)));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movd, Operand::Reg(X64Reg::Xmm15), op1));
+                    sink.push(X64MCInstr::with2($f32m, Operand::Reg(X64Reg::Xmm15), op2));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movss, out, Operand::Reg(X64Reg::Xmm15)));
                 },
                 FInstrVariant::RegFp =>  {
-                    sink.push(X64MCInstr::with2(Mnemonic::Movd,     Operand::Reg(x64Reg::Xmm15), op1));
-                    sink.push(X64MCInstr::with2($f32m, Operand::Reg(x64Reg::Xmm15), op2));
-                    sink.push(X64MCInstr::with2(Mnemonic::Movss, out, Operand::Reg(x64Reg::Xmm15)));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movd,     Operand::Reg(X64Reg::Xmm15), op1));
+                    sink.push(X64MCInstr::with2($f32m, Operand::Reg(X64Reg::Xmm15), op2));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movss, out, Operand::Reg(X64Reg::Xmm15)));
                 },
                 FInstrVariant::FpMem =>  {
-                    sink.push(X64MCInstr::with2(Mnemonic::Movss,    Operand::Reg(x64Reg::Xmm15), op1));
-                    sink.push(X64MCInstr::with2($f32m, Operand::Reg(x64Reg::Xmm15), op2));
-                    sink.push(X64MCInstr::with2(Mnemonic::Movss, out, Operand::Reg(x64Reg::Xmm15)));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movss,    Operand::Reg(X64Reg::Xmm15), op1));
+                    sink.push(X64MCInstr::with2($f32m, Operand::Reg(X64Reg::Xmm15), op2));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movss, out, Operand::Reg(X64Reg::Xmm15)));
                 },
                 FInstrVariant::MemFp =>  {
-                    sink.push(X64MCInstr::with2(Mnemonic::Movss,    Operand::Reg(x64Reg::Xmm15), op1));
-                    sink.push(X64MCInstr::with2($f32m, Operand::Reg(x64Reg::Xmm15), op2));
-                    sink.push(X64MCInstr::with2(Mnemonic::Movss, out, Operand::Reg(x64Reg::Xmm15)));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movss,    Operand::Reg(X64Reg::Xmm15), op1));
+                    sink.push(X64MCInstr::with2($f32m, Operand::Reg(X64Reg::Xmm15), op2));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movss, out, Operand::Reg(X64Reg::Xmm15)));
                 },
                 FInstrVariant::FpImm =>  {
-                    sink.push(X64MCInstr::with2(Mnemonic::Movss,    Operand::Reg(x64Reg::Xmm15), op1));
-                    sink.push(X64MCInstr::with2(Mnemonic::Mov,      Operand::Reg(x64Reg::Eax), op2));
-                    sink.push(X64MCInstr::with2(Mnemonic::Movd,     out.clone(), Operand::Reg(x64Reg::Eax)));
-                    sink.push(X64MCInstr::with2($f32m, Operand::Reg(x64Reg::Xmm15), out.clone()));
-                    sink.push(X64MCInstr::with2(Mnemonic::Movss, out, Operand::Reg(x64Reg::Xmm15)));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movss,    Operand::Reg(X64Reg::Xmm15), op1));
+                    sink.push(X64MCInstr::with2(Mnemonic::Mov,      Operand::Reg(X64Reg::Eax), op2));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movd,     out.clone(), Operand::Reg(X64Reg::Eax)));
+                    sink.push(X64MCInstr::with2($f32m, Operand::Reg(X64Reg::Xmm15), out.clone()));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movss, out, Operand::Reg(X64Reg::Xmm15)));
                 },
                 FInstrVariant::Normal => {},
                 FInstrVariant::MemImm => {
-                    sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), op1));
-                    sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Xmm15), Operand::Reg(x64Reg::Rax)));
-                    sink.push(X64MCInstr::with2($f32m, Operand::Reg(x64Reg::Xmm15), op2));
-                    sink.push(X64MCInstr::with2(Mnemonic::Movss, out, Operand::Reg(x64Reg::Xmm15)));
+                    sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rax), op1));
+                    sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Xmm15), Operand::Reg(X64Reg::Rax)));
+                    sink.push(X64MCInstr::with2($f32m, Operand::Reg(X64Reg::Xmm15), op2));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movss, out, Operand::Reg(X64Reg::Xmm15)));
                 },
             };
         } else {
             // f64
             match variant {
                 FInstrVariant::Fp =>     {
-                    sink.push(X64MCInstr::with2(Mnemonic::Movsd, Operand::Reg(x64Reg::Xmm15), op1));
-                    sink.push(X64MCInstr::with2($f64m, Operand::Reg(x64Reg::Xmm15), op2));
-                    sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(x64Reg::Xmm15)));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movsd, Operand::Reg(X64Reg::Xmm15), op1));
+                    sink.push(X64MCInstr::with2($f64m, Operand::Reg(X64Reg::Xmm15), op2));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(X64Reg::Xmm15)));
                 },
                 FInstrVariant::FpReg =>  {
-                    sink.push(X64MCInstr::with2(Mnemonic::Movq, Operand::Reg(x64Reg::Xmm15), op1));
-                    sink.push(X64MCInstr::with2($f64m, Operand::Reg(x64Reg::Xmm15), op2));
-                    sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(x64Reg::Xmm15)));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movq, Operand::Reg(X64Reg::Xmm15), op1));
+                    sink.push(X64MCInstr::with2($f64m, Operand::Reg(X64Reg::Xmm15), op2));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(X64Reg::Xmm15)));
                 },
                 FInstrVariant::RegFp =>  {
-                    sink.push(X64MCInstr::with2(Mnemonic::Movq,     Operand::Reg(x64Reg::Xmm15), op1));
-                    sink.push(X64MCInstr::with2($f64m, Operand::Reg(x64Reg::Xmm15), op2));
-                    sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(x64Reg::Xmm15)));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movq,     Operand::Reg(X64Reg::Xmm15), op1));
+                    sink.push(X64MCInstr::with2($f64m, Operand::Reg(X64Reg::Xmm15), op2));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(X64Reg::Xmm15)));
                 },
                 FInstrVariant::FpMem =>  {
-                    sink.push(X64MCInstr::with2(Mnemonic::Movss,    Operand::Reg(x64Reg::Xmm15), op1));
-                    sink.push(X64MCInstr::with2($f64m, Operand::Reg(x64Reg::Xmm15), op2));
-                    sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(x64Reg::Xmm15)));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movss,    Operand::Reg(X64Reg::Xmm15), op1));
+                    sink.push(X64MCInstr::with2($f64m, Operand::Reg(X64Reg::Xmm15), op2));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(X64Reg::Xmm15)));
                 },
                 FInstrVariant::MemFp =>  {
-                    sink.push(X64MCInstr::with2(Mnemonic::Movsd,    Operand::Reg(x64Reg::Xmm15), op1));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movsd,    Operand::Reg(X64Reg::Xmm15), op1));
                     sink.push(X64MCInstr::with2(Mnemonic::Movq,     out.clone(), op2));
-                    sink.push(X64MCInstr::with2($f64m, Operand::Reg(x64Reg::Xmm15), out.clone()));
-                    sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(x64Reg::Xmm15)));
+                    sink.push(X64MCInstr::with2($f64m, Operand::Reg(X64Reg::Xmm15), out.clone()));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(X64Reg::Xmm15)));
                 },
                 FInstrVariant::FpImm =>  {
-                    sink.push(X64MCInstr::with2(Mnemonic::Movss, Operand::Reg(x64Reg::Xmm15), op1));
-                    sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), op2));
-                    sink.push(X64MCInstr::with2($f64m, Operand::Reg(x64Reg::Xmm15), Operand::Reg(x64Reg::Rax)));
-                    sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(x64Reg::Xmm15)));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movss, Operand::Reg(X64Reg::Xmm15), op1));
+                    sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rax), op2));
+                    sink.push(X64MCInstr::with2($f64m, Operand::Reg(X64Reg::Xmm15), Operand::Reg(X64Reg::Rax)));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(X64Reg::Xmm15)));
                 },
                 FInstrVariant::Normal => {},
                 FInstrVariant::MemImm => {
-                    sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), op1));
-                    sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Xmm15), Operand::Reg(x64Reg::Rax)));
-                    sink.push(X64MCInstr::with2($f64m, Operand::Reg(x64Reg::Xmm15), op2));
-                    sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(x64Reg::Xmm15)));
+                    sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rax), op1));
+                    sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Xmm15), Operand::Reg(X64Reg::Rax)));
+                    sink.push(X64MCInstr::with2($f64m, Operand::Reg(X64Reg::Xmm15), op2));
+                    sink.push(X64MCInstr::with2(Mnemonic::Movsd, out, Operand::Reg(X64Reg::Xmm15)));
                 },
             };
         }

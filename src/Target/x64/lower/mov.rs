@@ -1,5 +1,5 @@
 use crate::CodeGen::MachineInstr;
-use crate::Target::x64Reg;
+use crate::Target::x64::X64Reg;
 use crate::Target::x64::asm::instr::*;
 
 pub(crate) fn x64_lower_move(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
@@ -12,8 +12,8 @@ pub(crate) fn x64_lower_move(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
 
     if let Operand::Mem(_) = out {
         if let Operand::Reg(_) = op1 {} else {
-            sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), op1) );
-            sink.push( X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta))) );
+            sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)), op1) );
+            sink.push( X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta))) );
             return;
         }
     }

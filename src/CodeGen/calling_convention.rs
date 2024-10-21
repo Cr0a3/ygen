@@ -1,4 +1,4 @@
-use crate::{Target::{x64Reg, Arch, CallConv}, IR::TypeMetadata};
+use crate::{Target::{x64::X64Reg, Arch, CallConv}, IR::TypeMetadata};
 
 use super::Reg;
 
@@ -16,8 +16,8 @@ impl MachineCallingConvention {
             CallConv::WindowsFastCall => {
                 match arch {
                     Arch::X86_64 => match ty {
-                        TypeMetadata::f32 | TypeMetadata::f64 => Reg::x64(x64Reg::Xmm0),
-                        _ => Reg::x64(x64Reg::Rax.sub_ty(ty))
+                        TypeMetadata::f32 | TypeMetadata::f64 => Reg::x64(X64Reg::Xmm0),
+                        _ => Reg::x64(X64Reg::Rax.sub_ty(ty))
                     },
                     _ => todo!()
                 }
@@ -25,8 +25,8 @@ impl MachineCallingConvention {
             CallConv::SystemV => {
                 match arch {
                     Arch::X86_64 => match ty {
-                        TypeMetadata::f32 | TypeMetadata::f64 => Reg::x64(x64Reg::Xmm0),
-                        _ => Reg::x64(x64Reg::Rax.sub_ty(ty))
+                        TypeMetadata::f32 | TypeMetadata::f64 => Reg::x64(X64Reg::Xmm0),
+                        _ => Reg::x64(X64Reg::Rax.sub_ty(ty))
                     },
                     _ => todo!()
                 }
@@ -43,9 +43,9 @@ impl MachineCallingConvention {
                 if TypeMetadata::f32 == ty || TypeMetadata::f64 == ty {
                     return match arch {
                         Arch::X86_64 => vec![
-                            Reg::x64(x64Reg::Xmm0), Reg::x64(x64Reg::Xmm1), Reg::x64(x64Reg::Xmm2),
-                            Reg::x64(x64Reg::Xmm3), Reg::x64(x64Reg::Xmm4), Reg::x64(x64Reg::Xmm5),
-                            Reg::x64(x64Reg::Xmm6), Reg::x64(x64Reg::Xmm7)
+                            Reg::x64(X64Reg::Xmm0), Reg::x64(X64Reg::Xmm1), Reg::x64(X64Reg::Xmm2),
+                            Reg::x64(X64Reg::Xmm3), Reg::x64(X64Reg::Xmm4), Reg::x64(X64Reg::Xmm5),
+                            Reg::x64(X64Reg::Xmm6), Reg::x64(X64Reg::Xmm7)
                         ],
 
                         _ => todo!(),
@@ -54,8 +54,8 @@ impl MachineCallingConvention {
 
                 match arch {
                     Arch::X86_64 => vec![
-                        Reg::x64(x64Reg::Rcx), Reg::x64(x64Reg::Rdx), 
-                        Reg::x64(x64Reg::R8), Reg::x64(x64Reg::R9)
+                        Reg::x64(X64Reg::Rcx), Reg::x64(X64Reg::Rdx), 
+                        Reg::x64(X64Reg::R8), Reg::x64(X64Reg::R9)
                     ],
                     _ => todo!()
                 }
@@ -64,9 +64,9 @@ impl MachineCallingConvention {
                 if TypeMetadata::f32 == ty || TypeMetadata::f64 == ty {
                     return match arch {
                         Arch::X86_64 => vec![
-                            Reg::x64(x64Reg::Xmm0), Reg::x64(x64Reg::Xmm1), Reg::x64(x64Reg::Xmm2),
-                            Reg::x64(x64Reg::Xmm3), Reg::x64(x64Reg::Xmm4), Reg::x64(x64Reg::Xmm5),
-                            Reg::x64(x64Reg::Xmm6), Reg::x64(x64Reg::Xmm7)
+                            Reg::x64(X64Reg::Xmm0), Reg::x64(X64Reg::Xmm1), Reg::x64(X64Reg::Xmm2),
+                            Reg::x64(X64Reg::Xmm3), Reg::x64(X64Reg::Xmm4), Reg::x64(X64Reg::Xmm5),
+                            Reg::x64(X64Reg::Xmm6), Reg::x64(X64Reg::Xmm7)
                         ],
 
                         _ => todo!(),
@@ -75,9 +75,9 @@ impl MachineCallingConvention {
 
                 match arch {
                     Arch::X86_64 => vec![
-                        Reg::x64(x64Reg::Rdi), Reg::x64(x64Reg::Rsi), 
-                        Reg::x64(x64Reg::Rcx), Reg::x64(x64Reg::Rdx), 
-                        Reg::x64(x64Reg::R8), Reg::x64(x64Reg::R9)
+                        Reg::x64(X64Reg::Rdi), Reg::x64(X64Reg::Rsi), 
+                        Reg::x64(X64Reg::Rcx), Reg::x64(X64Reg::Rdx), 
+                        Reg::x64(X64Reg::R8), Reg::x64(X64Reg::R9)
                     ],
                     _ => todo!()
                 }

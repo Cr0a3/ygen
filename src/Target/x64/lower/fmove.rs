@@ -1,6 +1,6 @@
 use crate::CodeGen::MachineInstr;
 use crate::Target::x64::instr::*;
-use crate::Target::x64Reg;
+use crate::Target::x64::X64Reg;
 use crate::IR::TypeMetadata;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -96,14 +96,14 @@ pub(crate) fn x64_lower_fmove(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) 
             FInstrVariant::MemFp =>  sink.push(X64MCInstr::with2(Mnemonic::Movss,    out, op1)),
             FInstrVariant::FpImm =>  {
                 // TODO
-                sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Eax), op1));
-                sink.push(X64MCInstr::with2(Mnemonic::Movd, out, Operand::Reg(x64Reg::Eax)));
+                sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Eax), op1));
+                sink.push(X64MCInstr::with2(Mnemonic::Movd, out, Operand::Reg(X64Reg::Eax)));
             },
             FInstrVariant::Normal => sink.push(X64MCInstr::with2(Mnemonic::Mov, out, op1)),
             FInstrVariant::MemImm => {
                 // TODO
-                sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), op1));
-                sink.push(X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(x64Reg::Rax)));
+                sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rax), op1));
+                sink.push(X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(X64Reg::Rax)));
             },
         };
     } else {
@@ -115,13 +115,13 @@ pub(crate) fn x64_lower_fmove(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) 
             FInstrVariant::FpMem =>  sink.push(X64MCInstr::with2(Mnemonic::Movsd,    out, op1)),
             FInstrVariant::MemFp =>  sink.push(X64MCInstr::with2(Mnemonic::Movsd,    out, op1)),
             FInstrVariant::FpImm =>  {
-                sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), op1));
-                sink.push(X64MCInstr::with2(Mnemonic::Movq, out, Operand::Reg(x64Reg::Rax)));
+                sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rax), op1));
+                sink.push(X64MCInstr::with2(Mnemonic::Movq, out, Operand::Reg(X64Reg::Rax)));
             },
             FInstrVariant::Normal => sink.push(X64MCInstr::with2(Mnemonic::Mov, out, op1)),
             FInstrVariant::MemImm => {
-                sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax), op1));
-                sink.push(X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(x64Reg::Rax)));
+                sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rax), op1));
+                sink.push(X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(X64Reg::Rax)));
             },
         };
     }

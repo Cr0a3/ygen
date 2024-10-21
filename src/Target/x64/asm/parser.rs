@@ -1,6 +1,6 @@
 use std::{any::Any, collections::VecDeque, error::Error, fmt::Display, str::FromStr};
 
-use crate::{Support::ColorProfile, Target::{x64Reg, Compiler}};
+use crate::{Support::ColorProfile, Target::{x64::X64Reg, Compiler}};
 
 use super::{instr::*, Token};
 
@@ -54,7 +54,7 @@ impl x64Parser {
             self.tokens.pop_front(); // advance
             first_op = true;
         } else if let Some(Token::Ident(reg)) = self.tokens.front() {
-            if let Some(reg) = x64Reg::parse(reg.to_string()) {
+            if let Some(reg) = X64Reg::parse(reg.to_string()) {
                 instr.op1 = Some(Operand::Reg(reg))
             } else {
                 Err(ParsingError::UnknownRegOrUnexpectedIdent(reg.to_string()))?
@@ -74,7 +74,7 @@ impl x64Parser {
                     instr.op2 = Some(Operand::Imm(*n));
                     self.tokens.pop_front(); // advance
                 } else if let Some(Token::Ident(reg)) = self.tokens.front() {
-                    if let Some(reg) = x64Reg::parse(reg.to_string()) {
+                    if let Some(reg) = X64Reg::parse(reg.to_string()) {
                         instr.op2 = Some(Operand::Reg(reg))
                     } else {
                         Err(ParsingError::UnknownRegOrUnexpectedIdent(reg.to_string()))?
@@ -114,7 +114,7 @@ impl x64Parser {
             mem.displ = *n as isize;
             self.tokens.pop_front(); // advance
         } else if let Some(Token::Ident(reg)) = self.tokens.front() {
-            if let Some(reg) = x64Reg::parse(reg.to_string()) {
+            if let Some(reg) = X64Reg::parse(reg.to_string()) {
                 mem.base = Some(reg);
             } else if "rip" == reg.as_str() {
                 mem.rip = true;
@@ -138,7 +138,7 @@ impl x64Parser {
                 else { mem.displ += *n as isize; }
                 self.tokens.pop_front(); // advance
             } else if let Some(Token::Ident(reg)) = self.tokens.front() {
-                if let Some(reg) = x64Reg::parse(reg.to_string()) {
+                if let Some(reg) = X64Reg::parse(reg.to_string()) {
                     mem.index = Some(reg);
                 } else {
                     Err(ParsingError::UnknownRegOrUnexpectedIdent(reg.to_string()))?

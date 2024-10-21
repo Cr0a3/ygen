@@ -5,7 +5,7 @@ use crate::CodeGen::{IrCodeGenArea, IrCodeGenHelper, MCDocInstr, MCInstr};
 use crate::CodeGen::{compilation::CompilationHelper, MachineInstr};
 use crate::IR::{BlockId, Const, FuncId, Module, Type, TypeMetadata};
 
-use super::{Triple, WhiteList};
+use super::{AsmPrinter, Triple, WhiteList};
 use super::{CallConv, Compiler, Lexer};
 
 /// The TargetBackendDescr is used to store all the functions/information to compile ir nodes into assembly
@@ -27,6 +27,8 @@ pub struct TargetBackendDescr {
     pub(crate) epilog: bool,
 
     pub(crate) whitelist: WhiteList,
+
+    pub(crate) printer: Option<Box<dyn AsmPrinter>>,
 }
 
 macro_rules! compile_func {
@@ -71,6 +73,7 @@ impl TargetBackendDescr {
             whitelist: WhiteList::new(),
             sink: vec![],
             epilog: false,
+            printer: None,
         }
     }
     /// Returns the lexer to use with the TargetBackendDescr

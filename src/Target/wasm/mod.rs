@@ -7,6 +7,9 @@ use crate::CodeGen::{reg_alloc::RegAlloc, CompilationHelper, MachineCallingConve
 
 use super::{Arch, CallConv, TargetBackendDescr, WhiteList};
 
+/// Wasm assembly printing
+pub mod printer;
+
 /// Initializes the wasm target
 pub fn initializeWasmTarget(_: CallConv) -> TargetBackendDescr {
     let mut target = TargetBackendDescr::new();
@@ -16,7 +19,8 @@ pub fn initializeWasmTarget(_: CallConv) -> TargetBackendDescr {
 
     target.lexer = Some(Box::new( asm::lexer::wasmLexer {} ));
     target.compile = Some(Box::new( asm::parser::wasmParser::new(Vec::new())));
-    
+    target.printer = Some(printer::WasmAsmPrinter::new());
+
     let mut compiler = CompilationHelper::new(
             Arch::Wasm64, 
             MachineCallingConvention {
@@ -27,7 +31,7 @@ pub fn initializeWasmTarget(_: CallConv) -> TargetBackendDescr {
             CallConv::WasmBasicCAbi, 
             true
         ), 
-        crate::CodeGen::Reg::x64(super::x64Reg::Al) // unnedded won't be used, so anything can go here
+        crate::CodeGen::Reg::x64(crate::Target::x64::X64Reg::Al) // unnedded won't be used, so anything can go here
     );
 
 

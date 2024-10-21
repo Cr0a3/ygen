@@ -22,11 +22,11 @@ mod fcmp;
 mod fmove;
 mod fcast;
 
-use super::{instr::{Mnemonic, Operand, X64MCInstr}, x64Reg};
+use super::{instr::{Mnemonic, Operand, X64MCInstr}, X64Reg};
 
 macro_rules! x64_stack {
     ($off:expr) => {
-        Operand::Mem(x64Reg::Rbp - $off)
+        Operand::Mem(X64Reg::Rbp - $off)
     };
 }
 
@@ -34,7 +34,7 @@ pub(crate) fn x64_lower_instr(conv: CallConv, sink: &mut Vec<X64MCInstr>, instr:
     match &instr.mnemonic {        
     MachineMnemonic::CallStackPrepare => {
         sink.push(X64MCInstr::with2(
-            Mnemonic::Sub, Operand::Reg(x64Reg::Rsp), 
+            Mnemonic::Sub, Operand::Reg(X64Reg::Rsp), 
             Operand::Imm(
                 MachineCallingConvention {
                 call_conv: conv
@@ -42,7 +42,7 @@ pub(crate) fn x64_lower_instr(conv: CallConv, sink: &mut Vec<X64MCInstr>, instr:
         )));
     },MachineMnemonic::CallStackRedo => {
         sink.push(X64MCInstr::with2(
-            Mnemonic::Add, Operand::Reg(x64Reg::Rsp), 
+            Mnemonic::Add, Operand::Reg(X64Reg::Rsp), 
             Operand::Imm(
                 MachineCallingConvention {
                 call_conv: conv

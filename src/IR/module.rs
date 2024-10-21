@@ -1,6 +1,6 @@
 use gimli::DwLang;
 
-use crate::{debug::{DebugLocation, DebugRegistry}, prelude::Triple, CodeGen::MachineInstr, Obj::{Decl, Link, Linkage, ObjectBuilder}, Optimizations::PassManager, Support::{ColorClass, ColorProfile}, Target::TargetRegistry};
+use crate::{debug::{DebugLocation, DebugRegistry}, prelude::Triple, CodeGen::MachineInstr, Obj::{Decl, Link, ObjectBuilder}, Optimizations::PassManager, Support::{ColorClass, ColorProfile}, Target::TargetRegistry};
 
 use super::{func::FunctionType, Const, Function, VerifyError};
 use std::{collections::HashMap, error::Error, fmt::Debug, fs::OpenOptions, io::Write, path::Path};
@@ -322,70 +322,16 @@ impl Module {
 
     /// emits all function into one asm string
     pub fn emitAsm(&mut self, triple: Triple, registry: &mut TargetRegistry) -> Result<String, Box<dyn Error>> {
+        let printer = registry.getBasedOnArch(triple.arch)?;
+        let printer = printer.printer.clone().expect("expected assembly printer for assembly printing");
+        
         let mut lines = String::new();
-        lines.push_str(&format!("// made using {} v{}\n", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION")));
-        lines.push_str(&format!("// by {}\n\n", env!("CARGO_PKG_AUTHORS").replace(";", " ")));
-        lines.push_str("section .text\n\n");
+        lines.push_str(&printer.comment(&format!("made using {} v{}\n", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"))));
+        lines.push_str(&printer.comment(&format!("by {}\n\n", env!("CARGO_PKG_AUTHORS").replace(";", " "))));
 
-        for (name, func) in self.funcs.clone() {
-            if func.linkage == Linkage::Extern {
-                lines += &format!("global {}\n", name);
-                continue;
-            }
-
-            if func.linkage == Linkage::External {
-                lines += &format!("global {}\n", name);
-            } 
-
-            lines += &format!("{}:\n", name);
-
-            let mut index = 0;
-
-            for block in &func.blocks {
-                lines += &format!(" {}:\n", block.name);
-                
-                let asm_lines = registry.buildAsmForTarget(triple.arch, &block, &func, self)?;
-                
-                if registry.requires_prolog(&func) && index == 0 {
-                    let mut helper = registry.getBackendForFuncOrFork(triple.arch, &func).helper.expect("expected valid helper");
-
-                    let mut prolog = vec![];
-
-                    helper.compile_prolog(&mut prolog);
-
-                    let mc_instrs = helper.lower.unwrap()(triple.getCallConv()?, prolog);
-
-                    for instr in mc_instrs {
-                        for line in instr.dump()?  {
-                            lines += &format!("\t{}\n", line);
-                        }
-                    }
-                }
-
-                for line in asm_lines {
-                    if line.starts_with("#") { // debug
-                        lines.pop(); // \n
-                    }
-
-                    lines += &format!("\t{}\n", line);
-                }
-            
-                index += 1;
-            }
-        }
-
-        lines.push_str("section .rodata\n\n");
-
-        for (_, consta) in &self.consts {
-            lines.push_str(&format!("{}: {:02X?} # {}\n", consta.name, consta.data, consta.data.iter()                                      
-                                                                                                .filter_map(|&byte| {
-                                                                                                    if byte >= 32 && byte <= 126 {
-                                                                                                        Some(byte as char)
-                                                                                                    } else {
-                                                                                                        None
-                                                                                                    }
-                                                                                                }).collect::<String>()));
-        }
+        lines.push_str(
+            &printer.print(self, registry, triple.getCallConv()?)?
+        );
 
         Ok(lines)
     }

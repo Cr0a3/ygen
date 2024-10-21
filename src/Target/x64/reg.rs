@@ -5,7 +5,7 @@ use crate::IR::TypeMetadata;
 /// A x64 register
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[allow(missing_docs)]
-pub enum x64Reg {
+pub enum X64Reg {
     Rax, Eax, Ax, Al,
     Rbx, Ebx, Bx, Bl,
     Rcx, Ecx, Cx, Cl,
@@ -31,10 +31,10 @@ pub enum x64Reg {
     Xmm12, Xmm13, Xmm14, Xmm15,
 }
 
-impl x64Reg {
+impl X64Reg {
     /// Parses the string to an register (Returns none if it's invalid)
     pub fn parse(string: String) -> Option<Self> {
-        use x64Reg::*;
+        use X64Reg::*;
         match string.to_ascii_lowercase().as_str() {
             "rax" => Some(Rax), "eax" => Some(Eax), "ax" => Some(Ax), "al" => Some(Al),
             "rbx" => Some(Rbx), "ebx" => Some(Ebx), "bx" => Some(Bx), "bl" => Some(Bl),
@@ -68,7 +68,7 @@ impl x64Reg {
 
     /// Returns if the reg is in the extendet region (r8->r15)
     pub fn extended(&self) -> bool {
-        use x64Reg::*;
+        use X64Reg::*;
         match self {
             R8 | R8d | R8w | R8b |
             R9 | R9d | R9w | R9b |
@@ -86,8 +86,8 @@ impl x64Reg {
     }
 
     /// The sub 64 bit wide variant of the register
-    pub fn sub64(&self) -> x64Reg {
-        use x64Reg::*;
+    pub fn sub64(&self) -> X64Reg {
+        use X64Reg::*;
         match self {
             Rax | Eax | Ax | Al => Rax,
             Rbx | Ebx | Bx | Bl => Rbx,
@@ -113,8 +113,8 @@ impl x64Reg {
     }
 
     /// The sub 32 bit wide variant of the register
-    pub fn sub32(&self) -> x64Reg {
-        use x64Reg::*;
+    pub fn sub32(&self) -> X64Reg {
+        use X64Reg::*;
         match self {
             Rax | Eax | Ax | Al => Eax,
             Rbx | Ebx | Bx | Bl => Ebx,
@@ -140,8 +140,8 @@ impl x64Reg {
     }
 
     /// The sub 16 bit wide variant of the register
-    pub fn sub16(&self) -> x64Reg {
-        use x64Reg::*;
+    pub fn sub16(&self) -> X64Reg {
+        use X64Reg::*;
         match self {
             Rax | Eax | Ax | Al => Ax,
             Rbx | Ebx | Bx | Bl => Bx,
@@ -167,8 +167,8 @@ impl x64Reg {
     }
 
     /// The sub8 bit wide variant of the register
-    pub fn sub8(&self) -> x64Reg {
-        use x64Reg::*;
+    pub fn sub8(&self) -> X64Reg {
+        use X64Reg::*;
         match self {
             Rax | Eax | Ax | Al => Al,
             Rbx | Ebx | Bx | Bl => Bl,
@@ -194,9 +194,9 @@ impl x64Reg {
     }
     
     /// gets the subvariant based on the type
-    pub fn sub_ty(&self, ty: TypeMetadata) -> x64Reg {
+    pub fn sub_ty(&self, ty: TypeMetadata) -> X64Reg {
         if TypeMetadata::f32 == ty || TypeMetadata::f64 == ty {
-            use x64Reg::*;
+            use X64Reg::*;
             return match self {
                 Rax | Eax | Ax | Al => Xmm0,
                 Rbx | Ebx | Bx | Bl => Xmm1,
@@ -233,7 +233,7 @@ impl x64Reg {
 
     /// Is the register (or better the subvariant) 64 bit wide?
     pub fn is_gr64(&self) -> bool {
-        use x64Reg::*;
+        use X64Reg::*;
         match self {
             Rax | Rbx | Rcx | Rdx | Rsi | Rdi |
             Rsp | Rbp | R8 | R9 | R10 | R11 |
@@ -245,7 +245,7 @@ impl x64Reg {
     
     /// Is the register (or better the subvariant) 32 bit wide?
     pub fn is_gr32(&self) -> bool {
-        use x64Reg::*;
+        use X64Reg::*;
         match self {
             Eax | Ebx | Ecx | Edx | Esi | Edi |
             Esp | Ebp | R8d | R9d | R10d | R11d |
@@ -257,7 +257,7 @@ impl x64Reg {
     
     /// Is the register (or better the subvariant) 16 bit wide?
     pub fn is_gr16(&self) -> bool {
-        use x64Reg::*;
+        use X64Reg::*;
         match self {
             Ax | Bx | Cx | Dx | Si | Di |
             Sp | Bp | R8w | R9w | R10w | R11w |
@@ -269,7 +269,7 @@ impl x64Reg {
     
     /// Is the register (or better the subvariant) 8 bit wide?
     pub fn is_gr8(&self) -> bool {
-        use x64Reg::*;
+        use X64Reg::*;
         match self {
             Al | Bl | Cl | Dl | Sil | Dil |
             Spl | Bpl | R8b | R9b | R10b |
@@ -281,7 +281,7 @@ impl x64Reg {
     
     /// Is the register a xmm register?
     pub fn is_xmm(&self) -> bool {
-        use x64Reg::*;
+        use X64Reg::*;
         match self {
             Xmm0    | Xmm1  | Xmm2  | Xmm3  | Xmm4  |
             Xmm5    | Xmm6  | Xmm7  | Xmm8  | Xmm9  |
@@ -295,44 +295,44 @@ impl x64Reg {
     pub fn enc(&self) -> u8 {
         match self {
             // GR
-            x64Reg::Rax | x64Reg::Eax | x64Reg::Ax | x64Reg::Al => 0,
-            x64Reg::Rcx | x64Reg::Ecx | x64Reg::Cx | x64Reg::Cl => 1,
-            x64Reg::Rdx | x64Reg::Edx | x64Reg::Dx | x64Reg::Dl => 2,
-            x64Reg::Rbx | x64Reg::Ebx | x64Reg::Bx | x64Reg::Bl => 3,
-            x64Reg::Rsi | x64Reg::Esi | x64Reg::Si | x64Reg::Sil => 6,
-            x64Reg::Rbp | x64Reg::Ebp | x64Reg::Bp | x64Reg::Bpl => 5,
-            x64Reg::Rsp | x64Reg::Esp | x64Reg::Sp | x64Reg::Spl => 4,
-            x64Reg::Rdi | x64Reg::Edi | x64Reg::Di | x64Reg::Dil => 7,
+            X64Reg::Rax | X64Reg::Eax | X64Reg::Ax | X64Reg::Al => 0,
+            X64Reg::Rcx | X64Reg::Ecx | X64Reg::Cx | X64Reg::Cl => 1,
+            X64Reg::Rdx | X64Reg::Edx | X64Reg::Dx | X64Reg::Dl => 2,
+            X64Reg::Rbx | X64Reg::Ebx | X64Reg::Bx | X64Reg::Bl => 3,
+            X64Reg::Rsi | X64Reg::Esi | X64Reg::Si | X64Reg::Sil => 6,
+            X64Reg::Rbp | X64Reg::Ebp | X64Reg::Bp | X64Reg::Bpl => 5,
+            X64Reg::Rsp | X64Reg::Esp | X64Reg::Sp | X64Reg::Spl => 4,
+            X64Reg::Rdi | X64Reg::Edi | X64Reg::Di | X64Reg::Dil => 7,
 
             // here use a rex prefix
-            x64Reg::R8 | x64Reg::R8d | x64Reg::R8w | x64Reg::R8b => 0,
-            x64Reg::R9 | x64Reg::R9d | x64Reg::R9w | x64Reg::R9b => 1,
-            x64Reg::R10 | x64Reg::R10d | x64Reg::R10w | x64Reg::R10b => 2,
-            x64Reg::R11 | x64Reg::R11d | x64Reg::R11w | x64Reg::R11b => 3,
-            x64Reg::R12 | x64Reg::R12d | x64Reg::R12w | x64Reg::R12b => 4,
-            x64Reg::R13 | x64Reg::R13d | x64Reg::R13w | x64Reg::R13b => 5,
-            x64Reg::R14 | x64Reg::R14d | x64Reg::R14w | x64Reg::R14b => 6,
-            x64Reg::R15 | x64Reg::R15d | x64Reg::R15w | x64Reg::R15b => 7,
+            X64Reg::R8 | X64Reg::R8d | X64Reg::R8w | X64Reg::R8b => 0,
+            X64Reg::R9 | X64Reg::R9d | X64Reg::R9w | X64Reg::R9b => 1,
+            X64Reg::R10 | X64Reg::R10d | X64Reg::R10w | X64Reg::R10b => 2,
+            X64Reg::R11 | X64Reg::R11d | X64Reg::R11w | X64Reg::R11b => 3,
+            X64Reg::R12 | X64Reg::R12d | X64Reg::R12w | X64Reg::R12b => 4,
+            X64Reg::R13 | X64Reg::R13d | X64Reg::R13w | X64Reg::R13b => 5,
+            X64Reg::R14 | X64Reg::R14d | X64Reg::R14w | X64Reg::R14b => 6,
+            X64Reg::R15 | X64Reg::R15d | X64Reg::R15w | X64Reg::R15b => 7,
 
             // Xmm
-            x64Reg::Xmm0 => 0,
-            x64Reg::Xmm1 => 1,
-            x64Reg::Xmm2 => 2,
-            x64Reg::Xmm3 => 3,
-            x64Reg::Xmm4 => 4,
-            x64Reg::Xmm5 => 5,
-            x64Reg::Xmm6 => 6,
-            x64Reg::Xmm7 => 7,
+            X64Reg::Xmm0 => 0,
+            X64Reg::Xmm1 => 1,
+            X64Reg::Xmm2 => 2,
+            X64Reg::Xmm3 => 3,
+            X64Reg::Xmm4 => 4,
+            X64Reg::Xmm5 => 5,
+            X64Reg::Xmm6 => 6,
+            X64Reg::Xmm7 => 7,
 
             // here use a rex prefix
-            x64Reg::Xmm8 => 0,
-            x64Reg::Xmm9 => 1,
-            x64Reg::Xmm10 => 2,
-            x64Reg::Xmm11 => 3,
-            x64Reg::Xmm12 => 4,
-            x64Reg::Xmm13 => 5,
-            x64Reg::Xmm14 => 6,
-            x64Reg::Xmm15 => 7,
+            X64Reg::Xmm8 => 0,
+            X64Reg::Xmm9 => 1,
+            X64Reg::Xmm10 => 2,
+            X64Reg::Xmm11 => 3,
+            X64Reg::Xmm12 => 4,
+            X64Reg::Xmm13 => 5,
+            X64Reg::Xmm14 => 6,
+            X64Reg::Xmm15 => 7,
 
         }
     }
@@ -343,7 +343,7 @@ impl x64Reg {
     }
 }
 
-impl Display for x64Reg {
+impl Display for X64Reg {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", format!("{:?}", self).to_lowercase())
     }

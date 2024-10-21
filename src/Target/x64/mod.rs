@@ -12,7 +12,8 @@ pub use reg::*;
 
 mod asm;
 mod lower;
-
+/// X64 Style assembly printing
+pub mod printer;
 
 pub use asm::*;
 
@@ -32,6 +33,8 @@ pub fn initializeX64Target(call_conv: CallConv) -> TargetBackendDescr {
     target.whitelist = construct_whitelist();
 
     target.helper = Some(construct_compilation_helper(call_conv));
+
+    target.printer = Some(printer::X64AsmPrinter::new());
 
     target
 }

@@ -1,4 +1,4 @@
-use crate::{CodeGen::MachineInstr, Target::{x64::instr::*, x64Reg}, IR::TypeMetadata};
+use crate::{CodeGen::MachineInstr, Target::{x64::instr::*, x64::X64Reg}, IR::TypeMetadata};
 
 pub(crate) fn X64_lower_fcast(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr, input_type: TypeMetadata) {
     let out = instr.out.expect("fcast expects output");
@@ -7,7 +7,7 @@ pub(crate) fn X64_lower_fcast(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr, 
     let input = instr.operands.get(0).expect("fcast expects input operand");
     let input = (*input).into();
 
-    let mut output_reg = x64Reg::Rax.sub_ty(instr.meta);
+    let mut output_reg = X64Reg::Rax.sub_ty(instr.meta);
 
     if let Operand::Reg(reg) = &out {
         output_reg = *reg;

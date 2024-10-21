@@ -1,5 +1,5 @@
 use crate::CodeGen::MachineInstr;
-use crate::Target::x64Reg;
+use crate::Target::x64::X64Reg;
 use crate::Target::x64::asm::instr::*;
 
 pub(crate) fn x64_lower_adr_load(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr, symbol: &String) {
@@ -8,13 +8,13 @@ pub(crate) fn x64_lower_adr_load(sink: &mut Vec<X64MCInstr>, instr: &MachineInst
     let out = out.into();
 
     sink.push(
-        X64MCInstr::with2(Mnemonic::Lea, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), Operand::Mem(MemOp { base: None, index: None, scale: 1, displ: 7, rip: true })).into()
+        X64MCInstr::with2(Mnemonic::Lea, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)), Operand::Mem(MemOp { base: None, index: None, scale: 1, displ: 7, rip: true })).into()
     );
     sink.push(
         X64MCInstr::with1(Mnemonic::Link, Operand::LinkDestination(symbol.to_string(), -4)).into()
     );
     sink.push(
-        X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta))).into()
+        X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta))).into()
     );
 }
 
@@ -34,10 +34,10 @@ pub(crate) fn x64_lower_adrm(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
         }
     } else {
         if let Operand::Mem(_) = op {
-            sink.push(X64MCInstr::with2(Mnemonic::Lea, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), op));
+            sink.push(X64MCInstr::with2(Mnemonic::Lea, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)), op));
         } else {
-            sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta)), op));
+            sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)), op));
         }
-        sink.push(X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(x64Reg::Rax.sub_ty(instr.meta))));
+        sink.push(X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta))));
     }
 }
