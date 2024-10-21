@@ -69,3 +69,40 @@ pub fn call() -> Result<(), Box<dyn Error>> {
 
     Ok(())
 }
+
+#[no_mangle]
+extern "C" fn custom_func(ls: i32, rs: i32) -> i32 {
+    ls + rs + 1
+}
+
+#[test]
+pub fn extern_symbol() -> Result<(), Box<dyn Error>> {
+    let mut module = Module();
+
+    let test_ty = FnTy(vec![TypeMetadata::i32], TypeMetadata::i32);
+    let add_ty = FnTy(vec![TypeMetadata::i32, TypeMetadata::i32], TypeMetadata::i32);
+
+    let add = module.add("add", &add_ty);
+    let add = add.id();
+
+    let test = module.add("test", &test_ty);
+    test.addBlock("entry");
+
+    let out = test.BuildCall(&add, vec![test_ty.arg(0), test_ty.arg(0)]);
+    test.BuildRet(out);
+
+    
+    let mut funcs = module.jitMap(&mut initializeAllTargets(Triple::host())? )?;
+
+    funcs.setAbsAdr(&"add".to_string(), custom_func as *const () as usize);
+
+    let mut test: JitFunction<unsafe extern "C" fn(i32) -> i32> = funcs.get_function("test").expect("hmm shouldn't happen");
+
+    unsafe {
+        let ret = test.call(5);
+
+        assert_eq!(ret, 11);
+    }
+
+    Ok(())
+}

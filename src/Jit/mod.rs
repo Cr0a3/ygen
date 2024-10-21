@@ -9,7 +9,7 @@ pub use map::*;
 pub use func::*;
 pub use link::*;
 
-use crate::Obj::{Decl, Linkage};
+use crate::Obj::Decl;
 use crate::Target::{Arch, TargetRegistry, Triple};
 use crate::IR::Module;
 
@@ -37,13 +37,9 @@ impl Module {
 
         for (name, data) in &obj.defines {
             let mut typ = Decl::Function;
-            for (decl_name, decl, linkage) in &obj.decls {
+            for (decl_name, decl, _) in &obj.decls {
                 if decl_name == name {
                     typ = *decl;
-                }
-
-                if *linkage == Linkage::Extern {
-                    Err(JitError::UnsupportedImports)?
                 }
             }
 
@@ -57,6 +53,12 @@ impl Module {
         for reloc in &obj.links {
             map.reloc(reloc.to_owned());
         }
+
+        map.deal_with_abs_symbols = match Triple::host().arch {
+            Arch::X86_64 | Arch::X86 => Some(Box::new(crate::Target::x64::abs_jit::X64AbsSymDealer {})),
+            _ => None,
+        };
+
         Ok(map)
     }
 }

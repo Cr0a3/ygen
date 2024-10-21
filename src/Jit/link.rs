@@ -4,11 +4,11 @@ use crate::Obj::Link;
 use super::JitFunction;
 
 /// The JitLink dynamiclly links multible functions into one JitFunction
-#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct JitLinker {
     funcs: HashMap<String, (Vec<u8>, /*entry*/bool)>,
     labels: HashMap<String, Vec<u8>>,
     
+    pub(crate) reloc_with_custom_actions: Vec<(Link, Box<dyn Fn(Link, &mut Vec<u8>, usize)>)>,
     pub(crate) relocs: Vec<Link>,
 }
 
@@ -19,7 +19,8 @@ impl JitLinker {
             funcs: HashMap::new(),
             labels: HashMap::new(),
 
-            relocs: vec![],
+            reloc_with_custom_actions: Vec::new(),
+            relocs: Vec::new(),
         }
     }
 
@@ -36,6 +37,15 @@ impl JitLinker {
     /// Adds an relocation
     pub fn add_reloc(&mut self, link: Link) {
         self.relocs.push(link);
+    }
+
+    /// Adds a relocation with an custom callback
+    /// 
+    /// ### NOTE:
+    /// 
+    /// Custom relocations will be the first relocations to be exectued.
+    pub fn add_reloc_with_custom_action(&mut self, link: Link, action: impl Fn(Link, &mut Vec<u8>, usize) + 'static) {
+        self.reloc_with_custom_actions.push((link, Box::new( action )));
     }
 
     /// Links the code into a `Vec<u8>`
@@ -67,12 +77,15 @@ impl JitLinker {
             out.extend_from_slice(&data);
         }
 
+        for (reloc, action) in &self.reloc_with_custom_actions {
+            let from = *positions.get(reloc.from.as_str()).expect(&format!("Unkown symbol: {}", reloc.from));
+            
+            action(reloc.to_owned(), &mut out, from);
+        }
+
         for reloc in &self.relocs {
             let from = *positions.get(reloc.from.as_str()).expect(&format!("Unkown symbol: {}", reloc.from));
             let mut to = *positions.get(&reloc.to.as_str()).expect(&format!("Unkown symbol: {}", reloc.to));
-        
-            println!("from: {}", from);
-            println!("to: {}", to);
 
             let offset = reloc.at + from;
             let offset = offset as i64 + reloc.addend;
@@ -83,7 +96,6 @@ impl JitLinker {
             let to = to.to_be_bytes();
 
             let mut set_byte = |idx: i64, to: u8| {
-                println!("setting byte {:?} (pos: {}) to {}", out.get(idx as usize), idx, to);
                 *out.get_mut(idx as usize).unwrap() = to;
             };
 
@@ -92,8 +104,6 @@ impl JitLinker {
             set_byte(offset + 3, to[5]);
             set_byte(offset + 4, to[4]);
         }
-
-        println!("out: {:02x?}", out);
 
         out
     }
