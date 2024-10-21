@@ -46,6 +46,7 @@ impl x64Parser {
             mnemonic: mne,
             op1: None,
             op2: None,
+            far: false,
         };
 
         let mut first_op = false;
