@@ -10,12 +10,27 @@ pub use func::*;
 pub use link::*;
 
 use crate::Obj::{Decl, Linkage};
-use crate::Target::{TargetRegistry, Triple};
+use crate::Target::{Arch, TargetRegistry, Triple};
 use crate::IR::Module;
+
+impl Triple {
+    /// Returns if the triple supports jit
+    pub fn supports_jit(&self) -> bool {
+        match self.arch {
+            Arch::X86_64 | Arch::X86 => true,
+            _ => false, // is either not implemented or stuff like wasm which doesn't support jit
+        }
+    }
+}
 
 impl Module {
     /// Builds all functions into an jit map which can be called
     pub fn jitMap(&mut self, backend: &mut TargetRegistry) -> Result<JitMap, Box<dyn Error>> {
+
+        if !Triple::host().supports_jit() {
+            Err(JitError::HostDoesntSupportJit)?
+        }
+
         let mut map = JitMap::new();
 
         let (obj, _) = self.emitMachineCode(Triple::host(), backend, false)?;
@@ -53,6 +68,8 @@ pub enum JitError {
     TripleDoesntMatchHostOnes,
     /// Found an import but jit doesn't support function imports
     UnsupportedImports,
+    /// The host target does not support jit
+    HostDoesntSupportJit,
 }
 
 impl Display for JitError {
@@ -60,6 +77,7 @@ impl Display for JitError {
         write!(f, "{}", match self {
             JitError::TripleDoesntMatchHostOnes => "for constructing a jit map, the triple needs to be the host ones",
             JitError::UnsupportedImports => "jit maps don't support extern symbol imports",
+            JitError::HostDoesntSupportJit => "the host doesn't support jit",
         })
     }
 }
