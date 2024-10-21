@@ -15,6 +15,9 @@ pub struct X64MCInstr {
     pub op1: Option<Operand>,
     /// Second operand
     pub op2: Option<Operand>,
+
+    // for far calls
+    pub(crate) far: bool,
 }
 
 impl X64MCInstr {
@@ -24,6 +27,17 @@ impl X64MCInstr {
             mnemonic: mne,
             op1: None,
             op2: None,
+            far: false,
+        }
+    }
+
+    /// Makes the instruction use far calls (for call and so on)
+    pub fn make_far(&self) -> Self {
+        Self {
+            mnemonic: self.mnemonic.to_owned(),
+            op1: self.op1.to_owned(),
+            op2: self.op2.to_owned(),
+            far: true,
         }
     }
 
@@ -33,6 +47,7 @@ impl X64MCInstr {
             mnemonic: mne,
             op1: Some(op),
             op2: None,
+            far: false,
         }
     }
 
@@ -42,6 +57,7 @@ impl X64MCInstr {
             mnemonic: mne,
             op1: Some(op1),
             op2: Some(op2),
+            far: false,
         }
     }
 
@@ -602,7 +618,11 @@ impl X64MCInstr {
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     Instruction::with1::<MemoryOperand>(Code::Call_rm64, op1.into())?
                 } else if let Some(Operand::Imm(op1)) = &self.op1 {
-                    Instruction::with_branch(Code::Call_rel32_64, *op1 as u64)?
+                    if self.far {
+                        Instruction::with_far_branch(Code::Call_m1664, 0x33, *op1 as u32)?
+                    } else {
+                        Instruction::with_branch(Code::Call_rel32_64, *op1 as u64)?
+                    }
                 } else { todo!("{}", self) }
             },
             Mnemonic::Jmp => {
@@ -617,7 +637,11 @@ impl X64MCInstr {
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     Instruction::with1::<MemoryOperand>(Code::Jmp_rm64, op1.into())?
                 } else if let Some(Operand::Imm(op1)) = &self.op1 {
-                    Instruction::with_branch(Code::Jmp_rel32_64, *op1 as u64)?
+                    if self.far {
+                        Instruction::with_far_branch(Code::Jmp_m1664, 0x33, *op1 as u32)?
+                    } else {
+                        Instruction::with_branch(Code::Jmp_rel32_64, *op1 as u64)?
+                    }
                 } else { todo!("{}", self) }
             },
             Mnemonic::Jne => {

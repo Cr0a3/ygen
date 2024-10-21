@@ -10,6 +10,9 @@ mod reg;
 use compilation::construct_compilation_helper;
 pub use reg::*;
 
+#[cfg(feature = "jit")]
+pub(crate) mod abs_jit;
+
 mod asm;
 mod lower;
 /// X64 Style assembly printing

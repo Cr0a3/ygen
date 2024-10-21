@@ -11,6 +11,10 @@ pub struct JitMap {
     symbol_types: HashMap</*name*/String, /*true = func; false = data*/bool>,
     entry_symbol: String,
     relocs: Vec<Link>,
+
+    abs_symbols: HashMap<String, usize>,
+
+    pub(crate) deal_with_abs_symbols: Option<Box<dyn AbsSymDealer>>,
 }
 
 impl JitMap {
@@ -21,6 +25,8 @@ impl JitMap {
             entry_symbol: String::new(),
             symbol_types: HashMap::new(),
             relocs: Vec::new(),
+            abs_symbols: HashMap::new(),
+            deal_with_abs_symbols: None,
         }
     }
 
@@ -41,6 +47,15 @@ impl JitMap {
         self.relocs.push( reloc );
     }
 
+    /// Sets the absolute adress of 
+    pub fn setAbsAdr(&mut self, symbol: &String, adr: usize) {
+        if self.deal_with_abs_symbols.is_none() {
+            panic!("the jit map has no handler to deal with absolute symbols");
+        }
+
+        self.abs_symbols.insert(symbol.to_owned(), adr);
+    }
+
     /// links all the data into an jit linker
     pub fn link(&self) -> JitLinker {
         let mut linker = JitLinker::new();
@@ -58,6 +73,22 @@ impl JitMap {
         }
         
         for reloc in &self.relocs {
+            if let Some(adr) = self.abs_symbols.get(&reloc.to) {
+                let adr = *adr;
+                if let Some(dealer) = &self.deal_with_abs_symbols {
+                    let cloned = dealer.clone();
+                    linker.add_reloc_with_custom_action(
+                        reloc.to_owned(), 
+                        move |reloc, code, start_pos| {
+                            cloned.handle(code, start_pos + reloc.at, adr)
+                        },
+                    );
+                    continue;
+                } else {
+                    panic!("the jit map has no handler to deal with absolute symbols")
+                }
+            }
+
             linker.add_reloc(reloc.to_owned());
         }
 
@@ -78,5 +109,33 @@ impl JitMap {
         Some(unsafe {
             self.link().engine::<T>()
         })
+    }
+}
+
+pub(crate) trait AbsSymDealer {
+    fn handle(&self, code: &mut Vec<u8>, pos: usize, adr: usize);
+
+    fn dbg(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result;
+    fn cl(&self) -> Box<dyn AbsSymDealer>;
+    fn eqal(&self, other: &Box<dyn AbsSymDealer>) -> bool;
+}
+
+impl std::fmt::Debug for Box<dyn AbsSymDealer> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.dbg(f)
+    }
+}
+
+impl PartialEq for Box<dyn AbsSymDealer> {
+    fn eq(&self, other: &Self) -> bool {
+        self.eqal(&other)
+    }
+}
+
+impl Eq for Box<dyn AbsSymDealer> {}
+
+impl Clone for Box<dyn AbsSymDealer> {
+    fn clone(&self) -> Self {
+        self.cl()
     }
 }
