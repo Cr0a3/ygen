@@ -64,7 +64,6 @@ impl Cli {
     /// Prints the version and description
     pub fn version(&self) {
         println!("{} v{} (c) {}", self.app_name, self.app_version, self.app_author);
-        println!("{}", self.app_desc);
     }
 
     /// Prints help
@@ -72,6 +71,7 @@ impl Cli {
         let args: Vec<String> = env::args().collect();
 
         self.version();
+        println!("{}", self.app_desc);
 
         println!();
 
@@ -164,6 +164,17 @@ impl Cli {
                 exit(-1);
             }
         }
+
+        for arg in &self.opts {
+            if arg.long == "help".to_owned() && arg.was_there {
+                self.help();
+                exit(0);
+            }
+            if arg.long == "version".to_owned() && arg.was_there {
+                self.version();
+                exit(0);
+            }
+        } 
 
         for arg in &self.args {
             if arg.required && !arg.was_there {
