@@ -45,6 +45,9 @@ jobs:
 
             - name: Commit and force push to build branch
               run: |
+                git fetch origin build
+                git checkout -B build origin/build || git checkout --orphan build
+                git rm -r --cached . || true
                 git add bin lib
                 git commit -m "[BUILD] releasing new build" || echo "No changes to commit"
                 git push origin HEAD:build --force
