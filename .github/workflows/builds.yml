@@ -1,0 +1,50 @@
+name: Release build
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+    CARGO_INCREMENTAL: 0
+    CARGO_NET_RETRY: 10
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+    release:
+        runs-on: ubuntu-latests
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Install Rust toolchain
+              run: rustup update --no-self-update stable
+
+            - name: Create Directorys
+              run: |
+                mkdir bin
+                mkdir lib
+
+            - name: Build
+              run: |
+                cargo build --all --release
+                mv target/release/* bin/ || true
+                find bin -type f ! -executable -delete
+
+            - name: Move libs
+              run: |
+                mv target/release/*.so lib/ || true
+                mv target/release/*.dylib lib/ || true
+                mv target/release/*.dll lib/ || true
+
+            - name: Set up Git user for commit
+              run: |
+                git config --local user.email "action@github.com"
+                git config --local user.name "GitHub Action"
+
+
+            - name: Commit and force push to build branch
+              run: |
+                git add bin lib
+                git commit -m "[BUILD] releasing new build" || echo "No changes to commit"
+                git push origin HEAD:build --force
