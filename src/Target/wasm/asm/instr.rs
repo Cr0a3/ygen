@@ -181,7 +181,140 @@ impl WasmMCInstr {
                     _ => panic!("...remu only works for i32, i64")
                 }]
             },
-            WasmMnemonic::Return => encoded = vec![0x0f]
+            WasmMnemonic::Return => encoded = vec![0x0f],
+            WasmMnemonic::Eq | WasmMnemonic::Ne | WasmMnemonic::Gt | 
+            WasmMnemonic::Gts | WasmMnemonic::Gtu | WasmMnemonic::Lt | 
+            WasmMnemonic::Lts | WasmMnemonic::Ltu | WasmMnemonic::Ge | 
+            WasmMnemonic::Ges | WasmMnemonic::Geu | WasmMnemonic::Le | 
+            WasmMnemonic::Les | WasmMnemonic::Leu => {
+                let prefix = self.prefix.expect("...rems expects an prefix");
+
+                encoded = vec![match self.mnemonic {
+                    WasmMnemonic::Eq => match prefix {
+                        WasmPrefix::i32 => 0x46,
+                        WasmPrefix::i64 => 0x51,
+                        WasmPrefix::f32 => 0x5b,
+                        WasmPrefix::f64 => 0x61,
+                        _ => panic!("cmp instructions are only usable with i32/i64/f32/f64 prefix"),
+                    },
+                    WasmMnemonic::Ne => match prefix {
+                        WasmPrefix::i32 => 0x47,
+                        WasmPrefix::i64 => 0x52,
+                        WasmPrefix::f32 => 0x5c,
+                        WasmPrefix::f64 => 0x62,
+                        _ => panic!("cmp instructions are only usable with i32/i64/f32/f64 prefix"),
+                    },
+                    WasmMnemonic::Gt => match prefix {
+                        WasmPrefix::f32 => 0x5e,
+                        WasmPrefix::f64 => 0x64,
+                        _ => panic!("cmp instructions are only usable with i32/i64/f32/f64 prefix"),
+                    },
+                    WasmMnemonic::Gts => match prefix {
+                        WasmPrefix::i32 => 0x4a,
+                        WasmPrefix::i64 => 0x56,
+                        _ => panic!("cmp instructions are only usable with i32/i64/f32/f64 prefix"),
+                    },
+                    WasmMnemonic::Gtu => match prefix {
+                        WasmPrefix::i32 => 0x4b,
+                        WasmPrefix::i64 => 0x56,
+                        _ => panic!("cmp instructions are only usable with i32/i64/f32/f64 prefix"),
+                    },
+                    WasmMnemonic::Lt => match prefix {
+                        WasmPrefix::f32 => 0x5d,
+                        WasmPrefix::f64 => 0x63,
+                        _ => panic!("cmp instructions are only usable with i32/i64/f32/f64 prefix"),
+                    },
+                    WasmMnemonic::Lts => match prefix {
+                        WasmPrefix::i32 => 0x48,
+                        WasmPrefix::i64 => 0x53,
+                        _ => panic!("cmp instructions are only usable with i32/i64/f32/f64 prefix"),
+                    },
+                    WasmMnemonic::Ltu => match prefix {
+                        WasmPrefix::i32 => 0x49,
+                        WasmPrefix::i64 => 0x54,
+                        _ => panic!("cmp instructions are only usable with i32/i64/f32/f64 prefix"),
+                    },
+                    WasmMnemonic::Ge => match prefix {
+                        WasmPrefix::f32 => 0x60,
+                        WasmPrefix::f64 => 0x66,
+                        _ => panic!("cmp instructions are only usable with i32/i64/f32/f64 prefix"),
+                    },
+                    WasmMnemonic::Ges => match prefix {
+                        WasmPrefix::i32 => 0x4e,
+                        WasmPrefix::i64 => 0x59,
+                        _ => panic!("cmp instructions are only usable with i32/i64/f32/f64 prefix"),
+                    },
+                    WasmMnemonic::Geu => match prefix {
+                        WasmPrefix::i32 => 0x5f,
+                        WasmPrefix::i64 => 0x5a,
+                        _ => panic!("cmp instructions are only usable with i32/i64/f32/f64 prefix"),
+                    },
+                    WasmMnemonic::Le => match prefix {
+                        WasmPrefix::f32 => 0x5f,
+                        WasmPrefix::f64 => 0x65,
+                        _ => panic!("cmp instructions are only usable with i32/i64/f32/f64 prefix"),
+                    },
+                    WasmMnemonic::Les => match prefix {
+                        WasmPrefix::i32 => 0x4c,
+                        WasmPrefix::i64 => 0x57,
+                        _ => panic!("cmp instructions are only usable with i32/i64/f32/f64 prefix"),
+                    },
+                    WasmMnemonic::Leu => match prefix {
+                        WasmPrefix::i32 => 0x4d,
+                        WasmPrefix::i64 => 0x58,
+                        _ => panic!("cmp instructions are only usable with i32/i64/f32/f64 prefix"),
+                    },
+
+                    _ => unreachable!(),
+                }]
+            },
+
+            WasmMnemonic::And | WasmMnemonic::Or | WasmMnemonic::Shl | WasmMnemonic::Shrs | WasmMnemonic::Shru | WasmMnemonic::Xor => {
+                let prefix = self.prefix.expect("and/or/shl/shr/xor expect a prefix");
+
+                encoded = vec![match self.mnemonic {
+                    WasmMnemonic::And => match prefix {
+                        WasmPrefix::i32 => 0x71,
+                        WasmPrefix::i64 => 0x83,
+                        _ => panic!("and/or/shl/shr/xor only work on i32/i64")
+                    },
+                    WasmMnemonic::Xor => match prefix {
+                        WasmPrefix::i32 => 0x73,
+                        WasmPrefix::i64 => 0x85,
+                        _ => panic!("and/or/shl/shr/xor only work on i32/i64")
+                    },
+                    WasmMnemonic::Or => match prefix {
+                        WasmPrefix::i32 => 0x72,
+                        WasmPrefix::i64 => 0x84,
+                        _ => panic!("and/or/shl/shr/xor only work on i32/i64")
+                    },
+                    WasmMnemonic::Shl => match prefix {
+                        WasmPrefix::i32 => 0x74,
+                        WasmPrefix::i64 => 0x86,
+                        _ => panic!("and/or/shl/shr/xor only work on i32/i64")
+                    },
+                    WasmMnemonic::Shrs => match prefix {
+                        WasmPrefix::i32 => 0x75,
+                        WasmPrefix::i64 => 0x87,
+                        _ => panic!("and/or/shl/shr/xor only work on i32/i64")
+                    },
+                    WasmMnemonic::Shru => match prefix {
+                        WasmPrefix::i32 => 0x76,
+                        WasmPrefix::i64 => 0x88,
+                        _ => panic!("and/or/shl/shr/xor only work on i32/i64")
+                    },
+                    _ => unreachable!()
+                }]
+            }
+            WasmMnemonic::Neg => {
+                let prefix = self.prefix.expect("neg expects prefix");
+
+                encoded = vec![match prefix {
+                    WasmPrefix::f32 => 0x8c,
+                    WasmPrefix::f64 => 0x9a,
+                    _ => panic!("neg only supports f32/f64")
+                }];
+            }
         }
 
         Ok((encoded, None))
@@ -205,6 +338,29 @@ pub enum WasmMnemonic {
     Rems,
     Remu,
     Return,
+    Eq,
+    Ne,
+    Gt,
+    Gts,
+    Gtu,
+    Lt,
+    Lts,
+    Ltu,
+    Ge,
+    Ges,
+    Geu,
+    Le,
+    Les,
+    Leu,
+
+    And,
+    Xor,
+    Or,
+    Shl,
+    Shrs,
+    Shru,
+
+    Neg,
 }
 
 impl From<String> for WasmMnemonic {
@@ -222,6 +378,26 @@ impl From<String> for WasmMnemonic {
             "rem_s" => WasmMnemonic::Rems,
             "rem_u" => WasmMnemonic::Remu,
             "return" => WasmMnemonic::Return,
+            "eq" => WasmMnemonic::Eq,
+            "ne" => WasmMnemonic::Ne,
+            "gt" => WasmMnemonic::Gt,
+            "gt_s" => WasmMnemonic::Gts,
+            "gt_u" => WasmMnemonic::Gtu,
+            "lt" => WasmMnemonic::Lt,
+            "lt_s" => WasmMnemonic::Lts,
+            "lt_u" => WasmMnemonic::Ltu,
+            "le" => WasmMnemonic::Le,
+            "le_s" => WasmMnemonic::Les,
+            "le_u" => WasmMnemonic::Leu,
+            "ge_s" => WasmMnemonic::Ges,
+            "ge_u" => WasmMnemonic::Geu,
+            "and" => WasmMnemonic::And,
+            "xor" => WasmMnemonic::Xor,
+            "or" => WasmMnemonic::Or,
+            "shl" => WasmMnemonic::Shl,
+            "shr_s" => WasmMnemonic::Shrs,
+            "shr_u" => WasmMnemonic::Shru,
+            "neg" => WasmMnemonic::Neg,
             _ => panic!("unkown wasm mnemonic: {value}"),
         }
     }
@@ -242,6 +418,27 @@ impl Display for WasmMnemonic {
             WasmMnemonic::Rems => "rem_s",
             WasmMnemonic::Remu => "rem_u",
             WasmMnemonic::Return => "return",
+            WasmMnemonic::Eq => "eq",
+            WasmMnemonic::Ne => "ne",
+            WasmMnemonic::Gt => "gt",
+            WasmMnemonic::Gts => "gt_s",
+            WasmMnemonic::Gtu => "gt_u",
+            WasmMnemonic::Lt => "lt",
+            WasmMnemonic::Lts => "lt_s",
+            WasmMnemonic::Ltu => "lt_u",
+            WasmMnemonic::Ge => "ge",
+            WasmMnemonic::Ges => "ge_s",
+            WasmMnemonic::Geu => "ge_u",
+            WasmMnemonic::Le => "le",
+            WasmMnemonic::Les => "le_s",
+            WasmMnemonic::Leu => "le_u",
+            WasmMnemonic::And => "and",
+            WasmMnemonic::Xor => "xor",
+            WasmMnemonic::Or => "or",
+            WasmMnemonic::Shl => "shl",
+            WasmMnemonic::Shrs => "shr_s",
+            WasmMnemonic::Shru => "shr_u",
+            WasmMnemonic::Neg => "neg",
         })
     }
 }
