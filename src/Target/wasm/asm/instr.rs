@@ -32,6 +32,16 @@ impl WasmMCInstr {
     pub(crate) fn encode(&self) -> Result<(Vec<u8>, Option<crate::Obj::Link>), Box<dyn std::error::Error>> {
         let mut encoded;
 
+        if let WasmMnemonic::BlockLink(target) = &self.mnemonic {
+            return Ok((Vec::new(), Some(crate::Obj::Link { 
+                from: String::new(), 
+                to: target.to_owned(), 
+                at: 0, 
+                addend: -4, 
+                special: true 
+            })))
+        }
+
         match self.mnemonic {
             WasmMnemonic::Get => {
                 let op1 = self.op1.expect("...get expects localidx");
@@ -305,7 +315,7 @@ impl WasmMCInstr {
                     },
                     _ => unreachable!()
                 }]
-            }
+            },
             WasmMnemonic::Neg => {
                 let prefix = self.prefix.expect("neg expects prefix");
 
@@ -314,7 +324,8 @@ impl WasmMCInstr {
                     WasmPrefix::f64 => 0x9a,
                     _ => panic!("neg only supports f32/f64")
                 }];
-            }
+            },
+            WasmMnemonic::BlockLink(_) => encoded = Vec::new(),
         }
 
         Ok((encoded, None))
@@ -323,7 +334,7 @@ impl WasmMCInstr {
 }
 
 /// A webassembly mnemonic (prefix.mnemonic)
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[allow(missing_docs)]
 pub enum WasmMnemonic {
     Get,
@@ -361,6 +372,8 @@ pub enum WasmMnemonic {
     Shru,
 
     Neg,
+
+    BlockLink(/*target*/String)
 }
 
 impl From<String> for WasmMnemonic {
@@ -406,39 +419,40 @@ impl From<String> for WasmMnemonic {
 impl Display for WasmMnemonic {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", match self {
-            WasmMnemonic::Get => "get",
-            WasmMnemonic::Set => "set",
-            WasmMnemonic::Const => "const",
-            WasmMnemonic::Add => "add",
-            WasmMnemonic::Mul => "mul",
-            WasmMnemonic::Sub => "sub",
-            WasmMnemonic::Div => "div",
-            WasmMnemonic::Divs => "div_s",
-            WasmMnemonic::Divu => "div_u",
-            WasmMnemonic::Rems => "rem_s",
-            WasmMnemonic::Remu => "rem_u",
-            WasmMnemonic::Return => "return",
-            WasmMnemonic::Eq => "eq",
-            WasmMnemonic::Ne => "ne",
-            WasmMnemonic::Gt => "gt",
-            WasmMnemonic::Gts => "gt_s",
-            WasmMnemonic::Gtu => "gt_u",
-            WasmMnemonic::Lt => "lt",
-            WasmMnemonic::Lts => "lt_s",
-            WasmMnemonic::Ltu => "lt_u",
-            WasmMnemonic::Ge => "ge",
-            WasmMnemonic::Ges => "ge_s",
-            WasmMnemonic::Geu => "ge_u",
-            WasmMnemonic::Le => "le",
-            WasmMnemonic::Les => "le_s",
-            WasmMnemonic::Leu => "le_u",
-            WasmMnemonic::And => "and",
-            WasmMnemonic::Xor => "xor",
-            WasmMnemonic::Or => "or",
-            WasmMnemonic::Shl => "shl",
-            WasmMnemonic::Shrs => "shr_s",
-            WasmMnemonic::Shru => "shr_u",
-            WasmMnemonic::Neg => "neg",
+            WasmMnemonic::Get => "get".to_string(),
+            WasmMnemonic::Set => "set".to_string(),
+            WasmMnemonic::Const => "const".to_string(),
+            WasmMnemonic::Add => "add".to_string(),
+            WasmMnemonic::Mul => "mul".to_string(),
+            WasmMnemonic::Sub => "sub".to_string(),
+            WasmMnemonic::Div => "div".to_string(),
+            WasmMnemonic::Divs => "div_s".to_string(),
+            WasmMnemonic::Divu => "div_u".to_string(),
+            WasmMnemonic::Rems => "rem_s".to_string(),
+            WasmMnemonic::Remu => "rem_u".to_string(),
+            WasmMnemonic::Return => "return".to_string(),
+            WasmMnemonic::Eq => "eq".to_string(),
+            WasmMnemonic::Ne => "ne".to_string(),
+            WasmMnemonic::Gt => "gt".to_string(),
+            WasmMnemonic::Gts => "gt_s".to_string(),
+            WasmMnemonic::Gtu => "gt_u".to_string(),
+            WasmMnemonic::Lt => "lt".to_string(),
+            WasmMnemonic::Lts => "lt_s".to_string(),
+            WasmMnemonic::Ltu => "lt_u".to_string(),
+            WasmMnemonic::Ge => "ge".to_string(),
+            WasmMnemonic::Ges => "ge_s".to_string(),
+            WasmMnemonic::Geu => "ge_u".to_string(),
+            WasmMnemonic::Le => "le".to_string(),
+            WasmMnemonic::Les => "le_s".to_string(),
+            WasmMnemonic::Leu => "le_u".to_string(),
+            WasmMnemonic::And => "and".to_string(),
+            WasmMnemonic::Xor => "xor".to_string(),
+            WasmMnemonic::Or => "or".to_string(),
+            WasmMnemonic::Shl => "shl".to_string(),
+            WasmMnemonic::Shrs => "shr_s".to_string(),
+            WasmMnemonic::Shru => "shr_u".to_string(),
+            WasmMnemonic::Neg => "neg".to_string(),
+            WasmMnemonic::BlockLink(target) => format!("# link to {target}"),
         })
     }
 }

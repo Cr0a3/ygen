@@ -7,7 +7,7 @@ macro_rules! WasmMathLower {
             let out = instr.out.expect("math ops expect out");
 
             let ls = instr.operands.get(0).expect("math ops expect ls operand");
-            let rs = instr.operands.get(0).expect("math ops expect rs operand");
+            let rs = instr.operands.get(1).expect("math ops expect rs operand");
 
             let ls = ls.into();
             let rs = rs.into();
