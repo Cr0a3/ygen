@@ -619,7 +619,7 @@ impl X64MCInstr {
                     Instruction::with1::<MemoryOperand>(Code::Call_rm64, op1.into())?
                 } else if let Some(Operand::Imm(op1)) = &self.op1 {
                     if self.far {
-                        Instruction::with_far_branch(Code::Call_m1664, 0x33, *op1 as u32)?
+                        Instruction::with2(Code::Call_m1664, MemoryOperand::with_base(Register::CS), *op1 as u32)?
                     } else {
                         Instruction::with_branch(Code::Call_rel32_64, *op1 as u64)?
                     }

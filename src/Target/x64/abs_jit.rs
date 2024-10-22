@@ -37,32 +37,35 @@ impl AbsSymDealer for X64AbsSymDealer {
         }
 
         println!("{:02x?}", code);
+
         // Fix
-        let mut fixup = Vec::new();
-
-        fixup.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rax), Operand::Imm(adr as i64)));
-
-        fixup.push(match variant {
-            X64AbsSymType::RipRel => X64MCInstr::with2(Mnemonic::Lea, Operand::Reg(X64Reg::Rax), Operand::Mem(X64Reg::Rax + 0)),
-            X64AbsSymType::Jmp => X64MCInstr::with1(Mnemonic::Jmp, Operand::Reg(X64Reg::Rax)).make_far(),
-            X64AbsSymType::Call => X64MCInstr::with1(Mnemonic::Jmp, Operand::Reg(X64Reg::Rax)).make_far(),
-        });
-
-        // Write
-        let mut fixup = {
-            let mut sink = Vec::new();
-            for instr in fixup {
-                sink.extend_from_slice( &instr.compile().expect("compilation failed") )
-            }
-
-            sink
+        let mut fix = match variant {
+            X64AbsSymType::RipRel => vec![0x48, 0x8D, 0x05, 0x07, 0x00, 0x00, 0x00, 0xFF, 0x25, 0x08, 0x00, 0x00, 0x00],
+            X64AbsSymType::Jmp => vec![0xFF, 0x25, 0x00, 0x00, 0x00, 0x00] ,
+            X64AbsSymType::Call => vec![0xFF, 0x15, 0x06, 0x00, 0x00, 0x00, 0xFF, 0x25, 0x08, 0x00, 0x00, 0x00],
         };
 
-        fixup.reverse();
+        // Write
 
-        for fix in fixup {
-            code.insert(pos - bytes_to_remove, fix);
+        let bytes = adr.to_be_bytes();
+
+        fix.push(bytes[0]);
+        fix.push(bytes[1]);
+        fix.push(bytes[2]);
+        fix.push(bytes[3]);
+        fix.push(bytes[4]);
+        fix.push(bytes[5]);
+        fix.push(bytes[6]);
+        fix.push(bytes[7]);
+
+        fix.reverse();
+
+        for fix in fix {
+            code.insert(pos - bytes_to_remove + 1, fix);
         }
+
+
+        println!("{:02X?}", code);
     }
 
     fn dbg(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
