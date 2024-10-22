@@ -28,12 +28,7 @@ impl CompilationHelper {
         let iftrue = node.inner2.name.to_owned();
         let iffalse = node.inner3.name.to_owned();
 
-        let src = *self.vars.get(&node.inner1.name).expect("expected valid variable");
-
-        let src = match src {
-            super::VarLocation::Reg(reg) => MachineOperand::Reg(reg),
-            super::VarLocation::Mem(stack) => MachineOperand::Stack(stack),
-        };
+        let src = (*self.vars.get(&node.inner1.name).expect("expected valid variable")).into();
 
         let mut cmp = MachineInstr::new(
             MachineMnemonic::BrCond(iftrue, iffalse)

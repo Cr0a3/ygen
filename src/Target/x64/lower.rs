@@ -1,5 +1,4 @@
-use crate::CodeGen::{MCInstr, MachineCallingConvention, MachineInstr, MachineMnemonic, MachineOperand};
-use crate::Optimizations::Optimize;
+use crate::CodeGen::{MachineInstr, MachineMnemonic, MachineOperand};
 use crate::Target::CallConv;
 
 mod adr;
@@ -22,33 +21,11 @@ mod fcmp;
 mod fmove;
 mod fcast;
 
-use super::{instr::{Mnemonic, Operand, X64MCInstr}, X64Reg};
+use super::reg_alloc::*;
 
-macro_rules! x64_stack {
-    ($off:expr) => {
-        Operand::Mem(X64Reg::Rbp - $off)
-    };
-}
 
-pub(crate) fn x64_lower_instr(conv: CallConv, sink: &mut Vec<X64MCInstr>, instr: MachineInstr) {
-    match &instr.mnemonic {        
-    MachineMnemonic::CallStackPrepare => {
-        sink.push(X64MCInstr::with2(
-            Mnemonic::Sub, Operand::Reg(X64Reg::Rsp), 
-            Operand::Imm(
-                MachineCallingConvention {
-                call_conv: conv
-            }.shadow(crate::Target::Arch::X86_64) - 8
-        )));
-    },MachineMnemonic::CallStackRedo => {
-        sink.push(X64MCInstr::with2(
-            Mnemonic::Add, Operand::Reg(X64Reg::Rsp), 
-            Operand::Imm(
-                MachineCallingConvention {
-                call_conv: conv
-            }.shadow(crate::Target::Arch::X86_64) - 8
-        )));
-    },
+pub(crate) fn x64_lower_instr(conv: CallConv, sink: &mut Vec<X64RegAllocInstr>, instr: MachineInstr) {
+    match &instr.mnemonic {
         MachineMnemonic::Move =>                                         mov::x64_lower_move(sink, &instr),
         MachineMnemonic::Add =>                                          math::x64_lower_add(sink, &instr),
         MachineMnemonic::And =>                                          math::x64_lower_and(sink, &instr),
@@ -60,8 +37,8 @@ pub(crate) fn x64_lower_instr(conv: CallConv, sink: &mut Vec<X64MCInstr>, instr:
         MachineMnemonic::Xor =>                                          math::x64_lower_xor(sink, &instr),
         MachineMnemonic::Shl =>                                          math::x64_lower_shl(sink, &instr),
         MachineMnemonic::Shr =>                                          math::x64_lower_shr(sink, &instr),
-        MachineMnemonic::Zext(_) =>                                      zext::x64_lower_zext(sink, &instr),
-        MachineMnemonic::Downcast(_) =>                                  downcast::x64_lower_downcast(sink, &instr),
+        MachineMnemonic::Zext(start) =>                   zext::x64_lower_zext(sink, &instr, start),
+        MachineMnemonic::Downcast(start) =>               downcast::x64_lower_downcast(sink, &instr, start),
         MachineMnemonic::Call(to) =>                            call::x64_lower_call(conv, sink, &instr, to),
         MachineMnemonic::Return =>                                       ret::x64_lower_return(sink, &instr),
         MachineMnemonic::AdressLoad(to) =>                      adr::x64_lower_adr_load(sink, &instr, to),
@@ -73,8 +50,6 @@ pub(crate) fn x64_lower_instr(conv: CallConv, sink: &mut Vec<X64MCInstr>, instr:
         MachineMnemonic::StackAlloc =>                                   stack::x64_lower_salloc(sink, &instr),
         MachineMnemonic::Store =>                                        stack::x64_lower_store(sink, &instr),
         MachineMnemonic::Load =>                                         stack::x64_lower_load(sink, &instr),
-        MachineMnemonic::Push =>                                         push::x64_lower_push(sink, &instr),
-        MachineMnemonic::PushCleanup =>                                  push::x64_lower_push_cleanup(sink, &instr),
         MachineMnemonic::AdrMove =>                                      adr::x64_lower_adrm(sink, &instr),
         MachineMnemonic::Switch(cases) =>         switch::x64_lower_switch(sink, &instr, cases),
         MachineMnemonic::Neg =>                                          math::x64_lower_neg(sink, &instr),
@@ -87,21 +62,18 @@ pub(crate) fn x64_lower_instr(conv: CallConv, sink: &mut Vec<X64MCInstr>, instr:
         MachineMnemonic::FSub =>                                         fmath::x64_lower_fsub(sink, &instr),
         MachineMnemonic::FCompare(mode) =>                     fcmp::x64_lower_fcmp(sink, &instr, mode),
         MachineMnemonic::FCast(input_type) =>             fcast::X64_lower_fcast(sink, &instr, *input_type),
+        MachineMnemonic::ArgMove(index) =>                         mov::X64_lower_arg_move(sink, &instr, *index),
         _ => todo!("TDOD: {}", instr.mnemonic),
     }
 }
 
 /// The function used for lowering general `MachineInstr` into `MCInstr`
-pub(crate) fn x64_lower(conv: CallConv, instrs: Vec<MachineInstr>) -> Vec<Box<dyn MCInstr>> {
-    let mut out = vec![
-        X64MCInstr::with0(Mnemonic::StartOptimization)
-    ];
+pub(crate) fn x64_lower(conv: CallConv, instrs: Vec<MachineInstr>) -> Vec<X64RegAllocInstr> {
+    let mut out = Vec::new();
 
     for instr in instrs {
         x64_lower_instr(conv, &mut out, instr.clone());
     }
-
-    out.optimize();
 
     let mut mc_instrs = vec![];
 
@@ -112,15 +84,11 @@ pub(crate) fn x64_lower(conv: CallConv, instrs: Vec<MachineInstr>) -> Vec<Box<dy
     mc_instrs
 }
 
-impl From<MachineOperand> for Operand {
+impl From<MachineOperand> for RegAllocOperand {
     fn from(value: MachineOperand) -> Self {
         match value {
-            MachineOperand::Stack(stack) => x64_stack!(stack as u32),
-            MachineOperand::Imm(imm) => Operand::Imm(imm as i64),
-            MachineOperand::Reg(reg) => match reg {
-                crate::CodeGen::Reg::x64(x64_reg) => Operand::Reg(x64_reg),
-                _ => panic!("the x64 backend expects the register to be x64 registers and not any other")
-            },
+            MachineOperand::Imm(imm) => RegAllocOperand::Imm(imm as i64),
+            MachineOperand::Reg(vreg) => RegAllocOperand::Reg(vreg),
         }
     }
 }

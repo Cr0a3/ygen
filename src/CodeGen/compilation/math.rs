@@ -1,35 +1,24 @@
 use crate::CodeGen::instr::{MachineMnemonic, MachineOperand, MachineInstr};
 use crate::IR::ir::*;
 use crate::prelude::{Var, Block, Type};
-use super::{CompilationHelper, VarLocation};
+use super::CompilationHelper;
 
 macro_rules! MathVarVar {
     ($func:ident, $node:ident, $mnemonic:expr) => {
         impl CompilationHelper {
             #[allow(missing_docs)]
             pub(crate) fn $func(&mut self, node: &$node<Var, Var, Var>, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
-                let src1 = *self.vars.get(&node.inner1.name).expect("expected valid variable");
-                let src2 = *self.vars.get(&node.inner2.name).expect("expected valid variable");
+                let src1 = (*self.vars.get(&node.inner1.name).expect("expected valid variable")).into();
+                let src2 = (*self.vars.get(&node.inner2.name).expect("expected valid variable")).into();
         
-                let out = *self.vars.get(&node.inner3.name).unwrap();
+                let out = (*self.vars.get(&node.inner3.name).unwrap()).into();
         
                 let mut instr = MachineInstr::new($mnemonic);
-        
-                match src1 {
-                    VarLocation::Reg(reg) => instr.add_operand(MachineOperand::Reg(reg)),
-                    VarLocation::Mem(stack) => instr.add_operand( MachineOperand::Stack(stack) ),
-                }
-        
-                match src2 {
-                    VarLocation::Reg(reg) => instr.add_operand(MachineOperand::Reg(reg)),
-                    VarLocation::Mem(stack) => instr.add_operand( MachineOperand::Stack(stack) ),
-                }
-        
-                match out {
-                    VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
-                    VarLocation::Mem(stack) => instr.set_out( MachineOperand::Stack(stack) ),
-                }
-                
+    
+                instr.add_operand(src1);
+                instr.add_operand(src2);
+                instr.set_out(out);
+
                 instr.meta = node.inner3.ty;
         
                 mc_sink.push(instr);
@@ -37,7 +26,7 @@ macro_rules! MathVarVar {
                 if let Some(phi_loc) = self.alloc.phi_vars.get(&node.inner3.name) {
                     let mut instr = MachineInstr::new(MachineMnemonic::Move);
                     instr.set_out((*phi_loc).into());
-                    instr.add_operand(out.into());
+                    instr.add_operand(out);
                     mc_sink.push(instr);
                 }
             }
@@ -62,27 +51,26 @@ macro_rules! MathVarType {
         impl CompilationHelper {
             #[allow(missing_docs)]
             pub fn $func(&mut self, node: &$node<Var, Type, Var>, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
-                let src1 = *self.vars.get(&node.inner1.name).expect("expected valid variable");
-                let out = *self.vars.get(&node.inner3.name).unwrap();
+                let src1 = (*self.vars.get(&node.inner1.name).expect("expected valid variable")).into();
+        
+                let out = (*self.vars.get(&node.inner3.name).unwrap()).into();
         
                 let mut instr = MachineInstr::new($mnemonic);
-        
-                match src1 {
-                    VarLocation::Reg(reg) => instr.add_operand(MachineOperand::Reg(reg)),
-                    VarLocation::Mem(stack) => instr.add_operand( MachineOperand::Stack(stack) ),
-                }
-        
+    
+                instr.add_operand(src1);
                 instr.add_operand(MachineOperand::Imm(node.inner2.val()));
+                instr.set_out(out);
 
-                match out {
-                    VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
-                    VarLocation::Mem(stack) => instr.set_out( MachineOperand::Stack(stack) ),
-                }
-
-                
                 instr.meta = node.inner3.ty;
         
                 mc_sink.push(instr);
+
+                if let Some(phi_loc) = self.alloc.phi_vars.get(&node.inner3.name) {
+                    let mut instr = MachineInstr::new(MachineMnemonic::Move);
+                    instr.set_out((*phi_loc).into());
+                    instr.add_operand(out);
+                    mc_sink.push(instr);
+                }
             }
         }
     };
@@ -104,22 +92,24 @@ macro_rules! MathTypeType {
         impl CompilationHelper {
             #[allow(missing_docs)]
             pub(crate) fn $func(&mut self, node: &$node<Type, Type, Var>, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
-                let out = *self.vars.get(&node.inner3.name).unwrap();
+                let out = (*self.vars.get(&node.inner3.name).unwrap()).into();
         
                 let mut instr = MachineInstr::new($mnemonic);
-        
+    
                 instr.add_operand(MachineOperand::Imm(node.inner1.val()));
-        
                 instr.add_operand(MachineOperand::Imm(node.inner2.val()));
+                instr.set_out(out);
 
-                match out {
-                    VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
-                    VarLocation::Mem(stack) => instr.set_out( MachineOperand::Stack(stack) ),
-                }
-        
                 instr.meta = node.inner3.ty;
-
+        
                 mc_sink.push(instr);
+
+                if let Some(phi_loc) = self.alloc.phi_vars.get(&node.inner3.name) {
+                    let mut instr = MachineInstr::new(MachineMnemonic::Move);
+                    instr.set_out((*phi_loc).into());
+                    instr.add_operand(out);
+                    mc_sink.push(instr);
+                }
             }
         }
     };

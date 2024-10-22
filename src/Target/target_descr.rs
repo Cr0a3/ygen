@@ -3,7 +3,7 @@ use crate::debug::DebugLocation;
 use crate::prelude::{ir::*, Block, Var};
 use crate::CodeGen::{IrCodeGenArea, IrCodeGenHelper, MCDocInstr, MCInstr};
 use crate::CodeGen::{compilation::CompilationHelper, MachineInstr};
-use crate::IR::{BlockId, Const, FuncId, Module, Type, TypeMetadata};
+use crate::IR::{BlockId, Const, FuncId, Function, Module, Type, TypeMetadata};
 
 use super::{AsmPrinter, Triple, WhiteList};
 use super::{CallConv, Compiler, Lexer};
@@ -19,12 +19,10 @@ pub struct TargetBackendDescr {
 
     pub(crate) helper: Option<CompilationHelper>,
 
-    pub(crate) block: Option<Block>,
+    block: Option<Block>,
     pub(crate) call: CallConv,
 
     pub(crate) sink: Vec<MachineInstr>,
-
-    pub(crate) epilog: bool,
 
     pub(crate) whitelist: WhiteList,
 
@@ -72,7 +70,6 @@ impl TargetBackendDescr {
             helper: None,
             whitelist: WhiteList::new(),
             sink: vec![],
-            epilog: false,
             printer: None,
         }
     }
@@ -87,8 +84,8 @@ impl TargetBackendDescr {
     }
 
     /// builds all ir nodes of the current block into a vector of MachineInstr
-    pub fn build_instrs(&mut self, triple: &Triple, module: &mut Module) -> Vec<MachineInstr> {
-        let areas = self.build_instrs_with_ir_debug(triple, module);
+    pub fn build_instrs(&mut self, triple: &Triple, func: &Function, module: &mut Module) -> Vec<MachineInstr> {
+        let areas = self.build_instrs_with_ir_debug(triple, func, module);
 
         let mut merged = vec![];
 
@@ -100,7 +97,7 @@ impl TargetBackendDescr {
     }
 
     /// builds the instruction with ir debug metadata
-    pub fn build_instrs_with_ir_debug(&mut self, triple: &Triple, module: &mut Module) -> Vec<IrCodeGenArea> {
+    pub fn build_instrs_with_ir_debug(&mut self, triple: &Triple, func: &Function, module: &mut Module) -> Vec<IrCodeGenArea> {
         let helper = if let Some(helper) = &mut self.helper { helper }
         else { panic!("no current compilation helper"); };
 
@@ -108,60 +105,13 @@ impl TargetBackendDescr {
             panic!("the architecture of the triple {:?} isn't the same as the one of the compilation helper {:?}", triple.arch, helper.arch)
         }
 
-        let block = if let Some(block) = &self.block {
-            block.clone()
-        } else {
-            panic!("no current block");
-        };
-
         let mut ir_helper = IrCodeGenHelper::new(helper.to_owned());
 
-        for node in block.nodes.to_owned() {
-            if ir_helper.helper.epilog() {
-                self.epilog = true;
-            }
-
-            // VERY UGLY CODE WHICH SINCRONICES THE MAX STACK_OFF 
-            // OF EITHER ir_helper or helper (the one who has the biggest gets selected)
-            if helper.alloc.stack_off < ir_helper.helper.alloc.stack_off {
-                helper.alloc.stack_off = ir_helper.helper.alloc.stack_off;
-            } else if ir_helper.helper.alloc.stack_off < helper.alloc.stack_off {
-                ir_helper.helper.alloc.stack_off = helper.alloc.stack_off;
-            }
-
-            if let Some(node) = node.as_any().downcast_ref::<Return<Type>>() {
-                ir_helper.compile_ret_ty(node, &block, module);
-
-                if self.epilog {
-                    let mut epilog_instrs = vec![];
-                    helper.compile_epilog(&mut epilog_instrs);
-    
-                    if let Some(last) = ir_helper.compiled.last_mut() {
-                        let backup = last.compiled.clone();
-                        last.compiled = epilog_instrs;
-                        last.compiled.extend_from_slice(&backup);
-                    } else { unreachable!() }
-
-                }
-            } else if let Some(node) = node.as_any().downcast_ref::<Return<Var>>() {
-                ir_helper.compile_ret_var(node, &block, module);
-
-                if self.epilog {
-                    let mut epilog_instrs = vec![];
-                    helper.compile_epilog(&mut epilog_instrs);
-    
-                    if let Some(last) = ir_helper.compiled.last_mut() {
-                        let backup = last.compiled.clone();
-                        last.compiled = epilog_instrs;
-                        last.compiled.extend_from_slice(&backup);
-                    } else { unreachable!() }
-                }
-            } else {
-                node.compile_dir(&mut ir_helper, &block, module);
+        for block in &func.blocks {
+            for node in &block.nodes {
+                node.compile_dir(&mut ir_helper, block, module);
             }
         }
-
-        *helper = ir_helper.helper;
 
         ir_helper.compiled
     }
@@ -181,7 +131,6 @@ impl TargetBackendDescr {
             self.call = reference.call;
             self.sink = reference.sink;
             self.whitelist = reference.whitelist;
-            self.epilog = false;
         }
     }
 
@@ -193,7 +142,7 @@ impl TargetBackendDescr {
             let mut mc_instrs = vec![];
 
             if let Some(lower) = helper.lower {
-                let lowered = lower(self.call, instrs);
+                let lowered = lower(&instrs, self.call);
 
                 mc_instrs.extend_from_slice(&lowered);
             } else {
@@ -224,7 +173,7 @@ impl TargetBackendDescr {
     
     
                 if let Some(lower) = helper.lower {
-                    let lowered = lower(self.call, instrs);
+                    let lowered = lower(&instrs, self.call);
     
                     mc_instrs.extend_from_slice(&lowered);
                 } else {

@@ -1,13 +1,12 @@
 use std::{collections::HashMap, error::Error, fmt::Display};
 
-use crate::{debug::DebugLocation, prelude::Function, CodeGen::MachineInstr, Obj::Link, IR::{Block, Module}};
+use crate::{debug::DebugLocation, prelude::Function, CodeGen::MachineInstr, Obj::Link, IR::Module};
 
 use super::{Arch, CallConv, TargetBackendDescr, Triple};
 
 /// The target registry: manages different targets
 pub struct TargetRegistry {
     targets: HashMap<Arch, TargetBackendDescr>,
-    funcs: HashMap<String, TargetBackendDescr>,
 
     pub(crate) epilogs: HashMap<String, bool>,
 
@@ -19,7 +18,6 @@ impl TargetRegistry {
     pub fn new(triple: Triple) -> Self {
         Self {
             targets: HashMap::new(),
-            funcs: HashMap::new(),
             epilogs: HashMap::new(),
             triple: triple,
         }
@@ -49,171 +47,66 @@ impl TargetRegistry {
         }
     }
 
-    pub(crate) fn getBackendForFuncOrFork(&mut self, arch: Arch, funct: &Function) -> TargetBackendDescr {
-        if let Some(backend) = self.funcs.get(&funct.name) {
-            let backend = backend.to_owned();
-
-            return backend;
-        } else if let Some(to_fork) = self.targets.get(&arch) {
-            let to_fork = to_fork.to_owned();
-            self.funcs.insert(funct.name.to_owned(), to_fork);
-            self.getBackendForFuncOrFork(arch, funct)
-        } else { panic!("the arch: {:?} wasn't initialized", arch); }
-    }
-
-    fn updateFuncBackend(&mut self, name: &String, backend: TargetBackendDescr) {
-        if let Some(original) = self.funcs.get_mut(name) {
-            *original = backend;
-        }
-    }
-
     /// emits machine instrs for target <br>
     /// **note**: machine instrs are portable over all platforms <br>
     /// **warning**: Does not add a prolog
-    pub fn buildMachineInstrsForTarget(&mut self, arch: Arch, block: &Block, funct: &Function, module: &mut Module) -> Result<Vec<MachineInstr>, Box<dyn Error>> {
-        let triple = self.triple;
+    pub fn buildMachineInstrsForTarget(&mut self, arch: Arch, func: &Function, module: &mut Module) -> Result<Vec<MachineInstr>, Box<dyn Error>> {
+        let mut backend = self.targets.get(&arch).expect(&format!("unregistered target: {:?}", arch)).clone();
 
-        let run_alloc = if let Some(_) = self.funcs.get(&funct.name) { false } else { true };
-        
-        let mut backend = self.getBackendForFuncOrFork(arch, funct);
-
-        if run_alloc {
-            if let Some(helper) = &mut backend.helper {
-                helper.run_alloc(&funct);
-            }
-        }
-
-        backend.block = Some(block.clone());
-        let instrs = backend.build_instrs(&triple, module);
-
-        if backend.epilog {
-            if !self.epilogs.contains_key(&funct.name) {
-                self.epilogs.insert( funct.name.to_owned(), true );
-            }
-        }
-
-        self.updateFuncBackend(&funct.name, backend);
+        let instrs = backend.build_instrs(&self.triple, func, module);
 
         Ok(instrs)
     }
 
     /// Builds the ir of the given triple into text assembly code <br>
     /// **warning**: Does not add a prolog
-    pub fn buildAsmForTarget(&mut self, arch: Arch, block: &Block, funct: &Function, module: &mut Module) -> Result<Vec<String>, Box<dyn Error>> {
-       let triple = self.triple;
+    pub fn buildAsmForTarget(&mut self, arch: Arch, func: &Function, module: &mut Module) -> Result<Vec<String>, Box<dyn Error>> {
+        let backend = self.targets.get(&arch).expect(&format!("unregistered target: {:?}", arch)).clone();
 
-       let run_alloc = if let Some(_) = self.funcs.get(&funct.name) { false } else { true };
+        let instrs = self.buildMachineInstrsForTarget(arch, func, module)?;
 
-        let mut backend = self.getBackendForFuncOrFork(arch, funct);
+        let instrs = backend.lower(instrs)?;
 
-        if run_alloc {
-            if let Some(helper) = &mut backend.helper {
-                helper.run_alloc(&funct);
-            }
+        let mut asm = Vec::new();
+
+        for instr in instrs {
+            asm.extend_from_slice(
+                &instr.dump()?
+            );
         }
-
-        backend.block = Some(block.clone());
-
-        let instrs = backend.build_instrs_with_ir_debug(&triple, module);
-        let instrs = backend.lower_debug(instrs)?;
-
-        let mut asm = vec![];
-
-        for (instrs, _) in instrs {
-            for instr in instrs {
-                asm.push(
-                    instr.to_string()
-                )
-            }
-        }
-
-        if backend.epilog {
-            if !self.epilogs.contains_key(&funct.name) {
-                self.epilogs.insert(funct.name.to_string(), true);
-            }
-        }
-
-        self.updateFuncBackend(&funct.name, backend);
 
         Ok(asm)
     }
 
     /// Builds the ir of the given triple into machine code <br>
     /// **warning**: Does not add a prolog
-    pub fn buildMachineCodeForTarget(&mut self, arch: Arch, block: &Block, funct: &Function, module: &mut Module) -> Result<(Vec<u8>, Vec<Link>), Box<dyn Error>> {
-        let triple = self.triple;
+    pub fn buildMachineCodeForTarget(&mut self, arch: Arch, funct: &Function, module: &mut Module) -> Result<(Vec<u8>, Vec<Link>), Box<dyn Error>> {
+        let mut backend = self.targets.get(&arch).expect(&format!("unregistered target: {:?}", arch)).clone();
 
-        let run_alloc = if let Some(_) = self.funcs.get(&funct.name) { false } else { true };
-
-        let mut backend = self.getBackendForFuncOrFork(arch, funct);
-
-        if run_alloc {
-            if let Some(helper) = &mut backend.helper {
-                helper.run_alloc(&funct);
-            }
-        }
-
-        backend.block = Some(block.clone());
-
-        let instrs = backend.build_instrs(&triple, module);
+        let instrs = backend.build_instrs(&self.triple, funct, module);
         let instrs = backend.lower(instrs)?;
 
-        let mut res = vec![];
-        let mut links = vec![];
+        let mut encoded = Vec::new();
+        let mut links = Vec::new();
 
-        for instr in &instrs {
-            let (encoded, link) = &instr.encode()?;
-            res.extend_from_slice(&encoded);
+        for instr in instrs {
+            let (encod, link) = instr.encode()?;
+            
+            encoded.extend_from_slice(&encod);
 
-            if let Some(link) = link {
-                let mut link = link.clone();
-
-                if link.special {
-                    link.from = block.name.to_owned();
-                } else {
-                    link.from = funct.name.to_string();
-                }
-                link.at = res.len();
-
-                links.push(link);
+            if let Some(link) = &link {
+                links.push(link.to_owned());
             }
         }
 
-        if backend.epilog {
-            if !self.epilogs.contains_key(&funct.name) {
-                self.epilogs.insert(funct.name.to_string(), true);
-            }
-        }
-
-        self.updateFuncBackend(&funct.name, backend);
-
-        Ok((res, links))
-    }
-
-    /// returns if the function needs to get an added prolog
-    pub fn requires_prolog(&self, funct: &Function) -> bool {
-        if self.epilogs.contains_key(&funct.name) {
-            true
-        } else { false }
+        Ok((encoded, links))
     }
 
     /// build the debugging information for an function
-    pub fn buildDebugInfo(&mut self, arch: Arch, block: &Block, funct: &Function, module: &mut Module) -> Result<Vec<DebugLocation>, Box<dyn Error>> {
-        let triple = self.triple;
+    pub fn buildDebugInfo(&mut self, arch: Arch, funct: &Function, module: &mut Module) -> Result<Vec<DebugLocation>, Box<dyn Error>> {
+        let mut backend = self.targets.get(&arch).expect(&format!("unregistered target: {:?}", arch)).clone();
 
-        let run_alloc = if let Some(_) = self.funcs.get(&funct.name) { false } else { true };
-
-        let mut backend = self.getBackendForFuncOrFork(arch, funct);
-
-        if run_alloc {
-            if let Some(helper) = &mut backend.helper {
-                helper.run_alloc(&funct);
-            }
-        }
-
-        backend.block = Some(block.clone());
-
-        let instrs = backend.build_instrs_with_ir_debug(&triple, module);
+        let instrs = backend.build_instrs_with_ir_debug(&self.triple, funct, module);
         let instrs = backend.lower_debug(instrs)?;
 
         let mut dbgs = vec![];
@@ -235,14 +128,6 @@ impl TargetRegistry {
                 offset += instr.encode()?.0.len() as u64;
             }    
         }
-
-        if backend.epilog {
-            if !self.epilogs.contains_key(&funct.name) {
-                self.epilogs.insert(funct.name.to_string(), true);
-            }
-        }
-
-        self.updateFuncBackend(&funct.name, backend);
 
         Ok(dbgs)
     } 

@@ -1,26 +1,14 @@
 use crate::CodeGen::{MachineInstr, MachineMnemonic, MachineOperand};
 use crate::IR::{Block, TypeMetadata, Var, ir::Alloca};
 
-use super::{CompilationHelper, VarLocation};
+use super::CompilationHelper;
 
 impl CompilationHelper {
     #[allow(missing_docs)]
     pub fn compile_alloca(&mut self, node: &Alloca<Var, TypeMetadata>, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
-        let out = *self.vars.get(&node.inner1.name).unwrap();
+        let out = (*self.vars.get(&node.inner1.name).unwrap()).into();
 
-        let out = match out {
-            super::VarLocation::Reg(reg) => MachineOperand::Reg(reg),
-            super::VarLocation::Mem(mem) => MachineOperand::Stack(mem),
-        };
-
-        let off = if let MachineOperand::Stack(mem) = out {
-            mem
-        } else {
-            match self.alloc.alloc_stack(node.inner2) {
-                VarLocation::Mem(off) => off,
-                _ => unreachable!(),
-            }
-        };
+        let off = self.alloc.alloc_stack(node.inner2).0;
 
         let mut instr = MachineInstr::new(MachineMnemonic::StackAlloc);
 

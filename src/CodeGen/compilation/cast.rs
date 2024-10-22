@@ -1,14 +1,14 @@
 use crate::prelude::Cast;
 use crate::IR::{Block, TypeMetadata, Var};
-use super::{CompilationHelper, VarLocation};
-use crate::CodeGen::{MachineInstr, MachineMnemonic, MachineOperand};
+use super::CompilationHelper;
+use crate::CodeGen::{MachineInstr, MachineMnemonic};
 
 impl CompilationHelper {
     #[allow(missing_docs)]
     pub fn compile_cast(&mut self, node: &Cast<Var, TypeMetadata, Var>, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
-        let src1 = *self.vars.get(&node.inner1.name).expect("expected valid variable");
+        let src1 = (*self.vars.get(&node.inner1.name).expect("expected valid variable")).into();
 
-        let out = *self.vars.get(&node.inner3.name).unwrap();
+        let out = (*self.vars.get(&node.inner3.name).unwrap()).into();
 
         let op = {
             if node.inner1.ty.float() || node.inner2.float() {
@@ -24,16 +24,8 @@ impl CompilationHelper {
 
         let mut instr = MachineInstr::new(op);
 
-        match src1 {
-            VarLocation::Reg(reg) => instr.add_operand(MachineOperand::Reg(reg)),
-            VarLocation::Mem(stack) => instr.add_operand( MachineOperand::Stack(stack) ),
-        }
-
-        match out {
-            VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
-            VarLocation::Mem(stack) => instr.add_operand( MachineOperand::Stack(stack) ),
-        }
-
+        instr.set_out(out);
+        instr.add_operand(src1);
         instr.meta = node.inner3.ty;
 
         mc_sink.push(instr);

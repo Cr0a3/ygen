@@ -293,28 +293,11 @@ impl Module {
         let mut out = Vec::new();
 
         for (name, func) in self.funcs.clone() {
-            let mut instrs = vec![];
 
-            for block in &func.blocks {
-                instrs.extend_from_slice(&
-                    registry.buildMachineInstrsForTarget(triple.arch, &block,  &func, self)?
-                );
-            }
+            let instrs =
+                registry.buildMachineInstrsForTarget(triple.arch, &func, self)?;
 
-            if registry.requires_prolog(&func) {
-                let backup = instrs.clone();
-                
-                let mut helper = registry.getBackendForFuncOrFork(triple.arch, &func).helper.expect("expected valid helper");
-
-                let mut prolog = vec![];
-
-                helper.compile_prolog(&mut prolog);
-
-                instrs = prolog;
-                instrs.extend_from_slice(&backup);
-            }
-
-            out.push((name.to_string(), instrs));
+            out.push((name, instrs));
         }
 
         Ok(out)

@@ -5,8 +5,7 @@ use crate::prelude::CmpMode;
 use crate::Obj::Link;
 use crate::IR::{BlockId, Type, TypeMetadata};
 
-use super::reg::Reg;
-use super::{CompilationHelper, VarLocation};
+use super::{CompilationHelper, VReg};
 
 /// a low level instruction which is portable over platforms
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -154,9 +153,7 @@ pub enum MachineOperand {
     /// a number
     Imm(f64),
     /// a register
-    Reg(Reg),
-    /// stack offset
-    Stack(i64),
+    Reg(VReg),
 }
 
 impl PartialEq for MachineOperand {
@@ -164,7 +161,6 @@ impl PartialEq for MachineOperand {
         match (self, other) {
             (Self::Imm(l0), Self::Imm(r0)) => l0 == r0,
             (Self::Reg(l0), Self::Reg(r0)) => l0 == r0,
-            (Self::Stack(l0), Self::Stack(r0)) => l0 == r0,
             _ => false,
         }
     }
@@ -183,22 +179,18 @@ impl Display for MachineOperand {
         write!(f, "{}", match self {
             MachineOperand::Imm(imm) => format!("{:#x?}", imm),
             MachineOperand::Reg(reg) => format!("{:?}", reg),
-            MachineOperand::Stack(off) => format!("sp - {:#x?}", off),
         })
     }
 }
 
-impl From<VarLocation> for MachineOperand {
-    fn from(location: VarLocation) -> Self {
-        match location {
-            VarLocation::Reg(reg) => MachineOperand::Reg(reg),
-            VarLocation::Mem(mem) => MachineOperand::Stack(mem),
-        }
+impl From<VReg> for MachineOperand {
+    fn from(reg: VReg) -> Self {
+        MachineOperand::Reg(reg)
     }
 }
 
-impl From<&VarLocation> for MachineOperand {
-    fn from(value: &VarLocation) -> Self {
+impl From<&VReg> for MachineOperand {
+    fn from(value: &VReg) -> Self {
         (*value).into()
     }
 }
@@ -255,14 +247,7 @@ pub enum MachineMnemonic {
     Prolog,
     Epilog,
 
-    /// stack arg
-    Push,
-
-    /// stack arg cleanup
-    PushCleanup,
-
-    CallStackPrepare,
-    CallStackRedo,
+    ArgMove(/*argument number*/i32),
 
     AdrMove,
 
@@ -305,10 +290,7 @@ impl MachineMnemonic {
             MachineMnemonic::StackAlloc =>          "salloc",
             MachineMnemonic::Store =>               "store",
             MachineMnemonic::Load =>                "load",
-            MachineMnemonic::Push =>                "push",
-            MachineMnemonic::PushCleanup =>         "clean_push",
-            MachineMnemonic::CallStackPrepare =>    "callsprep",
-            MachineMnemonic::CallStackRedo =>       "callspred",
+            MachineMnemonic::ArgMove(_) =>          "argmove",
             MachineMnemonic::AdrMove =>             "adrmov",    
             MachineMnemonic::Switch(_) =>           "switch",
             MachineMnemonic::Neg =>                 "neg",

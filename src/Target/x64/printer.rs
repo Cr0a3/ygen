@@ -43,7 +43,7 @@ impl AsmPrinter for X64AsmPrinter {
 
                     helper.compile_prolog(&mut prolog);
 
-                    let mc_instrs = helper.lower.unwrap()(call_conv, prolog);
+                    let mc_instrs = helper.lower.unwrap()(prolog, call_conv);
 
                     for instr in mc_instrs {
                         for line in instr.dump()?  {

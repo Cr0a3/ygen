@@ -1,8 +1,9 @@
 use crate::CodeGen::MachineInstr;
-use crate::Target::x64::X64Reg;
 use crate::Target::x64::asm::instr::*;
 
-pub(crate) fn x64_lower_move(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
+use super::{RegAllocOperand, X64RegAllocInstr};
+
+pub(crate) fn x64_lower_move(sink: &mut Vec<X64RegAllocInstr>, instr: &MachineInstr) {
     let op1 = instr.operands.get(0).expect("expected a first operand");
     let out = instr.out.expect("expected a output operand");
 
@@ -10,13 +11,6 @@ pub(crate) fn x64_lower_move(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     
     let out = out.into();
 
-    if let Operand::Mem(_) = out {
-        if let Operand::Reg(_) = op1 {} else {
-            sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)), op1) );
-            sink.push( X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta))) );
-            return;
-        }
-    }
-
-    sink.push( X64MCInstr::with2(Mnemonic::Mov, out, op1).into() );
+    sink.push( X64RegAllocInstr::with2(Mnemonic::Mov, RegAllocOperand::Tmp0, op1) );
+    sink.push( X64RegAllocInstr::with2(Mnemonic::Mov, out, RegAllocOperand::Tmp0) );
 }

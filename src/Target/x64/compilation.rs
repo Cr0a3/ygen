@@ -1,6 +1,7 @@
-use crate::{CodeGen::{calling_convention::MachineCallingConvention, compilation::CompilationHelper, reg_alloc::RegAlloc, ConstImmRules, Reg}, Target::{Arch, CallConv}};
+use crate::CodeGen::{calling_convention::MachineCallingConvention, compilation::CompilationHelper, reg_alloc::RegAlloc, ConstImmRules, MCInstr, MachineInstr, Reg};
+use crate::Target::{Arch, CallConv};
 
-use super::X64Reg;
+use super::{lower::x64_lower, X64Reg};
 
 pub(crate) fn construct_compilation_helper(call_conv: CallConv) -> CompilationHelper {
 
@@ -8,41 +9,7 @@ pub(crate) fn construct_compilation_helper(call_conv: CallConv) -> CompilationHe
         call_conv: call_conv
     };
 
-    let mut alloc = RegAlloc::new(Arch::X86_64, call_conv, false);
-
-    alloc.free_registers.push(Arch::X86_64, Reg::x64(X64Reg::Rcx));
-    alloc.free_registers.push(Arch::X86_64, Reg::x64(X64Reg::Rdx));
-    alloc.free_registers.push(Arch::X86_64, Reg::x64(X64Reg::Rsi));
-    alloc.free_registers.push(Arch::X86_64, Reg::x64(X64Reg::Rdi));
-    alloc.free_registers.push(Arch::X86_64, Reg::x64(X64Reg::R8));
-    alloc.free_registers.push(Arch::X86_64, Reg::x64(X64Reg::R9));
-    alloc.free_registers.push(Arch::X86_64, Reg::x64(X64Reg::R10));
-    alloc.free_registers.push(Arch::X86_64, Reg::x64(X64Reg::R11));
-    alloc.free_registers.push(Arch::X86_64, Reg::x64(X64Reg::R12));
-    alloc.free_registers.push(Arch::X86_64, Reg::x64(X64Reg::R13));
-    alloc.free_registers.push(Arch::X86_64, Reg::x64(X64Reg::R14));
-    alloc.free_registers.push(Arch::X86_64, Reg::x64(X64Reg::R15));
-
-    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(X64Reg::Xmm0));
-    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(X64Reg::Xmm1));
-    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(X64Reg::Xmm2));
-    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(X64Reg::Xmm3));
-    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(X64Reg::Xmm4));
-    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(X64Reg::Xmm5));
-    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(X64Reg::Xmm6));
-    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(X64Reg::Xmm7));
-    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(X64Reg::Xmm8));
-    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(X64Reg::Xmm9));
-    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(X64Reg::Xmm10));
-    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(X64Reg::Xmm11));
-    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(X64Reg::Xmm12));
-    alloc.free_fpregs.push(Arch::X86_64, Reg::x64(X64Reg::Xmm13));
-    // Used as temporary storage
-    // alloc.free_fpregs.push(Arch::X86_64, Reg::x64(x64Reg::Xmm14));
-    // alloc.free_fpregs.push(Arch::X86_64, Reg::x64(x64Reg::Xmm15));
-    alloc.free_fpregs.reverse(Arch::X86_64);
-
-    alloc.free_registers.reverse(Arch::X86_64);
+    let alloc = RegAlloc::new(Arch::X86_64, call_conv);
 
     let mut helper = CompilationHelper::new(
         Arch::X86_64, 
@@ -51,9 +18,24 @@ pub(crate) fn construct_compilation_helper(call_conv: CallConv) -> CompilationHe
         Reg::x64(X64Reg::Rax)
     );
 
-    helper.lower = Some(super::lower::x64_lower);
+    helper.lower = Some(X64Compile);
 
     helper.fp_imm = ConstImmRules::CreateConst;
 
     helper
+}
+
+pub(crate) fn X64Compile(compilat: &Vec<MachineInstr>, call: CallConv) -> Vec<Box<dyn MCInstr>> {
+    let alloc_instrs = x64_lower(call, compilat.to_owned());
+
+    let mut allocator = super::reg_alloc::X64Allocator::new();
+
+    allocator.instrs = alloc_instrs;
+
+    allocator.allocate();
+    allocator.allocate_tmps();
+
+    allocator.bake();
+
+    allocator.out
 }

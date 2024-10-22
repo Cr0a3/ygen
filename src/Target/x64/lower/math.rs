@@ -2,10 +2,11 @@ use crate::CodeGen::MachineInstr;
 use crate::Target::x64::X64Reg;
 use crate::Target::x64::asm::instr::*;
 use crate::IR::TypeMetadata;
+use super::{RegAllocOperand, X64RegAllocInstr};
 
 macro_rules! LowerSimpleMath {
     ($func:ident, $mnemonic:expr) => {
-        pub(crate) fn $func(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {       
+        pub(crate) fn $func(sink: &mut Vec<X64RegAllocInstr>, instr: &MachineInstr) {       
             let op1 = instr.operands.get(0).expect("expected a first operand");
             let op2 = instr.operands.get(1).expect("expected a second operand");
             let out = instr.out.expect("expected a output operand");
@@ -14,11 +15,10 @@ macro_rules! LowerSimpleMath {
             let op2 =(*op2).into();
             let out = out.into();
 
-            let rax = || Operand::Reg(X64Reg::Rax.sub_ty(instr.meta));
 
-            sink.push( X64MCInstr::with2(Mnemonic::Mov, rax(), op1).into() );
-            sink.push( X64MCInstr::with2($mnemonic, rax(), op2).into() );
-            sink.push( X64MCInstr::with2(Mnemonic::Mov, out, rax()).into() );
+            sink.push( X64RegAllocInstr::with2(Mnemonic::Mov, RegAllocOperand::Tmp0, op1).into() );
+            sink.push( X64RegAllocInstr::with2($mnemonic, RegAllocOperand::Tmp0, op2).into() );
+            sink.push( X64RegAllocInstr::with2(Mnemonic::Mov, out, RegAllocOperand::Tmp0).into() );
         }
     };
 }
@@ -29,14 +29,14 @@ LowerSimpleMath!(x64_lower_or, Mnemonic::Or);
 LowerSimpleMath!(x64_lower_sub, Mnemonic::Sub);
 LowerSimpleMath!(x64_lower_xor, Mnemonic::Xor);
 
-pub(crate) fn x64_lower_mul(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
+pub(crate) fn x64_lower_mul(sink: &mut Vec<X64RegAllocInstr>, instr: &MachineInstr) {
     let op1 = instr.operands.get(0).expect("expected a first operand");
     let op2 = instr.operands.get(1).expect("expected a second operand");
     let out = instr.out.expect("expected a output operand");
 
     let op1 = (*op1).into();
     let op2 = (*op2).into();
-    let out: Operand = out.into();
+    let out = out.into();
 
     let mnemonic = if instr.meta.signed() {
         Mnemonic::Imul
@@ -44,30 +44,18 @@ pub(crate) fn x64_lower_mul(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
         Mnemonic::Mul
     };
 
-    if out != Operand::Reg(X64Reg::Rdx.sub_ty(instr.meta)) {
-        sink.push( X64MCInstr::with1(Mnemonic::Push, Operand::Reg(X64Reg::Rdx)).into() );
-    }
-
-    let rax = || Operand::Reg(X64Reg::Rax.sub_ty(instr.meta));
-
-    sink.push(X64MCInstr::with2(Mnemonic::Mov, rax(), op1));
+    sink.extend_from_slice( &[
+        X64RegAllocInstr::with1(Mnemonic::Push, RegAllocOperand::Allocated(Operand::Reg(X64Reg::Rdx))),
+        X64RegAllocInstr::with2(Mnemonic::Mov, RegAllocOperand::Allocated(Operand::Reg(X64Reg::Rax)), op1),
     
-    // mul/imul only accept r/m
-    if let Operand::Imm(_) = op2 {
-        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rbx.sub_ty(instr.meta)), op2));
-        sink.push(X64MCInstr::with1(mnemonic, Operand::Reg(X64Reg::Rbx.sub_ty(instr.meta))));
-    } else if let Operand::Mem(_) = op2 {
-        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rbx.sub_ty(instr.meta)), op2));
-        sink.push(X64MCInstr::with1(mnemonic, Operand::Reg(X64Reg::Rbx.sub_ty(instr.meta))));
-    } else {
-        sink.push(X64MCInstr::with1(mnemonic, op2));
-    }
+        X64RegAllocInstr::with2(Mnemonic::Mov, RegAllocOperand::Tmp0, op2),
+        X64RegAllocInstr::with1(mnemonic, RegAllocOperand::Tmp0),
+    
 
-    sink.push(X64MCInstr::with2(Mnemonic::Mov, out.to_owned(), rax()));
+        X64RegAllocInstr::with2(Mnemonic::Mov, out, RegAllocOperand::Tmp0),
+        X64RegAllocInstr::with1(Mnemonic::Pop, RegAllocOperand::Allocated(Operand::Reg(X64Reg::Rdx)))
+    ]);
 
-    if out != Operand::Reg(X64Reg::Rdx.sub_ty(instr.meta)) {
-        sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(X64Reg::Rdx)).into() );
-    }
 }
 
 pub(crate) fn x64_lower_neg(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {

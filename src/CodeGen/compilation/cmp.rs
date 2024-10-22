@@ -1,27 +1,13 @@
-use crate::{prelude::Cmp, CodeGen::{MachineInstr, MachineMnemonic, MachineOperand}, IR::{Block, TypeMetadata}};
+use crate::{prelude::Cmp, CodeGen::{MachineInstr, MachineMnemonic}, IR::{Block, TypeMetadata}};
 
 use super::CompilationHelper;
 
 impl CompilationHelper {
     #[allow(missing_docs)]
     pub fn compile_cmp(&mut self, node: &Cmp, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
-        let ls = *self.vars.get(&node.ls.name).expect("expected valid variable");
-        let rs = *self.vars.get(&node.rs.name).expect("expected valid variable");
-
-        let ls = match ls {
-            super::VarLocation::Reg(reg) => MachineOperand::Reg(reg),
-            super::VarLocation::Mem(stack) => MachineOperand::Stack(stack),
-        };
-
-        let rs = match rs {
-            super::VarLocation::Reg(reg) => MachineOperand::Reg(reg),
-            super::VarLocation::Mem(stack) => MachineOperand::Stack(stack),
-        };
-
-        let out = match *self.vars.get(&node.out.name).unwrap() {
-            super::VarLocation::Reg(reg) => MachineOperand::Reg(reg),
-            super::VarLocation::Mem(stack) => MachineOperand::Stack(stack),
-        };
+        let ls = (*self.vars.get(&node.ls.name).expect("expected valid variable")).into();
+        let rs = (*self.vars.get(&node.rs.name).expect("expected valid variable")).into();
+        let out = (*self.vars.get(&node.out.name).expect("expected valid variable")).into();
 
         let mut cmp = MachineInstr::new(MachineMnemonic::Compare(node.mode) );
         

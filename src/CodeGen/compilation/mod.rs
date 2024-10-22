@@ -3,7 +3,8 @@ use std::collections::HashMap;
 use crate::Target::{Arch, CallConv};
 use crate::IR::{Function, TypeMetadata};
 
-use super::{calling_convention::MachineCallingConvention, reg::Reg, reg_alloc::RegAlloc, MCInstr, MachineInstr};
+use super::{MachineInstr, VReg};
+use super::{calling_convention::MachineCallingConvention, reg::Reg, reg_alloc::RegAlloc, MCInstr};
 
 mod call;
 mod ret;
@@ -42,11 +43,11 @@ pub enum ConstImmRules {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CompilationHelper {
     pub(crate) arch: Arch,
-    pub(crate) lower: Option<fn(CallConv, Vec<MachineInstr>) -> Vec<Box<dyn MCInstr>>>,
+    pub(crate) lower: Option<fn(&Vec<MachineInstr>, CallConv) -> Vec<Box<dyn MCInstr>>>,
 
     pub(crate) call: MachineCallingConvention,
 
-    pub(crate) vars: HashMap<String, VarLocation>,
+    pub(crate) vars: HashMap<String, VReg>,
     pub(crate) var_types: HashMap<String, TypeMetadata>,
     pub(crate) allocated_vars: Vec<String>,
 
@@ -79,7 +80,7 @@ impl CompilationHelper {
         self.var_types = self.alloc.var_types.to_owned();
     }
 
-    fn get_vars_to_save_for_call(&self, node: &crate::prelude::Call<crate::prelude::FuncId, Vec<crate::prelude::Var>, crate::prelude::Var>) -> Vec<(String, VarLocation)> {
+    fn get_vars_to_save_for_call(&self, node: &crate::prelude::Call<crate::prelude::FuncId, Vec<crate::prelude::Var>, crate::prelude::Var>) -> Vec<(String, VReg)> {
         let vars = self.alloc.scoped_vars_before_node(Box::new( node.clone() ));
     
         let mut with_name = vec![];
@@ -89,17 +90,4 @@ impl CompilationHelper {
 
         with_name
     }
-
-    #[inline]
-    pub(crate) fn epilog(&self) -> bool {
-        if self.alloc.stack_off != self.call.shadow(self.arch) {
-            true
-        } else { false }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum VarLocation {
-    Reg(Reg),
-    Mem(i64),
 }

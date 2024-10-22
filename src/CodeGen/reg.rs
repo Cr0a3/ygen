@@ -9,6 +9,15 @@ pub enum Reg {
     wasm(i32),
 }
 
+/// a virtual register
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct VReg(pub i32);
+
+/// a virtual memory adress
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct VMem(pub i32);
+
+
 impl Reg {
     /// returns the architecture of the register
     pub fn arch(&self) -> Arch {
