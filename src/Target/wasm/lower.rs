@@ -54,7 +54,7 @@ pub(crate) fn wasm_lower_instr(sink: &mut Vec<super::asm::WasmMCInstr>, instr: M
         crate::CodeGen::MachineMnemonic::Load => stack::wasm_lower_load(sink, &instr),
         crate::CodeGen::MachineMnemonic::Prolog => {},
         crate::CodeGen::MachineMnemonic::Epilog => {},
-        crate::CodeGen::MachineMnemonic::Push => panic!("illegal instruction for "),
+        crate::CodeGen::MachineMnemonic::Push => stack::wasm_lower_push(sink, &instr),
         crate::CodeGen::MachineMnemonic::PushCleanup => {},
         crate::CodeGen::MachineMnemonic::CallStackPrepare => {},
         crate::CodeGen::MachineMnemonic::CallStackRedo => {},
