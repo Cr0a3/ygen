@@ -55,34 +55,25 @@ pub(crate) fn x64_lower_mul(sink: &mut Vec<X64RegAllocInstr>, instr: &MachineIns
         X64RegAllocInstr::with2(Mnemonic::Mov, out, RegAllocOperand::Tmp0),
         X64RegAllocInstr::with1(Mnemonic::Pop, RegAllocOperand::Allocated(Operand::Reg(X64Reg::Rdx)))
     ]);
-
 }
 
-pub(crate) fn x64_lower_neg(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
+pub(crate) fn x64_lower_neg(sink: &mut Vec<X64RegAllocInstr>, instr: &MachineInstr) {
     let out = instr.out.expect("neg expectes output");
     let op = instr.operands.get(0).expect("neg expectes operand");
 
-    let out: Operand = out.into();
-    let op: Operand = (*op).into();
+    let out = out.into();
+    let op = (*op).into();
 
     if op == out {
-        sink.push(X64MCInstr::with1(Mnemonic::Neg, out));
+        sink.push(X64RegAllocInstr::with1(Mnemonic::Neg, out));
         return;
     }
 
-    if let Operand::Mem(_) = op {
-        if let Operand::Reg(_) = out {
-            sink.push(X64MCInstr::with2(Mnemonic::Mov, out.clone(), op));
-            sink.push(X64MCInstr::with1(Mnemonic::Neg, out));
-        } else {
-            sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rax), op));
-            sink.push(X64MCInstr::with2(Mnemonic::Mov, out.clone(), Operand::Reg(X64Reg::Rax)));
-            sink.push(X64MCInstr::with1(Mnemonic::Neg, out));
-        }
-    } else {
-        sink.push(X64MCInstr::with2(Mnemonic::Mov, out.clone(), op));
-        sink.push(X64MCInstr::with1(Mnemonic::Neg, out));
-    }
+    sink.extend_from_slice(&[
+        X64RegAllocInstr::with2(Mnemonic::Mov, RegAllocOperand::Tmp0, op),
+        X64RegAllocInstr::with1(Mnemonic::Neg, out),
+        X64RegAllocInstr::with2(Mnemonic::Mov, out, RegAllocOperand::Tmp0),
+    ]);
 }
 
 pub(crate) fn x64_lower_div(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
