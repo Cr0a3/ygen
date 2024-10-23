@@ -1,4 +1,4 @@
-use std::{error::Error, fmt::Display, process::Command};
+use std::{error::Error, fmt::Display};
 use crate::Support::Colorize;
 
 use super::*;
@@ -266,30 +266,11 @@ impl Triple {
 
     /// Returns the host target triple
     pub fn host() -> Triple {
-        Triple::parse(&getHostTargetTripleViaRustc()).unwrap()
+        Triple::parse(&getHostTargetTriple()).unwrap()
     }
 }
 use std::str;
 
-fn getHostTargetTripleViaRustc() -> String {
-    let output = Command::new("rustc")
-    .arg("--version")
-    .arg("--verbose")
-    .output()
-    .expect("Failed to execute rustc");
-
-    if output.status.success() {
-        let mut out = String::new();
-        let stdout = str::from_utf8(&output.stdout).expect("Failed to parse output");
-        for line in stdout.lines() {
-            if line.starts_with("host:") {
-                let target_triple = line.split_whitespace().nth(1).expect("Failed to parse target triple");
-                out = target_triple.to_string();
-            }
-        }
-
-        return out;
-    } else {
-        panic!()
-    }
+fn getHostTargetTriple() -> String {
+    std::env::var("TARGET_PLATFORM").expect("hmm did not found target triple")
 }
