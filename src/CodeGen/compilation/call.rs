@@ -56,7 +56,7 @@ impl CompilationHelper {
             if let Some(reg) = arg_reg {
                 arg_reg = Some(match reg {
                     Reg::x64(x64) => Reg::x64(x64.sub_ty(arg.ty)),
-                    Reg::wasm(i) => Reg::wasm(i),
+                    Reg::wasm(i, t) => Reg::wasm(i, t),
                 })
             }
             

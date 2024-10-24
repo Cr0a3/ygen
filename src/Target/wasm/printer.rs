@@ -1,5 +1,7 @@
 use crate::{Obj::Linkage, Target::{Arch, AsmPrinter, CallConv}};
 
+use super::lower::wasm_construct_local_types;
+
 /// prints assembly in wasm style
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct WasmAsmPrinter {}
@@ -33,7 +35,6 @@ impl AsmPrinter for WasmAsmPrinter {
 
             fmt_ty.push_str(&format!(") -> ({})", func.ty.ret));
 
-            lines.push(format!(".functype {} {}\n", name, fmt_ty));
 
             if func.linkage == Linkage::Extern {
                 lines.push( format!(".globl {}\n", name) );
@@ -46,7 +47,39 @@ impl AsmPrinter for WasmAsmPrinter {
                 lines.push( format!(".hidden {}\n", name) );
             }
 
+            let mut mc_instrs = Vec::new();
+
+            for block in &func.blocks {
+                mc_instrs.extend_from_slice(
+                    &registry.buildMachineInstrsForTarget(Arch::Wasm64, &block, &func, module)?
+                );
+            }
+
+            let types = wasm_construct_local_types(mc_instrs);
+
+            let mut fmt_types = String::new();
+            let mut index = 0;
+
+            for (_, ty) in types {
+                if index < func.ty.args.iter().count() {
+                    index += 1;
+                    continue;
+                }
+
+                if index > func.ty.args.iter().count() {
+                    fmt_types.push(',');
+                    fmt_types.push(' ');
+                }
+
+                fmt_types.push_str( &ty.to_string() );
+
+                index += 1;
+            }
+
             lines.push( format!("{}:\n", name) );
+            lines.push(format!(".functype {} {}\n", name, fmt_ty));
+            lines.push( format!(".local {}\n", fmt_types) );
+
 
             let mut index = 0;
 
@@ -79,6 +112,9 @@ impl AsmPrinter for WasmAsmPrinter {
             
                 index += 1;
             }
+            
+            lines.push("\tend_function\n".into());
+
         }
 
         lines.push(".data\n\n".to_string());

@@ -3,7 +3,7 @@ mod lower;
 /// Wasm instruction encoding
 pub mod asm;
 
-use crate::CodeGen::{reg_alloc::RegAlloc, CompilationHelper, MachineCallingConvention};
+use crate::CodeGen::{reg_alloc::RegAlloc, CompilationHelper, ConstImmRules, MachineCallingConvention};
 
 use super::{Arch, CallConv, TargetBackendDescr, WhiteList};
 
@@ -34,6 +34,7 @@ pub fn initializeWasmTarget(_: CallConv) -> TargetBackendDescr {
         crate::CodeGen::Reg::x64(crate::Target::x64::X64Reg::Al) // unnedded won't be used, so anything can go here
     );
 
+    compiler.fp_imm = ConstImmRules::InstrOp;
 
     compiler.lower = Some(lower::wasm_lower);
 

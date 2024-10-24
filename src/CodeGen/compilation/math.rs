@@ -8,8 +8,8 @@ macro_rules! MathVarVar {
         impl CompilationHelper {
             #[allow(missing_docs)]
             pub(crate) fn $func(&mut self, node: &$node<Var, Var, Var>, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
-                let src1 = *self.vars.get(&node.inner1.name).expect("expected valid variable");
-                let src2 = *self.vars.get(&node.inner2.name).expect("expected valid variable");
+                let src1 = *self.vars.get(&node.inner1.name).expect("expected valid ls variable");
+                let src2 = *self.vars.get(&node.inner2.name).expect("expected valid rs variable");
         
                 let out = *self.vars.get(&node.inner3.name).unwrap();
         

@@ -42,10 +42,13 @@ impl RegVec {
     }
 
     pub(crate) fn inner(&mut self, arch: Arch) -> &mut Vec<Reg> {
+        let keys = self.regs.clone();
+        let keys = keys.keys();
+
         if let Some(entry) = self.regs.get_mut(&arch) {
             entry
         } else {
-            panic!("unkown entry: {:?}", arch)
+            panic!("unkown entry: {:?} (known entrys: {:?})", arch, keys)
         }
     }
 }

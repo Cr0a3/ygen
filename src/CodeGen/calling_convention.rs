@@ -32,7 +32,7 @@ impl MachineCallingConvention {
                 }
             },
             CallConv::AppleAarch64 => todo!(),
-            CallConv::WasmBasicCAbi => Reg::wasm(0),
+            CallConv::WasmBasicCAbi => Reg::wasm(0, TypeMetadata::i32),
         }
     }
     

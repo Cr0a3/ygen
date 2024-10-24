@@ -9,6 +9,8 @@ mod cast;
 mod call;
 mod switch;
 
+use std::collections::HashMap;
+
 use crate::{CodeGen::{MCInstr, MachineInstr, MachineOperand}, Optimizations::Optimize, Target::CallConv, IR::TypeMetadata};
 
 use super::asm::{WasmOperand, WasmPrefix};
@@ -84,12 +86,37 @@ pub(crate) fn wasm_lower(_: CallConv, instrs: Vec<MachineInstr>) -> Vec<Box<dyn 
     mc_instrs
 }
 
+/// This functions constructs the types for the variables
+/// (Used for creating the `.local ty1, ...` stuff)
+pub(crate) fn wasm_construct_local_types(instrs: Vec<MachineInstr>) -> HashMap<i32, TypeMetadata> {
+    let mut types = HashMap::new();
+
+    for instr in instrs {
+        for operand in instr.operands {
+            match operand {
+                MachineOperand::Imm(_) => {},
+                MachineOperand::Reg(reg) => match reg {
+                    crate::CodeGen::Reg::wasm(num, type_metadata) => if let Some(element) = types.get_mut(&num) {
+                        *element = type_metadata;
+                    } else {
+                        types.insert(num, type_metadata);
+                    },
+                    _ => panic!("wasm functions expect wasm registers")
+                },
+                MachineOperand::Stack(_) => todo!("wasm type detection does not support memory references currently"),
+            }
+        }
+    }
+
+    types
+}
+
 impl Into<WasmOperand> for MachineOperand {
     fn into(self) -> WasmOperand {
         match self {
             MachineOperand::Imm(imm) => WasmOperand::Const(imm),
             MachineOperand::Reg(var) => match var {
-                crate::CodeGen::Reg::wasm(var) => WasmOperand::Var(var),
+                crate::CodeGen::Reg::wasm(var, _) => WasmOperand::Var(var),
                 _ => panic!("the wasm backend expects that only wasm registers are used"),
             },
             MachineOperand::Stack(var) => WasmOperand::Var(var as i32),

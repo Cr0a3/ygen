@@ -1,4 +1,4 @@
-use crate::Target::{x64::X64Reg, Arch};
+use crate::{Target::{x64::X64Reg, Arch}, IR::TypeMetadata};
 
 /// A shared enum for registers
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -6,7 +6,7 @@ pub enum Reg {
     /// a register of the x64 platform
     x64(X64Reg),
     /// a wasm variable
-    wasm(i32),
+    wasm(i32, TypeMetadata),
 }
 
 impl Reg {
@@ -14,7 +14,7 @@ impl Reg {
     pub fn arch(&self) -> Arch {
         match self {
             Reg::x64(_) => Arch::X86_64,
-            Reg::wasm(_) => Arch::Wasm64,
+            Reg::wasm(_, _) => Arch::Wasm64,
         }
     }
     
@@ -42,9 +42,9 @@ impl Reg {
                     _ => todo!(),
                 }
             },
-            Reg::wasm(ls) => {
+            Reg::wasm(ls, lsty) => {
                 match &other {
-                    Reg::wasm(rs) =>  *ls == *rs,
+                    Reg::wasm(rs, rsty) =>  *ls == *rs && *lsty == *rsty,
                     _ => todo!()
                 }
             }

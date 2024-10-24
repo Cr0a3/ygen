@@ -69,12 +69,12 @@ impl RegAlloc {
             let location = {
                 if self.just_vars {
                     self.curr_index += 1;
-                    VarLocation::Mem((self.curr_index - 1) as i64)
+                    VarLocation::Reg(Reg::wasm(num as i32, *ty))
                 } else {
                     if let Some(reg) = self.call.args(self.arch, *ty).get(num) {
                         VarLocation::Reg(match reg {
                             Reg::x64(x64) => Reg::x64(x64.sub_ty(*ty)),
-                            Reg::wasm(i) => Reg::wasm(*i),
+                            Reg::wasm(i, _) => Reg::wasm(*i, *ty),
                         })
                     } else {
                         todo!("The new system currently doesn't support memory")
@@ -83,14 +83,16 @@ impl RegAlloc {
             };
 
             if let VarLocation::Reg(reg) = location {
-                let vec = self.free_registers.inner(self.arch);
+                if !self.just_vars {
+                    let vec = self.free_registers.inner(self.arch);
 
-                let mut index = 0;
-                for item in vec.clone() {
-                    if item.is(&reg) {
-                        vec.remove(index);
-                    } else {
-                        index += 1;
+                    let mut index = 0;
+                    for item in vec.clone() {
+                        if item.is(&reg) {
+                            vec.remove(index);
+                        } else {
+                            index += 1;
+                        }
                     }
                 }
             }
@@ -286,10 +288,10 @@ impl RegAlloc {
 
         if self.just_vars {
             if let Some(var) = self.jvars.pop() {
-                return VarLocation::Mem(var as i64);
+                return VarLocation::Reg(Reg::wasm(var, ty));
             } else {
                 self.curr_index += 1;
-                return VarLocation::Mem((self.curr_index - 1) as i64);
+                return VarLocation::Reg(Reg::wasm(self.curr_index - 1, ty));
             }
         }
 
@@ -304,7 +306,7 @@ impl RegAlloc {
         if let Some(reg) = reg {
             VarLocation::Reg( match reg {
                 Reg::x64(x64_reg) => Reg::x64( x64_reg.sub_ty(ty) ),
-                Reg::wasm(i) => Reg::wasm(i),
+                Reg::wasm(i, t) => Reg::wasm(i, t),
             } )
         } else {
             self.alloc_stack(ty)
