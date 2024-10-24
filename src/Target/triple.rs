@@ -272,5 +272,5 @@ impl Triple {
 use std::str;
 
 fn getHostTargetTriple() -> String {
-    std::env::var("TARGET_PLATFORM").expect("hmm did not found target triple")
+    env!("TARGET").to_string()
 }
