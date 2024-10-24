@@ -1,5 +1,6 @@
 use std::{fmt::Display, ops::{Add, Sub}, str::FromStr};
 use iced_x86::{BlockEncoder, BlockEncoderOptions, Code, Instruction, InstructionBlock, MemoryOperand, Register};
+use object::RelocationEncoding;
 
 use crate::CodeGen::MCInstr;
 use crate::Obj::Link;
@@ -68,9 +69,21 @@ impl X64MCInstr {
 
         if self.mnemonic == Mnemonic::Link {
             if let Some(Operand::LinkDestination(dst, addend)) = &self.op1 {
-                return Ok((vec![], Some(Link { from: "".into(), to: dst.to_string(), at: 0, addend: *addend, special: false })));
+                return Ok((vec![], Some(Link { 
+                    from: "".into(), 
+                    to: dst.to_string(), 
+                    at: 0, addend: *addend, 
+                    special: false,
+                    kind: RelocationEncoding::X86Branch,
+                })));
             } else if let Some(Operand::BlockLinkDestination(dst, addend)) = &self.op1 {
-                return Ok((vec![], Some(Link { from: "".into(), to: dst.to_string(), at: 0, addend: *addend, special: true })));
+                return Ok((vec![], Some(Link { 
+                    from: "".into(), 
+                    to: dst.to_string(), 
+                    at: 0, addend: *addend, 
+                    special: true,
+                    kind: RelocationEncoding::Generic,
+                 })));
             } else {
                 return Ok((vec![], None));
             }
@@ -436,6 +449,8 @@ impl X64MCInstr {
                         } else if op1.is_gr64() {
                             Instruction::with2::<Register, MemoryOperand>(Code::Lea_r64_m, (*op1).into(), op2.into())?
                         } else { todo!("{}", self) }
+                    } else if let Some(Operand::RipRelative(_)) = &self.op2 {
+                        Instruction::with2::<Register, MemoryOperand>(Code::Lea_r64_m, (*op1).into(), MemoryOperand::with_base_displ(Register::RIP, 7))?
                     } else { todo!("{}", self) }
                 } else { todo!("{}", self) }
             },
@@ -1088,6 +1103,7 @@ impl X64MCInstr {
                 at: 0,
                 addend: *addend,
                 special: false,
+                kind: RelocationEncoding::X86Branch,
             })
         } else if let Some(Operand::BlockLinkDestination(target, addend)) = &self.op1 {
             links = Some(Link {
@@ -1096,6 +1112,16 @@ impl X64MCInstr {
                 at: 0,
                 addend: *addend,
                 special: true,
+                kind: RelocationEncoding::Generic,
+            })
+        } else if let Some(Operand::RipRelative(target)) = &self.op2 {
+            links = Some(Link {
+                from: "".into(),
+                to: target.to_owned(),
+                at: 0,
+                addend: -4,
+                special: false,
+                kind: RelocationEncoding::X86RipRelative,
             })
         }
 
@@ -1279,6 +1305,7 @@ impl X64MCInstr {
                 Operand::Imm(num) => profile.markup(&num.to_string(), ColorClass::Value),
                 Operand::Reg(reg) => profile.markup(&reg.to_string(), ColorClass::Var),
                 Operand::Mem(mem) => profile.markup(&format!("{}", mem), ColorClass::Var),
+                Operand::RipRelative(rip) => profile.markup(&format!("[rel {}]", rip), ColorClass::Var),
                 Operand::LinkDestination(_, _) => "".to_string(),
                 Operand::BlockLinkDestination(_, _) => "".to_string(),
                 Operand::Debug(s) => s.to_string(),
@@ -1287,6 +1314,7 @@ impl X64MCInstr {
                 string.push_str(&format!(", {}", match op2 {
                     Operand::Imm(num) => profile.markup(&format!("{}", num.to_string()), ColorClass::Value),
                     Operand::Reg(reg) => profile.markup(&format!(", {}", reg.to_string()), ColorClass::Var),
+                    Operand::RipRelative(rip) => profile.markup(&format!("[rel {}]", rip), ColorClass::Var),
                     Operand::Mem(mem) => profile.markup(&format!("{}", mem), ColorClass::Var),
                     Operand::LinkDestination(_, _) => "".to_string(),
                     Operand::BlockLinkDestination(_, _) => "".to_string(),
@@ -1595,6 +1623,8 @@ pub enum Operand {
     BlockLinkDestination(String, i64),
     /// For debugging
     Debug(String),
+    /// A rip relative
+    RipRelative(String),
 }
 
 impl PartialEq for Operand {
@@ -1605,6 +1635,7 @@ impl PartialEq for Operand {
             (Self::Mem(l0), Self::Mem(r0)) => l0 == r0,
             (Self::LinkDestination(l0, l1), Self::LinkDestination(r0, r1)) => l0 == r0 && l1 == r1,
             (Self::Debug(l0), Self::Debug(r0)) => l0 == r0,
+            (Self::RipRelative(l0), Self::RipRelative(r0)) => l0 == r0,
             _ => false,
         }
     }
@@ -1619,6 +1650,7 @@ impl Display for Operand {
             Operand::LinkDestination(target, _) => target.to_string(),
             Operand::BlockLinkDestination(target, _) =>target.to_string(),
             Operand::Debug(s) => s.to_string(),
+            Operand::RipRelative(target) => format!("[rel {}]", target),
         })
     }
 }

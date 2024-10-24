@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use object::RelocationEncoding;
+
 use crate::CodeGen::MCInstr;
 
 /// A wasm instruction
@@ -38,7 +40,8 @@ impl WasmMCInstr {
                 to: target.to_owned(), 
                 at: 0, 
                 addend: -4, 
-                special: true 
+                special: true,
+                kind: RelocationEncoding::Generic
             })))
         }
 

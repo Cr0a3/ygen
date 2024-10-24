@@ -85,6 +85,8 @@ pub struct Link {
     pub addend: i64,
     /// If it is a special relocation (only internal usage)
     pub special: bool,
+    /// the type
+    pub kind: RelocationEncoding,
 }
 
 /// The linkage of the target symbol
@@ -355,15 +357,7 @@ impl ObjectBuilder {
                 addend: link.addend + addend,
                 flags: RelocationFlags::Generic { 
                     kind: RelocationKind::PltRelative, 
-                    encoding: {
-                        match &self.triple.arch {
-                            Target::Arch::Aarch64 => RelocationEncoding::AArch64Call,
-                            Target::Arch::Aarch64BE => RelocationEncoding::AArch64Call,
-                            Target::Arch::X86 => RelocationEncoding::X86Branch,
-                            Target::Arch::X86_64 =>  RelocationEncoding::X86Branch,
-                            _ => RelocationEncoding::Generic,
-                        }
-                    }, 
+                    encoding: link.kind, 
                     size: 32, 
                 },
             })?;

@@ -239,6 +239,7 @@ impl Module {
                             at: link.at + prev_len - 1, 
                             addend: link.addend,
                             special: false,
+                            kind: link.kind,
                         });
                     }
                 }

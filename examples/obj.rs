@@ -1,5 +1,6 @@
 use std::{error::Error, fs::OpenOptions, path::Path};
 
+use object::RelocationEncoding;
 use ygen::debug::{DebugLocation, DebugRegistry};
 use ygen::{Obj::*, Target::Triple};
 use ygen::Target::x64::{instr::*, X64Reg};
@@ -35,7 +36,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     
     data.extend_from_slice(&X64MCInstr::with2(Mnemonic::Lea, Operand::Reg(X64Reg::Rax), rip_relativ).compile()?);
 
-    obj.link( Link { from: "main".into(), to: "string".into(), at: data.len(), addend: -4, special: false });
+    obj.link( Link { from: "main".into(), to: "string".into(), at: data.len(), addend: -4, special: false, kind: RelocationEncoding::X86Branch });
     
     if cfg!(target_os = "windows") {
         data.extend_from_slice(&X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rcx), Operand::Reg(X64Reg::Rax)).compile()?);
@@ -47,7 +48,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     debug.add_location(&"main".to_string(), DebugLocation { line: 4, col: 4, epilog: false, prolog: false, adr: data.len() as u64 });
     data.extend_from_slice(&X64MCInstr::with1(Mnemonic::Call, Operand::Imm(0)).compile()?); // call printf
 
-    obj.link( Link { from: "main".into(), to: "printf".into(), at: data.len(), addend: -4, special: false });
+    obj.link( Link { from: "main".into(), to: "printf".into(), at: data.len(), addend: -4, special: false, kind: RelocationEncoding::X86Branch });
 
     
     debug.add_location(&"main".to_string(), DebugLocation { line: 5, col: 4, epilog: false, prolog: false, adr: data.len() as u64 });

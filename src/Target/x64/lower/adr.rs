@@ -7,15 +7,10 @@ pub(crate) fn x64_lower_adr_load(sink: &mut Vec<X64MCInstr>, instr: &MachineInst
 
     let out = out.into();
 
-    sink.push(
-        X64MCInstr::with2(Mnemonic::Lea, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)), Operand::Mem(MemOp { base: None, index: None, scale: 1, displ: 7, rip: true })).into()
-    );
-    sink.push(
-        X64MCInstr::with1(Mnemonic::Link, Operand::LinkDestination(symbol.to_string(), -4)).into()
-    );
-    sink.push(
-        X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta))).into()
-    );
+    sink.extend_from_slice(&[
+        X64MCInstr::with2(Mnemonic::Lea, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)), Operand::RipRelative(symbol.to_owned())),
+        X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)))
+    ]);
 }
 
 pub(crate) fn x64_lower_adrm(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
