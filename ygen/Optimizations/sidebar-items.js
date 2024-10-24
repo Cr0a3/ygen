@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["auto_max_optimize"],"mod":["Passes"],"struct":["PassManager"],"trait":["Optimize","Pass"]};
