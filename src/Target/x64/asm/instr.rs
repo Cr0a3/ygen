@@ -1130,159 +1130,6 @@ impl X64MCInstr {
 
     /// Verifys the instruction (like checking the right opcodes etc.)
     pub fn verify(&self) -> Result<(), InstrEncodingError> {
-        /*match self.mnemonic {
-            Mnemonic::Lea => {
-                if self.op2 == None || self.op1 == None {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "lea needs to have two operand".into()))?
-                }
-                if let Some(Operand::Reg(_)) = self.op1 {} else {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "leas first operand needs to be an register".into()))?
-                }
-                if let Some(Operand::Mem(_)) = self.op2 {} else {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "leas secound operand needs to be an memop".into()))?
-                }
-            },
-            Mnemonic::Mov => {
-                if self.op2 == None || self.op1 == None {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "mov needs to have two operand".into()))?
-                }
-                if let Some(Operand::Imm(_)) = self.op1 {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "the mov instructions requires that the first operand is either a reg or a memop".into()))?
-                }
-
-                if let Some(Operand::Mem(_)) = self.op1 {
-                    if let Some(Operand::Reg(_)) = self.op2 {} else {
-                        Err(InstrEncodingError::InvalidVariant(self.clone(), "mov is only allowed: `mov rm/8, r` but something other was found".into()))?
-                    }
-                }
-            },
-            Mnemonic::Add | Mnemonic::Adc | Mnemonic::Sub | Mnemonic::And | Mnemonic::Or | Mnemonic::Xor | Mnemonic::Cmp => {
-                if self.op2 == None || self.op1 == None {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "add/sub/and/or/xor needs to have two operand".into()))?
-                }
-                if let Some(Operand::Imm(_)) = self.op1 {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "the add/sub/and/or/xor instructions requires that the first operand is either a reg or a memop".into()))?
-                }
-
-                if let Some(Operand::Mem(_)) = self.op1 {
-                    if let Some(Operand::Mem(_)) = self.op2 {
-                        Err(InstrEncodingError::InvalidVariant(self.clone(), "add/sub/or/xor can't have two mem operands".into()))?
-                    }
-                    if let Some(Operand::Imm(_)) = self.op2 {
-                        Err(InstrEncodingError::InvalidVariant(self.clone(), "add/sub/or/xor can't have mem, num (idk why)".into()))?
-                    }
-                }
-            },
-            Mnemonic::Push => {
-                if self.op2 != None || self.op1 == None {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "push needs to have one operand".into()))?
-                }
-            },
-            Mnemonic::Pop => {
-                if let Some(Operand::Imm(_)) = self.op1 {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "the pop instruction needs to have an op1 of either reg or mem".into()))?
-                }
-
-                if self.op2 != None || self.op1 == None {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "pop needs to have one operand".into()))?
-                }
-            },
-            Mnemonic::Ret => {
-                if self.op1 != None || self.op2 != None {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "ret isn't allowed to have operands".into()))?
-                }
-            },
-            Mnemonic::Movzx => todo!("{}", self),
-            Mnemonic::Call | Mnemonic::Jmp => {
-                if self.op2 != None {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "call/jmp only needs one operand".into()))?
-                }
-
-                if let Some(Operand::Imm(_)) = self.op1 {} else {
-                    if let Some(Operand::Mem(_)) = self.op1 {} else {
-                        Err(InstrEncodingError::InvalidVariant(self.clone(), "call/jmp can needs to have num/mem operand".into()))?
-                    }
-                }
-            }
-            Mnemonic::Link | Mnemonic::Debug | Mnemonic::StartOptimization | Mnemonic::EndOptimization => {},
-            Mnemonic::Endbr64 => {
-                if self.op1.is_some() || self.op2.is_some() {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "endbr64 can't have operands".to_string()))?
-                }
-            }
-            Mnemonic::Mul | Mnemonic::Imul | Mnemonic::Div | Mnemonic::Idiv => {
-                if !(self.op1 != None && self.op2 == None) {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "mul/imul/div/idiv need on operand of type r/m".into()))?
-                }
-
-                if let Some(Operand::Imm(_)) = self.op1  {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), 
-                        "mul/imul/div/idiv need one operand of type r/m".into()
-                    ))?
-                }
-            }
-            Mnemonic::Jne | Mnemonic::Je => {
-                if let Some(Operand::Imm(_)) = self.op1 {} else {
-                    Err(InstrEncodingError::InvalidVariant(self.to_owned(), "j.. expects one imm as its ops".to_owned()))?
-                }
-            }
-            Mnemonic::Setg | Mnemonic::Setge | Mnemonic::Setl | Mnemonic::Setle | Mnemonic::Sete | Mnemonic::Setne => {
-                if self.op2.is_some() || self.op1.is_none() {
-                    Err(InstrEncodingError::InvalidVariant(self.to_owned(), "set.. expects one operand".to_owned()))?
-                }
-
-                if let Some(Operand::Imm(_)) = self.op1 {
-                    Err(InstrEncodingError::InvalidVariant(self.to_owned(), "set.. requires one operand of either register or memory".to_owned()))?
-                }
-            }
-            Mnemonic::Neg => {
-                if !(self.op1.is_some() && self.op2.is_none()) {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "neg r/m.. is required for neg".into()))?
-                }
-                if let Some(Operand::Imm(_)) = self.op1 {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "neg r/m.. is required for neg".into()))?
-                }
-            }
-            Mnemonic::Cmove | Mnemonic::Cmovne  => {
-                if let Some(Operand::Reg(_)) = &self.op1 {
-                    if let Some(Operand::Imm(_)) = &self.op2 {
-                        Err(InstrEncodingError::InvalidVariant(self.clone(), "cmov expects r, r/m".into()))?
-                    } else if self.op2.is_none() {
-                        Err(InstrEncodingError::InvalidVariant(self.clone(), "cmov expects r, r/m".into()))?
-                    }
-                } else {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "cmov expects r, r/m".into()))?
-                }
-            }
-            Mnemonic::Sal | Mnemonic::Shr | Mnemonic::Sar => {
-                if self.op1.is_none() || self.op2.is_none() {
-                    Err(InstrEncodingError::InvalidVariant(self.clone(), "sal/shr/sar expects r/m, cl".into()))?
-                }
-
-                if let Some(Operand::Reg(reg)) = &self.op2 {
-                    if x64Reg::Cl != *reg {
-                        Err(InstrEncodingError::InvalidVariant(self.clone(), "sal/shr/sar expects r/m, cl".into()))?
-                    }
-                }
-            }
-            Mnemonic::Movq   =>  todo!("{}", self),
-            Mnemonic::Movd   =>  todo!("{}", self),
-            Mnemonic::Movss  =>  todo!("{}", self),
-            Mnemonic::Movsd  =>  todo!("{}", self),
-            Mnemonic::Movups =>  todo!("{}", self),
-            Mnemonic::Movupd =>  todo!("{}", self),
-            Mnemonic::Addss  =>  todo!("{}", self),
-            Mnemonic::Addsd  =>  todo!("{}", self),
-            Mnemonic::Divss  =>  todo!("{}", self),
-            Mnemonic::Divsd  =>  todo!("{}", self),
-            Mnemonic::Mulss  =>  todo!("{}", self),
-            Mnemonic::Mulsd  =>  todo!("{}", self),
-            Mnemonic::Subss  =>  todo!("{}", self),
-            Mnemonic::Subsd  =>  todo!("{}", self),
-            Mnemonic::Ucomiss  =>  todo!("{}", self),
-            Mnemonic::Ucomisd  =>  todo!("{}", self),
-        };*/
-
         Ok(())
     }
 
@@ -1915,5 +1762,203 @@ impl Sub<u32> for X64Reg {
             displ: -(rhs as isize),
             rip: false,
         }
+    }
+}
+
+macro_rules! IsCheckerOps0 {
+    ($func:tt, $mnemonic:expr) => {
+        impl X64MCInstr {
+            /// [AUTO GENERATED] checks if the instruction is the same as the other
+            pub fn $func(&self) -> bool {
+                self.mnemonic == $mnemonic
+            }
+        }
+    };
+}
+
+IsCheckerOps0!(is_add, Mnemonic::Add);
+IsCheckerOps0!(is_adc, Mnemonic::Adc);
+IsCheckerOps0!(is_and, Mnemonic::And);
+IsCheckerOps0!(is_or, Mnemonic::Or);
+IsCheckerOps0!(is_xor, Mnemonic::Xor);
+IsCheckerOps0!(is_sub, Mnemonic::Sub);
+IsCheckerOps0!(is_neg, Mnemonic::Neg);
+IsCheckerOps0!(is_cmp, Mnemonic::Cmp);
+IsCheckerOps0!(is_lea, Mnemonic::Lea);
+IsCheckerOps0!(is_mov, Mnemonic::Mov);
+IsCheckerOps0!(is_movzx, Mnemonic::Movzx);
+IsCheckerOps0!(is_push, Mnemonic::Push);
+IsCheckerOps0!(is_pop, Mnemonic::Pop);
+IsCheckerOps0!(is_ret, Mnemonic::Ret);
+IsCheckerOps0!(is_imul, Mnemonic::Imul);
+IsCheckerOps0!(is_mul, Mnemonic::Mul);
+IsCheckerOps0!(is_idiv, Mnemonic::Idiv);
+IsCheckerOps0!(is_div, Mnemonic::Div);
+IsCheckerOps0!(is_call, Mnemonic::Call);
+IsCheckerOps0!(is_jmp, Mnemonic::Jmp);
+IsCheckerOps0!(is_jne, Mnemonic::Jne);
+IsCheckerOps0!(is_je, Mnemonic::Je);
+IsCheckerOps0!(is_endbr64, Mnemonic::Endbr64);
+IsCheckerOps0!(is_sete, Mnemonic::Sete);
+IsCheckerOps0!(is_setne, Mnemonic::Setne);
+IsCheckerOps0!(is_setg, Mnemonic::Setg);
+IsCheckerOps0!(is_setl, Mnemonic::Setl);
+IsCheckerOps0!(is_setge, Mnemonic::Setge);
+IsCheckerOps0!(is_setle, Mnemonic::Setle);
+IsCheckerOps0!(is_cmove, Mnemonic::Cmove);
+IsCheckerOps0!(is_cmovne, Mnemonic::Cmovne);
+IsCheckerOps0!(is_sal, Mnemonic::Sal);
+IsCheckerOps0!(is_shr, Mnemonic::Shr);
+IsCheckerOps0!(is_sar, Mnemonic::Sar);
+IsCheckerOps0!(is_movq, Mnemonic::Movq);
+IsCheckerOps0!(is_movd, Mnemonic::Movd);
+IsCheckerOps0!(is_movss, Mnemonic::Movss);
+IsCheckerOps0!(is_movsd, Mnemonic::Movsd);
+IsCheckerOps0!(is_movups, Mnemonic::Movups);
+IsCheckerOps0!(is_movupd, Mnemonic::Movupd);
+IsCheckerOps0!(is_addss, Mnemonic::Addss);
+IsCheckerOps0!(is_addsd, Mnemonic::Addsd);
+IsCheckerOps0!(is_divss, Mnemonic::Divss);
+IsCheckerOps0!(is_divsd, Mnemonic::Divsd);
+IsCheckerOps0!(is_mulss, Mnemonic::Mulss);
+IsCheckerOps0!(is_mulsd, Mnemonic::Mulsd);
+IsCheckerOps0!(is_subss, Mnemonic::Subss);
+IsCheckerOps0!(is_subsd, Mnemonic::Subsd);
+IsCheckerOps0!(is_ucomiss, Mnemonic::Ucomiss);
+IsCheckerOps0!(is_ucomisd, Mnemonic::Ucomisd);
+IsCheckerOps0!(is_cvtss2si, Mnemonic::Cvtss2si);
+IsCheckerOps0!(is_cvtsd2si, Mnemonic::Cvtsd2si);
+IsCheckerOps0!(is_cvtss2sd, Mnemonic::Cvtss2sd);
+IsCheckerOps0!(is_cvtsd2ss, Mnemonic::Cvtsd2ss);
+IsCheckerOps0!(is_cvtsi2ss, Mnemonic::Cvtsi2ss);
+IsCheckerOps0!(is_cvtsi2sd, Mnemonic::Cvtsi2sd);
+
+macro_rules! IsCheckerOps1 {
+    ($func:tt, $mnemonic:expr) => {
+        impl X64MCInstr {
+            /// [AUTO GENERATED] checks if the instruction is the same as the other
+            pub fn $func(&self, op1: &Operand) -> bool {
+                self.mnemonic == $mnemonic && self.op1 == Some(op1.to_owned())
+            }
+        }
+    };
+}
+
+IsCheckerOps1!(is_add1, Mnemonic::Add);
+IsCheckerOps1!(is_adc1, Mnemonic::Adc);
+IsCheckerOps1!(is_and1, Mnemonic::And);
+IsCheckerOps1!(is_or1, Mnemonic::Or);
+IsCheckerOps1!(is_xor1, Mnemonic::Xor);
+IsCheckerOps1!(is_sub1, Mnemonic::Sub);
+IsCheckerOps1!(is_neg1, Mnemonic::Neg);
+IsCheckerOps1!(is_cmp1, Mnemonic::Cmp);
+IsCheckerOps1!(is_lea1, Mnemonic::Lea);
+IsCheckerOps1!(is_mov1, Mnemonic::Mov);
+IsCheckerOps1!(is_movzx1, Mnemonic::Movzx);
+IsCheckerOps1!(is_push1, Mnemonic::Push);
+IsCheckerOps1!(is_pop1, Mnemonic::Pop);
+IsCheckerOps1!(is_imul1, Mnemonic::Imul);
+IsCheckerOps1!(is_mul1, Mnemonic::Mul);
+IsCheckerOps1!(is_idiv1, Mnemonic::Idiv);
+IsCheckerOps1!(is_sete1, Mnemonic::Sete);
+IsCheckerOps1!(is_setne1, Mnemonic::Setne);
+IsCheckerOps1!(is_setg1, Mnemonic::Setg);
+IsCheckerOps1!(is_setl1, Mnemonic::Setl);
+IsCheckerOps1!(is_setge1, Mnemonic::Setge);
+IsCheckerOps1!(is_setle1, Mnemonic::Setle);
+IsCheckerOps1!(is_cmove1, Mnemonic::Cmove);
+IsCheckerOps1!(is_cmovne1, Mnemonic::Cmovne);
+IsCheckerOps1!(is_sal1, Mnemonic::Sal);
+IsCheckerOps1!(is_shr1, Mnemonic::Shr);
+IsCheckerOps1!(is_movq1, Mnemonic::Movq);
+IsCheckerOps1!(is_movd1, Mnemonic::Movd);
+IsCheckerOps1!(is_movss1, Mnemonic::Movd);
+IsCheckerOps1!(is_movsd1, Mnemonic::Movd);
+IsCheckerOps1!(is_movups1, Mnemonic::Movups);
+IsCheckerOps1!(is_movupd1, Mnemonic::Movupd);
+IsCheckerOps1!(is_addss1, Mnemonic::Addss);
+IsCheckerOps1!(is_addsd1, Mnemonic::Addsd);
+IsCheckerOps1!(is_divss1, Mnemonic::Divss);
+IsCheckerOps1!(is_divsd1, Mnemonic::Divsd);
+IsCheckerOps1!(is_mulss1, Mnemonic::Mulss);
+IsCheckerOps1!(is_mulsd1, Mnemonic::Mulsd);
+IsCheckerOps1!(is_subss1, Mnemonic::Subss);
+IsCheckerOps1!(is_subsd1, Mnemonic::Subsd);
+IsCheckerOps1!(is_ucomiss1, Mnemonic::Ucomiss);
+IsCheckerOps1!(is_ucomisd1, Mnemonic::Ucomisd);
+IsCheckerOps1!(is_cvtss2si1, Mnemonic::Cvtss2si);
+IsCheckerOps1!(is_cvtsd2si1, Mnemonic::Cvtsd2si);
+IsCheckerOps1!(is_cvtss2sd1, Mnemonic::Cvtss2sd);
+IsCheckerOps1!(is_cvtsd2ss1, Mnemonic::Cvtsd2ss);
+IsCheckerOps1!(is_cvtsi2ss1, Mnemonic::Cvtsi2ss);
+IsCheckerOps1!(is_cvtsi2sd1, Mnemonic::Cvtsi2sd);
+
+macro_rules! IsCheckerOps2 {
+    ($func:tt, $mnemonic:expr) => {
+        impl X64MCInstr {
+            /// [AUTO GENERATED] checks if the instruction is the same as the other
+            pub fn $func(&self, op1: &Operand, op2: &Operand) -> bool {
+                self.mnemonic == $mnemonic && self.op1 == Some(op1.to_owned()) && self.op2 == Some(op2.to_owned())
+            }
+        }
+    };
+}
+
+IsCheckerOps2!(is_add2, Mnemonic::Add);
+IsCheckerOps2!(is_adc2, Mnemonic::Adc);
+IsCheckerOps2!(is_and2, Mnemonic::And);
+IsCheckerOps2!(is_or2, Mnemonic::Or);
+IsCheckerOps2!(is_xor2, Mnemonic::Xor);
+IsCheckerOps2!(is_sub2, Mnemonic::Sub);
+IsCheckerOps2!(is_cmp2, Mnemonic::Cmp);
+IsCheckerOps2!(is_lea2, Mnemonic::Lea);
+IsCheckerOps2!(is_mov2, Mnemonic::Mov);
+IsCheckerOps2!(is_movzx2, Mnemonic::Movzx);
+IsCheckerOps2!(is_cmove2, Mnemonic::Cmove);
+IsCheckerOps2!(is_cmovne2, Mnemonic::Cmovne);
+IsCheckerOps2!(is_sal2, Mnemonic::Sal);
+IsCheckerOps2!(is_shr2, Mnemonic::Shr);
+IsCheckerOps2!(is_movq2, Mnemonic::Movq);
+IsCheckerOps2!(is_movd2, Mnemonic::Movd);
+IsCheckerOps2!(is_movss2, Mnemonic::Movd);
+IsCheckerOps2!(is_movsd2, Mnemonic::Movd);
+IsCheckerOps2!(is_movups2, Mnemonic::Movups);
+IsCheckerOps2!(is_movupd2, Mnemonic::Movupd);
+IsCheckerOps2!(is_addss2, Mnemonic::Addss);
+IsCheckerOps2!(is_addsd2, Mnemonic::Addsd);
+IsCheckerOps2!(is_divss2, Mnemonic::Divss);
+IsCheckerOps2!(is_divsd2, Mnemonic::Divsd);
+IsCheckerOps2!(is_mulss2, Mnemonic::Mulss);
+IsCheckerOps2!(is_mulsd2, Mnemonic::Mulsd);
+IsCheckerOps2!(is_subss2, Mnemonic::Subss);
+IsCheckerOps2!(is_subsd2, Mnemonic::Subsd);
+IsCheckerOps2!(is_ucomiss2, Mnemonic::Ucomiss);
+IsCheckerOps2!(is_ucomisd2, Mnemonic::Ucomisd);
+IsCheckerOps2!(is_cvtss2si2, Mnemonic::Cvtss2si);
+IsCheckerOps2!(is_cvtsd2si2, Mnemonic::Cvtsd2si);
+IsCheckerOps2!(is_cvtss2sd2, Mnemonic::Cvtss2sd);
+IsCheckerOps2!(is_cvtsd2ss2, Mnemonic::Cvtsd2ss);
+IsCheckerOps2!(is_cvtsi2ss2, Mnemonic::Cvtsi2ss);
+IsCheckerOps2!(is_cvtsi2sd2, Mnemonic::Cvtsi2sd);
+
+impl X64MCInstr {
+    /// Checks if the first operand is a register
+    pub fn is_op1_reg(&self) -> bool {
+        matches!(self.op1, Some(Operand::Reg(_)))
+    }
+
+    /// Checks if the first operand is a memory displacment
+    pub fn is_op1_mem(&self) -> bool {
+        matches!(self.op1, Some(Operand::Mem(_)) | Some(Operand::RipRelative(_)))
+    }
+    
+    /// Checks if the second operand is a register
+    pub fn is_op2_reg(&self) -> bool {
+        matches!(self.op2, Some(Operand::Reg(_)))
+    }
+
+    /// Checks if the second operand is a memory displacment
+    pub fn is_op2_mem(&self) -> bool {
+        matches!(self.op2, Some(Operand::Mem(_)) | Some(Operand::RipRelative(_)))
     }
 }

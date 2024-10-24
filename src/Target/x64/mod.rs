@@ -18,6 +18,9 @@ mod lower;
 /// X64 Style assembly printing
 pub mod printer;
 
+/// X64 assembly optimizations
+pub mod optimizer;
+
 pub use asm::*;
 
 use crate::{CodeGen::MachineMnemonic, Target::Compiler};

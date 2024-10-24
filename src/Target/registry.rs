@@ -114,17 +114,15 @@ impl TargetRegistry {
 
         backend.block = Some(block.clone());
 
-        let instrs = backend.build_instrs_with_ir_debug(&triple, module);
-        let instrs = backend.lower_debug(instrs)?;
+        let instrs = backend.build_instrs(&triple, module);
+        let instrs = backend.lower(instrs)?;
 
         let mut asm = vec![];
 
-        for (instrs, _) in instrs {
-            for instr in instrs {
-                asm.push(
-                    instr.to_string()
-                )
-            }
+        for instr in instrs {
+            asm.push(
+                instr.to_string()
+            )
         }
 
         if backend.epilog {

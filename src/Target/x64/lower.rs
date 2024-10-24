@@ -1,5 +1,4 @@
 use crate::CodeGen::{MCInstr, MachineCallingConvention, MachineInstr, MachineMnemonic, MachineOperand};
-use crate::Optimizations::Optimize;
 use crate::Target::CallConv;
 
 mod adr;
@@ -22,6 +21,7 @@ mod fcmp;
 mod fmove;
 mod fcast;
 
+use super::optimizer::X64AsmOpt;
 use super::{instr::{Mnemonic, Operand, X64MCInstr}, X64Reg};
 
 macro_rules! x64_stack {
@@ -101,13 +101,14 @@ pub(crate) fn x64_lower(conv: CallConv, instrs: Vec<MachineInstr>) -> Vec<Box<dy
         x64_lower_instr(conv, &mut out, instr.clone());
     }
 
-    out.optimize();
+    X64AsmOpt(&mut out);
 
     let mut mc_instrs = vec![];
 
     for instr in out {
         mc_instrs.push( instr.into() );
     }
+
 
     mc_instrs
 }
