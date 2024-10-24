@@ -7,12 +7,7 @@ pub(crate) fn x64_lower_br(sink: &mut Vec<X64MCInstr>, _: &MachineInstr, symbol:
     let target = Operand::BlockLinkDestination(symbol.to_owned(), -4);
 
     sink.push(
-        X64MCInstr::with1(Mnemonic::Jmp, Operand::Imm(0))
-    );
-
-
-    sink.push(
-        X64MCInstr::with1(Mnemonic::Link, target)
+        X64MCInstr::with1(Mnemonic::Jmp, target)
     );
 }
 
@@ -29,8 +24,6 @@ pub(crate) fn x64_lower_cond_br(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr
     } else {
         sink.push(X64MCInstr::with2(Mnemonic::Cmp, src, value));
     }
-    sink.push(X64MCInstr::with1(Mnemonic::Jne, Operand::Imm(0)));
-    sink.push(X64MCInstr::with1(Mnemonic::Link, Operand::BlockLinkDestination(iftrue.to_owned(), -4))); // not 0
-    sink.push(X64MCInstr::with1(Mnemonic::Jmp, Operand::Imm(0)));
-    sink.push(X64MCInstr::with1(Mnemonic::Link, Operand::BlockLinkDestination(iffalse.to_owned(), -4))); // is 0
+    sink.push(X64MCInstr::with1(Mnemonic::Jne, Operand::BlockLinkDestination(iftrue.to_owned(), -4))); // jne not0
+    sink.push(X64MCInstr::with1(Mnemonic::Jmp, Operand::BlockLinkDestination(iffalse.to_owned(), -4))); // jmp is0
 }

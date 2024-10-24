@@ -20,15 +20,10 @@ pub(crate) fn x64_lower_switch(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr,
     }
 
     for (case_type, block) in cases {
-        sink.push(
+        sink.extend_from_slice(&[
             X64MCInstr::with2(Mnemonic::Cmp, var.clone(), Operand::Imm(case_type.val() as i64)),
-        ); 
-        sink.push(
-            X64MCInstr::with1(Mnemonic::Je, Operand::Imm(0))
-        );
-        sink.push(
-            X64MCInstr::with1(Mnemonic::Link, Operand::BlockLinkDestination(block.name.to_owned(), -4))
-        );
+            X64MCInstr::with1(Mnemonic::Je, Operand::BlockLinkDestination(block.name.to_owned(), -4))
+        ]);
     }
 }
 
@@ -64,8 +59,7 @@ pub(crate) fn x64_lower_fswitch(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr
             X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rbx.sub_ty(size)), Operand::Imm(imm)),
             X64MCInstr::with2(move_mne, Operand::Reg(X64Reg::Xmm14), Operand::Reg(X64Reg::Rbx.sub_ty(size))),
             X64MCInstr::with2(cmp_mne, Operand::Reg(X64Reg::Xmm15), Operand::Reg(X64Reg::Xmm14)),
-            X64MCInstr::with1(Mnemonic::Je, Operand::Imm(0)),
-            X64MCInstr::with1(Mnemonic::Link, Operand::BlockLinkDestination(block.name.to_owned(), -4)),
+            X64MCInstr::with1(Mnemonic::Je, Operand::BlockLinkDestination(block.name.to_owned(), -4)),
         ]);
     }
 }

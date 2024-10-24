@@ -623,6 +623,8 @@ impl X64MCInstr {
                     } else {
                         Instruction::with_branch(Code::Call_rel32_64, *op1 as u64)?
                     }
+                } else if let Some(Operand::LinkDestination(..)) = &self.op1 {
+                    Instruction::with_branch(Code::Call_rel32_64, 0)?
                 } else { todo!("{}", self) }
             },
             Mnemonic::Jmp => {
@@ -642,16 +644,28 @@ impl X64MCInstr {
                     } else {
                         Instruction::with_branch(Code::Jmp_rel32_64, *op1 as u64)?
                     }
+                } else if let Some(Operand::LinkDestination(..)) = &self.op1 {
+                    Instruction::with_branch(Code::Call_rel32_64, 0)?
+                } else if let Some(Operand::BlockLinkDestination(..)) = &self.op1 {
+                    Instruction::with_branch(Code::Call_rel32_64, 0)?
                 } else { todo!("{}", self) }
             },
             Mnemonic::Jne => {
                 if let Some(Operand::Imm(op1)) = &self.op1 {
                     Instruction::with_branch(Code::Jne_rel32_64, *op1 as u64)?
+                } else if let Some(Operand::LinkDestination(..)) = &self.op1 {
+                    Instruction::with_branch(Code::Call_rel32_64, 0)?
+                } else if let Some(Operand::BlockLinkDestination(..)) = &self.op1 {
+                    Instruction::with_branch(Code::Call_rel32_64, 0)?
                 } else { todo!("{}", self) }
             },
             Mnemonic::Je => {
                 if let Some(Operand::Imm(op1)) = &self.op1 {
                     Instruction::with_branch(Code::Je_rel32_64, *op1 as u64)?
+                } else if let Some(Operand::LinkDestination(..)) = &self.op1 {
+                    Instruction::with_branch(Code::Call_rel32_64, 0)?
+                } else if let Some(Operand::BlockLinkDestination(..)) = &self.op1 {
+                    Instruction::with_branch(Code::Call_rel32_64, 0)?
                 } else { todo!("{}", self) }
             },
             Mnemonic::Endbr64 => Instruction::with(Code::Endbr64),
@@ -1065,7 +1079,27 @@ impl X64MCInstr {
 
         let encoder = BlockEncoder::encode(64, instr, BlockEncoderOptions::DONT_FIX_BRANCHES)?;
 
-        Ok((encoder.code_buffer, None))        
+        let mut links = None;
+
+        if let Some(Operand::LinkDestination(target, addend)) = &self.op1 {
+            links = Some(Link {
+                from: "".into(),
+                to: target.to_owned(),
+                at: 0,
+                addend: *addend,
+                special: false,
+            })
+        } else if let Some(Operand::BlockLinkDestination(target, addend)) = &self.op1 {
+            links = Some(Link {
+                from: "".into(),
+                to: target.to_owned(),
+                at: 0,
+                addend: *addend,
+                special: true,
+            })
+        }
+
+        Ok((encoder.code_buffer, links))        
     }
 
     /// Verifys the instruction (like checking the right opcodes etc.)
@@ -1582,8 +1616,8 @@ impl Display for Operand {
             Operand::Imm(num) => num.to_string(),
             Operand::Reg(reg) => reg.to_string(),
             Operand::Mem(mem) => format!("{}", mem),
-            Operand::LinkDestination(_, _) => "".to_string(),
-            Operand::BlockLinkDestination(_, _) => "".to_string(),
+            Operand::LinkDestination(target, _) => target.to_string(),
+            Operand::BlockLinkDestination(target, _) =>target.to_string(),
             Operand::Debug(s) => s.to_string(),
         })
     }

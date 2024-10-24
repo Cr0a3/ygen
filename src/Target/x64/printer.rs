@@ -63,14 +63,21 @@ impl AsmPrinter for X64AsmPrinter {
         lines.push("section .rodata\n\n".to_string());
 
         for (_, consta) in &module.consts {
-            lines.push(format!("{}: {:02X?} # {}\n", consta.name, consta.data, consta.data.iter()                                      
-                .filter_map(|&byte| {
-                    if byte >= 32 && byte <= 126 {
-                        Some(byte as char)
-                    } else {
-                        None
-                    }
-                }).collect::<String>()));
+            let mut data = String::new();
+
+            let mut first = true;
+
+            for byte in &consta.data {
+                if !first {
+                    data.push(',');
+                    data.push(' ');
+                }
+
+                data.push_str(&format!("\t.byte {:02x?}\n", byte));
+                first = true;
+            }
+
+            lines.push(format!("{}: \n{}", consta.name, data));
         }
 
         let mut out = String::new();
