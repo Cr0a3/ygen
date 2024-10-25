@@ -347,4 +347,29 @@ impl RegAlloc {
         self.vars.insert(phi.out.name.to_owned(), out);
         self.var_types.insert(phi.out.name.to_owned(), phi.typ);
     }
+
+    pub(crate) fn free(&mut self, loc: VarLocation) {
+        if self.just_vars {
+            self.jvars.push(match loc {
+                VarLocation::Reg(reg) => match reg {
+                    Reg::wasm(num, _) => num,
+                    _ => panic!("expected wasm register")
+                },
+                VarLocation::Mem(_) => panic!("jvars only work with registers"),
+            });
+        }
+
+        match loc {
+            VarLocation::Reg(reg) => {
+                if reg.is_fp() {
+                    self.free_fpregs.push(self.arch, reg);
+                } else {
+                    self.free_registers.push(self.arch, reg);
+                }
+            },
+            VarLocation::Mem(_) => {
+                // TODO: Add freeing abilitys
+            },
+        }
+    }
 }

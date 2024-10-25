@@ -742,6 +742,7 @@ impl IrParser {
             self.expect( TokenType::Comma )?;
             self.input.pop_front();
 
+            self.expect(TokenType::Var(String::new()))?;
             let src = if let TokenType::Var(var) = &self.current_token()?.typ {
                 var.to_owned()
             } else { unreachable!() };

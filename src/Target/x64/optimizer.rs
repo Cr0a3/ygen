@@ -29,10 +29,10 @@ pub(crate) fn X64AsmOpt(instrs: &mut Vec<X64MCInstr>) {
         if let Some(opt_instr) = X64MergeInstrs(&instrs[index..], 3) {
             instrs[index] = opt_instr;
             instrs.drain(index + 1..index + 3);
-        } /*else if let Some(opt_instr) = X64MergeInstrs(&instrs[index..], 2) {
+        } else if let Some(opt_instr) = X64MergeInstrs(&instrs[index..], 2) {
             instrs[index] = opt_instr;
             instrs.drain(index + 1..index + 2);
-        } */else {
+        } else {
             index += 1;
         }
     }
@@ -58,16 +58,37 @@ fn X64Merge2Instrs(instrs: &[X64MCInstr]) -> Option<X64MCInstr> {
     let instr0 = instrs.get(0).unwrap();
     let instr1 = instrs.get(1).unwrap();
 
-    if instr0.op1 == instr1.op2 && 
-       (instr0.is_op1_reg() || instr0.is_op2_reg()) && 
-       instr1.is_mov() {
-        let mut new = instr0.clone();
-        new.op1 = instr1.op2.clone();
+    if let Some(merged) = X64MergeMove(instr0, instr1) { return Some(merged); }
+    // TODO: Add more instr combines here
 
-        Some(new)
-    } else {
-        None
+    None
+}
+
+fn X64MergeMove(instr0: &X64MCInstr, instr1: &X64MCInstr) -> Option<X64MCInstr> {
+    if !(instr0.is_mov1(&Operand::Reg(X64Reg::Rax)) || 
+       instr0.is_mov1(&Operand::Reg(X64Reg::Eax)) || 
+       instr0.is_mov1(&Operand::Reg(X64Reg::Ax))  || 
+       instr0.is_mov1(&Operand::Reg(X64Reg::Al)))   {
+        return None;
     }
+
+    if !instr1.is_mov() {
+        return None;
+    }
+
+    if !(instr1.op2.clone() == Some(Operand::Reg(X64Reg::Rax)) || 
+        instr1.op2.clone() == Some(Operand::Reg(X64Reg::Eax)) || 
+        instr1.op2.clone() == Some(Operand::Reg(X64Reg::Ax))  || 
+        instr1.op2.clone() == Some(Operand::Reg(X64Reg::Al)))   {
+        return None;
+    }
+
+    Some(X64MCInstr {
+        mnemonic: Mnemonic::Mov,
+        op1: instr1.op1.clone(),
+        op2: instr0.op2.clone(),
+        far: false,
+    })
 }
 
 fn X64Merge3Instrs(instrs: &[X64MCInstr]) -> Option<X64MCInstr> {
