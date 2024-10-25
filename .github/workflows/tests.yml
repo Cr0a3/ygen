@@ -1,4 +1,4 @@
-name: Run ir tests
+name: Run Tests
 on:
   push:
     branches: [ "main" ]
@@ -25,3 +25,4 @@ jobs:
       - name: Run tests
         run: |
           python3 tools/test.py
+          cargo test --all --features jit
