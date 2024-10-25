@@ -660,27 +660,63 @@ impl X64MCInstr {
                         Instruction::with_branch(Code::Jmp_rel32_64, *op1 as u64)?
                     }
                 } else if let Some(Operand::LinkDestination(..)) = &self.op1 {
-                    Instruction::with_branch(Code::Call_rel32_64, 0)?
+                    Instruction::with_branch(Code::Jmp_rel32_64, 0)?
                 } else if let Some(Operand::BlockLinkDestination(..)) = &self.op1 {
-                    Instruction::with_branch(Code::Call_rel32_64, 0)?
+                    Instruction::with_branch(Code::Jmp_rel32_64, 0)?
                 } else { todo!("{}", self) }
             },
             Mnemonic::Jne => {
                 if let Some(Operand::Imm(op1)) = &self.op1 {
                     Instruction::with_branch(Code::Jne_rel32_64, *op1 as u64)?
                 } else if let Some(Operand::LinkDestination(..)) = &self.op1 {
-                    Instruction::with_branch(Code::Call_rel32_64, 0)?
+                    Instruction::with_branch(Code::Jne_rel32_64, 0)?
                 } else if let Some(Operand::BlockLinkDestination(..)) = &self.op1 {
-                    Instruction::with_branch(Code::Call_rel32_64, 0)?
+                    Instruction::with_branch(Code::Jne_rel32_64, 0)?
                 } else { todo!("{}", self) }
             },
             Mnemonic::Je => {
                 if let Some(Operand::Imm(op1)) = &self.op1 {
                     Instruction::with_branch(Code::Je_rel32_64, *op1 as u64)?
                 } else if let Some(Operand::LinkDestination(..)) = &self.op1 {
-                    Instruction::with_branch(Code::Call_rel32_64, 0)?
+                    Instruction::with_branch(Code::Je_rel32_64, 0)?
                 } else if let Some(Operand::BlockLinkDestination(..)) = &self.op1 {
-                    Instruction::with_branch(Code::Call_rel32_64, 0)?
+                    Instruction::with_branch(Code::Je_rel32_64, 0)?
+                } else { todo!("{}", self) }
+            },
+            Mnemonic::Jge => {
+                if let Some(Operand::Imm(op1)) = &self.op1 {
+                    Instruction::with_branch(Code::Jge_rel32_64, *op1 as u64)?
+                } else if let Some(Operand::LinkDestination(..)) = &self.op1 {
+                    Instruction::with_branch(Code::Jge_rel32_64, 0)?
+                } else if let Some(Operand::BlockLinkDestination(..)) = &self.op1 {
+                    Instruction::with_branch(Code::Jge_rel32_64, 0)?
+                } else { todo!("{}", self) }
+            },
+            Mnemonic::Jl => {
+                if let Some(Operand::Imm(op1)) = &self.op1 {
+                    Instruction::with_branch(Code::Jl_rel32_64, *op1 as u64)?
+                } else if let Some(Operand::LinkDestination(..)) = &self.op1 {
+                    Instruction::with_branch(Code::Jl_rel32_64, 0)?
+                } else if let Some(Operand::BlockLinkDestination(..)) = &self.op1 {
+                    Instruction::with_branch(Code::Jl_rel32_64, 0)?
+                } else { todo!("{}", self) }
+            },
+            Mnemonic::Jle => {
+                if let Some(Operand::Imm(op1)) = &self.op1 {
+                    Instruction::with_branch(Code::Jle_rel32_64, *op1 as u64)?
+                } else if let Some(Operand::LinkDestination(..)) = &self.op1 {
+                    Instruction::with_branch(Code::Jle_rel32_64, 0)?
+                } else if let Some(Operand::BlockLinkDestination(..)) = &self.op1 {
+                    Instruction::with_branch(Code::Jle_rel32_64, 0)?
+                } else { todo!("{}", self) }
+            },
+            Mnemonic::Jg => {
+                if let Some(Operand::Imm(op1)) = &self.op1 {
+                    Instruction::with_branch(Code::Jg_rel32_64, *op1 as u64)?
+                } else if let Some(Operand::LinkDestination(..)) = &self.op1 {
+                    Instruction::with_branch(Code::Jg_rel32_64, 0)?
+                } else if let Some(Operand::BlockLinkDestination(..)) = &self.op1 {
+                    Instruction::with_branch(Code::Jg_rel32_64, 0)?
                 } else { todo!("{}", self) }
             },
             Mnemonic::Endbr64 => Instruction::with(Code::Endbr64),
@@ -1320,6 +1356,11 @@ pub enum Mnemonic {
     Cvtsd2ss,
     Cvtsi2ss,
     Cvtsi2sd,
+
+    Jg,
+    Jl,
+    Jge,
+    Jle,
 }
 
 impl FromStr for Mnemonic {
@@ -1383,6 +1424,10 @@ impl FromStr for Mnemonic {
             "cvtsd2ss"  => Ok(Mnemonic::Cvtsd2ss),
             "cvtsi2ss" => Ok(Mnemonic::Cvtsi2ss),
             "cvtsi2sd" => Ok(Mnemonic::Cvtsi2sd),
+            "jg" => Ok(Mnemonic::Jg),
+            "jl" => Ok(Mnemonic::Jl),
+            "jge" => Ok(Mnemonic::Jge),
+            "jle" => Ok(Mnemonic::Jle),
             _ => Err(()),
         }
     }
@@ -1451,6 +1496,10 @@ impl Display for Mnemonic {
             Mnemonic::Cvtsd2ss => "cvtsd2ss",
             Mnemonic::Cvtsi2ss => "cvtsi2ss",
             Mnemonic::Cvtsi2sd => "cvtsi2sd",
+            Mnemonic::Jg => "jg",
+            Mnemonic::Jl => "jl",
+            Mnemonic::Jge => "jge",
+            Mnemonic::Jle => "jle",
         })
     }
 }
@@ -1798,6 +1847,10 @@ IsCheckerOps0!(is_call, Mnemonic::Call);
 IsCheckerOps0!(is_jmp, Mnemonic::Jmp);
 IsCheckerOps0!(is_jne, Mnemonic::Jne);
 IsCheckerOps0!(is_je, Mnemonic::Je);
+IsCheckerOps0!(is_jg, Mnemonic::Jg);
+IsCheckerOps0!(is_jl, Mnemonic::Jl);
+IsCheckerOps0!(is_jge, Mnemonic::Jge);
+IsCheckerOps0!(is_jle, Mnemonic::Jle);
 IsCheckerOps0!(is_endbr64, Mnemonic::Endbr64);
 IsCheckerOps0!(is_sete, Mnemonic::Sete);
 IsCheckerOps0!(is_setne, Mnemonic::Setne);
@@ -1960,5 +2013,10 @@ impl X64MCInstr {
     /// Checks if the second operand is a memory displacment
     pub fn is_op2_mem(&self) -> bool {
         matches!(self.op2, Some(Operand::Mem(_)) | Some(Operand::RipRelative(_)))
+    }
+
+    /// Checks if the second operand is a rip relative
+    pub fn is_op2_rip(&self) -> bool {
+        matches!(self.op2, Some(Operand::RipRelative(_)))
     }
 }

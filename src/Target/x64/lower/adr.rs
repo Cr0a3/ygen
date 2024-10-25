@@ -7,10 +7,16 @@ pub(crate) fn x64_lower_adr_load(sink: &mut Vec<X64MCInstr>, instr: &MachineInst
 
     let out = out.into();
 
-    sink.extend_from_slice(&[
-        X64MCInstr::with2(Mnemonic::Lea, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)), Operand::RipRelative(symbol.to_owned())),
-        X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)))
-    ]);
+    if let Operand::Reg(_) = out {
+        sink.push(
+            X64MCInstr::with2(Mnemonic::Lea, out, Operand::RipRelative(symbol.to_owned()))
+        );
+    } else {
+        sink.extend_from_slice(&[
+            X64MCInstr::with2(Mnemonic::Lea, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)), Operand::RipRelative(symbol.to_owned())),
+            X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)))
+        ]);
+    }
 }
 
 pub(crate) fn x64_lower_adrm(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
