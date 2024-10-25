@@ -1,0 +1,50 @@
+name: PR Labeler
+
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  label_assign_comment:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Pre
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Set variables
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          LABEL_NAME="needs-review"
+          ASSIGNEE="Cr0a3"
+          COMMENT="Thank you for your pr to ygen! @Cr0a3 will shortly review your pr"
+
+      - name: Label
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -X POST -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/labels \
+            -d "{\"labels\": [\"$LABEL_NAME\"]}"
+
+      - name: Assign user
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -X POST -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/assignees \
+            -d "{\"assignees\": [\"$ASSIGNEE\"]}"
+
+      - name: Comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -X POST -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/comments \
+            -d "{\"body\": \"$COMMENT\"}"
