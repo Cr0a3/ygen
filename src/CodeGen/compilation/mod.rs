@@ -43,6 +43,7 @@ pub enum ConstImmRules {
 pub struct CompilationHelper {
     pub(crate) arch: Arch,
     pub(crate) lower: Option<fn(CallConv, Vec<MachineInstr>) -> Vec<Box<dyn MCInstr>>>,
+    pub(crate) after_alloc: Option<fn(&CompilationHelper)>,
 
     pub(crate) call: MachineCallingConvention,
 
@@ -69,6 +70,7 @@ impl CompilationHelper {
             alloc: alloc,
             tmp_reg: tmp,
             fp_imm: ConstImmRules::InstrOp,
+            after_alloc: None,
         }
     }
 
@@ -78,6 +80,10 @@ impl CompilationHelper {
         self.vars = self.alloc.vars.to_owned();
         self.var_types = self.alloc.var_types.to_owned();
         self.allocated_vars = self.alloc.allocated_vars.to_owned();
+
+        if let Some(func) = self.after_alloc {
+            func(self);
+        }
     }
 
     fn get_vars_to_save_for_call(&self, node: &crate::prelude::Call<crate::prelude::FuncId, Vec<crate::prelude::Var>, crate::prelude::Var>) -> Vec<(String, VarLocation)> {

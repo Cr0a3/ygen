@@ -55,5 +55,15 @@ pub(crate) fn construct_compilation_helper(call_conv: CallConv) -> CompilationHe
 
     helper.fp_imm = ConstImmRules::CreateConst;
 
+    helper.after_alloc = Some(x64_after_alloc);
+
     helper
+}
+
+fn x64_after_alloc(compiler: &CompilationHelper) {
+    if compiler.alloc.stack_off < compiler.call.shadow(compiler.arch) {
+        unsafe {
+            super::lower::USE_SP_FOR_STACK = true;
+        }
+    }
 }
