@@ -110,8 +110,16 @@ impl Ir for BrCond<Var, BlockId, BlockId> {
         compiler.compile_br_cond(&self, &block, module)
     }
 
-    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        None
+    fn maybe_inline(&self, vars: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let Some(check) = vars.get(&self.inner1.name) {
+            let value = check.val() as i64;
+
+            if value == 0 {
+                Some(Br::new(self.inner3.to_owned()))
+            } else {
+                Some(Br::new(self.inner2.to_owned()))
+            }
+        } else { None }
     }
     
     fn eval(&self) -> Option<Box<dyn Ir>> {
