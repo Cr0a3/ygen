@@ -349,7 +349,7 @@ impl ObjectBuilder {
             let (_, _, to_sym, decl, _, _) = syms.get(&link.to).expect("expected valid link destination");
 
             let addend = match decl {
-                Decl::Function => 4,
+                Decl::Function => if self.triple.getCallConv()? == Target::CallConv::SystemV { 4 } else {0},
                 _ => 0,
             };
             let offset = -3;
