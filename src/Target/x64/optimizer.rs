@@ -129,20 +129,12 @@ fn X64MergeAdd(instr0: &X64MCInstr, instr1: &X64MCInstr, instr2: &X64MCInstr) ->
         return None;
     }
 
-    if !instr0.is_op2_reg() {
-        return None;
-    }
-
     if !(instr1.is_add1(&Operand::Reg(X64Reg::Rax)) || 
        instr1.is_add1(&Operand::Reg(X64Reg::Eax)) || 
        instr1.is_add1(&Operand::Reg(X64Reg::Ax))  || 
        instr1.is_add1(&Operand::Reg(X64Reg::Al)))   {
         return None;
     }    
-    
-    if !instr1.is_op2_reg() {
-        return None;
-    }
 
     if !instr2.is_mov() {
         return None;
@@ -155,40 +147,78 @@ fn X64MergeAdd(instr0: &X64MCInstr, instr1: &X64MCInstr, instr2: &X64MCInstr) ->
         return None;
     }
 
+    if !(instr0.is_op2_reg() && instr1.is_op2_reg() ||
+       instr0.is_op2_imm() && instr1.is_op2_imm() ||
+       instr0.is_op2_reg() && instr1.is_op2_imm()) {
+        return None;
+       }
+
     let mut out = instr2.op1.clone();
     let mut ls = instr0.op2.clone();
     let mut rs = instr1.op2.clone();
 
     if let Some(Operand::Reg(reg)) = out {
-        if reg.is_gr8() {
+        if !(reg.is_gr32() || reg.is_gr64()) {
             out = Some(Operand::Reg(reg.sub16()))
         }
     }
 
     if let Some(Operand::Reg(reg)) = ls {
-        if reg.is_gr8() {
+        if !(reg.is_gr32() || reg.is_gr64()) {
             ls = Some(Operand::Reg(reg.sub64()))
         }
     }
 
     if let Some(Operand::Reg(reg)) = rs {
-        if reg.is_gr8() {
+        if !(reg.is_gr32() || reg.is_gr64()) {
             rs = Some(Operand::Reg(reg.sub64()))
         }
     }
 
-    Some(vec![X64MCInstr {
-        mnemonic: Mnemonic::Lea,
-        op1: out,
-        op2: Some(Operand::Mem(MemOp {
-            base: Some(x64_reg_extract(rs)),
-            index: Some(x64_reg_extract(ls)),
-            scale: 1,
-            displ: 0,
-            rip: false,
-        })),
-        far: false,
-    }])
+    if instr0.is_op2_reg() && instr1.is_op2_reg() {
+        Some(vec![X64MCInstr {
+            mnemonic: Mnemonic::Lea,
+            op1: out,
+            op2: Some(Operand::Mem(MemOp {
+                base: Some(x64_reg_extract(rs)),
+                index: Some(x64_reg_extract(ls)),
+                scale: 1,
+                displ: 0,
+                rip: false,
+            })),
+            far: false,
+        }])
+    } else if instr0.is_op2_imm() && instr1.is_op2_reg() {
+        let imm = if let Some(Operand::Imm(imm)) = instr0.op1 { imm } else { unreachable!() };
+
+        Some(vec![X64MCInstr {
+            mnemonic: Mnemonic::Lea,
+            op1: out,
+            op2: Some(Operand::Mem(MemOp {
+                base: Some(x64_reg_extract(rs)),
+                index: None,
+                scale: 1,
+                displ: imm as isize,
+                rip: false,
+            })),
+            far: false,
+        }])
+    } else if instr0.is_op2_reg() && instr1.is_op2_imm() {
+        let imm = if let Some(Operand::Imm(imm)) = instr1.op2 { imm } else { unreachable!() };
+
+        Some(vec![X64MCInstr {
+            mnemonic: Mnemonic::Lea,
+            op1: out,
+            op2: Some(Operand::Mem(MemOp {
+                base: Some(x64_reg_extract(ls)),
+                index: None,
+                scale: 1,
+                displ: imm as isize,
+                rip: false,
+            })),
+            far: false,
+        }])
+    } else { None }
 }
 
 fn X64MergeBrCond(instr0: &X64MCInstr, instr1: &X64MCInstr, instr2: &X64MCInstr) -> Option<Vec<X64MCInstr>> {

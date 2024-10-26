@@ -2004,6 +2004,11 @@ impl X64MCInstr {
     pub fn is_op1_mem(&self) -> bool {
         matches!(self.op1, Some(Operand::Mem(_)) | Some(Operand::RipRelative(_)))
     }
+
+    /// Checks if the first operand is an imm
+    pub fn is_op1_imm(&self) -> bool {
+        matches!(self.op1, Some(Operand::Imm(_)))
+    }
     
     /// Checks if the second operand is a register
     pub fn is_op2_reg(&self) -> bool {
@@ -2018,5 +2023,10 @@ impl X64MCInstr {
     /// Checks if the second operand is a rip relative
     pub fn is_op2_rip(&self) -> bool {
         matches!(self.op2, Some(Operand::RipRelative(_)))
+    }
+
+    /// Checks if the second operand is an imm
+    pub fn is_op2_imm(&self) -> bool {
+        matches!(self.op2, Some(Operand::Imm(_)))
     }
 }
