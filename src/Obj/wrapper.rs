@@ -346,12 +346,12 @@ impl ObjectBuilder {
 
         for link in &self.links {
             let (_, off, _, _, _, _) = syms.get(&link.from).expect("expectd valid link source");
-            let (_, _, to_sym, decl, _, _) = syms.get(&link.to).expect("expected valid link destination");
+            let (_, _, to_sym, _decl, _, _) = syms.get(&link.to).expect("expected valid link destination");
 
-            let addend = match decl {
+            let addend = 0;/*match decl {
                 Decl::Function => if self.triple.getCallConv()? == Target::CallConv::SystemV { 4 } else {0},
                 _ => 0,
-            };
+            };*/
             let offset = -3;
 
             obj.add_relocation(secText, Relocation {
