@@ -147,7 +147,11 @@ impl Module {
     /// Runs the pass manager over all functions
     pub fn runPassMngr(&mut self, mngr: PassManager) {
         for (_, func) in &mut self.funcs {
-            func.runPassMngr(&mngr)
+            func.runPassMngr(&mngr);
+            
+            for opt in &mngr.passes {
+                opt.run_func(func);
+            }
         }
     }
 
