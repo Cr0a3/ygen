@@ -1,0 +1,28 @@
+name: Linux/Run Tests
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  ytest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Install Rust toolchain
+        run: |
+          rustup update --no-self-update stable
+
+      - name: Build
+        run: cargo build --all
+
+      - name: Run tests
+        run: |
+          python3 tools/test.py
+          cargo test --all --features jit
