@@ -77,6 +77,7 @@ impl CompilationHelper {
         self.alloc.run_alloc(func);
         self.vars = self.alloc.vars.to_owned();
         self.var_types = self.alloc.var_types.to_owned();
+        self.allocated_vars = self.alloc.allocated_vars.to_owned();
     }
 
     fn get_vars_to_save_for_call(&self, node: &crate::prelude::Call<crate::prelude::FuncId, Vec<crate::prelude::Var>, crate::prelude::Var>) -> Vec<(String, VarLocation)> {

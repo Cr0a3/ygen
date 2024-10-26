@@ -21,6 +21,7 @@ pub struct RegAlloc {
     pub(crate) vars: HashMap<String, VarLocation>,
     pub(crate) var_types: HashMap<String, TypeMetadata>,
     pub(crate) phi_vars: HashMap<String, VarLocation>,
+    pub(crate) allocated_vars: Vec<String>,
 
     pub(crate) scopes: HashMap<String, Vec<(Var, VarLocation)>>,
 
@@ -57,6 +58,7 @@ impl RegAlloc {
             jvars: Vec::new(),
             curr_index: 0,
             just_vars: just_vars,
+            allocated_vars: Vec::new(),
         }
     }
 
