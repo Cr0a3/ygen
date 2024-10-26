@@ -69,6 +69,9 @@ pub fn call() -> Result<(), Box<dyn Error>> {
 
     Ok(())
 }
+/*
+
+// NOT YET SUPPORTED
 
 #[no_mangle]
 extern "C" fn custom_func(ls: i32, rs: i32) -> i32 {
@@ -105,4 +108,4 @@ pub fn extern_symbol() -> Result<(), Box<dyn Error>> {
     }
 
     Ok(())
-}
+}*/
