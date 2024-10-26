@@ -22,7 +22,7 @@ define i32 @main() {
 
     %6 = add u8 %2, %5
 
-    %7 = cast u8 %2 to i32
+    %7 = cast u8 %6 to i32
 
     ret i32 %7
 }
