@@ -4,7 +4,7 @@ use super::Pass;
 
 /// The manager of all passes (PassManager)
 pub struct PassManager {
-    passes: VecDeque<Box<dyn Pass>>,
+    pub(crate) passes: VecDeque<Box<dyn Pass>>,
 }
 
 impl PassManager {

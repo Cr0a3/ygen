@@ -63,6 +63,8 @@ impl AbsSymDealer for X64AbsSymDealer {
         for fix in fixup {
             code.insert(pos - bytes_to_remove, fix);
         }
+
+        todo!("unsupported");
     }
 
     fn dbg(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

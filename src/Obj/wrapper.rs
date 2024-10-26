@@ -346,10 +346,10 @@ impl ObjectBuilder {
 
         for link in &self.links {
             let (_, off, _, _, _, _) = syms.get(&link.from).expect("expectd valid link source");
-            let (_, _, to_sym, ty, _, _) = syms.get(&link.to).expect("expected valid link destination");
+            let (_, _, to_sym, decl, _, _) = syms.get(&link.to).expect("expected valid link destination");
 
-            let addend = match ty {
-                Decl::Function => 1,
+            let addend = match decl {
+                Decl::Function => 4,
                 _ => 0,
             };
             let offset = -3;

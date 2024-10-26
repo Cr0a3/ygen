@@ -170,6 +170,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             let pass = match pass.to_lowercase().as_str() {
                 "cp" | "const_eval" | "const_evaluation" | "const-eval" | "const-evaluation" =>     Some( Passes::ConstantEvaluation() ),
                 "dne" | "dead_node" | "dead_node_elim" | "dead-node" | "dead-node-elimination" =>   Some( Passes::DeadNodeElimination() ),
+                "dbe" | "dead_block" | "dead_block_elim" | "dead-block" | "dead-block-elimination" =>   Some( Passes::DeadBlockElimination() ),
                 _ => {eprintln!("unkown pass: {}", pass); None },
             };
 
@@ -183,6 +184,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let mut opts = PassManager::new();
 
         opts.add( Passes::ConstantEvaluation() );
+        opts.add( Passes::DeadBlockElimination() );
         opts.add( Passes::DeadNodeElimination() );
 
         module.runPassMngr(opts);
