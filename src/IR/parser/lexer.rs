@@ -311,6 +311,18 @@ impl IrLexer {
 
             '"' => ty = Some(self.scan_string()?),
 
+            ';' => {
+                let ref_line = self.line_no;
+
+                loop {
+                    self.advance()?;
+
+                    if self.line_no != ref_line {
+                        break;
+                    }
+                }
+            }
+
             '.' => {
                 self.advance()?;
                 if let '.' = self.peek().unwrap() {} else {
