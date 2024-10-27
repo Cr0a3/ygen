@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, HashMap};
 
 use crate::Obj::Linkage;
-use crate::IR::{BlockId, Const, FnTy, FuncId, FunctionType, Type, TypeMetadata, Var};
+use crate::IR::{BlockId, Const, FuncId, FunctionType, Type, TypeMetadata, Var};
 
 use crate::prelude::ir::*;
 
@@ -58,11 +58,15 @@ impl<'a> IrSemnatic<'a> {
         
         let mut fun_args = vec![];
 
-        for (_, arg) in &args.0 {
-            fun_args.push( *arg );
+        for (name, arg) in &args.0 {
+            fun_args.push( (name.to_owned(), *arg) );
         }
         
-        let mut ty = FnTy(fun_args, ret);
+        let mut ty = FunctionType {
+            args: fun_args,
+            ret: ret,
+            any_args: false,
+        };
 
         if args.1 {
             ty.activate_dynamic_arguments();
@@ -392,7 +396,7 @@ impl<'a> IrSemnatic<'a> {
                 })?
             };
 
-            if let Some(expected) = sig.args.get(index) {
+            if let Some((_, expected)) = sig.args.get(index) {
                 if *expected != *arg {
                     Err(IrError::WrongArgument {
                         loc: loc.to_owned(),

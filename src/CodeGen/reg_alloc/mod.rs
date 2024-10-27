@@ -67,7 +67,7 @@ impl RegAlloc {
 
         let mut num = 0;
 
-        for ty in &func.args {
+        for (name, ty) in &func.args {
             let location = {
                 if self.just_vars {
                     self.curr_index += 1;
@@ -99,14 +99,12 @@ impl RegAlloc {
                 }
             }
 
-            let name = || func.arg(num).name;
-
             self.vars.insert(
-                name(), 
+                name.to_owned(), 
                 location
             );
 
-            self.var_types.insert(name(), *ty);
+            self.var_types.insert(name.to_owned(), *ty);
 
             num += 1;
         }

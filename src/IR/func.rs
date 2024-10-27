@@ -14,7 +14,7 @@ use crate::Support::ColorProfile;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FunctionType {
     /// The function arguments (stored as: num, type)
-    pub args: Vec<TypeMetadata>,
+    pub args: Vec<(String, TypeMetadata)>,
     /// The return type
     pub ret: TypeMetadata,
     /// After the given arguments any argument type can be supplied (like the printf function - is in c ...)
@@ -23,7 +23,7 @@ pub struct FunctionType {
 
 impl FunctionType {
     /// Creates a new function type
-    pub fn new(args: Vec<TypeMetadata>, ret: TypeMetadata) -> Self {
+    pub fn new(args: Vec<(String, TypeMetadata)>, ret: TypeMetadata) -> Self {
         Self {
             args: args,
             ret: ret,
@@ -41,9 +41,9 @@ impl FunctionType {
     /// If the num doesn't exists, it panics
     pub fn arg(&self, num: usize) -> Var {
         let mut index = 0;
-        for meta in &self.args {
+        for (name, meta) in &self.args {
             if index == num {
-                return Var { name: format!("%{}", index), ty: *meta }
+                return Var { name: name.to_owned(), ty: *meta }
             }
 
             index += 1;
@@ -238,7 +238,15 @@ impl Function {
 
 /// Creates a new function type
 pub fn FnTy(args: Vec<TypeMetadata>, ret: TypeMetadata) -> FunctionType {
-    FunctionType::new(args, ret)
+    let mut processed = Vec::new();
+    let mut index = 0;
+
+    for arg in args {
+        processed.push((format!("%{index}"), arg));
+        index += 1;
+    }
+
+    FunctionType::new(processed, ret)
 }
 
 /// Creates a new Function

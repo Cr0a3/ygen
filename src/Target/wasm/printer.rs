@@ -23,7 +23,7 @@ impl AsmPrinter for WasmAsmPrinter {
 
             let mut index = 0;
 
-            for arg in &func.ty.args {
+            for (_name, arg) in &func.ty.args {
                 if index != 0 {
                     fmt_ty.push(',');
                     fmt_ty.push(' ');

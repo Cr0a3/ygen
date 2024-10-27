@@ -28,8 +28,8 @@ impl IrGen {
     fn gen_func(&mut self, name: String, ret: TypeMetadata, args:  (BTreeMap<String, TypeMetadata>, bool), body: Vec<(String, IrBlock)>, scope: Linkage) {
         let mut ty = FunctionType::new(vec![], ret);
 
-        for (_, arg) in &args.0 {
-            ty.args.push( *arg );
+        for (name, arg) in &args.0 {
+            ty.args.push( (name.to_owned(), *arg) );
         }
 
         let mut raw = Function {
