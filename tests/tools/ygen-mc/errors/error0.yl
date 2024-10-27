@@ -2,4 +2,4 @@
 cargo run -p ygen-mc -- -as=Hi -no-clr -no-out -no-asm
 # STDOUT:
 Error: unknown instruction: 'hi'
-# EXPECT_FAIL
+# EXIT_CODE=-1

@@ -106,7 +106,8 @@ fn main() {
 
     for cmd in parsed.cmd {
         let args = cmd  .replace("%s", path_str)
-                                .replace("%c", path2_str);
+                                .replace("%c", path2_str)
+                                .replace("./", "");
         let args = unescaper::unescape(&args).unwrap();
         let args = args.trim();
 
@@ -152,7 +153,7 @@ fn main() {
                                     exit(-1);
                                 }
                             }
-                        }  else {
+                        }  else if !parsed.ignore_fail {
                             println!("{}: the programm didn't exit sucessfull with code {}", "Error".red().bold(), exit_code);
                             exit(-1);
                         }
