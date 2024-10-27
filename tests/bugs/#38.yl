@@ -1,0 +1,20 @@
+# RUN:
+cargo run -p ylc -- -in=%s -o=out.o
+gcc out.o %c -o a.exe
+./a.exe
+# IN:
+
+define i32 @add(i32 %a, i32 %b) {
+  entry:
+    %ret = mul i32 %a, %b
+    ret i32 %ret
+}
+
+# IN2:
+extern int add(int, int);
+
+int main() {
+    return add(2, 3);
+}
+
+# EXIT_CODE=5
