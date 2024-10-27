@@ -1,7 +1,7 @@
 use crate::CodeGen::instr::{MachineMnemonic, MachineOperand, MachineInstr};
 use crate::IR::ir::*;
 use crate::prelude::{Var, Block, Type};
-use super::{CompilationHelper, VarLocation};
+use super::CompilationHelper;
 
 macro_rules! MathVarVar {
     ($func:ident, $node:ident, $mnemonic:expr) => {
@@ -15,21 +15,10 @@ macro_rules! MathVarVar {
         
                 let mut instr = MachineInstr::new($mnemonic);
         
-                match src1 {
-                    VarLocation::Reg(reg) => instr.add_operand(MachineOperand::Reg(reg)),
-                    VarLocation::Mem(stack) => instr.add_operand( MachineOperand::Stack(stack) ),
-                }
+                instr.add_operand(src1.into());
+                instr.add_operand(src2.into());
+                instr.set_out(out.into());
         
-                match src2 {
-                    VarLocation::Reg(reg) => instr.add_operand(MachineOperand::Reg(reg)),
-                    VarLocation::Mem(stack) => instr.add_operand( MachineOperand::Stack(stack) ),
-                }
-        
-                match out {
-                    VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
-                    VarLocation::Mem(stack) => instr.set_out( MachineOperand::Stack(stack) ),
-                }
-                
                 instr.meta = node.inner3.ty;
         
                 mc_sink.push(instr);
@@ -67,22 +56,21 @@ macro_rules! MathVarType {
         
                 let mut instr = MachineInstr::new($mnemonic);
         
-                match src1 {
-                    VarLocation::Reg(reg) => instr.add_operand(MachineOperand::Reg(reg)),
-                    VarLocation::Mem(stack) => instr.add_operand( MachineOperand::Stack(stack) ),
-                }
-        
+                
+                instr.add_operand(src1.into());
                 instr.add_operand(MachineOperand::Imm(node.inner2.val()));
-
-                match out {
-                    VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
-                    VarLocation::Mem(stack) => instr.set_out( MachineOperand::Stack(stack) ),
-                }
-
+                instr.set_out(out.into());
                 
                 instr.meta = node.inner3.ty;
         
                 mc_sink.push(instr);
+
+                if let Some(phi_loc) = self.alloc.phi_vars.get(&node.inner3.name) {
+                    let mut instr = MachineInstr::new(MachineMnemonic::Move);
+                    instr.set_out((*phi_loc).into());
+                    instr.add_operand(out.into());
+                    mc_sink.push(instr);
+                }
             }
         }
     };
@@ -109,17 +97,20 @@ macro_rules! MathTypeType {
                 let mut instr = MachineInstr::new($mnemonic);
         
                 instr.add_operand(MachineOperand::Imm(node.inner1.val()));
-        
                 instr.add_operand(MachineOperand::Imm(node.inner2.val()));
-
-                match out {
-                    VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
-                    VarLocation::Mem(stack) => instr.set_out( MachineOperand::Stack(stack) ),
-                }
+                
+                instr.set_out(out.into());
         
                 instr.meta = node.inner3.ty;
 
                 mc_sink.push(instr);
+
+                if let Some(phi_loc) = self.alloc.phi_vars.get(&node.inner3.name) {
+                    let mut instr = MachineInstr::new(MachineMnemonic::Move);
+                    instr.set_out((*phi_loc).into());
+                    instr.add_operand(out.into());
+                    mc_sink.push(instr);
+                }
             }
         }
     };

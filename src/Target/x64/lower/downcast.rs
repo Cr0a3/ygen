@@ -11,7 +11,7 @@ pub(crate) fn x64_lower_downcast(sink: &mut Vec<X64MCInstr>, instr: &MachineInst
             crate::CodeGen::Reg::x64(reg) => Operand::Reg(reg.sub_ty(instr.meta)),
             _ => panic!("x64 backend expects x64 registers")
         }
-        crate::CodeGen::MachineOperand::Stack(off) => Operand::Mem(X64Reg::Rbp - *off as u32),
+        crate::CodeGen::MachineOperand::Stack(off, _) => Operand::Mem(X64Reg::Rbp - *off as u32),
     };
 
     sink.extend_from_slice(&[

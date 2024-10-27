@@ -103,7 +103,7 @@ pub(crate) fn wasm_construct_local_types(instrs: Vec<MachineInstr>) -> HashMap<i
                     },
                     _ => panic!("wasm functions expect wasm registers")
                 },
-                MachineOperand::Stack(_) => todo!("wasm type detection does not support memory references currently"),
+                MachineOperand::Stack(_, _) => todo!("wasm type detection does not support memory references currently"),
             }
         }
     }
@@ -119,7 +119,7 @@ impl Into<WasmOperand> for MachineOperand {
                 crate::CodeGen::Reg::wasm(var, _) => WasmOperand::Var(var),
                 _ => panic!("the wasm backend expects that only wasm registers are used"),
             },
-            MachineOperand::Stack(var) => WasmOperand::Var(var as i32),
+            MachineOperand::Stack(var, _) => WasmOperand::Var(var as i32),
         }
     }
 }

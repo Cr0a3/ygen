@@ -108,5 +108,5 @@ impl CompilationHelper {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum VarLocation {
     Reg(Reg),
-    Mem(i64),
+    Mem(i64, TypeMetadata),
 }

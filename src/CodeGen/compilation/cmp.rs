@@ -1,4 +1,4 @@
-use crate::{prelude::Cmp, CodeGen::{MachineInstr, MachineMnemonic, MachineOperand}, IR::{Block, TypeMetadata}};
+use crate::{prelude::Cmp, CodeGen::{MachineInstr, MachineMnemonic}, IR::{Block, TypeMetadata}};
 
 use super::CompilationHelper;
 
@@ -7,21 +7,12 @@ impl CompilationHelper {
     pub fn compile_cmp(&mut self, node: &Cmp, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
         let ls = *self.vars.get(&node.ls.name).expect("expected valid variable");
         let rs = *self.vars.get(&node.rs.name).expect("expected valid variable");
+        let out =  *self.vars.get(&node.out.name).unwrap();
 
-        let ls = match ls {
-            super::VarLocation::Reg(reg) => MachineOperand::Reg(reg),
-            super::VarLocation::Mem(stack) => MachineOperand::Stack(stack),
-        };
+        let ls = ls.into();
+        let rs = rs.into();
 
-        let rs = match rs {
-            super::VarLocation::Reg(reg) => MachineOperand::Reg(reg),
-            super::VarLocation::Mem(stack) => MachineOperand::Stack(stack),
-        };
-
-        let out = match *self.vars.get(&node.out.name).unwrap() {
-            super::VarLocation::Reg(reg) => MachineOperand::Reg(reg),
-            super::VarLocation::Mem(stack) => MachineOperand::Stack(stack),
-        };
+        let out =  out.into();
 
         let mut cmp = MachineInstr::new(MachineMnemonic::Compare(node.mode) );
         

@@ -1,7 +1,7 @@
 use crate::prelude::Cast;
 use crate::IR::{Block, TypeMetadata, Var};
-use super::{CompilationHelper, VarLocation};
-use crate::CodeGen::{MachineInstr, MachineMnemonic, MachineOperand};
+use super::CompilationHelper;
+use crate::CodeGen::{MachineInstr, MachineMnemonic};
 
 impl CompilationHelper {
     #[allow(missing_docs)]
@@ -24,15 +24,8 @@ impl CompilationHelper {
 
         let mut instr = MachineInstr::new(op);
 
-        match src1 {
-            VarLocation::Reg(reg) => instr.add_operand(MachineOperand::Reg(reg)),
-            VarLocation::Mem(stack) => instr.add_operand( MachineOperand::Stack(stack) ),
-        }
-
-        match out {
-            VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
-            VarLocation::Mem(stack) => instr.add_operand( MachineOperand::Stack(stack) ),
-        }
+        instr.add_operand(src1.into());
+        instr.set_out(out.into());
 
         instr.meta = node.inner3.ty;
 

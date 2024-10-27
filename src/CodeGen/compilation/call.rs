@@ -26,18 +26,18 @@ impl CompilationHelper {
                         let mut save = MachineInstr::new( MachineMnemonic::Move );
             
                         let off = match self.alloc.alloc_stack(typ) {
-                            VarLocation::Mem(off) => off,
+                            VarLocation::Mem(off, ty) => (off, ty),
                             _ => unreachable!(),
                         };
                         saved.insert(name.to_owned(), (off, loc));
 
-                        save.set_out(MachineOperand::Stack(off));
+                        save.set_out(MachineOperand::Stack(off.0, off.1));
                         save.add_operand(loc.into());
 
                         mc_sink.push(save);
                     }
                 },
-                VarLocation::Mem(_) => {},
+                VarLocation::Mem(_, _) => {},
             }
         }
 
@@ -67,7 +67,7 @@ impl CompilationHelper {
                     let mut op = src.into();
     
                     if let Some((save, _)) = saved.get(&arg.name) {
-                        op = MachineOperand::Stack(*save);
+                        op = MachineOperand::Stack(save.0, save.1);
                     }
     
                     instr.set_out(MachineOperand::Reg(reg));
@@ -129,7 +129,7 @@ impl CompilationHelper {
             let mut restore = MachineInstr::new( MachineMnemonic::Move);
 
             restore.set_out(original.into());
-            restore.add_operand(MachineOperand::Stack(stack));
+            restore.add_operand(MachineOperand::Stack(stack.0, stack.1));
 
             mc_sink.push( restore );
         }
@@ -153,10 +153,7 @@ impl CompilationHelper {
 
         instr.meta = node.inner1.ty.ret;
 
-        match loc {
-            VarLocation::Reg(reg) => instr.set_out(MachineOperand::Reg(reg)),
-            VarLocation::Mem(stack) => instr.set_out( MachineOperand::Stack(stack) ),
-        }
+        instr.set_out(loc.into());
 
         mc_sink.push(instr);
 

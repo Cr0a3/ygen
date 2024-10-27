@@ -639,7 +639,7 @@ impl X64MCInstr {
                         Instruction::with_branch(Code::Call_rel32_64, *op1 as u64)?
                     }
                 } else if let Some(Operand::LinkDestination(..)) = &self.op1 {
-                    Instruction::with_branch(Code::Call_rel32_64, 0)?
+                    Instruction::with_branch(Code::Call_rel32_64, 5)?
                 } else { todo!("{}", self) }
             },
             Mnemonic::Jmp => {

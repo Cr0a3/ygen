@@ -156,7 +156,7 @@ pub enum MachineOperand {
     /// a register
     Reg(Reg),
     /// stack offset
-    Stack(i64),
+    Stack(i64, TypeMetadata),
 }
 
 impl PartialEq for MachineOperand {
@@ -164,7 +164,7 @@ impl PartialEq for MachineOperand {
         match (self, other) {
             (Self::Imm(l0), Self::Imm(r0)) => l0 == r0,
             (Self::Reg(l0), Self::Reg(r0)) => l0 == r0,
-            (Self::Stack(l0), Self::Stack(r0)) => l0 == r0,
+            (Self::Stack(l0, l1), Self::Stack(r0, r1)) => l0 == r0 && l1 == r1,
             _ => false,
         }
     }
@@ -183,7 +183,7 @@ impl Display for MachineOperand {
         write!(f, "{}", match self {
             MachineOperand::Imm(imm) => format!("{:#x?}", imm),
             MachineOperand::Reg(reg) => format!("{:?}", reg),
-            MachineOperand::Stack(off) => format!("sp - {:#x?}", off),
+            MachineOperand::Stack(off, size) => format!("{size} sp - {:#x?}", off),
         })
     }
 }
@@ -192,7 +192,7 @@ impl From<VarLocation> for MachineOperand {
     fn from(location: VarLocation) -> Self {
         match location {
             VarLocation::Reg(reg) => MachineOperand::Reg(reg),
-            VarLocation::Mem(mem) => MachineOperand::Stack(mem),
+            VarLocation::Mem(mem, size) => MachineOperand::Stack(mem, size),
         }
     }
 }

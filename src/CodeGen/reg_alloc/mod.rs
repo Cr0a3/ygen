@@ -313,17 +313,17 @@ impl RegAlloc {
         }
     }
 
-    pub(crate) fn alloc_stack(&mut self, _: TypeMetadata) -> VarLocation {
+    pub(crate) fn alloc_stack(&mut self, ty: TypeMetadata) -> VarLocation {
         if self.just_vars {
             if let Some(var) = self.jvars.pop() {
-                return VarLocation::Mem(var as i64);
+                return VarLocation::Mem(var as i64, ty);
             } else {
                 self.curr_index += 1;
-                return VarLocation::Mem((self.curr_index - 1) as i64);
+                return VarLocation::Mem((self.curr_index - 1) as i64, ty);
             }
         }
 
-        let ret = VarLocation::Mem(self.stack_off);
+        let ret = VarLocation::Mem(self.stack_off, ty);
             
         self.stack_off += self.call.align(self.arch);
         
@@ -355,7 +355,7 @@ impl RegAlloc {
                     Reg::wasm(num, _) => num,
                     _ => panic!("expected wasm register")
                 },
-                VarLocation::Mem(_) => panic!("jvars only work with registers"),
+                VarLocation::Mem(_, _) => panic!("jvars only work with registers"),
             });
         }
 
@@ -367,7 +367,7 @@ impl RegAlloc {
                     self.free_registers.push(self.arch, reg);
                 }
             },
-            VarLocation::Mem(_) => {
+            VarLocation::Mem(_, _) => {
                 // TODO: Add freeing abilitys
             },
         }
