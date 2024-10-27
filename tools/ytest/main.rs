@@ -105,9 +105,11 @@ fn main() {
     let mut code = 0;
 
     for cmd in parsed.cmd {
-        let args = cmd  .replace("%s", path_str)
-                                .replace("%c", path2_str)
-                                .replace("./", "");
+        let mut args = cmd  .replace("%s", path_str)
+                                .replace("%c", path2_str);
+        if cfg!(target_os = "windows") {
+            args = args.replace("./", "");
+        }
         let args = unescaper::unescape(&args).unwrap();
         let args = args.trim();
 
