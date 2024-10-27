@@ -16,8 +16,12 @@ jobs:
         uses: actions/checkout@v4
         
       - name: Install Rust toolchain
-        run: |
+        run: 
           rustup update --no-self-update stable
+
+      - name: Install filecheck
+        run: 
+          pip install filecheck
 
       - name: Build
         run: cargo build --all

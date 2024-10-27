@@ -109,38 +109,20 @@ fn main() {
                                 .replace("%c", path2_str);
         let args = unescaper::unescape(&args).unwrap();
         let args = args.trim();
-        let mut args = args.split(" ").collect::<Vec<&str>>();
-
-        let program = args.get(0).expect("expected valid excutable name").to_string();
-
-        args.reverse();
-        args.pop();
-        args.reverse();
 
 
-        println!("{}: executing following commandline: '{}{}'", "Info".blue().bold(), program, {
-            let mut fmt = String::new();
-
-            for arg in &args {
-                fmt.push_str(&format!(" {}", arg));
-            }
-
-            fmt
+        let mut cmd = Command::new( if cfg!(target_os = "windows") {
+            "cmd"
+        } else {
+            "sh"
+        });
+        cmd.arg(if cfg!(target_os = "windows") {
+            "/C"
+        } else {
+            "-c"
         });
 
-        let mut cmd = Command::new( program );
-        
-        for arg in args {
-            if arg == "" {
-                break;
-            }
-
-            if arg == " " {
-                continue;
-            }
-
-            cmd.arg( arg );
-        }
+        cmd.arg(args);
 
         let out = cmd.output().expect("failed to execute the process");
         let stdout = out.stdout;
@@ -170,7 +152,7 @@ fn main() {
                                     exit(-1);
                                 }
                             }
-                        } else if cli.opt("neg-exit") && code == (-1i32 as u32) && !parsed.ignore_fail {
+                        }  else {
                             println!("{}: the programm didn't exit sucessfull with code {}", "Error".red().bold(), exit_code);
                             exit(-1);
                         }

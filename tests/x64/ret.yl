@@ -1,0 +1,10 @@
+# RUN: 
+cargo run -p ylc -- -in=%s -asm-clr | filecheck %s
+
+# IN:
+define i32 @test() {
+  entry:
+; CHECK: mov eax, 5
+; CHECK: ret
+        ret i32 5
+}
