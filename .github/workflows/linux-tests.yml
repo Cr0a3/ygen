@@ -23,6 +23,9 @@ jobs:
         run: cargo build --all
 
       - name: Run tests
-        run: |
-          python3 tools/test.py
+        run: 
+          python tools/test.py
+
+      - name: Run rust tests
+        run: 
           cargo test --all --features jit

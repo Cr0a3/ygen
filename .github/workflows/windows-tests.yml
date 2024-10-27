@@ -16,13 +16,16 @@ jobs:
         uses: actions/checkout@v4
         
       - name: Install Rust toolchain
-        run: |
+        run: 
           rustup update --no-self-update stable
 
       - name: Build
         run: cargo build --all
 
       - name: Run tests
-        run: |
+        run: 
           python tools/test.py
+
+      - name: Run rust tests
+        run: 
           cargo test --all --features jit
