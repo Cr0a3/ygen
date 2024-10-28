@@ -1,5 +1,5 @@
 # RUN: 
-cargo run -p ylc -- -in=%s -asm-clr --triple="x86_64-linux"  | filecheck %s
+cargo run -p ylc -- -in=%s -asm-clr --triple=x86_64-unknown-linux  | filecheck %s
 
 # IN:
 define i32 @test() {

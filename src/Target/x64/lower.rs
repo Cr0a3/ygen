@@ -25,13 +25,16 @@ use super::optimizer::X64AsmOpt;
 use super::{instr::{Mnemonic, Operand, X64MCInstr}, X64Reg};
 
 pub(crate) static mut USE_SP_FOR_STACK: bool = false;
+pub(crate) static mut SP_OFF: i32 = -4;
 
 macro_rules! x64_stack {
     ($off:expr) => {
-        if unsafe {!USE_SP_FOR_STACK} {
-            Operand::Mem(X64Reg::Rbp - $off)
-        } else {
-            Operand::Mem(X64Reg::Rsp - $off)
+        unsafe {
+            if !USE_SP_FOR_STACK {
+                Operand::Mem(X64Reg::Rbp - $off as u32)
+            } else {
+                Operand::Mem(X64Reg::Rsp + ($off + SP_OFF) as u32)
+            }
         }
     };
 }
@@ -122,7 +125,7 @@ pub(crate) fn x64_lower(conv: CallConv, instrs: Vec<MachineInstr>) -> Vec<Box<dy
 impl From<MachineOperand> for Operand {
     fn from(value: MachineOperand) -> Self {
         match value {
-            MachineOperand::Stack(stack, _) => x64_stack!(stack as u32),
+            MachineOperand::Stack(stack, _) => x64_stack!(stack as i32),
             MachineOperand::Imm(imm) => Operand::Imm(imm as i64),
             MachineOperand::Reg(reg) => match reg {
                 crate::CodeGen::Reg::x64(x64_reg) => Operand::Reg(x64_reg),
