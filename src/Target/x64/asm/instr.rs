@@ -16,6 +16,8 @@ pub struct X64MCInstr {
     pub op1: Option<Operand>,
     /// Second operand
     pub op2: Option<Operand>,
+    /// Third operand
+    pub op3: Option<Operand>,
 
     // for far calls
     pub(crate) far: bool,
@@ -28,6 +30,7 @@ impl X64MCInstr {
             mnemonic: mne,
             op1: None,
             op2: None,
+            op3: None,
             far: false,
         }
     }
@@ -38,6 +41,7 @@ impl X64MCInstr {
             mnemonic: self.mnemonic.to_owned(),
             op1: self.op1.to_owned(),
             op2: self.op2.to_owned(),
+            op3: self.op3.to_owned(),
             far: true,
         }
     }
@@ -48,6 +52,7 @@ impl X64MCInstr {
             mnemonic: mne,
             op1: Some(op),
             op2: None,
+            op3: None,
             far: false,
         }
     }
@@ -58,6 +63,18 @@ impl X64MCInstr {
             mnemonic: mne,
             op1: Some(op1),
             op2: Some(op2),
+            op3: None,
+            far: false,
+        }
+    }
+
+    /// Creates the instruction with 3 operands
+    pub fn with3(mne: Mnemonic, op1: Operand, op2: Operand, op3: Operand) -> Self {
+        Self {
+            mnemonic: mne,
+            op1: Some(op1),
+            op2: Some(op2),
+            op3: Some(op3),
             far: false,
         }
     }
@@ -563,15 +580,49 @@ impl X64MCInstr {
             Mnemonic::Ret => Instruction::with(Code::Retnq),
             Mnemonic::Imul => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
-                    if op1.is_gr64() {
-                        Instruction::with1::<Register>(Code::Imul_rm64, (*op1).into())?
-                    } else if op1.is_gr32() {
-                        Instruction::with1::<Register>(Code::Imul_rm32, (*op1).into())?
-                    } else if op1.is_gr16() {
-                        Instruction::with1::<Register>(Code::Imul_rm16, (*op1).into())?
-                    } else if op1.is_gr8() {
-                        Instruction::with1::<Register>(Code::Imul_rm8, (*op1).into())?
-                    } else { todo!("{}", self)}
+                    if let Some(Operand::Reg(op2)) = &self.op2 {
+                        if let Some(Operand::Imm(op3)) = &self.op3 {
+                            if op1.is_gr16() {
+                                Instruction::with3::<Register, Register, i32>(Code::Imul_r16_rm16_imm16, (*op1).into(), (*op2).into(), *op3 as i32)?
+                            } else if op1.is_gr32() {
+                                Instruction::with3::<Register, Register, i32>(Code::Imul_r32_rm32_imm32, (*op1).into(), (*op2).into(), *op3 as i32)?
+                            } else if op1.is_gr64() {
+                                Instruction::with3::<Register, Register, i32>(Code::Imul_r64_rm64_imm32, (*op1).into(), (*op2).into(), *op3 as i32)?
+                            } else { todo!("{}", self)}
+                        } else if op1.is_gr64() {
+                            Instruction::with2::<Register, Register>(Code::Imul_r64_rm64, (*op1).into(), (*op2).into())?
+                        } else if op1.is_gr32() {
+                            Instruction::with2::<Register, Register>(Code::Imul_r32_rm32, (*op1).into(), (*op2).into())?
+                        } else if op1.is_gr16() {
+                            Instruction::with2::<Register, Register>(Code::Imul_r16_rm16, (*op1).into(), (*op2).into())?
+                        } else { todo!("{}", self)}
+                    } else if let Some(Operand::Mem(op2)) = &self.op2 {
+                        if let Some(Operand::Imm(op3)) = &self.op3 {
+                            if op1.is_gr16() {
+                                Instruction::with3::<Register, MemoryOperand, i32>(Code::Imul_r16_rm16_imm16, (*op1).into(), op2.into(), *op3 as i32)?
+                            } else if op1.is_gr32() {
+                                Instruction::with3::<Register, MemoryOperand, i32>(Code::Imul_r32_rm32_imm32, (*op1).into(), op2.into(), *op3 as i32)?
+                            } else if op1.is_gr64() {
+                                Instruction::with3::<Register, MemoryOperand, i32>(Code::Imul_r64_rm64_imm32, (*op1).into(), op2.into(), *op3 as i32)?
+                            } else { todo!("{}", self)}
+                        } else if op1.is_gr64() {
+                            Instruction::with2::<Register, MemoryOperand>(Code::Imul_r64_rm64, (*op1).into(), op2.into())?
+                        } else if op1.is_gr32() {
+                            Instruction::with2::<Register, MemoryOperand>(Code::Imul_r32_rm32, (*op1).into(), op2.into())?
+                        } else if op1.is_gr16() {
+                            Instruction::with2::<Register, MemoryOperand>(Code::Imul_r16_rm16, (*op1).into(), op2.into())?
+                        } else { todo!("{}", self)}
+                    } else {
+                        if op1.is_gr64() {
+                            Instruction::with1::<Register>(Code::Imul_rm64, (*op1).into())?
+                        } else if op1.is_gr32() {
+                            Instruction::with1::<Register>(Code::Imul_rm32, (*op1).into())?
+                        } else if op1.is_gr16() {
+                            Instruction::with1::<Register>(Code::Imul_rm16, (*op1).into())?
+                        } else if op1.is_gr8() {
+                            Instruction::with1::<Register>(Code::Imul_rm8, (*op1).into())?
+                        } else { todo!("{}", self)}
+                    }
                 } else if let Some(Operand::Mem(op1)) = &self.op1 {
                     Instruction::with1::<MemoryOperand>(Code::Imul_rm64, op1.into())?
                 } else { todo!("{}", self) }
@@ -1119,7 +1170,10 @@ impl X64MCInstr {
                     } else { todo!("{}", self) }
                 } else { todo!("{}", self) }
             },
-        
+            Mnemonic::Cbw => Instruction::with(Code::Cbw),
+            Mnemonic::Cwd => Instruction::with(Code::Cwd),
+            Mnemonic::Cdq => Instruction::with(Code::Cdq),
+            Mnemonic::Cqo => Instruction::with(Code::Cqo),
         };
         
         //instr.as_near_branch();
@@ -1247,6 +1301,9 @@ impl Display for X64MCInstr {
             string.push_str(&format!(" {}", op1));
             if let Some(op2) = &self.op2 {
                 string.push_str(&format!(", {}", op2));
+                if let Some(op3) = &self.op3 {
+                    string.push_str(&format!(", {}", op3));
+                }
             }
         }
 
@@ -1361,6 +1418,11 @@ pub enum Mnemonic {
     Jl,
     Jge,
     Jle,
+
+    Cbw,
+    Cwd,
+    Cdq,
+    Cqo,
 }
 
 impl FromStr for Mnemonic {
@@ -1428,6 +1490,10 @@ impl FromStr for Mnemonic {
             "jl" => Ok(Mnemonic::Jl),
             "jge" => Ok(Mnemonic::Jge),
             "jle" => Ok(Mnemonic::Jle),
+            "cbw" => Ok(Mnemonic::Cbw),
+            "cwd" => Ok(Mnemonic::Cwd),
+            "cdq" => Ok(Mnemonic::Cdq),
+            "cqo" => Ok(Mnemonic::Cqo),
             _ => Err(()),
         }
     }
@@ -1500,6 +1566,10 @@ impl Display for Mnemonic {
             Mnemonic::Jl => "jl",
             Mnemonic::Jge => "jge",
             Mnemonic::Jle => "jle",
+            Mnemonic::Cbw => "cbw",
+            Mnemonic::Cwd => "cwd",
+            Mnemonic::Cdq => "cdq",
+            Mnemonic::Cqo => "cqo",
         })
     }
 }
@@ -1521,6 +1591,23 @@ pub enum Operand {
     Debug(String),
     /// A rip relative
     RipRelative(String),
+}
+
+impl Operand {
+    /// Returns if the operand is a register
+    pub fn is_reg(&self) -> bool {
+        matches!(self, Operand::Reg(_))
+    }
+
+    /// Returns if the operand is a imm
+    pub fn is_imm(&self) -> bool {
+        matches!(self, Operand::Imm(_))
+    }
+
+    /// Returns if the operand is a memory displacmenet or rip relative
+    pub fn is_mem(&self) -> bool {
+        matches!(self, Operand::Mem(_) | Operand::RipRelative(_))
+    }
 }
 
 impl PartialEq for Operand {
