@@ -46,6 +46,7 @@ impl x64Parser {
             mnemonic: mne,
             op1: None,
             op2: None,
+            op3: None,
             far: false,
         };
 
@@ -68,6 +69,7 @@ impl x64Parser {
             self.tokens.pop_front(); // advance over ]
         }
 
+        let mut second_op = false;
         if first_op {
             if let Some(Token::Comma) = self.tokens.front() {
                 self.tokens.pop_front(); // advance
@@ -83,11 +85,31 @@ impl x64Parser {
                     self.tokens.pop_front(); // advance
                 } else if let Some(Token::L_Bracket) = self.tokens.front() {
                     instr.op2 = Some(Operand::Mem(self.parse_mem()?));
-                }else {
+                } else {
                     Err(ParsingError::CommaWithoutOperandAfter)?
                 }
-            } else if self.tokens.len() > 0 {
-                Err(ParsingError::UnexpectedTokens(self.tokens.clone().into()))?
+            }
+            second_op = true;
+        } 
+        
+        if second_op {
+            if let Some(Token::Comma) = self.tokens.front() {
+                self.tokens.pop_front(); // advance
+                if let Some(Token::Num(n)) = self.tokens.front() {
+                    instr.op3 = Some(Operand::Imm(*n));
+                    self.tokens.pop_front(); // advance
+                } else if let Some(Token::Ident(reg)) = self.tokens.front() {
+                    if let Some(reg) = X64Reg::parse(reg.to_string()) {
+                        instr.op3 = Some(Operand::Reg(reg))
+                    } else {
+                        Err(ParsingError::UnknownRegOrUnexpectedIdent(reg.to_string()))?
+                    }
+                    self.tokens.pop_front(); // advance
+                } else if let Some(Token::L_Bracket) = self.tokens.front() {
+                    instr.op3 = Some(Operand::Mem(self.parse_mem()?));
+                } else {
+                    Err(ParsingError::CommaWithoutOperandAfter)?
+                }
             }
         } else if self.tokens.len() > 0 {
             Err(ParsingError::UnexpectedTokens(self.tokens.clone().into()))?

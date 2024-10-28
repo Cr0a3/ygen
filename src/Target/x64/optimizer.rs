@@ -101,6 +101,7 @@ fn X64MergeMove(instr0: &X64MCInstr, instr1: &X64MCInstr) -> Option<Vec<X64MCIns
         mnemonic: Mnemonic::Mov,
         op1: instr1.op1.clone(),
         op2: instr0.op2.clone(),
+        op3: None,
         far: false,
     }])
 }
@@ -186,6 +187,7 @@ fn X64MergeAdd(instr0: &X64MCInstr, instr1: &X64MCInstr, instr2: &X64MCInstr) ->
                 displ: 0,
                 rip: false,
             })),
+            op3: None,
             far: false,
         }])
     } else if instr0.is_op2_imm() && instr1.is_op2_reg() {
@@ -201,6 +203,7 @@ fn X64MergeAdd(instr0: &X64MCInstr, instr1: &X64MCInstr, instr2: &X64MCInstr) ->
                 displ: imm as isize,
                 rip: false,
             })),
+            op3: None,
             far: false,
         }])
     } else if instr0.is_op2_reg() && instr1.is_op2_imm() {
@@ -216,6 +219,7 @@ fn X64MergeAdd(instr0: &X64MCInstr, instr1: &X64MCInstr, instr2: &X64MCInstr) ->
                 displ: imm as isize,
                 rip: false,
             })),
+            op3: None,
             far: false,
         }])
     } else { None }
@@ -260,6 +264,7 @@ fn X64MergeBrCond(instr0: &X64MCInstr, instr1: &X64MCInstr, instr2: &X64MCInstr)
         mnemonic: jmp_mne,
         op1: instr2.op1.to_owned(),
         op2: None,
+        op3: None,
         far: false,
     }])
 }
