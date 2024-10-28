@@ -1523,6 +1523,23 @@ pub enum Operand {
     RipRelative(String),
 }
 
+impl Operand {
+    /// Returns if the operand is a register
+    pub fn is_reg(&self) -> bool {
+        matches!(self, Operand::Reg(_))
+    }
+
+    /// Returns if the operand is a imm
+    pub fn is_imm(&self) -> bool {
+        matches!(self, Operand::Imm(_))
+    }
+
+    /// Returns if the operand is a memory displacmenet or rip relative
+    pub fn is_mem(&self) -> bool {
+        matches!(self, Operand::Mem(_) | Operand::RipRelative(_))
+    }
+}
+
 impl PartialEq for Operand {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {

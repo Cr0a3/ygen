@@ -34,9 +34,39 @@ pub(crate) fn x64_lower_mul(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     let op2 = instr.operands.get(1).expect("expected a second operand");
     let out = instr.out.expect("expected a output operand");
 
-    let op1 = (*op1).into();
-    let op2 = (*op2).into();
+    let op1: Operand = (*op1).into();
+    let op2: Operand = (*op2).into();
     let out: Operand = out.into();
+
+    if op1.is_reg() && op2.is_imm() && out.is_reg() {
+        let Operand::Reg(op) = op1 else { unreachable!() };
+        let Operand::Imm(displ) = op2 else { unreachable!() };
+
+        sink.push(X64MCInstr::with2(Mnemonic::Lea, out, Operand::Mem(MemOp { 
+            base: Some(op), 
+            index: None, 
+            scale: 1, 
+            displ: displ as isize, 
+            rip: false, 
+        })));
+        
+        return;
+    }
+
+    if op1.is_imm() && op2.is_reg() && out.is_reg() {
+        let Operand::Reg(op) = op2 else { unreachable!() };
+        let Operand::Imm(displ) = op1 else { unreachable!() };
+
+        sink.push(X64MCInstr::with2(Mnemonic::Lea, out, Operand::Mem(MemOp { 
+            base: Some(op), 
+            index: None, 
+            scale: 1, 
+            displ: displ as isize, 
+            rip: false, 
+        })));
+        
+        return;
+    }
 
     let mnemonic = if instr.meta.signed() {
         Mnemonic::Imul
