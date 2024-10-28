@@ -1170,7 +1170,10 @@ impl X64MCInstr {
                     } else { todo!("{}", self) }
                 } else { todo!("{}", self) }
             },
-        
+            Mnemonic::Cbw => Instruction::with(Code::Cbw),
+            Mnemonic::Cwd => Instruction::with(Code::Cwd),
+            Mnemonic::Cdq => Instruction::with(Code::Cdq),
+            Mnemonic::Cqo => Instruction::with(Code::Cqo),
         };
         
         //instr.as_near_branch();
@@ -1415,6 +1418,11 @@ pub enum Mnemonic {
     Jl,
     Jge,
     Jle,
+
+    Cbw,
+    Cwd,
+    Cdq,
+    Cqo,
 }
 
 impl FromStr for Mnemonic {
@@ -1482,6 +1490,10 @@ impl FromStr for Mnemonic {
             "jl" => Ok(Mnemonic::Jl),
             "jge" => Ok(Mnemonic::Jge),
             "jle" => Ok(Mnemonic::Jle),
+            "cbw" => Ok(Mnemonic::Cbw),
+            "cwd" => Ok(Mnemonic::Cwd),
+            "cdq" => Ok(Mnemonic::Cdq),
+            "cqo" => Ok(Mnemonic::Cqo),
             _ => Err(()),
         }
     }
@@ -1554,6 +1566,10 @@ impl Display for Mnemonic {
             Mnemonic::Jl => "jl",
             Mnemonic::Jge => "jge",
             Mnemonic::Jle => "jle",
+            Mnemonic::Cbw => "cbw",
+            Mnemonic::Cwd => "cwd",
+            Mnemonic::Cdq => "cdq",
+            Mnemonic::Cqo => "cqo",
         })
     }
 }

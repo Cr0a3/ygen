@@ -110,76 +110,76 @@ pub(crate) fn x64_lower_neg(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
 }
 
 pub(crate) fn x64_lower_div(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
+    // core logic:
+
+    // save rdx
+    // mov rax, op1
+    // rdx = 0
+    // div op2
+    // mov out, rax
+    // restore rdx
+
+    // but with imms:
+    // save rdx
+    // rdx = 0
+    // mov rax, op1
+    // mov rbx, op2
+    // div rbx
+    // mov out, rax
+    // restore rdx
+
     let op1 = instr.operands.get(0).expect("expected a first operand");
     let op2 = instr.operands.get(1).expect("expected a second operand");
     let out = instr.out.expect("expected a output operand");
 
-    let mut op1 = (*op1).into();
-    let mut op2 = (*op2).into();
+    let op1: Operand = (*op1).into();
+    let op2: Operand = (*op2).into();
     let out: Operand = out.into();
 
-    let mnemonic = if instr.meta.signed() {
+    let div_mnemonic = if instr.meta.signed() {
         Mnemonic::Idiv
     } else {
         Mnemonic::Div
     };
 
-    if out != Operand::Reg(X64Reg::Rdx.sub_ty(instr.meta)) {
-        sink.push( X64MCInstr::with1(Mnemonic::Push, Operand::Reg(X64Reg::Rdx)).into() );
-    }
-
-    let mut pop_rcx = false;
-    let mut pop_rsi = false;
-
-    if let Operand::Reg(reg) = op1 {
-        if X64Reg::Rdx == reg.sub_ty(TypeMetadata::i64) {
-            sink.push( X64MCInstr::with1(Mnemonic::Push, Operand::Reg(X64Reg::Rcx)));
-            sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rcx.sub_ty(instr.meta)), op1) );
-            op1 = Operand::Reg( X64Reg::Rcx.sub_ty(instr.meta) );
-
-            pop_rcx = true;
-        }
-    } 
-    if let Operand::Reg(reg) = op2 {
-        if X64Reg::Rdx == reg.sub_ty(TypeMetadata::i64) {
-            sink.push( X64MCInstr::with1(Mnemonic::Push, Operand::Reg(X64Reg::Rsi)) );
-            sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rsi.sub_ty(instr.meta)), op2) );
-            op2 = Operand::Reg( X64Reg::Rsi.sub_ty(instr.meta) );
-
-            pop_rsi = true;
-        }
-    }
-
-    sink.push( X64MCInstr::with2(Mnemonic::Xor, Operand::Reg(X64Reg::Rdx), Operand::Reg(X64Reg::Rdx)) );
-
-    let rax = || Operand::Reg(X64Reg::Rax.sub_ty(instr.meta));
-
-    sink.push(X64MCInstr::with2(Mnemonic::Mov, rax(), op1.clone()));
-    
-    // mul/imul only accept r/m
-    if let Operand::Imm(_) = op2 {
-        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rbx.sub_ty(instr.meta)), op2.clone()));
-        sink.push(X64MCInstr::with1(mnemonic, Operand::Reg(X64Reg::Rbx.sub_ty(instr.meta))));
-    } else if let Operand::Mem(_) = op2 {
-        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rbx.sub_ty(instr.meta)), op2.clone()));
-        sink.push(X64MCInstr::with1(mnemonic, Operand::Reg(X64Reg::Rbx.sub_ty(instr.meta))));
+    let rdx_prep_instr = if instr.meta.signed() {
+        X64MCInstr::with0(match instr.meta {
+            TypeMetadata::i8 => Mnemonic::Cbw,
+            TypeMetadata::i16 => Mnemonic::Cwd,
+            TypeMetadata::i32 => Mnemonic::Cdq,
+            TypeMetadata::i64 => Mnemonic::Cqo,
+            _ => panic!("type {} was labeld as signed but shouldn't be", instr.meta)
+        })
     } else {
-        sink.push(X64MCInstr::with1(mnemonic, op2.clone()));
-    }
+        X64MCInstr::with2(Mnemonic::Xor, Operand::Reg(X64Reg::Rdx), Operand::Reg(X64Reg::Rdx))
+    };
 
-    if pop_rsi {
-        sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(X64Reg::Rsi)));
-    }
-
-    if pop_rcx {
-        sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(X64Reg::Rcx)));
-    }
-
+    let out_is_rdx = if let Operand::Reg(reg) = out { reg.sub64() == X64Reg::Rdx } else { false };
     
-    sink.push(X64MCInstr::with2(Mnemonic::Mov, out.to_owned(), rax()));
+    if !out_is_rdx {
+        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::R15), Operand::Reg(X64Reg::Rdx))); // save rdx
+    }
 
-    if out != Operand::Reg(X64Reg::Rdx.sub_ty(instr.meta)) {
-        sink.push( X64MCInstr::with1(Mnemonic::Pop, Operand::Reg(X64Reg::Rdx)).into() );
+    // assembly code is here
+    let div_instr = if op2.is_imm() {
+        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rbx.sub_ty(instr.meta)), op2));
+        X64MCInstr::with1(div_mnemonic, Operand::Reg(X64Reg::Rbx.sub_ty(instr.meta)))
+    } else if matches!(op2, Operand::Reg(X64Reg::Rdx) | Operand::Reg(X64Reg::Edx)) {
+        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rbx.sub_ty(instr.meta)), op2));
+        X64MCInstr::with1(div_mnemonic, Operand::Reg(X64Reg::Rbx.sub_ty(instr.meta)))
+    } else {
+        X64MCInstr::with1(div_mnemonic, op2)
+    };
+
+    sink.extend_from_slice(&[
+        X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)), op1),
+        rdx_prep_instr,
+        div_instr,
+        X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta))),
+    ]);
+
+    if !out_is_rdx {
+        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::R15), Operand::Reg(X64Reg::Rdx))); // restore rdx
     }
 }
 
