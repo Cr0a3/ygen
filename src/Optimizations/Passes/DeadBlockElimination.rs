@@ -37,9 +37,9 @@ impl Pass for DeadBlockElimination {
         for block in func.blocks.clone() {
             if !used_blocks.contains(&block.name) && index != 0 { // do not remove first block
                 func.blocks.remove(index);
+            } else { // no removed block
+                index += 1;
             }
-            
-            index += 1;
         }
     }
 }
