@@ -9,7 +9,7 @@ use super::{instr::*, lexer::Token};
 pub(crate) struct wasmParser {
     pub(crate) tokens: VecDeque<Token>,
     /// The output instruction
-    pub out: Option<WasmMCInstr>,
+    pub(crate) out: Option<WasmMCInstr>,
 }
 
 impl wasmParser {

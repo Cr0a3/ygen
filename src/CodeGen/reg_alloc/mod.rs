@@ -325,7 +325,7 @@ impl RegAlloc {
 
         let ret = VarLocation::Mem(self.stack_off, ty);
             
-        self.stack_off += self.call.align(self.arch);
+        self.stack_off += ty.byteSize() as i64;
         
         ret
     }

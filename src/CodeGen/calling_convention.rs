@@ -96,6 +96,7 @@ impl MachineCallingConvention {
     pub fn shadow(&self, _: Arch) -> i64 {
         match self.call_conv {
             CallConv::WindowsFastCall => 32,
+            CallConv::SystemV => 16,
             _ => 8,
         }
     }
