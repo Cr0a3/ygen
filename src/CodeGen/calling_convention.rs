@@ -37,6 +37,74 @@ impl MachineCallingConvention {
     }
     
     /// returns the args for the specifc architecture
+    pub fn arg(&self, arch: Arch, ty: TypeMetadata, idx: usize) -> Option<Reg> {
+        match self.call_conv {
+            CallConv::WindowsFastCall => {
+                if TypeMetadata::f32 == ty || TypeMetadata::f64 == ty {
+                    return match arch {
+                        Arch::X86_64 => {
+                            let args = vec![
+                                Reg::x64(X64Reg::Xmm0), Reg::x64(X64Reg::Xmm1), Reg::x64(X64Reg::Xmm2),
+                                Reg::x64(X64Reg::Xmm3), Reg::x64(X64Reg::Xmm4), Reg::x64(X64Reg::Xmm5),
+                                Reg::x64(X64Reg::Xmm6), Reg::x64(X64Reg::Xmm7)
+                            ];
+                            let arg = args.get(idx).cloned();
+                            arg
+                        },
+
+                        _ => todo!(),
+                    }
+                }
+
+                match arch {
+                    Arch::X86_64 => {
+                        let args = vec![
+                            Reg::x64(X64Reg::Rcx), Reg::x64(X64Reg::Rdx), 
+                            Reg::x64(X64Reg::R8), Reg::x64(X64Reg::R9)
+                        ];
+                        let arg = args.get(idx).cloned();
+                        arg
+                    },
+                    _ => todo!()
+                }
+            },
+            CallConv::SystemV => {
+                if TypeMetadata::f32 == ty || TypeMetadata::f64 == ty {
+                    return match arch {
+                        Arch::X86_64 => {
+                            let args = vec![
+                                Reg::x64(X64Reg::Xmm0), Reg::x64(X64Reg::Xmm1), Reg::x64(X64Reg::Xmm2),
+                                Reg::x64(X64Reg::Xmm3), Reg::x64(X64Reg::Xmm4), Reg::x64(X64Reg::Xmm5),
+                                Reg::x64(X64Reg::Xmm6), Reg::x64(X64Reg::Xmm7)
+                            ];
+                            let arg = args.get(idx).cloned();
+                            arg
+                        },
+
+                        _ => todo!(),
+                    }
+                }
+
+                match arch {
+                    Arch::X86_64 => {
+                        let args = vec![
+                            Reg::x64(X64Reg::Rdi), Reg::x64(X64Reg::Rsi), 
+                            Reg::x64(X64Reg::Rcx), Reg::x64(X64Reg::Rdx), 
+                            Reg::x64(X64Reg::R8), Reg::x64(X64Reg::R9)
+                        ];
+                        let arg = args.get(idx).cloned();
+                        arg
+                    },
+                    _ => todo!()
+                }
+            },
+            CallConv::AppleAarch64 => todo!(),
+            CallConv::WasmBasicCAbi => Some(Reg::wasm(idx as i32, ty)),
+        }
+    }
+
+    
+    /// returns the args for the specifc architecture
     pub fn args(&self, arch: Arch, ty: TypeMetadata) -> Vec<Reg> {
         match self.call_conv {
             CallConv::WindowsFastCall => {
@@ -89,8 +157,19 @@ impl MachineCallingConvention {
     
     /// returns how many arguments are stored in registers
     pub fn num_reg_args(&self, arch: Arch, ty: TypeMetadata) -> usize {
-        self.args(arch, ty).len()
+        match arch {
+            Arch::X86_64 => match self.call_conv {
+                CallConv::SystemV => if ty.float() { 6 } else { 7 },
+                CallConv::WindowsFastCall => if ty.float() { 4 } else { 7 },
+                _ => panic!("unsuported calling convention for x86-64"),
+            },
+
+            Arch::Wasm64 => usize::MAX, // all arguments are stored in registers
+            _ => panic!("unsuported arch: {:?}", arch),
+        }
     }
+
+
 
     /// returns the stack shadow space
     pub fn shadow(&self, _: Arch) -> i64 {

@@ -3,7 +3,11 @@ mod lower;
 /// Wasm instruction encoding
 pub mod asm;
 
-use crate::CodeGen::{reg_alloc::RegAlloc, CompilationHelper, ConstImmRules, MachineCallingConvention};
+mod reg_alloc;
+
+use std::collections::HashMap;
+
+use crate::CodeGen::{Allocator, CompilationHelper, ConstImmRules, MachineCallingConvention};
 
 use super::{Arch, CallConv, TargetBackendDescr, WhiteList};
 
@@ -21,16 +25,28 @@ pub fn initializeWasmTarget(_: CallConv) -> TargetBackendDescr {
     target.compile = Some(Box::new( asm::parser::wasmParser::new(Vec::new())));
     target.printer = Some(printer::WasmAsmPrinter::new());
 
+    let alloc = Allocator {
+        alloc: Some(reg_alloc::wasm_alloc),
+        alloc_rv: Some(reg_alloc::wasm_alloc_var),
+        alloc_stack: Some(reg_alloc::wasm_alloc_var),
+        free: Some(reg_alloc::wasm_free),
+        after_alloc: None,
+        vars: HashMap::new(),
+        var_types: HashMap::new(),
+        allocated_vars: Vec::new(),
+        epilog: false,
+        scopes: HashMap::new(),
+        phi_vars: HashMap::new(),
+        stack_off: 0,
+        fregs: Vec::new(),
+        ffpregs: Vec::new(),
+        call: MachineCallingConvention { call_conv: CallConv::WasmBasicCAbi },
+    };
+
     let mut compiler = CompilationHelper::new(
-            Arch::Wasm64, 
-            MachineCallingConvention {
-            call_conv: CallConv::WasmBasicCAbi
-        }, 
-        RegAlloc::new(
-            Arch::Wasm64, 
-            CallConv::WasmBasicCAbi, 
-            true
-        ), 
+         Arch::Wasm64, 
+        MachineCallingConvention { call_conv: CallConv::WasmBasicCAbi }, 
+        alloc, 
         crate::CodeGen::Reg::x64(crate::Target::x64::X64Reg::Al) // unnedded won't be used, so anything can go here
     );
 

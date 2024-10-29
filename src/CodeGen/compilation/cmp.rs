@@ -25,7 +25,7 @@ impl CompilationHelper {
 
         mc_sink.push( cmp );
 
-        if let Some(phi_loc) = self.alloc.phi_vars.get(&node.out.name) {
+        if let Some(phi_loc) = self.phi_vars.get(&node.out.name) {
             let mut instr = MachineInstr::new(MachineMnemonic::Move);
             instr.set_out((*phi_loc).into());
             instr.add_operand(out.into());
