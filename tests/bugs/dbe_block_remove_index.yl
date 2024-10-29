@@ -1,0 +1,29 @@
+# RUN:
+cargo run -p ylc -- -in=%s -passes=dbe -fmt
+# IN:
+
+define i32 @main() {
+  entry:
+    br ret
+
+  ret:
+    br after_should_be_removed
+
+  should_be_removed:
+    ret i32 1
+
+  after_should_be_removed:
+    ret i32 12345
+}
+
+# STDOUT:
+define i32 @main() {
+  entry:
+    br ret
+
+  ret:
+    br after_should_be_removed
+
+  after_should_be_removed:
+    ret i32 12345
+}
