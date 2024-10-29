@@ -74,6 +74,8 @@ impl MachineInstr {
 
         let mut out = Vec::new();
 
+        let mut tmp_locs = Vec::new();
+
         for operand in &mut self.operands {
             if let MachineOperand::Imm(imm) = operand {
                 let imm = *imm;
@@ -117,12 +119,16 @@ impl MachineInstr {
                 module.const_index += 1;
 
                 helper.free(location);
-                helper.free(float);
+                tmp_locs.push(float);
             }
         }
 
         out.push(self.to_owned());
         
+        for tmp in tmp_locs {
+            helper.free(tmp);
+        }
+
         out
     }
 }

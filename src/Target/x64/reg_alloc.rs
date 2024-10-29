@@ -5,6 +5,7 @@ use crate::IR::Var;
 
 fn arg_prep(alloc: &mut Allocator, func: &Function, call: MachineCallingConvention) {
     let mut index = 0;
+
     for (name, ty) in &func.ty.args {
         if let Some(reg) = call.arg(Arch::X86_64, *ty, index) {
             // argument in an register
@@ -57,6 +58,17 @@ fn node_prep(alloc: &mut Allocator, node: &Box<dyn Ir>) {
         // potential freeing here
     }
 
+    let mut scopes = Vec::new();
+
+    for (name, location) in &alloc.vars {
+        scopes.push( (Var {
+            name: name.to_owned(),
+            ty: *alloc.var_types.get(name).unwrap(),
+        }, *location) );
+    }
+
+    alloc.scopes.insert(node.dump(), scopes);
+
     // handle specific nodes here (like alloca)
     if let Some(alloca) = node.as_any().downcast_ref::<Alloca<Var, TypeMetadata>>() {
         let location = x64_alloc_stack(alloc, alloca.inner2);
@@ -94,6 +106,8 @@ pub(crate) fn x64_alloc_rv(alloc: &mut Allocator, ty: TypeMetadata) -> VarLocati
 }
 
 pub(crate) fn x64_alloc_stack(alloc: &mut Allocator, ty: TypeMetadata) -> VarLocation {
+    alloc.epilog = true;
+
     let ret = VarLocation::Mem(alloc.stack_off, ty);    
     alloc.stack_off += ty.byteSize() as i64;
     

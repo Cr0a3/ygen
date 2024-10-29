@@ -120,8 +120,8 @@ impl CompilationHelper {
     }
 
     pub(crate) fn alloc_stack(&mut self, ty: TypeMetadata) -> VarLocation {
-        if let Some(alloc) = self.alloc.alloc_rv {
-            alloc(&mut self.alloc, ty)
+        if let Some(alloc_stack) = self.alloc.alloc_stack {
+            alloc_stack(&mut self.alloc, ty)
         } else { panic!("no registered stack allocation function for {:?}", self.arch) }
     }
 

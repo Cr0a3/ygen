@@ -59,8 +59,8 @@ impl MachineCallingConvention {
                 match arch {
                     Arch::X86_64 => {
                         let args = vec![
-                            Reg::x64(X64Reg::Rcx), Reg::x64(X64Reg::Rdx), 
-                            Reg::x64(X64Reg::R8), Reg::x64(X64Reg::R9)
+                            Reg::x64(X64Reg::Rcx.sub_ty(ty)), Reg::x64(X64Reg::Rdx.sub_ty(ty)), 
+                            Reg::x64(X64Reg::R8.sub_ty(ty)), Reg::x64(X64Reg::R9.sub_ty(ty))
                         ];
                         let arg = args.get(idx).cloned();
                         arg
@@ -88,9 +88,9 @@ impl MachineCallingConvention {
                 match arch {
                     Arch::X86_64 => {
                         let args = vec![
-                            Reg::x64(X64Reg::Rdi), Reg::x64(X64Reg::Rsi), 
-                            Reg::x64(X64Reg::Rcx), Reg::x64(X64Reg::Rdx), 
-                            Reg::x64(X64Reg::R8), Reg::x64(X64Reg::R9)
+                            Reg::x64(X64Reg::Rdi.sub_ty(ty)), Reg::x64(X64Reg::Rsi.sub_ty(ty)), 
+                            Reg::x64(X64Reg::Rcx.sub_ty(ty)), Reg::x64(X64Reg::Rdx.sub_ty(ty)), 
+                            Reg::x64(X64Reg::R8.sub_ty(ty)), Reg::x64(X64Reg::R9.sub_ty(ty))
                         ];
                         let arg = args.get(idx).cloned();
                         arg

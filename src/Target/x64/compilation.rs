@@ -78,12 +78,12 @@ pub(crate) fn construct_compilation_helper(call_conv: CallConv) -> CompilationHe
 }
 
 fn x64_after_alloc(compiler: &CompilationHelper) {
-    if compiler.alloc.stack_off - 8 < compiler.call.shadow(compiler.arch) {
+    /*if compiler.alloc.stack_off - 8 < compiler.call.shadow(compiler.arch) {
         unsafe {
             super::lower::USE_SP_FOR_STACK = true;
             if compiler.call.call_conv == CallConv::WindowsFastCall {
                 super::lower::SP_OFF = 32;
             }
         }
-    }
+    }*/
 }

@@ -24,18 +24,18 @@ mod fcast;
 use super::optimizer::X64AsmOpt;
 use super::{instr::{Mnemonic, Operand, X64MCInstr}, X64Reg};
 
-pub(crate) static mut USE_SP_FOR_STACK: bool = false;
-pub(crate) static mut SP_OFF: i32 = -4;
+//pub(crate) static mut USE_SP_FOR_STACK: bool = false;
+//pub(crate) static mut SP_OFF: i32 = -4;
 
 macro_rules! x64_stack {
     ($off:expr) => {
-        unsafe {
-            if !USE_SP_FOR_STACK {
+        //unsafe {
+            //if !USE_SP_FOR_STACK {
                 Operand::Mem(X64Reg::Rbp - $off as u32)
-            } else {
+            /*} else {
                 Operand::Mem(X64Reg::Rsp + ($off + SP_OFF) as u32)
-            }
-        }
+            }*/
+        //}
     };
 }
 

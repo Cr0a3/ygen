@@ -58,11 +58,11 @@ impl Ir for Store<Var, Var> {
     }
     
     fn inputs(&self) -> Vec<Var> {
-        vec![self.inner2.to_owned()]
+        vec![self.inner1.to_owned(), self.inner2.to_owned()]
     }
     
     fn output(&self) -> Option<Var> {
-        Some(self.inner1.to_owned())
+        None // technicly the ptr is the output
     }
 }
 
@@ -112,11 +112,11 @@ impl Ir for Store<Var, Type> {
     }
     
     fn inputs(&self) -> Vec<Var> {
-        vec![]
+        vec![self.inner1.to_owned()]
     }
     
     fn output(&self) -> Option<Var> {
-        Some(self.inner1.to_owned())
+        None // techniclly the ptr is the output and not an argument
     }
 }
 

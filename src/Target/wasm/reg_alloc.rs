@@ -36,8 +36,18 @@ pub(crate) fn wasm_alloc(alloc: &mut Allocator, func: &Function) {
 }
 
 fn node_prep(alloc: &mut Allocator, node: &Box<dyn Ir>) {
+    let mut scopes = Vec::new();
+    
+    for (name, location) in &alloc.vars {
+        scopes.push( (Var {
+            name: name.to_owned(),
+            ty: *alloc.var_types.get(name).unwrap(),
+        }, *location) );
+    }
+    
+    alloc.scopes.insert(node.dump(), scopes);
+    
     let inputs = node.inputs();
-
     for _input in inputs {
         // potential freeing here
     }
