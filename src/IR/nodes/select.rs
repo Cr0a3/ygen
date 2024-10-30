@@ -1,4 +1,4 @@
-use super::{Assign, Ir, Select};
+use super::{Assign, EvalOptVisitor, Ir, Select};
 use crate::{prelude::{Type, TypeMetadata, Var}, Support::ColorClass, IR::Function};
 
 impl Ir for Select<Type, Type> {
@@ -49,6 +49,16 @@ impl Ir for Select<Type, Type> {
         compiler.compile_select_tt(self, block, module)
     }
 
+    fn inputs(&self) -> Vec<Var> {
+        vec![self.cond.to_owned()]
+    }
+
+    fn output(&self) -> Option<Var> {
+        Some(self.out.clone())
+    }
+}
+
+impl EvalOptVisitor for Select<Type, Type> {
     fn maybe_inline(&self, const_values: &std::collections::HashMap<String, Type>) -> Option<Box<dyn Ir>> {
         if let Some(cond) = const_values.get(&self.cond.name) {
             if cond.val() == 0.0 {
@@ -67,14 +77,6 @@ impl Ir for Select<Type, Type> {
         }
 
         None
-    }
-
-    fn inputs(&self) -> Vec<Var> {
-        vec![self.cond.to_owned()]
-    }
-
-    fn output(&self) -> Option<Var> {
-        Some(self.out.clone())
     }
 }
 
@@ -124,6 +126,16 @@ impl Ir for Select<Var, Type> {
         compiler.compile_select_vt(self, block, module)
     }
 
+    fn inputs(&self) -> Vec<Var> {
+        vec![self.cond.to_owned(), self.yes.clone()]
+    }
+
+    fn output(&self) -> Option<Var> {
+        Some(self.out.clone())
+    }
+}
+
+impl EvalOptVisitor for Select<Var, Type> {
     fn maybe_inline(&self, const_values: &std::collections::HashMap<String, Type>) -> Option<Box<dyn Ir>> {
         if let Some(yes) = const_values.get(&self.yes.name) {
             return Some(Select {
@@ -139,14 +151,6 @@ impl Ir for Select<Var, Type> {
 
     fn eval(&self) -> Option<Box<dyn Ir>> {
         None
-    }
-
-    fn inputs(&self) -> Vec<Var> {
-        vec![self.cond.to_owned(), self.yes.clone()]
-    }
-
-    fn output(&self) -> Option<Var> {
-        Some(self.out.clone())
     }
 }
 
@@ -196,6 +200,16 @@ impl Ir for Select<Type, Var> {
         compiler.compile_select_tv(self, block, module)
     }
 
+    fn inputs(&self) -> Vec<Var> {
+        vec![self.cond.to_owned()]
+    }
+
+    fn output(&self) -> Option<Var> {
+        Some(self.out.clone())
+    }
+}
+
+impl EvalOptVisitor for Select<Type, Var> {
     fn maybe_inline(&self, const_values: &std::collections::HashMap<String, Type>) -> Option<Box<dyn Ir>> {
         if let Some(no) = const_values.get(&self.no.name) {
             return Some(Select {
@@ -211,14 +225,6 @@ impl Ir for Select<Type, Var> {
 
     fn eval(&self) -> Option<Box<dyn Ir>> {
         None
-    }
-
-    fn inputs(&self) -> Vec<Var> {
-        vec![self.cond.to_owned()]
-    }
-
-    fn output(&self) -> Option<Var> {
-        Some(self.out.clone())
     }
 }
 
@@ -266,6 +272,16 @@ impl Ir for Select<Var, Var> {
         compiler.compile_select_vv(self, block, module)
     }
 
+    fn inputs(&self) -> Vec<Var> {
+        vec![self.cond.to_owned(), self.yes.clone()]
+    }
+
+    fn output(&self) -> Option<Var> {
+        Some(self.out.clone())
+    }
+}
+
+impl EvalOptVisitor for Select<Var, Var> {
     fn maybe_inline(&self, _: &std::collections::HashMap<String, Type>) -> Option<Box<dyn Ir>> {
         None
     }
@@ -276,14 +292,6 @@ impl Ir for Select<Var, Var> {
         }
 
         None
-    }
-
-    fn inputs(&self) -> Vec<Var> {
-        vec![self.cond.to_owned(), self.yes.clone()]
-    }
-
-    fn output(&self) -> Option<Var> {
-        Some(self.out.clone())
     }
 }
 

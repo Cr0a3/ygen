@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{Support::ColorClass, IR::{BlockId, Function, Type, TypeMetadata, Var}};
 
-use super::{Br, Ir};
+use super::{Br, EvalOptVisitor, Ir};
 
 /// The switch node is used to switch
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -80,6 +80,16 @@ impl Ir for Switch {
         compiler.compile_switch(self, block, module)
     }
 
+    fn inputs(&self) -> Vec<Var> {
+        vec![self.to_switch.to_owned()]
+    }
+
+    fn output(&self) -> Option<Var> {
+        None
+    }
+}
+
+impl EvalOptVisitor for Switch {
     fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
         None
     }
@@ -90,14 +100,6 @@ impl Ir for Switch {
             Some(Br::new(self.default.to_owned()))
 
         } else { None }
-    }
-
-    fn inputs(&self) -> Vec<Var> {
-        vec![self.to_switch.to_owned()]
-    }
-
-    fn output(&self) -> Option<Var> {
-        None
     }
 }
 

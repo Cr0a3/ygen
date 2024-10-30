@@ -59,20 +59,22 @@ impl Ir for GetElemPtr {
         compiler.compile_getelemptr(self, block, module)
     }
 
-    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        None
-    }
-
-    fn eval(&self) -> Option<Box<dyn Ir>> {
-        None
-    }
-
     fn inputs(&self) -> Vec<Var> {
         vec![self.ptr.to_owned(), self.index.to_owned()]
     }
 
     fn output(&self) -> Option<Var> {
         Some(self.out.to_owned())
+    }
+}
+
+impl EvalOptVisitor for GetElemPtr {
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
     }
 }
 

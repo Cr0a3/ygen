@@ -41,19 +41,21 @@ impl Ir for Return<Type> {
         compiler.compile_ret_ty(&self, block, module)
     }
     
-    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        None
-    }
-    
-    fn eval(&self) -> Option<Box<dyn Ir>> {
-        None
-    }
-    
     fn inputs(&self) -> Vec<Var> {
         vec![]
     }
     
     fn output(&self) -> Option<Var> {
+        None
+    }
+}
+
+impl EvalOptVisitor for Return<Type> {
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
         None
     }
 }
@@ -102,6 +104,16 @@ impl Ir for Return<Var> {
         compiler.compile_ret_var(&self, &block, module)
     }
     
+    fn inputs(&self) -> Vec<Var> {
+        vec![self.inner1.to_owned()]
+    }
+    
+    fn output(&self) -> Option<Var> {
+        None
+    }
+}
+
+impl EvalOptVisitor for Return<Var> {
     fn maybe_inline(&self, const_values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
         if let Some(constant) = const_values.get(&self.inner1.name) {
             Some( Return::new(*constant) )
@@ -109,14 +121,6 @@ impl Ir for Return<Var> {
     }
     
     fn eval(&self) -> Option<Box<dyn Ir>> {
-        None
-    }
-    
-    fn inputs(&self) -> Vec<Var> {
-        vec![self.inner1.to_owned()]
-    }
-    
-    fn output(&self) -> Option<Var> {
         None
     }
 }

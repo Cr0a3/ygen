@@ -34,6 +34,16 @@ impl Ir for Neg<Var, /*out*/Var> {
         compiler.compile_neg(self, block, module)
     }
 
+    fn inputs(&self) -> Vec<Var> {
+        vec![self.inner1.to_owned()]
+    }
+
+    fn output(&self) -> Option<Var> {
+        Some(self.inner2.to_owned())
+    }
+}
+
+impl EvalOptVisitor for Neg<Var, Var> {
     fn maybe_inline(&self, const_values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
         if let Some(value) = const_values.get(&self.inner1.name) {
             if self.inner1.ty != TypeMetadata::f32 || self.inner1.ty != TypeMetadata::f64 {
@@ -46,14 +56,6 @@ impl Ir for Neg<Var, /*out*/Var> {
 
     fn eval(&self) -> Option<Box<dyn Ir>> {
         None
-    }
-
-    fn inputs(&self) -> Vec<Var> {
-        vec![self.inner1.to_owned()]
-    }
-
-    fn output(&self) -> Option<Var> {
-        Some(self.inner2.to_owned())
     }
 }
 

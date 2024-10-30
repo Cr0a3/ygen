@@ -4,7 +4,7 @@ use crate::Support::ColorClass;
 use crate::IR::block::BlockId;
 use crate::IR::{Function, Type, Var};
 
-use super::{Br, BrCond, Ir};
+use super::{Br, BrCond, EvalOptVisitor, Ir};
 
 impl Ir for Br<BlockId> {
     fn dump(&self) -> String {
@@ -48,19 +48,22 @@ impl Ir for Br<BlockId> {
         compiler.compile_br(&self, &block, module)
     }
     
-    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        None
-    }
-    
-    fn eval(&self) -> Option<Box<dyn Ir>> {
-        None
-    }
     
     fn inputs(&self) -> Vec<Var> {
         vec![]
     }
     
     fn output(&self) -> Option<Var> {
+        None
+    }
+}
+
+impl EvalOptVisitor for Br<BlockId> {
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
         None
     }
 }
@@ -109,7 +112,17 @@ impl Ir for BrCond<Var, BlockId, BlockId> {
     fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
         compiler.compile_br_cond(&self, &block, module)
     }
+    
+    fn inputs(&self) -> Vec<Var> {
+        vec![self.inner1.to_owned()]
+    }
+    
+    fn output(&self) -> Option<Var> {
+        None
+    }
+}
 
+impl EvalOptVisitor for BrCond<Var, BlockId, BlockId> {
     fn maybe_inline(&self, vars: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
         if let Some(check) = vars.get(&self.inner1.name) {
             let value = check.val() as i64;
@@ -126,14 +139,6 @@ impl Ir for BrCond<Var, BlockId, BlockId> {
         if self.inner2.name == self.inner3.name {
             Some(Br::new( self.inner3.to_owned() ))
         } else { None }
-    }
-    
-    fn inputs(&self) -> Vec<Var> {
-        vec![self.inner1.to_owned()]
-    }
-    
-    fn output(&self) -> Option<Var> {
-        None
     }
 }
 

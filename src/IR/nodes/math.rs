@@ -1,7 +1,7 @@
 use super::*;
 
 macro_rules! MathIrNode {
-    ($name:ident, $compileFuncVarVar:ident, $compileFuncVarTy:ident, $compileFuncTyTy:ident, $buildTraitName:ident, $buildFuncName:ident, $dump:expr, $op:tt) => {
+    ($name:ident, $compileFuncVarVar:ident, $compileFuncVarTy:ident, $compileFuncTyTy:ident, $buildTraitName:ident, $buildFuncName:ident, $dump:expr) => {
         /// Used for overloading the build function
         pub trait $buildTraitName<T, U> {
             /// Xors values
@@ -107,19 +107,6 @@ macro_rules! MathIrNode {
                 compiler.$compileFuncTyTy(&self, &block, module)
             }
     
-            fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-                None
-            }
-            
-            fn eval(&self) -> Option<Box<dyn Ir>> {
-                if TypeMetadata::f32 != self.inner1.into() && TypeMetadata::f64 != self.inner2.into() {
-                    Some(Assign::new(
-                        self.inner3.to_owned(), Type::from_int
-                        (self.inner1.into(), ((self.inner1.val() as i64) $op (self.inner2.val() as i64)) as f64
-                    )))
-                } else { None }
-            }
-    
             fn inputs(&self) -> Vec<Var> {
                 vec![]
             }
@@ -181,27 +168,6 @@ macro_rules! MathIrNode {
     
             fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
                 compiler.$compileFuncVarVar(&self, &block, module)
-            }
-    
-            fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-                if let Some(lhs) = values.get(&self.inner1.name) {
-                    if let Some(rhs) = values.get(&self.inner2.name) {
-                        if TypeMetadata::f32 != (*lhs).into() && TypeMetadata::f64 != (*rhs).into() {
-                            Some(Assign::new(
-                                self.inner3.to_owned(), Type::from_int
-                                (self.inner1.ty, ((lhs.val() as i64) $op (rhs.val() as i64)) as f64
-                            )))
-                        } else { None }
-                    } else {
-                        Some($name::new(self.inner2.to_owned(), *lhs, self.inner3.to_owned()))
-                    }
-                } else if let Some(rhs) = values.get(&self.inner2.name) {
-                    Some($name::new(self.inner2.to_owned(), *rhs, self.inner3.to_owned()))
-                } else { None }
-            }
-            
-            fn eval(&self) -> Option<Box<dyn Ir>> {
-                None
             }
     
             fn inputs(&self) -> Vec<Var> {
@@ -267,21 +233,6 @@ macro_rules! MathIrNode {
                 compiler.$compileFuncVarTy(&self, &block, module)
             }
 
-            fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-                if let Some(lhs) = values.get(&self.inner1.name) {
-                    if TypeMetadata::f32 != (*lhs).into() && TypeMetadata::f64 != self.inner2.into() {
-                        Some(Assign::new(
-                            self.inner3.to_owned(), Type::from_int
-                            (self.inner1.ty, ((lhs.val() as i64) $op (self.inner2.val() as i64)) as f64
-                        )))
-                    } else { None }
-                } else { None }
-            }
-            
-            fn eval(&self) -> Option<Box<dyn Ir>> {
-                None
-            }
-    
             fn inputs(&self) -> Vec<Var> {
                 vec![self.inner1.to_owned()]
             }
@@ -294,14 +245,563 @@ macro_rules! MathIrNode {
     };
 }
 
-MathIrNode!(Add,    compile_add_var_var,   compile_add_var_type, compile_add_type_type, BuildAdd, BuildAdd, "add", +);
-MathIrNode!(Sub,    compile_sub_var_var,   compile_sub_var_type, compile_sub_type_type, BuildSub, BuildSub, "sub", -);
-MathIrNode!(Xor,    compile_xor_var_var,   compile_xor_var_type, compile_xor_type_type, BuildXor, BuildXor, "xor", ^);
-MathIrNode!(Or,     compile_or_var_var,    compile_or_var_type, compile_or_type_type, BuildOr, BuildOr, "or", |);
-MathIrNode!(And,    compile_and_var_var,   compile_and_var_type, compile_and_type_type, BuildAnd, BuildAnd, "and", &);
-MathIrNode!(Mul,    compile_mul_var_var,   compile_mul_var_type, compile_mul_type_type, BuildMul, BuildMul, "mul", *);
-MathIrNode!(Div,    compile_div_var_var,   compile_div_var_type, compile_div_type_type, BuildDiv, BuildDiv, "div", /);
-MathIrNode!(Rem,    compile_rem_var_var,   compile_rem_var_type, compile_rem_type_type, BuildRem, BuildRem, "rem", %);
-MathIrNode!(Shl,    compile_shl_var_var,   compile_shl_var_type, compile_shl_type_type, BuildShl, BuildShl, "shl", <<);
-MathIrNode!(Shr,    compile_shr_var_var,   compile_shr_var_type, compile_shr_type_type, BuildShr, BuildShr, "shr", >>);
+MathIrNode!(Add,    compile_add_var_var,   compile_add_var_type, compile_add_type_type, BuildAdd, BuildAdd, "add");
+MathIrNode!(Sub,    compile_sub_var_var,   compile_sub_var_type, compile_sub_type_type, BuildSub, BuildSub, "sub");
+MathIrNode!(Xor,    compile_xor_var_var,   compile_xor_var_type, compile_xor_type_type, BuildXor, BuildXor, "xor");
+MathIrNode!(Or,     compile_or_var_var,    compile_or_var_type, compile_or_type_type, BuildOr, BuildOr, "or");
+MathIrNode!(And,    compile_and_var_var,   compile_and_var_type, compile_and_type_type, BuildAnd, BuildAnd, "and");
+MathIrNode!(Mul,    compile_mul_var_var,   compile_mul_var_type, compile_mul_type_type, BuildMul, BuildMul, "mul");
+MathIrNode!(Div,    compile_div_var_var,   compile_div_var_type, compile_div_type_type, BuildDiv, BuildDiv, "div");
+MathIrNode!(Rem,    compile_rem_var_var,   compile_rem_var_type, compile_rem_type_type, BuildRem, BuildRem, "rem");
+MathIrNode!(Shl,    compile_shl_var_var,   compile_shl_var_type, compile_shl_type_type, BuildShl, BuildShl, "shl");
+MathIrNode!(Shr,    compile_shr_var_var,   compile_shr_var_type, compile_shr_type_type, BuildShr, BuildShr, "shr");
 
+impl EvalOptVisitor for Add<Type, Type, Var> {
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        if TypeMetadata::f32 != self.inner1.into() && TypeMetadata::f64 != self.inner2.into() {
+            Some(Assign::new(
+                self.inner3.to_owned(), Type::from_int
+                (self.inner1.into(), ((self.inner1.val() as i64) + (self.inner2.val() as i64)) as f64
+            )))
+        } else { None }
+    }
+}
+
+impl EvalOptVisitor for Sub<Type, Type, Var> {
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        if TypeMetadata::f32 != self.inner1.into() && TypeMetadata::f64 != self.inner2.into() {
+            Some(Assign::new(
+                self.inner3.to_owned(), Type::from_int
+                (self.inner1.into(), ((self.inner1.val() as i64) - (self.inner2.val() as i64)) as f64
+            )))
+        } else { None }
+    }
+}
+
+impl EvalOptVisitor for Xor<Type, Type, Var> {
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        if TypeMetadata::f32 != self.inner1.into() && TypeMetadata::f64 != self.inner2.into() {
+            Some(Assign::new(
+                self.inner3.to_owned(), Type::from_int
+                (self.inner1.into(), ((self.inner1.val() as i64) ^ (self.inner2.val() as i64)) as f64
+            )))
+        } else { None }
+    }
+}
+
+impl EvalOptVisitor for Or<Type, Type, Var> {
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        if TypeMetadata::f32 != self.inner1.into() && TypeMetadata::f64 != self.inner2.into() {
+            Some(Assign::new(
+                self.inner3.to_owned(), Type::from_int
+                (self.inner1.into(), ((self.inner1.val() as i64) | (self.inner2.val() as i64)) as f64
+            )))
+        } else { None }
+    }
+}
+
+impl EvalOptVisitor for And<Type, Type, Var> {
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        if TypeMetadata::f32 != self.inner1.into() && TypeMetadata::f64 != self.inner2.into() {
+            Some(Assign::new(
+                self.inner3.to_owned(), Type::from_int
+                (self.inner1.into(), ((self.inner1.val() as i64) & (self.inner2.val() as i64)) as f64
+            )))
+        } else { None }
+    }
+}
+
+impl EvalOptVisitor for Mul<Type, Type, Var> {
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        if TypeMetadata::f32 != self.inner1.into() && TypeMetadata::f64 != self.inner2.into() {
+            Some(Assign::new(
+                self.inner3.to_owned(), Type::from_int
+                (self.inner1.into(), ((self.inner1.val() as i64) * (self.inner2.val() as i64)) as f64
+            )))
+        } else { None }
+    }
+}
+
+impl EvalOptVisitor for Div<Type, Type, Var> {
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        if TypeMetadata::f32 != self.inner1.into() && TypeMetadata::f64 != self.inner2.into() {
+            Some(Assign::new(
+                self.inner3.to_owned(), Type::from_int
+                (self.inner1.into(), ((self.inner1.val() as i64) / (self.inner2.val() as i64)) as f64
+            )))
+        } else { None }
+    }
+}
+
+impl EvalOptVisitor for Rem<Type, Type, Var> {
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        if TypeMetadata::f32 != self.inner1.into() && TypeMetadata::f64 != self.inner2.into() {
+            Some(Assign::new(
+                self.inner3.to_owned(), Type::from_int
+                (self.inner1.into(), ((self.inner1.val() as i64) % (self.inner2.val() as i64)) as f64
+            )))
+        } else { None }
+    }
+}
+
+impl EvalOptVisitor for Shl<Type, Type, Var> {
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        if TypeMetadata::f32 != self.inner1.into() && TypeMetadata::f64 != self.inner2.into() {
+            Some(Assign::new(
+                self.inner3.to_owned(), Type::from_int
+                (self.inner1.into(), ((self.inner1.val() as i64) << (self.inner2.val() as i64)) as f64
+            )))
+        } else { None }
+    }
+}
+
+impl EvalOptVisitor for Shr<Type, Type, Var> {
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        if TypeMetadata::f32 != self.inner1.into() && TypeMetadata::f64 != self.inner2.into() {
+            Some(Assign::new(
+                self.inner3.to_owned(), Type::from_int
+                (self.inner1.into(), ((self.inner1.val() as i64) >> (self.inner2.val() as i64)) as f64
+            )))
+        } else { None }
+    }
+}
+
+impl EvalOptVisitor for Add<Var, Var, Var> {
+    fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let Some(lhs) = values.get(&self.inner1.name) {
+            if let Some(rhs) = values.get(&self.inner2.name) {
+                if TypeMetadata::f32 != (*lhs).into() && TypeMetadata::f64 != (*rhs).into() {
+                    Some(Assign::new(
+                        self.inner3.to_owned(), Type::from_int
+                        (self.inner1.ty, ((lhs.val() as i64) + (rhs.val() as i64)) as f64
+                    )))
+                } else { None }
+            } else {
+                Some(Add::new(self.inner2.to_owned(), *lhs, self.inner3.to_owned()))
+            }
+        } else if let Some(rhs) = values.get(&self.inner2.name) {
+            Some(Add::new(self.inner2.to_owned(), *rhs, self.inner3.to_owned()))
+        } else { None }
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
+}
+
+impl EvalOptVisitor for Sub<Var, Var, Var> {
+    fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let Some(lhs) = values.get(&self.inner1.name) {
+            if let Some(rhs) = values.get(&self.inner2.name) {
+                if TypeMetadata::f32 != (*lhs).into() && TypeMetadata::f64 != (*rhs).into() {
+                    Some(Assign::new(
+                        self.inner3.to_owned(), Type::from_int
+                        (self.inner1.ty, ((lhs.val() as i64) + (rhs.val() as i64)) as f64
+                    )))
+                } else { None }
+            } else {
+                Some(Sub::new(self.inner2.to_owned(), *lhs, self.inner3.to_owned()))
+            }
+        } else if let Some(rhs) = values.get(&self.inner2.name) {
+            Some(Sub::new(self.inner2.to_owned(), *rhs, self.inner3.to_owned()))
+        } else { None }
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
+}
+
+impl EvalOptVisitor for Xor<Var, Var, Var> {
+    fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let Some(lhs) = values.get(&self.inner1.name) {
+            if let Some(rhs) = values.get(&self.inner2.name) {
+                if TypeMetadata::f32 != (*lhs).into() && TypeMetadata::f64 != (*rhs).into() {
+                    Some(Assign::new(
+                        self.inner3.to_owned(), Type::from_int
+                        (self.inner1.ty, ((lhs.val() as i64) ^ (rhs.val() as i64)) as f64
+                    )))
+                } else { None }
+            } else {
+                Some(Xor::new(self.inner2.to_owned(), *lhs, self.inner3.to_owned()))
+            }
+        } else if let Some(rhs) = values.get(&self.inner2.name) {
+            Some(Xor::new(self.inner2.to_owned(), *rhs, self.inner3.to_owned()))
+        } else { None }
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
+}
+
+impl EvalOptVisitor for Or<Var, Var, Var> {
+    fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let Some(lhs) = values.get(&self.inner1.name) {
+            if let Some(rhs) = values.get(&self.inner2.name) {
+                if TypeMetadata::f32 != (*lhs).into() && TypeMetadata::f64 != (*rhs).into() {
+                    Some(Assign::new(
+                        self.inner3.to_owned(), Type::from_int
+                        (self.inner1.ty, ((lhs.val() as i64) | (rhs.val() as i64)) as f64
+                    )))
+                } else { None }
+            } else {
+                Some(Or::new(self.inner2.to_owned(), *lhs, self.inner3.to_owned()))
+            }
+        } else if let Some(rhs) = values.get(&self.inner2.name) {
+            Some(Or::new(self.inner2.to_owned(), *rhs, self.inner3.to_owned()))
+        } else { None }
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
+}
+
+impl EvalOptVisitor for And<Var, Var, Var> {
+    fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let Some(lhs) = values.get(&self.inner1.name) {
+            if let Some(rhs) = values.get(&self.inner2.name) {
+                if TypeMetadata::f32 != (*lhs).into() && TypeMetadata::f64 != (*rhs).into() {
+                    Some(Assign::new(
+                        self.inner3.to_owned(), Type::from_int
+                        (self.inner1.ty, ((lhs.val() as i64) & (rhs.val() as i64)) as f64
+                    )))
+                } else { None }
+            } else {
+                Some(And::new(self.inner2.to_owned(), *lhs, self.inner3.to_owned()))
+            }
+        } else if let Some(rhs) = values.get(&self.inner2.name) {
+            Some(And::new(self.inner2.to_owned(), *rhs, self.inner3.to_owned()))
+        } else { None }
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
+}
+
+impl EvalOptVisitor for Mul<Var, Var, Var> {
+    fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let Some(lhs) = values.get(&self.inner1.name) {
+            if let Some(rhs) = values.get(&self.inner2.name) {
+                if TypeMetadata::f32 != (*lhs).into() && TypeMetadata::f64 != (*rhs).into() {
+                    Some(Assign::new(
+                        self.inner3.to_owned(), Type::from_int
+                        (self.inner1.ty, ((lhs.val() as i64) * (rhs.val() as i64)) as f64
+                    )))
+                } else { None }
+            } else {
+                Some(Mul::new(self.inner2.to_owned(), *lhs, self.inner3.to_owned()))
+            }
+        } else if let Some(rhs) = values.get(&self.inner2.name) {
+            Some(Mul::new(self.inner2.to_owned(), *rhs, self.inner3.to_owned()))
+        } else { None }
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
+}
+
+impl EvalOptVisitor for Div<Var, Var, Var> {
+    fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let Some(lhs) = values.get(&self.inner1.name) {
+            if let Some(rhs) = values.get(&self.inner2.name) {
+                if TypeMetadata::f32 != (*lhs).into() && TypeMetadata::f64 != (*rhs).into() {
+                    Some(Assign::new(
+                        self.inner3.to_owned(), Type::from_int
+                        (self.inner1.ty, ((lhs.val() as i64) / (rhs.val() as i64)) as f64
+                    )))
+                } else { None }
+            } else {
+                Some(Div::new(self.inner2.to_owned(), *lhs, self.inner3.to_owned()))
+            }
+        } else if let Some(rhs) = values.get(&self.inner2.name) {
+            Some(Div::new(self.inner2.to_owned(), *rhs, self.inner3.to_owned()))
+        } else { None }
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
+}
+
+impl EvalOptVisitor for Rem<Var, Var, Var> {
+    fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let Some(lhs) = values.get(&self.inner1.name) {
+            if let Some(rhs) = values.get(&self.inner2.name) {
+                if TypeMetadata::f32 != (*lhs).into() && TypeMetadata::f64 != (*rhs).into() {
+                    Some(Assign::new(
+                        self.inner3.to_owned(), Type::from_int
+                        (self.inner1.ty, ((lhs.val() as i64) % (rhs.val() as i64)) as f64
+                    )))
+                } else { None }
+            } else {
+                Some(Rem::new(self.inner2.to_owned(), *lhs, self.inner3.to_owned()))
+            }
+        } else if let Some(rhs) = values.get(&self.inner2.name) {
+            Some(Rem::new(self.inner2.to_owned(), *rhs, self.inner3.to_owned()))
+        } else { None }
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
+}
+
+impl EvalOptVisitor for Shl<Var, Var, Var> {
+    fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let Some(lhs) = values.get(&self.inner1.name) {
+            if let Some(rhs) = values.get(&self.inner2.name) {
+                if TypeMetadata::f32 != (*lhs).into() && TypeMetadata::f64 != (*rhs).into() {
+                    Some(Assign::new(
+                        self.inner3.to_owned(), Type::from_int
+                        (self.inner1.ty, ((lhs.val() as i64) << (rhs.val() as i64)) as f64
+                    )))
+                } else { None }
+            } else {
+                Some(Shl::new(self.inner2.to_owned(), *lhs, self.inner3.to_owned()))
+            }
+        } else if let Some(rhs) = values.get(&self.inner2.name) {
+            Some(Shl::new(self.inner2.to_owned(), *rhs, self.inner3.to_owned()))
+        } else { None }
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
+}
+
+impl EvalOptVisitor for Shr<Var, Var, Var> {
+    fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let Some(lhs) = values.get(&self.inner1.name) {
+            if let Some(rhs) = values.get(&self.inner2.name) {
+                if TypeMetadata::f32 != (*lhs).into() && TypeMetadata::f64 != (*rhs).into() {
+                    Some(Assign::new(
+                        self.inner3.to_owned(), Type::from_int
+                        (self.inner1.ty, ((lhs.val() as i64) >> (rhs.val() as i64)) as f64
+                    )))
+                } else { None }
+            } else {
+                Some(Shr::new(self.inner2.to_owned(), *lhs, self.inner3.to_owned()))
+            }
+        } else if let Some(rhs) = values.get(&self.inner2.name) {
+            Some(Shr::new(self.inner2.to_owned(), *rhs, self.inner3.to_owned()))
+        } else { None }
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
+}
+
+impl EvalOptVisitor for Add<Var, Type, Var> {
+    fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let Some(lhs) = values.get(&self.inner1.name) {
+            if TypeMetadata::f32 != (*lhs).into() && TypeMetadata::f64 != self.inner2.into() {
+                Some(Assign::new(
+                    self.inner3.to_owned(), Type::from_int
+                    (self.inner1.ty, ((lhs.val() as i64) + (self.inner2.val() as i64)) as f64
+                )))
+            } else { None }
+        } else { None }
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
+}
+
+impl EvalOptVisitor for Sub<Var, Type, Var> {
+    fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let Some(lhs) = values.get(&self.inner1.name) {
+            if TypeMetadata::f32 != (*lhs).into() && TypeMetadata::f64 != self.inner2.into() {
+                Some(Assign::new(
+                    self.inner3.to_owned(), Type::from_int
+                    (self.inner1.ty, ((lhs.val() as i64) - (self.inner2.val() as i64)) as f64
+                )))
+            } else { None }
+        } else { None }
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
+}
+
+impl EvalOptVisitor for Xor<Var, Type, Var> {
+    fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let Some(lhs) = values.get(&self.inner1.name) {
+            if TypeMetadata::f32 != (*lhs).into() && TypeMetadata::f64 != self.inner2.into() {
+                Some(Assign::new(
+                    self.inner3.to_owned(), Type::from_int
+                    (self.inner1.ty, ((lhs.val() as i64) ^ (self.inner2.val() as i64)) as f64
+                )))
+            } else { None }
+        } else { None }
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
+}
+
+impl EvalOptVisitor for Or<Var, Type, Var> {
+    fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let Some(lhs) = values.get(&self.inner1.name) {
+            if TypeMetadata::f32 != (*lhs).into() && TypeMetadata::f64 != self.inner2.into() {
+                Some(Assign::new(
+                    self.inner3.to_owned(), Type::from_int
+                    (self.inner1.ty, ((lhs.val() as i64) | (self.inner2.val() as i64)) as f64
+                )))
+            } else { None }
+        } else { None }
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
+}
+
+impl EvalOptVisitor for And<Var, Type, Var> {
+    fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let Some(lhs) = values.get(&self.inner1.name) {
+            if TypeMetadata::f32 != (*lhs).into() && TypeMetadata::f64 != self.inner2.into() {
+                Some(Assign::new(
+                    self.inner3.to_owned(), Type::from_int
+                    (self.inner1.ty, ((lhs.val() as i64) & (self.inner2.val() as i64)) as f64
+                )))
+            } else { None }
+        } else { None }
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
+}
+
+impl EvalOptVisitor for Mul<Var, Type, Var> {
+    fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let Some(lhs) = values.get(&self.inner1.name) {
+            if TypeMetadata::f32 != (*lhs).into() && TypeMetadata::f64 != self.inner2.into() {
+                Some(Assign::new(
+                    self.inner3.to_owned(), Type::from_int
+                    (self.inner1.ty, ((lhs.val() as i64) * (self.inner2.val() as i64)) as f64
+                )))
+            } else { None }
+        } else { None }
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
+}
+
+impl EvalOptVisitor for Div<Var, Type, Var> {
+    fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let Some(lhs) = values.get(&self.inner1.name) {
+            if TypeMetadata::f32 != (*lhs).into() && TypeMetadata::f64 != self.inner2.into() {
+                Some(Assign::new(
+                    self.inner3.to_owned(), Type::from_int
+                    (self.inner1.ty, ((lhs.val() as i64) / (self.inner2.val() as i64)) as f64
+                )))
+            } else { None }
+        } else { None }
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
+}
+
+impl EvalOptVisitor for Rem<Var, Type, Var> {
+    fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let Some(lhs) = values.get(&self.inner1.name) {
+            if TypeMetadata::f32 != (*lhs).into() && TypeMetadata::f64 != self.inner2.into() {
+                Some(Assign::new(
+                    self.inner3.to_owned(), Type::from_int
+                    (self.inner1.ty, ((lhs.val() as i64) % (self.inner2.val() as i64)) as f64
+                )))
+            } else { None }
+        } else { None }
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
+}
+
+impl EvalOptVisitor for Shl<Var, Type, Var> {
+    fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let Some(lhs) = values.get(&self.inner1.name) {
+            if TypeMetadata::f32 != (*lhs).into() && TypeMetadata::f64 != self.inner2.into() {
+                Some(Assign::new(
+                    self.inner3.to_owned(), Type::from_int
+                    (self.inner1.ty, ((lhs.val() as i64) << (self.inner2.val() as i64)) as f64
+                )))
+            } else { None }
+        } else { None }
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
+}
+
+impl EvalOptVisitor for Shr<Var, Type, Var> {
+    fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let Some(lhs) = values.get(&self.inner1.name) {
+            if TypeMetadata::f32 != (*lhs).into() && TypeMetadata::f64 != self.inner2.into() {
+                Some(Assign::new(
+                    self.inner3.to_owned(), Type::from_int
+                    (self.inner1.ty, ((lhs.val() as i64) >> (self.inner2.val() as i64)) as f64
+                )))
+            } else { None }
+        } else { None }
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
+}

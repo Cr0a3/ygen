@@ -82,14 +82,6 @@ impl Ir for Call<FuncId, Vec<Var>, Var> {
         compiler.compile_call(&self, &block, module)
     }
     
-    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        None
-    }
-    
-    fn eval(&self) -> Option<Box<dyn Ir>> {
-        None
-    }
-    
     fn inputs(&self) -> Vec<Var> {
         self.inner2.to_owned()
     }
@@ -99,7 +91,15 @@ impl Ir for Call<FuncId, Vec<Var>, Var> {
     }
 }
 
-
+impl EvalOptVisitor for Call<FuncId, Vec<Var>, Var> {
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
+    }
+}
 
 /// Trait for the call instruction
 /// Used for overloading the BuildCall function
