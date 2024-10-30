@@ -290,7 +290,7 @@ pub enum MachineMnemonic {
 
 impl MachineMnemonic {
     /// Returns the name of the mnemonic
-    pub fn name(&self) -> String {
+    pub fn name(&self) -> &'static str {
         match self {
             MachineMnemonic::Move =>                "move",
             MachineMnemonic::Add =>                 "add",
@@ -339,7 +339,7 @@ impl MachineMnemonic {
             MachineMnemonic::FShr =>                "fshr",
             MachineMnemonic::FCompare(_) =>         "fcompare",
             MachineMnemonic::FCast(_) =>            "fcast",
-        }.to_string()
+        }
     }
 }
 
@@ -348,7 +348,7 @@ impl Display for MachineMnemonic {
         write!(f, "{}", match self {
             MachineMnemonic::Call(target) => format!("{} {}", self.name(), target),
             MachineMnemonic::AdressLoad(adr) => format!("{} {}", self.name(), adr),
-            _ => self.name()
+            _ => self.name().to_string()
         })
     }
 }
