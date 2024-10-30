@@ -74,6 +74,8 @@ impl MachineInstr {
 
         let mut out = Vec::new();
 
+        let mut tmp_locs = Vec::new();
+
         for operand in &mut self.operands {
             if let MachineOperand::Imm(imm) = operand {
                 let imm = *imm;
@@ -93,7 +95,7 @@ impl MachineInstr {
                     constant.data = Vec::from(imm.to_bits().to_le_bytes());
                 }
 
-                let location = helper.alloc.alloc_rv(TypeMetadata::ptr);
+                let location = helper.alloc_rv(TypeMetadata::ptr);
 
                 let mut adrm = MachineInstr::new(MachineMnemonic::AdressLoad(constant.name.to_owned()));
                 adrm.set_out(location.into());
@@ -102,7 +104,7 @@ impl MachineInstr {
 
                 out.push(adrm);
 
-                let float = helper.alloc.alloc_rv(self.meta);
+                let float = helper.alloc_rv(self.meta);
 
                 let mut load = MachineInstr::new(MachineMnemonic::Load);
                 load.set_out(float.into());
@@ -115,11 +117,18 @@ impl MachineInstr {
                 *operand = float.into();
 
                 module.const_index += 1;
+
+                helper.free(location);
+                tmp_locs.push(float);
             }
         }
 
         out.push(self.to_owned());
         
+        for tmp in tmp_locs {
+            helper.free(tmp);
+        }
+
         out
     }
 }

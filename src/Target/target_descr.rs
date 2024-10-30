@@ -117,11 +117,11 @@ impl TargetBackendDescr {
         let mut ir_helper = IrCodeGenHelper::new(helper.to_owned());
 
         for node in block.nodes.to_owned() {
-            if ir_helper.helper.epilog() {
+            if ir_helper.helper.alloc.epilog {
                 self.epilog = true;
             }
 
-            // VERY UGLY CODE WHICH SINCRONICES THE MAX STACK_OFF 
+            // VERY UGLY CODE WHICH SYNCS THE MAX STACK_OFF 
             // OF EITHER ir_helper or helper (the one who has the biggest gets selected)
             if helper.alloc.stack_off < ir_helper.helper.alloc.stack_off {
                 helper.alloc.stack_off = ir_helper.helper.alloc.stack_off;

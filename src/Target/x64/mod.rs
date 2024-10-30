@@ -10,6 +10,8 @@ mod reg;
 use compilation::construct_compilation_helper;
 pub use reg::*;
 
+mod reg_alloc;
+
 #[cfg(feature = "jit")]
 pub(crate) mod abs_jit;
 

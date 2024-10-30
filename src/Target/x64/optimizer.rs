@@ -154,25 +154,25 @@ fn X64MergeAdd(instr0: &X64MCInstr, instr1: &X64MCInstr, instr2: &X64MCInstr) ->
         return None;
        }
 
-    let mut out = instr2.op1.clone();
-    let mut ls = instr0.op2.clone();
-    let mut rs = instr1.op2.clone();
+    let out = instr2.op1.clone();
+    let ls = instr0.op2.clone();
+    let rs = instr1.op2.clone();
 
     if let Some(Operand::Reg(reg)) = out {
         if !(reg.is_gr32() || reg.is_gr64()) {
-            out = Some(Operand::Reg(reg.sub16()))
+            return None;
         }
     }
 
     if let Some(Operand::Reg(reg)) = ls {
         if !(reg.is_gr32() || reg.is_gr64()) {
-            ls = Some(Operand::Reg(reg.sub64()))
+            return None;
         }
     }
 
     if let Some(Operand::Reg(reg)) = rs {
         if !(reg.is_gr32() || reg.is_gr64()) {
-            rs = Some(Operand::Reg(reg.sub64()))
+            return None;
         }
     }
 

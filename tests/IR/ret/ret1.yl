@@ -3,7 +3,9 @@ cargo run -p ylc -- -in=%s -o=out.o
 gcc out.o -o a.exe
 ./a.exe
 # IN:
-define u32 @main(u32 %0) {
+define u32 @main(u32 %0) { 
+; %= = argc
+; So when we call standalone ./a.exe we get 1
  entry:
     ret u32 %0
 }

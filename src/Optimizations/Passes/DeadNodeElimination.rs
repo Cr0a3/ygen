@@ -1,4 +1,4 @@
-use crate::Optimizations::Pass;
+use crate::{prelude::Call, Optimizations::Pass, IR::{FuncId, Var}};
 
 /// ## Pass DeadNodeElimination <br>
 /// deletes unused nodes
@@ -33,7 +33,10 @@ impl Pass for DeadNodeElimination_ {
 
                 if let Some(out) = out {
                     if !used.contains(&out.name) {
-                        to_remove.push((block.name.clone(), index - 1));
+                        if let Some(_) = node.as_any().downcast_ref::<Call<FuncId, Vec<Var>, Var>>() {} else {
+                            // node isn't a call
+                            to_remove.push((block.name.clone(), index - 1));
+                        }
                     }
                 }
     

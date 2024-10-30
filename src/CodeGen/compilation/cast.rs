@@ -13,9 +13,9 @@ impl CompilationHelper {
         let op = {
             if node.inner1.ty.float() || node.inner2.float() {
                 MachineMnemonic::FCast
-            } else if node.inner1.ty.bitSize() > node.inner2.bitSize() {
+            } else if node.inner1.ty.bitSize() < node.inner2.bitSize() {
                 MachineMnemonic::Zext
-            } else if node.inner1.ty.bitSize() < node.inner2.bitSize(){
+            } else if node.inner1.ty.bitSize() > node.inner2.bitSize(){
                 MachineMnemonic::Downcast
             } else {
                 return;
@@ -31,7 +31,7 @@ impl CompilationHelper {
 
         mc_sink.push(instr);
 
-        if let Some(phi_loc) = self.alloc.phi_vars.get(&node.inner3.name) {
+        if let Some(phi_loc) = self.phi_vars.get(&node.inner3.name) {
             let mut instr = MachineInstr::new(MachineMnemonic::Move);
             instr.set_out((*phi_loc).into());
             instr.add_operand(out.into());

@@ -25,7 +25,7 @@ impl CompilationHelper {
                         // SAVE IT ONTO THE STACK
                         let mut save = MachineInstr::new( MachineMnemonic::Move );
             
-                        let off = match self.alloc.alloc_stack(typ) {
+                        let off = match self.alloc_stack(typ) {
                             VarLocation::Mem(off, ty) => (off, ty),
                             _ => unreachable!(),
                         };
@@ -157,7 +157,7 @@ impl CompilationHelper {
 
         mc_sink.push(instr);
 
-        if let Some(phi_loc) = self.alloc.phi_vars.get(&node.inner1.name) {
+        if let Some(phi_loc) = self.phi_vars.get(&node.inner1.name) {
             let mut instr = MachineInstr::new(MachineMnemonic::Move);
             instr.set_out((*phi_loc).into());
             instr.add_operand(loc.into());

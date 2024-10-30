@@ -95,7 +95,7 @@ impl Ir for Call<FuncId, Vec<Var>, Var> {
     }
     
     fn output(&self) -> Option<Var> {
-        None // yes it has an output but it will get optimized away, so i just say "it has no output"
+        Some(self.inner3.to_owned())
     }
 }
 

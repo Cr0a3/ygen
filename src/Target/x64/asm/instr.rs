@@ -551,6 +551,39 @@ impl X64MCInstr {
                     } else { todo!("{}", self)}
                 } else { todo!("{}", self) }
             },
+            Mnemonic::Movsx => {
+                if let Some(Operand::Reg(op1)) = &self.op1 {
+                    if let Some(Operand::Reg(op2)) = &self.op2 {
+                        if op1.is_gr64() {
+                            if op2.is_gr16() {
+                                Instruction::with2::<Register, Register>(Code::Movsx_r64_rm16, (*op1).into(), (*op2).into())?
+                            } else if op2.is_gr8() {
+                                Instruction::with2::<Register, Register>(Code::Movsx_r64_rm8, (*op1).into(), (*op2).into())?
+                            } else { todo!("{}", self) }
+                        } else if op1.is_gr32() {
+                            if op2.is_gr16() {
+                                Instruction::with2::<Register, Register>(Code::Movsx_r32_rm16, (*op1).into(), (*op2).into())?
+                            } else if op2.is_gr8() {
+                                Instruction::with2::<Register, Register>(Code::Movsx_r32_rm8, (*op1).into(), (*op2).into())?
+                            } else { todo!("{}", self) }
+                        } else if op1.is_gr16() {
+                            if op2.is_gr16() {
+                                Instruction::with2::<Register, Register>(Code::Movsx_r32_rm16, (*op1).into(), (*op2).into())?
+                            } else if op2.is_gr8() {
+                                Instruction::with2::<Register, Register>(Code::Movsx_r32_rm8, (*op1).into(), (*op2).into())?
+                            } else { todo!("{}", self) }
+                        } else { todo!("{}", self)}
+                    } else if let Some(Operand::Mem(op2)) = &self.op2 {
+                        if op1.is_gr64() {
+                            Instruction::with2::<Register, MemoryOperand>(Code::Movsx_r64_rm16, (*op1).into(), op2.into())?
+                        } else if op1.is_gr32() {
+                            Instruction::with2::<Register, MemoryOperand>(Code::Movsx_r32_rm16, (*op1).into(), op2.into())?
+                        } else if op1.is_gr16() {
+                            Instruction::with2::<Register, MemoryOperand>(Code::Movsx_r16_rm16, (*op1).into(), op2.into())?
+                        } else {todo!("{}", self) } 
+                    } else { todo!("{}", self)}
+                } else { todo!("{}", self) }
+            },
             Mnemonic::Push => {
                 if let Some(Operand::Reg(op1)) = &self.op1 {
                     if op1.is_gr64() {
@@ -1347,6 +1380,7 @@ pub enum Mnemonic {
     Lea,
     Mov,
     Movzx,
+    Movsx,
     Push,
     Pop,
     Ret,
@@ -1494,6 +1528,7 @@ impl FromStr for Mnemonic {
             "cwd" => Ok(Mnemonic::Cwd),
             "cdq" => Ok(Mnemonic::Cdq),
             "cqo" => Ok(Mnemonic::Cqo),
+            "movsx" => Ok(Mnemonic::Movsx),
             _ => Err(()),
         }
     }
@@ -1570,6 +1605,7 @@ impl Display for Mnemonic {
             Mnemonic::Cwd => "cwd",
             Mnemonic::Cdq => "cdq",
             Mnemonic::Cqo => "cqo",
+            Mnemonic::Movsx => "movxz",
         })
     }
 }
@@ -1923,6 +1959,7 @@ IsCheckerOps0!(is_cmp, Mnemonic::Cmp);
 IsCheckerOps0!(is_lea, Mnemonic::Lea);
 IsCheckerOps0!(is_mov, Mnemonic::Mov);
 IsCheckerOps0!(is_movzx, Mnemonic::Movzx);
+IsCheckerOps0!(is_movsx, Mnemonic::Movsx);
 IsCheckerOps0!(is_push, Mnemonic::Push);
 IsCheckerOps0!(is_pop, Mnemonic::Pop);
 IsCheckerOps0!(is_ret, Mnemonic::Ret);
@@ -1995,6 +2032,7 @@ IsCheckerOps1!(is_cmp1, Mnemonic::Cmp);
 IsCheckerOps1!(is_lea1, Mnemonic::Lea);
 IsCheckerOps1!(is_mov1, Mnemonic::Mov);
 IsCheckerOps1!(is_movzx1, Mnemonic::Movzx);
+IsCheckerOps1!(is_movsx1, Mnemonic::Movsx);
 IsCheckerOps1!(is_push1, Mnemonic::Push);
 IsCheckerOps1!(is_pop1, Mnemonic::Pop);
 IsCheckerOps1!(is_imul1, Mnemonic::Imul);
@@ -2054,6 +2092,7 @@ IsCheckerOps2!(is_cmp2, Mnemonic::Cmp);
 IsCheckerOps2!(is_lea2, Mnemonic::Lea);
 IsCheckerOps2!(is_mov2, Mnemonic::Mov);
 IsCheckerOps2!(is_movzx2, Mnemonic::Movzx);
+IsCheckerOps2!(is_movsx2, Mnemonic::Movsx);
 IsCheckerOps2!(is_cmove2, Mnemonic::Cmove);
 IsCheckerOps2!(is_cmovne2, Mnemonic::Cmovne);
 IsCheckerOps2!(is_sal2, Mnemonic::Sal);
