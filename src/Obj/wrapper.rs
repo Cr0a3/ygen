@@ -10,6 +10,7 @@ use std::collections::BTreeMap;
 use std::fmt::Display;
 use std::fs::File;
 use std::error::Error;
+use std::io::Write;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum ObjectError {
@@ -125,6 +126,8 @@ pub struct ObjectBuilder {
 
     /// include debugging information
     pub debug: bool,
+
+    pub(crate) just_write_bytes: Option<Vec<u8>>,
 }
 
 impl ObjectBuilder {
@@ -141,6 +144,7 @@ impl ObjectBuilder {
             triple: triple,
 
             debug: false,
+            just_write_bytes: None,
         }
     }
 
@@ -167,7 +171,11 @@ impl ObjectBuilder {
     }
 
     /// Writes the object file into the the specified file
-    pub fn emit(&self, file: File, debug: Option<DebugRegistry>) -> Result<(), Box<dyn Error>> {
+    pub fn emit(&self, mut file: File, debug: Option<DebugRegistry>) -> Result<(), Box<dyn Error>> {
+        if let Some(bytes) = &self.just_write_bytes {
+            return Ok(file.write_all(&bytes)?);
+        }
+
         let align = 1;
 
         let mut obj = object::write::Object::new({

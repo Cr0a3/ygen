@@ -1,6 +1,6 @@
 use gimli::DwLang;
 
-use crate::{debug::{DebugLocation, DebugRegistry}, prelude::Triple, CodeGen::MachineInstr, Obj::{Decl, Link, ObjectBuilder}, Optimizations::PassManager, Support::{ColorClass, ColorProfile}, Target::TargetRegistry};
+use crate::{debug::{DebugLocation, DebugRegistry}, prelude::Triple, CodeGen::MachineInstr, Obj::{Decl, Link, ObjectBuilder}, Optimizations::PassManager, Support::{ColorClass, ColorProfile}, Target::{Arch, TargetRegistry}};
 
 use super::{func::FunctionType, Const, Function, VerifyError};
 use std::{collections::HashMap, error::Error, fmt::Debug, fs::OpenOptions, io::Write, path::Path};
@@ -157,6 +157,11 @@ impl Module {
 
     /// emits the machine code of the module into an object file (in the form of an object builder)
     pub fn emitMachineCode(&mut self, triple: Triple, registry: &mut TargetRegistry, debug: bool) -> Result<(ObjectBuilder, Option<DebugRegistry>), Box<dyn Error>> {
+        if triple.arch == Arch::Wasm64 {
+            // wasm is again super different and speciall so we need to use another crate for lowering this shit
+            return crate::Target::wasm::obj::wasm_emit_mccode(registry, debug, self);
+        }
+
         let mut obj = ObjectBuilder::new(triple);
 
         for (name, func) in self.funcs.clone() {

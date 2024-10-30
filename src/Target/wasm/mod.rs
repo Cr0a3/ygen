@@ -3,6 +3,8 @@ mod lower;
 /// Wasm instruction encoding
 pub mod asm;
 
+pub(crate) mod obj;
+
 mod reg_alloc;
 
 use std::collections::HashMap;
