@@ -77,7 +77,7 @@ pub(crate) fn construct_compilation_helper(call_conv: CallConv) -> CompilationHe
     helper
 }
 
-fn x64_after_alloc(compiler: &CompilationHelper) {
+fn x64_after_alloc(_compiler: &CompilationHelper) {
     /*if compiler.alloc.stack_off - 8 < compiler.call.shadow(compiler.arch) {
         unsafe {
             super::lower::USE_SP_FOR_STACK = true;

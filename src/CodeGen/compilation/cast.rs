@@ -13,9 +13,9 @@ impl CompilationHelper {
         let op = {
             if node.inner1.ty.float() || node.inner2.float() {
                 MachineMnemonic::FCast
-            } else if node.inner1.ty.bitSize() > node.inner2.bitSize() {
+            } else if node.inner1.ty.bitSize() < node.inner2.bitSize() {
                 MachineMnemonic::Zext
-            } else if node.inner1.ty.bitSize() < node.inner2.bitSize(){
+            } else if node.inner1.ty.bitSize() > node.inner2.bitSize(){
                 MachineMnemonic::Downcast
             } else {
                 return;

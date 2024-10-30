@@ -120,15 +120,23 @@ impl CompilationHelper {
     }
 
     pub(crate) fn alloc_stack(&mut self, ty: TypeMetadata) -> VarLocation {
-        if let Some(alloc_stack) = self.alloc.alloc_stack {
+        let out = if let Some(alloc_stack) = self.alloc.alloc_stack {
             alloc_stack(&mut self.alloc, ty)
-        } else { panic!("no registered stack allocation function for {:?}", self.arch) }
+        } else { panic!("no registered stack allocation function for {:?}", self.arch) };
+
+        self.epilog = self.alloc.epilog;
+
+        out
     }
 
     pub(crate) fn alloc_rv(&mut self, ty: TypeMetadata) -> VarLocation {
-        if let Some(alloc) = self.alloc.alloc_rv {
+        let out = if let Some(alloc) = self.alloc.alloc_rv {
             alloc(&mut self.alloc, ty)
-        }  else { panic!("no registered allocation function for {:?}", self.arch) }
+        }  else { panic!("no registered allocation function for {:?}", self.arch) };
+
+        self.epilog = self.alloc.epilog;
+
+        out
     }
 
     pub(crate) fn free(&mut self, loc: VarLocation) {
@@ -154,11 +162,6 @@ impl CompilationHelper {
         }
 
         with_name
-    }
-
-    #[inline]
-    pub(crate) fn epilog(&self) -> bool {
-        self.epilog
     }
 }
 

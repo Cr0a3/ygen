@@ -109,7 +109,7 @@ pub(crate) fn x64_alloc_stack(alloc: &mut Allocator, ty: TypeMetadata) -> VarLoc
     alloc.epilog = true;
 
     let ret = VarLocation::Mem(alloc.stack_off, ty);    
-    alloc.stack_off += ty.byteSize() as i64;
+    alloc.stack_off += 8; // alignment
     
     ret
 }
