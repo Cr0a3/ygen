@@ -2,24 +2,20 @@ use crate::Optimizations::Pass;
 
 /// ## Pass DeadNodeElimination <br>
 /// deletes unused nodes
-pub(crate) struct DeadNodeElimination {
-    recursion_steps: u32, // only used later one
-}
+pub(crate) struct DeadNodeElimination_;
 
 /// Creates a new DeadNodeElimination pass which is heap allocated
 pub fn DeadNodeElimination() -> Box<dyn Pass> {
-    Box::from( DeadNodeElimination {
-        recursion_steps: 1, // for other values we get errors
-    } )
+    Box::from( DeadNodeElimination_ {} )
 }
 
-impl Pass for DeadNodeElimination {
-    fn run(&self, block: &mut crate::prelude::Block) {
-        for _ in 0..self.recursion_steps {
-            let mut used: Vec<String> = Vec::new();
+impl Pass for DeadNodeElimination_ {
+    fn run_func(&self, func: &mut crate::prelude::Function) {
+        let mut used: Vec<String> = Vec::new();
 
-            let mut to_remove = vec![];
+        let mut to_remove = Vec::new();
 
+        for block in func.blocks.iter().rev() {
             let iter = block.nodes.iter();
             let iter = iter.rev();
 
@@ -32,25 +28,28 @@ impl Pass for DeadNodeElimination {
                 for input in inputs {
                     if !used.contains(&input.name) {
                         used.push(input.name);
-                    } else {
                     }
                 }
 
                 if let Some(out) = out {
                     if !used.contains(&out.name) {
-                        to_remove.push(index - 1);
+                        to_remove.push((block.name.clone(), index - 1));
                     }
                 }
     
                 index -= 1;
             }
+        }
 
-            let mut subdend = 0;
+        for block in &mut func.blocks {
+            let mut off = 0;
 
-            for index in to_remove {
-                block.nodes.remove(index as usize - subdend);
+            for (target_block, node) in &to_remove {
+                if target_block == &block.name {
+                    block.nodes.remove((*node - off) as usize);
 
-                subdend += 1;
+                    off += 1;
+                }
             }
         }
     }

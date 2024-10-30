@@ -1,0 +1,34 @@
+# RUN:
+cargo run -p ylc -- -in=%s -passes=dne,cp
+
+# IN:
+
+define i32 @test(i32 %a, i32 %b) {
+  entry:
+    %1 = alloca i32 
+    %out = alloca i32 
+    store i32 %a, %1
+
+    br loop_cond
+
+  loop_cond:
+    %2 = load i32 %1
+    %3 = cmp eq i32 %2, %b
+    
+    br cond %3 loop_body, loop_out
+
+  loop_body:
+    %4 = load i32 %1
+    %5 = add i32 %4, 1
+    store i32 %5, %1
+
+    %6 = load i32 %out
+    %7 = add i32 %6, %b
+    store i32 %7, %out
+
+    br loop_cond
+
+  loop_out:
+    %ret = load i32 %out
+    ret i32 %ret
+}
