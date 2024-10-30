@@ -1,0 +1,16 @@
+# RUN:
+cargo run -p ylc -- -in=%s -fmt
+# IN:
+
+define i32 @add(i32 %a, i32 %b) {
+  entry:
+    %1 = add i32 %a, %b
+    ret i32 %1
+}
+
+# STDERR:
+define i32 @add(i32 %a, i32 %b) {
+  entry:
+    %1 = add i32 %a, %b
+    ret i32 %1
+}

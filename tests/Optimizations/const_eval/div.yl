@@ -9,7 +9,7 @@ define i32 @div(i32 %0) {
 }
 
 # STDERR:
-define i32 @div(i32 %%0) {
+define i32 @div(i32 %0) {
   entry:
     %1 = i32 1
     ret i32 1
