@@ -36,7 +36,8 @@ impl WhiteList {
 
     /// Checks if the mnemonic is allowed
     pub fn is_allowed(&self, mnemonic: MachineMnemonic) -> bool {
-        *self.instrs.get(mnemonic.name()).unwrap_or(&false)
+        *self.instrs.get(mnemonic.name())
+        .unwrap_or(&true) // no registered forbid is an allow 
     }
 
     /// Checks for forbidden mnemonics
