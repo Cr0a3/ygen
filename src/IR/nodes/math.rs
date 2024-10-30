@@ -532,10 +532,22 @@ impl EvalOptVisitor for Mul<Var, Var, Var> {
                     )))
                 } else { None }
             } else {
-                Some(Mul::new(self.inner2.to_owned(), *lhs, self.inner3.to_owned()))
+                if lhs.val() == 0.0 {
+                    Some(Assign::new(self.inner3.to_owned(), Type::from_int(self.inner1.ty, 0.0)))
+                } else if lhs.val() == 1.0 {
+                    Some(Assign::new(self.inner3.to_owned(), Type::from_int(self.inner1.ty, 1.0)))
+                } else {
+                    Some(Mul::new(self.inner2.to_owned(), *lhs, self.inner3.to_owned()))
+                }
             }
         } else if let Some(rhs) = values.get(&self.inner2.name) {
-            Some(Mul::new(self.inner2.to_owned(), *rhs, self.inner3.to_owned()))
+            if rhs.val() == 0.0 {
+                Some(Assign::new(self.inner3.to_owned(), Type::from_int(self.inner1.ty, 0.0)))
+            } else if rhs.val() == 1.0 {
+                Some(Assign::new(self.inner3.to_owned(), Type::from_int(self.inner1.ty, 1.0)))
+            } else {
+                Some(Mul::new(self.inner2.to_owned(), *rhs, self.inner3.to_owned()))
+            }
         } else { None }
     }
     
@@ -563,7 +575,9 @@ impl EvalOptVisitor for Div<Var, Var, Var> {
     }
     
     fn eval(&self) -> Option<Box<dyn Ir>> {
-        None
+        if self.inner1 == self.inner2 {
+            Some(Assign::new(self.inner3.to_owned(), Type::from_int(self.inner1.ty, 1.0)))
+        } else { None }
     }
 }
 

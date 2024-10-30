@@ -110,7 +110,7 @@ impl Function {
         
                     for index in 0..self.ty.args.len() {
                         let arg = self.ty.arg(index);
-                        fmt += &format!("{} %{}, ", arg.ty, arg.name);
+                        fmt += &format!("{} {}, ", arg.ty, arg.name);
                     }
 
                     if self.ty.args.len() > 0 {
@@ -164,7 +164,7 @@ impl Function {
                         let arg = self.ty.arg(index);
                         fmt += &format!("{} {}, ", 
                                 profile.markup(&arg.ty.to_string(), ColorClass::Ty),
-                                profile.markup(&format!("%{}", arg.name), ColorClass::Var)
+                                profile.markup(&format!("{}", arg.name), ColorClass::Var)
                             );
                     }
 
