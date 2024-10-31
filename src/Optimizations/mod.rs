@@ -2,6 +2,8 @@ mod mngr;
 mod template;
 /// all passes
 pub mod Passes;
+/// all analysis functions
+pub mod Analysis;
 
 pub use mngr::PassManager;
 pub use template::Pass;
