@@ -5,7 +5,7 @@ use crate::CodeGen::{MachineInstr, MachineMnemonic};
 /// Stores allowed instructions
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WhiteList {
-    instrs: HashMap<String, AllowmentOption>,
+    instrs: HashMap<&'static str, bool>,
 }
 
 impl WhiteList {
@@ -18,35 +18,32 @@ impl WhiteList {
 
     /// Allowes a specifc mnemonic
     pub fn allow(&mut self, mnemonic: MachineMnemonic) {
-        if let Some(option) = self.instrs.get_mut(&mnemonic.name()) {
-            *option = AllowmentOption::Allowed;
+        if let Some(option) = self.instrs.get_mut(mnemonic.name()) {
+            *option = true;
         } else {
-            self.instrs.insert(mnemonic.name(), AllowmentOption::Allowed);
+            self.instrs.insert(mnemonic.name(), true);
         }
     }
 
     /// Forbids a specfic mnemonic
     pub fn forbid(&mut self, mnemonic: MachineMnemonic) {
-        if let Some(option) = self.instrs.get_mut(&mnemonic.name()) {
-            *option = AllowmentOption::NotAllowed;
+        if let Some(option) = self.instrs.get_mut(mnemonic.name()) {
+            *option = false;
         } else {
-            self.instrs.insert(mnemonic.name(), AllowmentOption::NotAllowed);
+            self.instrs.insert(mnemonic.name(), false);
         }
     }
 
     /// Checks if the mnemonic is allowed
-    pub fn is_allowed(&self, mnemonic: MachineMnemonic) -> AllowmentOption {
-        if let Some(option) = self.instrs.get(&mnemonic.name()) {
-            *option
-        } else {
-            AllowmentOption::Unknown
-        }
+    pub fn is_allowed(&self, mnemonic: MachineMnemonic) -> bool {
+        *self.instrs.get(mnemonic.name())
+        .unwrap_or(&true) // no registered forbid is an allow 
     }
 
     /// Checks for forbidden mnemonics
     pub fn check_for_forbidden_mnemonics(&self, vec: &Vec<MachineInstr>) -> Result<(), WhiteListError> {
         for instr in vec {
-            if self.is_allowed(instr.mnemonic.clone()) == AllowmentOption::NotAllowed {
+            if !self.is_allowed(instr.mnemonic.clone()) {
                 Err(WhiteListError::NotAllowed(instr.mnemonic.clone()))?
             }
         }

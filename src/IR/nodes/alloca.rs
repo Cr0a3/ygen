@@ -1,7 +1,7 @@
 use crate::IR::{Function, TypeMetadata, Var};
 use crate::Support::ColorClass;
 
-use super::{Alloca, Ir};
+use super::{Alloca, EvalOptVisitor, Ir};
 
 impl Ir for Alloca<Var, TypeMetadata> {
     fn dump(&self) -> String {
@@ -36,20 +36,22 @@ impl Ir for Alloca<Var, TypeMetadata> {
         compiler.compile_alloca(&self, &block, module)
     }
     
-    fn maybe_inline(&self, _: &std::collections::HashMap<String, crate::prelude::Type>) -> Option<Box<dyn Ir>> {
-        None
-    }
-    
-    fn eval(&self) -> Option<Box<dyn Ir>> {
-        None
-    }
-    
     fn inputs(&self) -> Vec<Var> {
         vec![]
     }
     
     fn output(&self) -> Option<Var> {
         Some(self.inner1.to_owned())
+    }
+}
+
+impl EvalOptVisitor for Alloca<Var, TypeMetadata> {
+    fn maybe_inline(&self, _: &std::collections::HashMap<String, crate::prelude::Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
     }
 }
 

@@ -4,11 +4,17 @@ use crate::Obj::Link;
 
 use super::{JitFunction, JitLinker};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SymbolType {
+    Data,
+    Func
+}
+
 /// A jit map is a structure which is used to easily map multiple symbols into an jit function (uses the jit linker)
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct JitMap {
-    symbols: HashMap</*name*/String, Vec<u8>>,
-    symbol_types: HashMap</*name*/String, /*true = func; false = data*/bool>,
+    symbols: HashMap<String, Vec<u8>>,
+    symbol_types: HashMap<String, SymbolType>,
     entry_symbol: String,
     relocs: Vec<Link>,
 
@@ -33,13 +39,13 @@ impl JitMap {
     /// adds a function to the map
     pub fn define_func(&mut self, name: &String, data: Vec<u8>) {
         self.symbols.insert(name.to_owned(), data);
-        self.symbol_types.insert(name.to_owned(), true);
+        self.symbol_types.insert(name.to_owned(), SymbolType::Func);
     }
 
     /// adds a data to the map
     pub fn define_data(&mut self, name: &String, data: Vec<u8>) {
         self.symbols.insert(name.to_owned(), data);
-        self.symbol_types.insert(name.to_owned(), false);
+        self.symbol_types.insert(name.to_owned(), SymbolType::Data);
     }
 
     /// adds a relocation to the map
@@ -61,9 +67,9 @@ impl JitMap {
         let mut linker = JitLinker::new();
 
         for (name, data) in &self.symbols {
-            let isfunc = *self.symbol_types.get(name).unwrap();
+            let symbol_type = *self.symbol_types.get(name).unwrap();
 
-            if isfunc {
+            if symbol_type == SymbolType::Func {
                 let entry = name == &self.entry_symbol;
 
                 linker.add_func(&name, data.to_owned(), entry);

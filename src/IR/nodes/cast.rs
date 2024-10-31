@@ -47,6 +47,17 @@ impl Ir for Cast<Var, TypeMetadata, Var> {
         compiler.compile_cast(&self, &block, module)
     }
 
+    
+    fn inputs(&self) -> Vec<Var> {
+        vec![self.inner1.to_owned()]
+    }
+    
+    fn output(&self) -> Option<Var> {
+        Some(self.inner3.to_owned())
+    }
+}
+
+impl EvalOptVisitor for Cast<Var, TypeMetadata, Var> {
     fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
         None
     }
@@ -55,14 +66,6 @@ impl Ir for Cast<Var, TypeMetadata, Var> {
         if self.inner2 == self.inner1.ty {
             Some(Assign::new(self.inner3.to_owned(), self.inner1.to_owned()))
         } else { None }
-    }
-    
-    fn inputs(&self) -> Vec<Var> {
-        vec![self.inner1.to_owned()]
-    }
-    
-    fn output(&self) -> Option<Var> {
-        Some(self.inner3.to_owned())
     }
 }
 

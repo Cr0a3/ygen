@@ -3,7 +3,7 @@ use std::fmt::Display;
 use crate::Support::ColorClass;
 use crate::IR::{Function, Type, TypeMetadata, Var, VerifyError};
 
-use super::{Assign, Cmp, Ir};
+use super::{Assign, Cmp, EvalOptVisitor, Ir};
 
 /// The "compare mode" (e.g: ls is equal to rs)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -81,6 +81,16 @@ impl Ir for Cmp {
         compiler.compile_cmp(&self, &block, module)
     }
     
+    fn inputs(&self) -> Vec<Var> {
+        vec![self.ls.to_owned(), self.rs.to_owned()]
+    }
+    
+    fn output(&self) -> Option<Var> {
+        Some(self.out.to_owned())
+    }
+}
+
+impl EvalOptVisitor for Cmp {
     fn maybe_inline(&self, _: &std::collections::HashMap<String, crate::prelude::Type>) -> Option<Box<dyn Ir>> {
         None
     }
@@ -100,14 +110,6 @@ impl Ir for Cmp {
                 self.out.ty, yes as f64
             )))
         } else { None }
-    }
-    
-    fn inputs(&self) -> Vec<Var> {
-        vec![self.ls.to_owned(), self.rs.to_owned()]
-    }
-    
-    fn output(&self) -> Option<Var> {
-        Some(self.out.to_owned())
     }
 }
 

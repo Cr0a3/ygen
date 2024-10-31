@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use crate::{Support::ColorClass, IR::Function};
 
-use super::Ir;
+use super::{EvalOptVisitor, Ir};
 
 /// A node which startes a debugging line programm
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -50,19 +50,21 @@ impl Ir for DebugNode {
         compiler.set_location_node(self)
     }
 
-    fn maybe_inline(&self, _: &std::collections::HashMap<String, crate::prelude::Type>) -> Option<Box<dyn Ir>> {
-        None
-    }
-
-    fn eval(&self) -> Option<Box<dyn Ir>> {
-        None
-    }
-
     fn inputs(&self) -> Vec<crate::prelude::Var> {
         vec![]
     }
 
     fn output(&self) -> Option<crate::prelude::Var> {
+        None
+    }
+}
+
+impl EvalOptVisitor for DebugNode {
+    fn maybe_inline(&self, _: &std::collections::HashMap<String, crate::prelude::Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+
+    fn eval(&self) -> Option<Box<dyn Ir>> {
         None
     }
 }

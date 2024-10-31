@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::IR::{Function, Type, TypeMetadata, Var};
 use crate::Support::ColorClass;
 
-use super::{Store, Ir};
+use super::{EvalOptVisitor, Ir, Store};
 
 impl Ir for Store<Var, Var> {
     fn dump(&self) -> String {
@@ -47,6 +47,16 @@ impl Ir for Store<Var, Var> {
         compiler.compile_store(&self, &block, module)
     }
     
+    fn inputs(&self) -> Vec<Var> {
+        vec![self.inner1.to_owned(), self.inner2.to_owned()]
+    }
+    
+    fn output(&self) -> Option<Var> {
+        None // technicly the ptr is the output
+    }
+}
+
+impl EvalOptVisitor for Store<Var, Var> {
     fn maybe_inline(&self, const_values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
         if let Some(constant) = const_values.get(&self.inner2.name) {
             Some( Store::new(self.inner1.to_owned(), *constant) )
@@ -57,13 +67,6 @@ impl Ir for Store<Var, Var> {
         None
     }
     
-    fn inputs(&self) -> Vec<Var> {
-        vec![self.inner1.to_owned(), self.inner2.to_owned()]
-    }
-    
-    fn output(&self) -> Option<Var> {
-        None // technicly the ptr is the output
-    }
 }
 
 impl Ir for Store<Var, Type> {
@@ -103,20 +106,22 @@ impl Ir for Store<Var, Type> {
         compiler.compile_store_ty(&self, &block, module)
     }
     
-    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        None
-    }
-    
-    fn eval(&self) -> Option<Box<dyn Ir>> {
-        None
-    }
-    
     fn inputs(&self) -> Vec<Var> {
         vec![self.inner1.to_owned()]
     }
     
     fn output(&self) -> Option<Var> {
         None // techniclly the ptr is the output and not an argument
+    }
+}
+
+impl EvalOptVisitor for Store<Var, Type> {
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
     }
 }
 

@@ -46,13 +46,6 @@ impl Ir for Assign<Var, Type> {
         compiler.compile_assign_var_type(&self, &block, module)
     }
 
-    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        None
-    }
-    
-    fn eval(&self) -> Option<Box<dyn Ir>> {
-        None
-    }
     
     fn inputs(&self) -> Vec<Var> {
         vec![]
@@ -60,6 +53,16 @@ impl Ir for Assign<Var, Type> {
     
     fn output(&self) -> Option<Var> {
         Some(self.inner1.to_owned())
+    }
+}
+
+impl EvalOptVisitor for Assign<Var, Type> {
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
     }
 }
 
@@ -110,6 +113,16 @@ impl Ir for Assign<Var, Var> {
         compiler.compile_assign_var_var(&self, &block, module)
     }
     
+    fn inputs(&self) -> Vec<Var> {
+        vec![self.inner2.to_owned()]
+    }
+    
+    fn output(&self) -> Option<Var> {
+        Some(self.inner1.to_owned())
+    }
+}
+
+impl EvalOptVisitor for Assign<Var, Var> {
     fn maybe_inline(&self, values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
         if let Some(lhs) = values.get(&self.inner2.name) {
             Some(Assign::new(self.inner1.to_owned(), *lhs))
@@ -118,14 +131,6 @@ impl Ir for Assign<Var, Var> {
     
     fn eval(&self) -> Option<Box<dyn Ir>> {
         None
-    }
-    
-    fn inputs(&self) -> Vec<Var> {
-        vec![self.inner2.to_owned()]
-    }
-    
-    fn output(&self) -> Option<Var> {
-        Some(self.inner1.to_owned())
     }
 }
 
@@ -167,13 +172,6 @@ impl Ir for Assign<Var, Const> {
         compiler.compile_assign_var_const(&self, &block, module)
     }
     
-    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        None
-    }
-    
-    fn eval(&self) -> Option<Box<dyn Ir>> {
-        None
-    }
     
     fn inputs(&self) -> Vec<Var> {
         vec![]
@@ -181,6 +179,16 @@ impl Ir for Assign<Var, Const> {
     
     fn output(&self) -> Option<Var> {
         Some(self.inner1.to_owned())
+    }
+}
+
+impl EvalOptVisitor for Assign<Var, Const> {
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
     }
 }
 

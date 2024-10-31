@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::Support::ColorClass;
 use crate::IR::{Function, Type, TypeMetadata, Var};
 
-use super::{Ir, Load};
+use super::{EvalOptVisitor, Ir, Load};
 
 impl Ir for Load<Var, Var, TypeMetadata> {
     fn dump(&self) -> String {
@@ -46,13 +46,6 @@ impl Ir for Load<Var, Var, TypeMetadata> {
     fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
         compiler.compile_load(&self, &block, module)
     }
-    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        None
-    }
-    
-    fn eval(&self) -> Option<Box<dyn Ir>> {
-        None
-    }
     
     fn inputs(&self) -> Vec<Var> {
         vec![self.inner2.to_owned()]
@@ -60,6 +53,16 @@ impl Ir for Load<Var, Var, TypeMetadata> {
     
     fn output(&self) -> Option<Var> {
         Some(self.inner1.to_owned())
+    }
+}
+
+impl EvalOptVisitor for Load<Var, Var, TypeMetadata> {
+    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+    
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
     }
 }
 

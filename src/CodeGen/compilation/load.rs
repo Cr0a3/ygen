@@ -6,7 +6,7 @@ use super::CompilationHelper;
 impl CompilationHelper {
     #[allow(missing_docs)]
     pub fn compile_load(&mut self, node: &Load<Var, Var, TypeMetadata>, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
-        let ptr = *self.vars.get(&node.inner2.name).expect("expected valid variable");
+        let ptr = *self.vars.get(&node.inner2.name).expect(&format!("expected valid variable {}", node.inner2.name));
         let ptr = ptr.into();
 
         let out = *self.vars.get(&node.inner1.name).unwrap();

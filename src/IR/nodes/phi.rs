@@ -1,7 +1,7 @@
 use crate::Support::ColorClass;
 use crate::IR::{Block, Function, TypeMetadata, Var};
 
-use super::{Phi, Ir};
+use super::{EvalOptVisitor, Ir, Phi};
 
 impl Ir for Phi {
     fn dump(&self) -> String {
@@ -60,14 +60,6 @@ impl Ir for Phi {
         // compiler.compile_phi(self)
     }
 
-    fn maybe_inline(&self, _: &std::collections::HashMap<String, crate::prelude::Type>) -> Option<Box<dyn Ir>> {
-        None
-    }
-
-    fn eval(&self) -> Option<Box<dyn Ir>> {
-        None
-    }
-
     fn inputs(&self) -> Vec<crate::prelude::Var> {
         let mut inputs = Vec::new();
 
@@ -80,6 +72,16 @@ impl Ir for Phi {
 
     fn output(&self) -> Option<crate::prelude::Var> {
         Some(self.out.to_owned())
+    }
+}
+
+impl EvalOptVisitor for Phi {
+    fn maybe_inline(&self, _: &std::collections::HashMap<String, crate::prelude::Type>) -> Option<Box<dyn Ir>> {
+        None
+    }
+
+    fn eval(&self) -> Option<Box<dyn Ir>> {
+        None
     }
 }
 

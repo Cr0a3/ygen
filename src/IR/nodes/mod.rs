@@ -203,7 +203,7 @@ pub struct Select<T, U>
 
 use crate::Support::{ColorClass, ColorProfile};
 /// The ir trait
-pub trait Ir: Debug + Any {
+pub trait Ir: Debug + Any + EvalOptVisitor {
     /// Returns the ir node as his textual representation
     fn dump(&self) -> String;
     /// Returns the ir node as his textual representation with colors
@@ -235,17 +235,20 @@ pub trait Ir: Debug + Any {
         other.dump() == self.dump()
     }
 
-    /// inlines the variables to the types if possible
-    fn maybe_inline(&self, const_values: &HashMap<String, Type>) -> Option<Box<dyn Ir>>;
-
-    /// evaluteas the node
-    fn eval(&self) -> Option<Box<dyn Ir>>;
-
     /// returns the vars used by the node as input
     fn inputs(&self) -> Vec<Var>;
 
     /// returns the output var
     fn output(&self) -> Option<Var>;
+}
+
+/// A trait used for constant propagination
+pub trait EvalOptVisitor {
+    /// inlines the variables if possible
+    fn maybe_inline(&self, const_values: &HashMap<String, Type>) -> Option<Box<dyn Ir>>;
+
+    /// evaluteas the node
+    fn eval(&self) -> Option<Box<dyn Ir>>;
 }
 
 impl PartialEq for Box<dyn Ir> {
