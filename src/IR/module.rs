@@ -1,6 +1,6 @@
 use gimli::DwLang;
 
-use crate::{debug::{DebugLocation, DebugRegistry}, prelude::Triple, CodeGen::MachineInstr, Obj::{Decl, Link, ObjectBuilder}, Optimizations::PassManager, Support::{ColorClass, ColorProfile}, Target::{Arch, TargetRegistry}};
+use crate::{debug::{DebugLocation, DebugRegistry}, prelude::Triple, CodeGen::MachineInstr, Obj::{Decl, Link, Linkage, ObjectBuilder}, Optimizations::PassManager, Support::{ColorClass, ColorProfile}, Target::{Arch, TargetRegistry}};
 
 use super::{func::FunctionType, Const, Function, VerifyError};
 use std::{collections::HashMap, error::Error, fmt::Debug, fs::OpenOptions, io::Write, path::Path};
@@ -90,7 +90,11 @@ impl Module {
 
             bytes.push(']');
 
-            string += &format!("const {} = {}\n", consta.name,  bytes);
+            string += &format!("{} const {} = {}\n", match consta.linkage {
+                Linkage::Extern => "import",
+                Linkage::External => "extern",
+                Linkage::Internal => "intern",
+            }, consta.name,  bytes);
         }
 
         for (_, func) in &self.funcs {
@@ -119,7 +123,12 @@ impl Module {
 
             bytes.push(']');
 
-            string += &format!("{} {} = {}\n", 
+            string += &format!("{} {} {} = {}\n", 
+                profile.markup(&match consta.linkage {
+                    Linkage::Extern => "import",
+                    Linkage::External => "extern",
+                    Linkage::Internal => "intern",
+                }, ColorClass::Instr), 
                 profile.markup("const", ColorClass::Instr), 
                 profile.markup(&consta.name, ColorClass::Name), 
                 profile.markup(&bytes, ColorClass::Value)

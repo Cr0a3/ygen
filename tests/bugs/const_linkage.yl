@@ -1,0 +1,7 @@
+# RUN:
+cargo run -p ylc -- -in=%s
+
+# IN:
+
+const extern extern_constant = [5, 4]
+const intern intern_constant = [5, 4]

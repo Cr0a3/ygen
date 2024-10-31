@@ -296,11 +296,15 @@ impl IrParser {
         let tok = self.current_token()?;
         if let TokenType::Ident(ident) = &tok.typ {
             match ident.as_str() {
-                "local" | "internal" | "private" => {
+                "local" | "internal" | "intern" | "private" => {
                     parsed_scope = true;
                     scope = Linkage::Internal
                 },
-                "public" | "external" => {
+                "public" | "external" | "extern" => {
+                    parsed_scope = true;
+                    scope = Linkage::External
+                },
+                "import" => {
                     parsed_scope = true;
                     scope = Linkage::External
                 },
