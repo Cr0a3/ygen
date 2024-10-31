@@ -16,7 +16,7 @@ is0:
     br isnt
 
 isnt:
-    %phied = phi i32 [%1, entry %3, isnt]
+    %phied = phi i32 [%1, entry %3, is0]
     ret i32 %phied
 }
 
