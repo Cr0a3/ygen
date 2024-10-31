@@ -113,6 +113,31 @@ impl<'a> IrSemnatic<'a> {
 
         let func = name;
 
+        // analyise block dependence
+
+        let mut branches_to = HashMap::new(); // HashMap<BlockName, Vec<Branches to these blocks>>
+
+        for (name, block) in body {
+            for node in &block.body {
+
+                let mut branches = Vec::new();
+
+                if let Some(br) = node.inst.as_any().downcast_ref::<Br<BlockId>>() {
+                    branches.push(br.inner1.to_owned());
+                } else if let Some(br) = node.inst.as_any().downcast_ref::<BrCond<Var, BlockId, BlockId>>() {
+                    branches.push(br.inner2.to_owned());
+                    branches.push(br.inner3.to_owned());
+                } else if let Some(switch) = node.inst.as_any().downcast_ref::<Switch>() {
+                    branches.push(switch.default.to_owned());   
+                    for (_, case) in &switch.cases {
+                        branches.push(case.to_owned());
+                    }
+                }
+
+                branches_to.insert(name.to_owned(), branches);
+            }
+        }
+
         for (name, block) in body {
             if blocks.contains(name) {
                 Err(IrError::DefinedTwice {
@@ -219,9 +244,42 @@ impl<'a> IrSemnatic<'a> {
                     self.analaysiz_load(&mut vars, node, loc)?;
                 } else if let Some(node) = any.downcast_ref::<Phi>() {
                     if vars.contains_key(&node.out.name) {
-                        Err(IrError::DefinedTwice { loc: loc, name: node.out.name.to_owned() })?
+                        Err(IrError::DefinedTwice { loc: loc.to_owned(), name: node.out.name.to_owned() })?
                     } else {
                         vars.insert(node.out.name.to_owned(), node.typ);
+                    }
+
+                    let mut handled = Vec::new();
+
+                    for (branch, branches) in &branches_to {
+                        if branches.contains(&BlockId(name.to_owned())) {
+                            let mut recived = false;
+
+                            for recive in &node.recive_from_blocks {
+                                if recive.0.name == branch.to_owned() {
+                                    handled.push(recive.0.name.clone());
+                                    recived = true;
+                                    break;
+                                }
+                            }
+
+                            if !recived {
+                                Err(IrError::PhiBranchNotHandled {
+                                    loc: loc.to_owned(),
+                                    branch: branch.to_owned(),
+                                })?
+                            }
+                        }
+                    }
+
+                    for (recive, _) in &node.recive_from_blocks {
+                        if !handled.contains(&recive.name) {
+                            Err(IrError::Unkown { 
+                                what: "block".into(), 
+                                name: recive.name.to_owned(), 
+                                loc: loc.to_owned() 
+                            })?
+                        }
                     }
                 } else if let Some(node) = any.downcast_ref::<Switch>() {
                     self.analyze_switch(func, &mut vars, node, loc)?;

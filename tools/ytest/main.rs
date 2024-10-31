@@ -144,12 +144,17 @@ fn main() {
 
         match cmd.status() {
             Ok(status) => {
+                if parsed.ignore_fail {
+                    code = status.code().expect("expected exit code") as u32;
+                    continue;
+                }
+
                 if !status.success() {
                     if let Some(exit_code) = status.code() {
                         code = exit_code as u32;
 
                         if let Some(expected_code) = parsed.expected_code {
-                            if expected_code == 0 || (cli.opt("exit") && code == (-1i32 as u32)) && !parsed.ignore_fail {
+                            if (expected_code == 0 || (cli.opt("exit")) && code == (-1i32 as u32)) && !parsed.ignore_fail {
                                 println!("{}: the programm didn't exit sucessfull with code {}", "Error".red().bold(), exit_code);
                                 if !cli.opt("no-exit") {
                                     exit(-1);
@@ -208,5 +213,10 @@ fn main() {
         } else {
             println!("expected exit code {} matched with found one {}", expected_code, code);
         }
+    }
+
+    if parsed.ignore_fail && code == 0 { // expected fail but it did not fail
+        println!("{}: expect fail", "Error".red().bold());  
+        exit(-1);
     }
 }

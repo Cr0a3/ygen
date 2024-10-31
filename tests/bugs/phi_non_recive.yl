@@ -1,0 +1,22 @@
+# RUN:
+cargo run -p ylc -- -in=%s -fmt
+# IN:
+
+define void @main() {
+  entry:
+    %tmp = i32 0
+    br loop
+
+  loop:
+    %0 = phi i64 [ %tmp, entry %1, loop ]
+    %1 = sub i64 %0, 1
+    br cond %0 end, loop
+
+  abc:
+    br loop
+
+  end:
+    ret void 0
+
+}
+# EXPECT_FAIL

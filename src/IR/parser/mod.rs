@@ -131,6 +131,14 @@ pub enum IrError {
         /// expected amount
         expected: usize,
     },
+
+    /// a block branches to a phi node, but the input of the block is not handled
+    PhiBranchNotHandled {
+        /// location
+        loc: Loc,
+        /// the branch name
+        branch: String,
+    }
 }
 
 impl Display for IrError {
@@ -314,6 +322,17 @@ impl Display for IrError {
 
                 fab.setCodeLine(loc.line_string.to_owned());
                 fab.addWhere(format!("to many arguments were supplyed - expected {expected}"), loc.coloumn, loc.length);
+
+                fab.to_string()
+            },
+
+            IrError::PhiBranchNotHandled { loc, branch } => {
+                let mut fab = Support::Error::new("unhandled phi branch", "", "", "");
+
+                fab.deactivateLocationDisplay();
+
+                fab.setCodeLine(loc.line_string.to_owned());
+                fab.addWhere(format!("block {branch} can branch to the phi node but there is no specified input"), loc.coloumn, loc.length);
 
                 fab.to_string()
             }

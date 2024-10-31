@@ -1,4 +1,4 @@
-use crate::{prelude::Call, Optimizations::Pass, IR::{FuncId, Var}};
+use crate::{prelude::{Call, Phi}, Optimizations::Pass, IR::{FuncId, Var}};
 
 /// ## Pass DeadNodeElimination <br>
 /// deletes unused nodes
@@ -11,49 +11,65 @@ pub fn DeadNodeElimination() -> Box<dyn Pass> {
 
 impl Pass for DeadNodeElimination_ {
     fn run_func(&self, func: &mut crate::prelude::Function) {
-        let mut used: Vec<String> = Vec::new();
+        for _ in 0..2 { // iterate two times, cuz then we can remove dependants with a dept of 1
+            let mut used: Vec<String> = Vec::new();
 
-        let mut to_remove = Vec::new();
+            let mut to_remove = Vec::new();
 
-        for block in func.blocks.iter().rev() {
-            let iter = block.nodes.iter();
-            let iter = iter.rev();
+            // first iterate over all phis
 
-            let mut index = iter.len() as i32;
-
-            for node in iter {
-                let inputs =  node.inputs();
-                let out = node.output();
-    
-                for input in inputs {
-                    if !used.contains(&input.name) {
-                        used.push(input.name);
-                    }
-                }
-
-                if let Some(out) = out {
-                    if !used.contains(&out.name) {
-                        if let Some(_) = node.as_any().downcast_ref::<Call<FuncId, Vec<Var>, Var>>() {} else {
-                            // node isn't a call
-                            to_remove.push((block.name.clone(), index - 1));
+            for block in func.blocks.iter() {
+                for node in &block.nodes {
+                    if let Some(phi) = node.as_any().downcast_ref::<Phi>() {
+                        for (_, reciver) in &phi.recive_from_blocks {
+                            used.push(reciver.name.to_owned());
                         }
                     }
                 }
-    
-                index -= 1;
             }
-        }
 
-        for block in &mut func.blocks {
-            let mut off = 0;
+            // now we can iterate over all normal nodes
 
-            for (target_block, node) in &to_remove {
-                if target_block == &block.name {
-                    block.nodes.remove((*node - off) as usize);
+            for block in func.blocks.iter().rev() {
+                let iter = block.nodes.iter();
+                let iter = iter.rev();
 
-                    off += 1;
+                let mut index = iter.len() as i32;
+
+                for node in iter {
+                    let inputs =  node.inputs();
+                    let out = node.output();
+        
+                    for input in inputs {
+                        if !used.contains(&input.name) {
+                            used.push(input.name);
+                        }
+                    }
+
+                    if let Some(out) = out {
+                        if !used.contains(&out.name) {
+                            if let Some(_) = node.as_any().downcast_ref::<Call<FuncId, Vec<Var>, Var>>() {} else {
+                                // node isn't a call
+                                to_remove.push((block.name.clone(), index - 1));
+                            }
+                        }
+                    }
+        
+                    index -= 1;
                 }
             }
-        }
+
+            for block in &mut func.blocks {
+                let mut off = 0;
+
+                for (target_block, node) in &to_remove {
+                    if target_block == &block.name {
+                        block.nodes.remove((*node - off) as usize);
+
+                        off += 1;
+                    }
+                }
+            }
+        }  
     }
 }

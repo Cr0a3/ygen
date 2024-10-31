@@ -1,0 +1,26 @@
+# RUN:
+cargo run -p ylc -- -in=%s -passes=dne -fmt
+# IN:
+
+define void @main() {
+  entry:
+    br loop
+  loop:
+    %0 = phi i64 [%1, loop]
+    %1 = sub i64 %0, 1
+    br cond %0 end, loop
+  end:
+    ret void 0
+}
+
+# STDOUT:
+define void @main() {
+    entry:
+        br loop
+    loop:
+        %0 = phi i64 [%1, loop]
+        %1 = sub i64 %0, 1
+        br cond %0 end, loop
+    end:
+        ret void 0
+}
