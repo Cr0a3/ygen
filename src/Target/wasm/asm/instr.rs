@@ -569,3 +569,185 @@ impl From<WasmMCInstr> for Box<dyn MCInstr> {
         Box::new( value )
     }
 }
+
+impl<'a> Into<wasm_encoder::Instruction<'a>> for WasmMCInstr {
+    fn into(self) -> wasm_encoder::Instruction<'a> {
+        use wasm_encoder::Instruction;
+        match self.mnemonic {
+            WasmMnemonic::Get => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::Local => Instruction::LocalGet(match self.op1.unwrap() { WasmOperand::Var(num) => num as u32, _ => panic!()}),
+                WasmPrefix::Global => Instruction::GlobalGet(match self.op1.unwrap() { WasmOperand::Var(num) => num as u32, _ => panic!()}),
+                _ => panic!(),
+            }},
+            WasmMnemonic::Set => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::Local => Instruction::LocalSet(match self.op1.unwrap() { WasmOperand::Var(num) => num as u32, _ => panic!()}),
+                WasmPrefix::Global => Instruction::GlobalSet(match self.op1.unwrap() { WasmOperand::Var(num) => num as u32, _ => panic!()}),
+                _ => panic!(),
+            }},
+            WasmMnemonic::Const => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32Const(match self.op1.unwrap() { WasmOperand::Const(num) => num as i32, _ => panic!()}),
+                WasmPrefix::i64 => Instruction::I64Const(match self.op1.unwrap() { WasmOperand::Const(num) => num as i64, _ => panic!()}),
+                WasmPrefix::f32 => Instruction::F32Const(match self.op1.unwrap() { WasmOperand::Const(num) => num as f32, _ => panic!()}),
+                WasmPrefix::f64 => Instruction::F64Const(match self.op1.unwrap() { WasmOperand::Const(num) => num as f64, _ => panic!()}),
+                _ => panic!(),
+            }},
+            WasmMnemonic::Add => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32Add,
+                WasmPrefix::i64 => Instruction::I64Add,
+                WasmPrefix::f32 => Instruction::F32Add,
+                WasmPrefix::f64 => Instruction::F64Add,
+                _ => panic!()
+            }},
+            WasmMnemonic::Mul => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32Mul,
+                WasmPrefix::i64 => Instruction::I64Mul,
+                WasmPrefix::f32 => Instruction::F32Mul,
+                WasmPrefix::f64 => Instruction::F64Mul,
+                _ => panic!()
+            }},
+            WasmMnemonic::Sub => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32Sub,
+                WasmPrefix::i64 => Instruction::I64Sub,
+                WasmPrefix::f32 => Instruction::F32Sub,
+                WasmPrefix::f64 => Instruction::F64Sub,
+                _ => panic!()
+            }},
+            WasmMnemonic::Div => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::f32 => Instruction::F32Div,
+                WasmPrefix::f64 => Instruction::F64Div,
+                _ => panic!()
+            }},
+            WasmMnemonic::Divs => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32DivS,
+                WasmPrefix::i64 => Instruction::I64DivS,
+                _ => panic!()
+            }},
+            WasmMnemonic::Divu => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32DivU,
+                WasmPrefix::i64 => Instruction::I64DivU,
+                _ => panic!()
+            }},
+            WasmMnemonic::Rems => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32RemS,
+                WasmPrefix::i64 => Instruction::I64RemS,
+                _ => panic!()
+            }},
+            WasmMnemonic::Remu => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32RemU,
+                WasmPrefix::i64 => Instruction::I64RemU,
+                _ => panic!()
+            }},
+            WasmMnemonic::Return => Instruction::Return,
+            WasmMnemonic::Eq => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32Eq,
+                WasmPrefix::i64 => Instruction::I64Eq,
+                WasmPrefix::f32 => Instruction::F32Eq,
+                WasmPrefix::f64 => Instruction::F64Eq,
+                _ => panic!()
+            }},
+            WasmMnemonic::Ne => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32Ne,
+                WasmPrefix::i64 => Instruction::I64Ne,
+                WasmPrefix::f32 => Instruction::F32Ne,
+                WasmPrefix::f64 => Instruction::F64Ne,
+                _ => panic!()
+            }},
+            WasmMnemonic::Gt => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::f32 => Instruction::F32Gt,
+                WasmPrefix::f64 => Instruction::F64Gt,
+                _ => panic!()
+            }},
+            WasmMnemonic::Gts => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32GtS,
+                WasmPrefix::i64 => Instruction::I64GtS,
+                _ => panic!()
+            }},
+            WasmMnemonic::Gtu => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32GtU,
+                WasmPrefix::i64 => Instruction::I64GtU,
+                _ => panic!()
+            }},
+            WasmMnemonic::Lt => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::f32 => Instruction::F32Lt,
+                WasmPrefix::f64 => Instruction::F64Lt,
+                _ => panic!()
+            }},
+            WasmMnemonic::Lts => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32LtS,
+                WasmPrefix::i64 => Instruction::I64LtS,
+                _ => panic!()
+            }},
+            WasmMnemonic::Ltu => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32LtU,
+                WasmPrefix::i64 => Instruction::I64LtU,
+                _ => panic!()
+            }},
+            WasmMnemonic::Ge => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::f32 => Instruction::F32Ge,
+                WasmPrefix::f64 => Instruction::F64Ge,
+                _ => panic!()
+            }},
+            WasmMnemonic::Ges => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32GeS,
+                WasmPrefix::i64 => Instruction::I64GeS,
+                _ => panic!()
+            }},
+            WasmMnemonic::Geu => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32GeU,
+                WasmPrefix::i64 => Instruction::I64GeU,
+                _ => panic!()
+            }},
+            WasmMnemonic::Le => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::f32 => Instruction::F32Le,
+                WasmPrefix::f64 => Instruction::F64Le,
+                _ => panic!()
+            }},
+            WasmMnemonic::Les => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32LeS,
+                WasmPrefix::i64 => Instruction::I64LeS,
+                _ => panic!()
+            }},
+            WasmMnemonic::Leu => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32LeU,
+                WasmPrefix::i64 => Instruction::I64LeU,
+                _ => panic!()
+            }},
+            WasmMnemonic::And => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32And,
+                WasmPrefix::i64 => Instruction::I64And,
+                _ => panic!()
+            }},
+            WasmMnemonic::Xor => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32Xor,
+                WasmPrefix::i64 => Instruction::I64Xor,
+                _ => panic!()
+            }},
+            WasmMnemonic::Or => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32Or,
+                WasmPrefix::i64 => Instruction::I64Or,
+                _ => panic!()
+            }},
+            WasmMnemonic::Shl => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32Shl,
+                WasmPrefix::i64 => Instruction::I64Shl,
+                _ => panic!()
+            }},
+            WasmMnemonic::Shrs => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32ShrS,
+                WasmPrefix::i64 => Instruction::I64ShrS,
+                _ => panic!()
+            }},
+            WasmMnemonic::Shru => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32ShrU,
+                WasmPrefix::i64 => Instruction::I64ShrU,
+                _ => panic!()
+            }},
+            WasmMnemonic::Neg => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::f32 => Instruction::F32Neg,
+                WasmPrefix::f64 => Instruction::F64Neg,
+                _ => panic!(),
+            }},
+            WasmMnemonic::BlockLink(_) => Instruction::Br(0),
+        }
+    }
+}

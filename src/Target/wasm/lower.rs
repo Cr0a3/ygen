@@ -75,7 +75,7 @@ pub(crate) fn wasm_lower(_: CallConv, instrs: Vec<MachineInstr>) -> Vec<Box<dyn 
         wasm_lower_instr(&mut out, instr.clone());
     }
 
-    out.optimize();
+    out = out.optimize();
 
     let mut mc_instrs = vec![];
 
@@ -88,18 +88,18 @@ pub(crate) fn wasm_lower(_: CallConv, instrs: Vec<MachineInstr>) -> Vec<Box<dyn 
 
 /// This functions constructs the types for the variables
 /// (Used for creating the `.local ty1, ...` stuff)
-pub(crate) fn wasm_construct_local_types(instrs: Vec<MachineInstr>) -> HashMap<i32, TypeMetadata> {
+pub(crate) fn wasm_construct_local_types(instrs: &Vec<MachineInstr>) -> HashMap<i32, TypeMetadata> {
     let mut types = HashMap::new();
 
     for instr in instrs {
-        for operand in instr.operands {
+        for operand in &instr.operands {
             match operand {
                 MachineOperand::Imm(_) => {},
                 MachineOperand::Reg(reg) => match reg {
-                    crate::CodeGen::Reg::wasm(num, type_metadata) => if let Some(element) = types.get_mut(&num) {
-                        *element = type_metadata;
+                    crate::CodeGen::Reg::wasm(num, type_metadata) => if let Some(element) = types.get_mut(num) {
+                        *element = *type_metadata;
                     } else {
-                        types.insert(num, type_metadata);
+                        types.insert(*num, *type_metadata);
                     },
                     _ => panic!("wasm functions expect wasm registers")
                 },

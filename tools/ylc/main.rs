@@ -86,7 +86,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         },
     };
 
-    let mut outfile = match File::options().create(true).write(true).open(&outfile) {
+    let mut outfile = match File::options().create(true).write(true).truncate(true).open(&outfile) {
         Ok(file) => file,
         Err(err) => {
             println!("{}: {} {}", "Error".red().bold(), outfile, err);

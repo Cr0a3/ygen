@@ -55,7 +55,7 @@ impl AsmPrinter for WasmAsmPrinter {
                 );
             }
 
-            let types = wasm_construct_local_types(mc_instrs);
+            let types = wasm_construct_local_types(&mc_instrs);
 
             let mut fmt_types = String::new();
             let mut index = 0;

@@ -70,7 +70,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
             &mut initializeAllTargets(triple)?,
             false // is debugging metadata enabled
         )?.0.emit(
-            OpenOptions::new().write(true).create(true).open("out.o")?, 
+            OpenOptions::new().write(true).truncate(true).create(true).open("out.o")?, 
             None // if debugging metadata is enabled here is the outputed metadata
     )?;
 
