@@ -85,6 +85,10 @@ impl Ir for Cmp {
         vec![self.ls.to_owned(), self.rs.to_owned()]
     }
     
+    fn inputs_mut(&mut self) -> Vec<&mut Var> {
+        vec![&mut self.ls, &mut self.rs]
+    }
+    
     fn output(&self) -> Option<Var> {
         Some(self.out.to_owned())
     }

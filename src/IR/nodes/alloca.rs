@@ -40,6 +40,10 @@ impl Ir for Alloca<Var, TypeMetadata> {
         vec![]
     }
     
+    fn inputs_mut(&mut self) -> Vec<&mut Var> {
+        vec![]
+    }
+    
     fn output(&self) -> Option<Var> {
         Some(self.inner1.to_owned())
     }

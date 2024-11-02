@@ -83,6 +83,10 @@ impl Ir for Switch {
     fn inputs(&self) -> Vec<Var> {
         vec![self.to_switch.to_owned()]
     }
+    
+    fn inputs_mut(&mut self) -> Vec<&mut Var> {
+        vec![&mut self.to_switch]
+    }
 
     fn output(&self) -> Option<Var> {
         None

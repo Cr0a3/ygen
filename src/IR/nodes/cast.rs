@@ -52,6 +52,10 @@ impl Ir for Cast<Var, TypeMetadata, Var> {
         vec![self.inner1.to_owned()]
     }
     
+    fn inputs_mut(&mut self) -> Vec<&mut Var> {
+        vec![&mut self.inner1]
+    }
+    
     fn output(&self) -> Option<Var> {
         Some(self.inner3.to_owned())
     }

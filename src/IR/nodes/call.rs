@@ -86,6 +86,10 @@ impl Ir for Call<FuncId, Vec<Var>, Var> {
         self.inner2.to_owned()
     }
     
+    fn inputs_mut(&mut self) -> Vec<&mut Var> {
+        self.inner2.iter_mut().collect::<Vec<&mut Var>>()
+    }
+    
     fn output(&self) -> Option<Var> {
         Some(self.inner3.to_owned())
     }

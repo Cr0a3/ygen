@@ -45,6 +45,10 @@ impl Ir for Return<Type> {
         vec![]
     }
     
+    fn inputs_mut(&mut self) -> Vec<&mut Var> {
+        vec![]
+    }
+    
     fn output(&self) -> Option<Var> {
         None
     }
@@ -106,6 +110,10 @@ impl Ir for Return<Var> {
     
     fn inputs(&self) -> Vec<Var> {
         vec![self.inner1.to_owned()]
+    }
+    
+    fn inputs_mut(&mut self) -> Vec<&mut Var> {
+        vec![&mut self.inner1]
     }
     
     fn output(&self) -> Option<Var> {

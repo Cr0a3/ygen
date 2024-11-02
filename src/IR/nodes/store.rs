@@ -51,6 +51,10 @@ impl Ir for Store<Var, Var> {
         vec![self.inner1.to_owned(), self.inner2.to_owned()]
     }
     
+    fn inputs_mut(&mut self) -> Vec<&mut Var> {
+        vec![&mut self.inner1, &mut self.inner2]
+    }
+    
     fn output(&self) -> Option<Var> {
         None // technicly the ptr is the output
     }
@@ -108,6 +112,10 @@ impl Ir for Store<Var, Type> {
     
     fn inputs(&self) -> Vec<Var> {
         vec![self.inner1.to_owned()]
+    }
+    
+    fn inputs_mut(&mut self) -> Vec<&mut Var> {
+        vec![&mut self.inner1]
     }
     
     fn output(&self) -> Option<Var> {

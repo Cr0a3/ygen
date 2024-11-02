@@ -63,6 +63,10 @@ impl Ir for GetElemPtr {
         vec![self.ptr.to_owned(), self.index.to_owned()]
     }
 
+    fn inputs_mut(&mut self) -> Vec<&mut Var> {
+        vec![&mut self.ptr, &mut self.index]
+    }
+
     fn output(&self) -> Option<Var> {
         Some(self.out.to_owned())
     }

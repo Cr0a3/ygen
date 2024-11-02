@@ -284,6 +284,9 @@ pub trait Ir: Debug + Any + EvalOptVisitor + IsNode {
         other.dump() == self.dump()
     }
 
+    /// returns a mutable reference to the vars used by the node as input
+    fn inputs_mut(&mut self) -> Vec<&mut Var>;
+
     /// returns the vars used by the node as input
     fn inputs(&self) -> Vec<Var>;
 

@@ -110,6 +110,10 @@ macro_rules! MathIrNode {
             fn inputs(&self) -> Vec<Var> {
                 vec![]
             }
+    
+            fn inputs_mut(&mut self) -> Vec<&mut Var> {
+                vec![]
+            }
             
             fn output(&self) -> Option<Var> {
                 Some(self.inner3.to_owned())
@@ -173,6 +177,10 @@ macro_rules! MathIrNode {
             fn inputs(&self) -> Vec<Var> {
                 vec![self.inner1.to_owned(), self.inner2.to_owned()]
             }
+    
+            fn inputs_mut(&mut self) -> Vec<&mut Var> {
+                vec![&mut self.inner1, &mut self.inner2]
+            }
             
             fn output(&self) -> Option<Var> {
                 Some(self.inner3.to_owned())
@@ -235,6 +243,10 @@ macro_rules! MathIrNode {
 
             fn inputs(&self) -> Vec<Var> {
                 vec![self.inner1.to_owned()]
+            }
+    
+            fn inputs_mut(&mut self) -> Vec<&mut Var> {
+                vec![&mut self.inner1]
             }
             
             fn output(&self) -> Option<Var> {

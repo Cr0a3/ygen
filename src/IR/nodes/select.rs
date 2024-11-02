@@ -54,6 +54,10 @@ impl Ir for Select<Type, Type> {
     fn inputs(&self) -> Vec<Var> {
         vec![self.cond.to_owned()]
     }
+    
+    fn inputs_mut(&mut self) -> Vec<&mut Var> {
+        vec![&mut self.cond]
+    }
 
     fn output(&self) -> Option<Var> {
         Some(self.out.clone())
@@ -131,6 +135,10 @@ impl Ir for Select<Var, Type> {
     fn inputs(&self) -> Vec<Var> {
         vec![self.cond.to_owned(), self.yes.clone()]
     }
+    
+    fn inputs_mut(&mut self) -> Vec<&mut Var> {
+        vec![&mut self.cond, &mut self.yes]
+    }
 
     fn output(&self) -> Option<Var> {
         Some(self.out.clone())
@@ -203,7 +211,11 @@ impl Ir for Select<Type, Var> {
     }
 
     fn inputs(&self) -> Vec<Var> {
-        vec![self.cond.to_owned()]
+        vec![self.cond.to_owned(), self.no.to_owned()]
+    }
+    
+    fn inputs_mut(&mut self) -> Vec<&mut Var> {
+        vec![&mut self.cond, &mut self.no]
     }
 
     fn output(&self) -> Option<Var> {
@@ -275,7 +287,11 @@ impl Ir for Select<Var, Var> {
     }
 
     fn inputs(&self) -> Vec<Var> {
-        vec![self.cond.to_owned(), self.yes.clone()]
+        vec![self.cond.to_owned(), self.yes.to_owned(), self.no.to_owned()]
+    }
+    
+    fn inputs_mut(&mut self) -> Vec<&mut Var> {
+        vec![&mut self.cond, &mut self.yes, &mut self.no]
     }
 
     fn output(&self) -> Option<Var> {

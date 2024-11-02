@@ -51,6 +51,10 @@ impl Ir for Assign<Var, Type> {
         vec![]
     }
     
+    fn inputs_mut(&mut self) -> Vec<&mut Var> {
+        vec![]
+    }
+    
     fn output(&self) -> Option<Var> {
         Some(self.inner1.to_owned())
     }
@@ -117,6 +121,10 @@ impl Ir for Assign<Var, Var> {
         vec![self.inner2.to_owned()]
     }
     
+    fn inputs_mut(&mut self) -> Vec<&mut Var> {
+        vec![&mut self.inner2]
+    }
+    
     fn output(&self) -> Option<Var> {
         Some(self.inner1.to_owned())
     }
@@ -174,6 +182,10 @@ impl Ir for Assign<Var, Const> {
     
     
     fn inputs(&self) -> Vec<Var> {
+        vec![]
+    }
+    
+    fn inputs_mut(&mut self) -> Vec<&mut Var> {
         vec![]
     }
     

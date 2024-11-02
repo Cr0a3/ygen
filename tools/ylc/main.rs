@@ -124,7 +124,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         println!("{:?}", parser.out);
     } 
 
-    match IrSemnatic::new(&parser.out).verify() {
+    match IrSemnatic::new(&mut parser.out).verify() {
         Ok(_) => {},
         Err(err) => {
             println!("{}", err);

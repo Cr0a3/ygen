@@ -70,6 +70,16 @@ impl Ir for Phi {
         inputs
     }
 
+    fn inputs_mut(&mut self) -> Vec<&mut crate::prelude::Var> {
+        let mut inputs = Vec::new();
+
+        for (_, reciv) in &mut self.recive_from_blocks {
+            inputs.push( reciv );
+        }
+
+        inputs
+    }
+
     fn output(&self) -> Option<crate::prelude::Var> {
         Some(self.out.to_owned())
     }

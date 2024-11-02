@@ -353,7 +353,7 @@ impl Module {
         let mut parser = parser::IrParser::new(lexer.out);
         parser.parse()?;
 
-        semnatic::IrSemnatic::new(&parser.out).verify()?;
+        semnatic::IrSemnatic::new(&mut parser.out).verify()?;
 
         let mut gen = gen::IrGen::new(parser.out);
 

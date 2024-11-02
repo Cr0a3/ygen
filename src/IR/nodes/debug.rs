@@ -53,6 +53,10 @@ impl Ir for DebugNode {
     fn inputs(&self) -> Vec<crate::prelude::Var> {
         vec![]
     }
+    
+    fn inputs_mut(&mut self) -> Vec<&mut crate::prelude::Var> {
+        vec![]
+    }
 
     fn output(&self) -> Option<crate::prelude::Var> {
         None

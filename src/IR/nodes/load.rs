@@ -51,6 +51,11 @@ impl Ir for Load<Var, Var, TypeMetadata> {
         vec![self.inner2.to_owned()]
     }
     
+    fn inputs_mut(&mut self) -> Vec<&mut Var> {
+        vec![&mut self.inner2]
+    }
+    
+    
     fn output(&self) -> Option<Var> {
         Some(self.inner1.to_owned())
     }
