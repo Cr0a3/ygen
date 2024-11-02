@@ -1,5 +1,7 @@
-use super::{Assign, EvalOptVisitor, Ir, Select};
-use crate::{prelude::{Type, TypeMetadata, Var}, Support::ColorClass, IR::Function};
+use std::any::{Any, TypeId};
+
+use super::{Assign, EvalOptVisitor, Ir, IsNode, Select};
+use crate::{prelude::{Type, TypeMetadata, Var}, Support::{AsAny, ColorClass}, IR::Function};
 
 impl Ir for Select<Type, Type> {
     fn dump(&self) -> String {
@@ -295,6 +297,89 @@ impl EvalOptVisitor for Select<Var, Var> {
     }
 }
 
+impl<T, U> IsNode for Select<T, U> 
+    where T: std::fmt::Debug + Clone + PartialEq + Eq + AsAny,
+        U: std::fmt::Debug + Clone + PartialEq + Eq + AsAny,
+{
+    fn is_select(&self) -> bool {
+        true
+    }
+}
+impl<T, U> Select<T, U> 
+    where T: std::fmt::Debug + Clone + PartialEq + Eq + AsAny + 'static,
+        U: std::fmt::Debug + Clone + PartialEq + Eq + AsAny + 'static,
+{
+    /// Returns the condition
+    pub fn getCondition(&self) -> Var {
+        self.cond.to_owned()
+    }
+
+    /// Returns the output variable
+    pub fn getOut(&self) -> Var {
+        self.out.to_owned()
+    }
+
+    /// Returns the type
+    pub fn getSelType(&self) -> TypeMetadata {
+        self.out.ty
+    }
+
+    /// Returns if the true value is a variable
+    pub fn isTrueVar(&self) -> bool {
+        self.yes.type_id() == TypeId::of::<Var>()
+    }
+
+    /// Returns if the false value is a variable
+    pub fn isFalseVar(&self) -> bool {
+        self.no.type_id() == TypeId::of::<Var>()
+    }
+
+    /// Returns if the true value is a constant
+    pub fn isTrueConst(&self) -> bool {
+        self.yes.type_id() == TypeId::of::<Type>()
+    }
+
+    /// Returns if the false value is a constant
+    pub fn isFalseConst(&self) -> bool {
+        self.no.type_id() == TypeId::of::<Type>()
+    }
+
+    /// Returns the true value as a variable
+    /// 
+    /// ### Panics
+    /// 
+    /// panics if the true value is not a variable so first check
+    pub fn getTrueVar(&self) -> Var {
+        self.yes.as_any().downcast_ref::<Var>().unwrap().clone()
+    }
+
+    /// Returns if the false value is a variable
+    /// 
+    /// ### Panics
+    /// 
+    /// panics if the false value is not a variable so first check
+    pub fn getFalseVar(&self) -> bool {
+        self.no.type_id() == TypeId::of::<Var>()
+    }
+
+    /// Returns the true value as a constant
+    /// 
+    /// ### Panics
+    /// 
+    /// panics if the true value is not a constant so first check
+    pub fn getTrueConst(&self) -> Type {
+        self.yes.as_any().downcast_ref::<Type>().unwrap().clone()
+    }
+
+    /// Returns the false value as a constant
+    /// 
+    /// ### Panics
+    /// 
+    /// panics if the false value is not a constant so first check
+    pub fn getFalseConst(&self) -> Type {
+        self.no.as_any().downcast_ref::<Type>().unwrap().clone()
+    }
+}
 /// This trait is used to build the select node
 pub trait BuildSelect<T, U> {
     /// The select node.

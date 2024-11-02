@@ -1,7 +1,7 @@
 use crate::Support::ColorClass;
 use crate::IR::{Block, Function, TypeMetadata, Var};
 
-use super::{EvalOptVisitor, Ir, Phi};
+use super::{EvalOptVisitor, Ir, IsNode, Phi};
 
 impl Ir for Phi {
     fn dump(&self) -> String {
@@ -82,6 +82,12 @@ impl EvalOptVisitor for Phi {
 
     fn eval(&self) -> Option<Box<dyn Ir>> {
         None
+    }
+}
+
+impl IsNode for Phi {
+    fn is_phi(&self) -> bool {
+        true
     }
 }
 

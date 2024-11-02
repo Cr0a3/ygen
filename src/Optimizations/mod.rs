@@ -5,6 +5,9 @@ pub mod Passes;
 /// all analysis functions
 pub mod Analysis;
 
+/// Instruction combining
+pub(crate) mod InstrCombine;
+
 pub use mngr::PassManager;
 pub use template::Pass;
 /// used for optimizing

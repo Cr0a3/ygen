@@ -78,6 +78,12 @@ impl EvalOptVisitor for GetElemPtr {
     }
 }
 
+impl IsNode for GetElemPtr {
+    fn is_getelemptr(&self) -> bool {
+        true
+    }
+}
+
 impl Function {
     /// Builds the `getelemptr` node.
     /// It is used for example in this c code:

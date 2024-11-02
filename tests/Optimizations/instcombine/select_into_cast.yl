@@ -1,0 +1,19 @@
+# RUN:
+cargo run -p ylc -- -in=%s -passes=instcombine -fmt
+# IN:
+
+define i32 @main() {
+  entry:
+    %1 = i8 1
+    %2 = select i32 %1, i32 1, i32 0
+    ret i32 %2
+}
+
+# STDOUT:
+
+define void @main() {
+  entry:
+    %1 = i8 1
+    %2 = cast i8 %1 to i32
+    ret i32 %2
+}

@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use crate::{Support::ColorClass, IR::Function};
 
-use super::{EvalOptVisitor, Ir};
+use super::{EvalOptVisitor, Ir, IsNode};
 
 /// A node which startes a debugging line programm
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -66,6 +66,12 @@ impl EvalOptVisitor for DebugNode {
 
     fn eval(&self) -> Option<Box<dyn Ir>> {
         None
+    }
+}
+
+impl IsNode for DebugNode {
+    fn is_debug(&self) -> bool {
+        true
     }
 }
 

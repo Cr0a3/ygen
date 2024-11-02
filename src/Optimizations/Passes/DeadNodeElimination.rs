@@ -34,7 +34,7 @@ impl Pass for DeadNodeElimination_ {
                 let iter = block.nodes.iter();
                 let iter = iter.rev();
 
-                let mut index = iter.len() as i32;
+                let mut index = iter.len();
 
                 for node in iter {
                     let inputs =  node.inputs();
@@ -54,19 +54,19 @@ impl Pass for DeadNodeElimination_ {
                             }
                         }
                     }
-        
+
                     index -= 1;
                 }
             }
 
             for block in &mut func.blocks {
-                let mut off = 0;
+                let off = 0;
 
                 for (target_block, node) in &to_remove {
                     if target_block == &block.name {
                         block.nodes.remove((*node - off) as usize);
 
-                        off += 1;
+                        //off += 1;
                     }
                 }
             }

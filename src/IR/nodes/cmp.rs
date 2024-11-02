@@ -3,7 +3,7 @@ use std::fmt::Display;
 use crate::Support::ColorClass;
 use crate::IR::{Function, Type, TypeMetadata, Var, VerifyError};
 
-use super::{Assign, Cmp, EvalOptVisitor, Ir};
+use super::{Assign, Cmp, EvalOptVisitor, Ir, IsNode};
 
 /// The "compare mode" (e.g: ls is equal to rs)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -110,6 +110,12 @@ impl EvalOptVisitor for Cmp {
                 self.out.ty, yes as f64
             )))
         } else { None }
+    }
+}
+
+impl IsNode for Cmp {
+    fn is_cmp(&self) -> bool {
+        true
     }
 }
 

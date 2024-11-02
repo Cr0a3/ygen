@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{Support::ColorClass, IR::{BlockId, Function, Type, TypeMetadata, Var}};
 
-use super::{Br, EvalOptVisitor, Ir};
+use super::{Br, EvalOptVisitor, Ir, IsNode};
 
 /// The switch node is used to switch
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -100,6 +100,12 @@ impl EvalOptVisitor for Switch {
             Some(Br::new(self.default.to_owned()))
 
         } else { None }
+    }
+}
+
+impl IsNode for Switch {
+    fn is_switch(&self) -> bool {
+        true
     }
 }
 

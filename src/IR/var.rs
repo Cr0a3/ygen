@@ -29,6 +29,12 @@ impl Var {
     }
 }
 
+impl crate::Support::AsAny for Var {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
 /// Creates a new variable
 pub fn Var(block: &mut Block, ty: TypeMetadata) -> Var {
     Var::new(block, ty)

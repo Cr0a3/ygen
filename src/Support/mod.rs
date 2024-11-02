@@ -39,3 +39,8 @@ impl PrintErrorAndExit for Result<(), VerifyError> {
         }
     }
 }
+
+#[doc(hidden)]
+pub trait AsAny {
+    fn as_any(&self) -> &dyn std::any::Any;
+}

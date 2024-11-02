@@ -34,7 +34,7 @@ pub use select::*;
 pub use getelemptr::*;
 
 macro_rules! IrTypeWith3 {
-    ($name:tt, $param1:tt, $param2:tt, $param3:tt) => {
+    ($name:tt, $param1:tt, $param2:tt, $param3:tt, $is_func:ident) => {
         /// An Ir node
         #[derive(Debug, Clone, PartialEq, Eq, Hash)]
         pub struct $name<$param1, $param2, $param3> {
@@ -60,10 +60,16 @@ macro_rules! IrTypeWith3 {
                 )
             }
         }
+
+        impl<$param1, $param2, $param3> IsNode for $name<$param1, $param2, $param3> {
+            fn $is_func(&self) -> bool {
+                true
+            }
+        }
     };
 }
 macro_rules! IrTypeWith2 {
-    ($name:tt, $param1:tt, $param2:tt) => {
+    ($name:tt, $param1:tt, $param2:tt, $is_func:ident) => {
         /// An Ir node
         #[derive(Debug, Clone, PartialEq, Eq, Hash)]
         pub struct $name<$param1, $param2> {
@@ -86,10 +92,16 @@ macro_rules! IrTypeWith2 {
                 )
             }
         }
+
+        impl<$param1, $param2> IsNode for $name<$param1, $param2> {
+            fn $is_func(&self) -> bool {
+                true
+            }
+        }
     };
 }
 macro_rules! IrTypeWith1 {
-    ($name:tt, $param1:tt) => {
+    ($name:tt, $param1:tt, $is_func:ident) => {
         /// An Ir node
         #[derive(Debug, Clone, PartialEq, Eq, Hash)]
         pub struct $name<$param1> {
@@ -109,35 +121,41 @@ macro_rules! IrTypeWith1 {
                 )
             }
         }
+
+        impl<$param1> IsNode for $name<$param1> {
+            fn $is_func(&self) -> bool {
+                true
+            }
+        }
     };
 }
 
-IrTypeWith1!(Return, T);
-IrTypeWith3!(Call, T, U, Z);
+IrTypeWith1!(Return, T, is_ret);
+IrTypeWith3!(Call, T, U, Z, is_call);
 
-IrTypeWith2!(Assign, T, U);
+IrTypeWith2!(Assign, T, U, is_assign);
 
-IrTypeWith3!(Cast, T, U, Z);
+IrTypeWith3!(Cast, T, U, Z, is_cast);
 
-IrTypeWith3!(Add, T, U, Z);
-IrTypeWith3!(Sub, T, U, Z);
-IrTypeWith3!(Xor, T, U, Z);
-IrTypeWith3!(Or, T, U, Z);
-IrTypeWith3!(And, T, U, Z);
-IrTypeWith3!(Mul, T, U, Z);
-IrTypeWith3!(Div, T, U, Z);
-IrTypeWith3!(Rem, T, U, Z);
-IrTypeWith3!(Shl, T, U, Z);
-IrTypeWith3!(Shr, T, U, Z);
+IrTypeWith3!(Add, T, U, Z, is_add);
+IrTypeWith3!(Sub, T, U, Z, is_sub);
+IrTypeWith3!(Xor, T, U, Z, is_xor);
+IrTypeWith3!(Or, T, U, Z, is_or);
+IrTypeWith3!(And, T, U, Z, is_and);
+IrTypeWith3!(Mul, T, U, Z, is_mul);
+IrTypeWith3!(Div, T, U, Z, is_div);
+IrTypeWith3!(Rem, T, U, Z, is_rem);
+IrTypeWith3!(Shl, T, U, Z, is_shl);
+IrTypeWith3!(Shr, T, U, Z, is_shr);
 
-IrTypeWith1!(Br, T);
-IrTypeWith3!(BrCond, T, U, Z);
+IrTypeWith1!(Br, T, is_br);
+IrTypeWith3!(BrCond, T, U, Z, is_brcond);
 
-IrTypeWith2!(Alloca, T, U);
-IrTypeWith2!(Store, T, U);
-IrTypeWith3!(Load, T, U, Z);
+IrTypeWith2!(Alloca, T, U, is_alloca);
+IrTypeWith2!(Store, T, U, is_store);
+IrTypeWith3!(Load, T, U, Z, is_load);
 
-IrTypeWith2!(Neg, T, U);
+IrTypeWith2!(Neg, T, U, is_neg);
 
 /// The cmp node is used to compare values
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -191,8 +209,8 @@ impl Phi {
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Select<T, U> 
-    where T: Debug + Clone + PartialEq + Eq,
-          U: Debug + Clone + PartialEq + Eq,
+    where T: Debug + Clone + PartialEq + Eq + AsAny,
+          U: Debug + Clone + PartialEq + Eq + AsAny,
 {
     pub(crate) out: Var,
     pub(crate) cond: Var,
@@ -201,9 +219,40 @@ pub struct Select<T, U>
     pub(crate) no: U,
 }
 
-use crate::Support::{ColorClass, ColorProfile};
+/// checks if the node is another node
+#[allow(missing_docs)]
+pub trait IsNode {
+    fn is_alloca(&self) -> bool { false }
+    fn is_assign(&self) -> bool { false }
+    fn is_cast(&self) -> bool { false }
+    fn is_br(&self) -> bool { false }
+    fn is_brcond(&self) -> bool { false }
+    fn is_call(&self) -> bool { false }
+    fn is_cmp(&self) -> bool { false }
+    fn is_debug(&self) -> bool { false }
+    fn is_getelemptr(&self) -> bool { false }
+    fn is_load(&self) -> bool { false }
+    fn is_add(&self) -> bool { false }
+    fn is_sub(&self) -> bool { false }
+    fn is_xor(&self) -> bool { false }
+    fn is_or(&self) -> bool { false }
+    fn is_and(&self) -> bool { false }
+    fn is_mul(&self) -> bool { false }
+    fn is_div(&self) -> bool { false }
+    fn is_rem(&self) -> bool { false }
+    fn is_shl(&self) -> bool { false }
+    fn is_shr(&self) -> bool { false }
+    fn is_neg(&self) -> bool { false }
+    fn is_phi(&self) -> bool { false }
+    fn is_ret(&self) -> bool { false }
+    fn is_select(&self) -> bool { false }
+    fn is_store(&self) -> bool { false }
+    fn is_switch(&self) -> bool { false }
+}
+
+use crate::Support::{AsAny, ColorClass, ColorProfile};
 /// The ir trait
-pub trait Ir: Debug + Any + EvalOptVisitor {
+pub trait Ir: Debug + Any + EvalOptVisitor + IsNode {
     /// Returns the ir node as his textual representation
     fn dump(&self) -> String;
     /// Returns the ir node as his textual representation with colors

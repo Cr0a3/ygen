@@ -171,6 +171,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 "cp" | "const_eval" | "const_evaluation" | "const-eval" | "const-evaluation" =>     Some( Passes::ConstantEvaluation() ),
                 "dne" | "dead_node" | "dead_node_elim" | "dead-node" | "dead-node-elimination" =>   Some( Passes::DeadNodeElimination() ),
                 "dbe" | "dead_block" | "dead_block_elim" | "dead-block" | "dead-block-elimination" =>   Some( Passes::DeadBlockElimination() ),
+                "instcombine" | "instrcombine" =>   Some( Passes::InstrCombine() ),
                 _ => {eprintln!("unkown pass: {}", pass); None },
             };
 
@@ -183,6 +184,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     } else if cli.opt("O") {
         let mut opts = PassManager::new();
 
+        opts.add( Passes::InstrCombine() );
         opts.add( Passes::ConstantEvaluation() );
         opts.add( Passes::DeadBlockElimination() );
         opts.add( Passes::DeadNodeElimination() );

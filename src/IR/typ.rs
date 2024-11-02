@@ -230,6 +230,12 @@ impl Display for Type {
     }
 }
 
+impl crate::Support::AsAny for Type {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
 impl Display for TypeMetadata {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", match &self {
