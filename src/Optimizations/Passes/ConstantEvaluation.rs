@@ -12,6 +12,10 @@ pub fn ConstantEvaluation() -> Box<dyn Pass> {
 }
 
 impl Pass for ConstantEvaluation {
+    fn name(&self) -> &'static str {
+        "ConstantEvaluation"
+    }
+
     fn run(&self, block: &mut crate::prelude::Block) {
         let mut const_values = HashMap::new();
 

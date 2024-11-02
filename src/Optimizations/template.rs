@@ -7,4 +7,7 @@ pub trait Pass {
 
     /// Runs the pass on the entire function
     fn run_func(&self, _func: &mut Function) {}
+
+    /// Returns the name of the pass
+    fn name(&self) -> &'static str;
 }

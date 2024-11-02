@@ -13,6 +13,6 @@ define i32 @main() {
 define i32 @main() {
   entry:
     %0 = i32 5
-    %1 = i32 %0
-    ret i32 %1
+    %1 = i32 5
+    ret i32 5
 }

@@ -62,8 +62,10 @@ impl Ir for Cast<Var, TypeMetadata, Var> {
 }
 
 impl EvalOptVisitor for Cast<Var, TypeMetadata, Var> {
-    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        None
+    fn maybe_inline(&self, vars: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let Some(var) = vars.get(&self.inner1.name) {
+            Some(Assign::new(self.inner3.to_owned(), *var))
+        } else { return None; }
     }
     
     fn eval(&self) -> Option<Box<dyn Ir>> {

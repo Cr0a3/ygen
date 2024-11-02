@@ -10,6 +10,10 @@ pub fn DeadNodeElimination() -> Box<dyn Pass> {
 }
 
 impl Pass for DeadNodeElimination_ {
+    fn name(&self) -> &'static str {
+        "DeadNodeElimination"
+    }
+    
     fn run_func(&self, func: &mut crate::prelude::Function) {
         for _ in 0..2 { // iterate two times, cuz then we can remove dependants with a dept of 1
             let mut used: Vec<String> = Vec::new();

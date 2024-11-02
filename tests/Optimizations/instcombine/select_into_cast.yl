@@ -11,7 +11,7 @@ define i32 @main() {
 
 # STDOUT:
 
-define void @main() {
+define i32 @main() {
   entry:
     %1 = i8 1
     %2 = cast i8 %1 to i32

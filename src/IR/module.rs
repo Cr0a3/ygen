@@ -15,6 +15,8 @@ pub struct Module {
 
     /// The number of current constants
     pub(crate) const_index: usize,
+
+    pub(crate) debug_passes: bool,
 }
 
 impl Module {
@@ -25,12 +27,18 @@ impl Module {
             consts: HashMap::new(),
             dbg_registry: None,
             const_index: 0,
+            debug_passes: false,
         }
     }
 
     /// Initializes debugging metadata
     pub fn init_dbg(&mut self, producer: String, lang: DwLang, infile: &Path) {
         self.dbg_registry = Some(DebugRegistry::new(producer, lang, infile));
+    }
+
+    /// Makes, that debugging information is outputed from the passes
+    pub fn activate_pass_dbg(&mut self) {
+        self.debug_passes = true;
     }
 
     /// Adds a new function to the module
@@ -155,11 +163,17 @@ impl Module {
 
     /// Runs the pass manager over all functions
     pub fn runPassMngr(&mut self, mngr: PassManager) {
-        for (_, func) in &mut self.funcs {
-            func.runPassMngr(&mngr);
-            
-            for opt in &mngr.passes {
-                opt.run_func(func);
+        for pass in &mngr.passes {
+            if self.debug_passes {
+                eprintln!("Running pass: {}", pass.name());
+            }
+
+            for (_, func) in &mut self.funcs {
+                pass.run_func(func);
+    
+                for block in &mut func.blocks {
+                    pass.run(block);
+                }
             }
         }
     }

@@ -10,6 +10,10 @@ pub fn InstrCombine() -> Box<dyn Pass> {
 }
 
 impl Pass for InstrCombinePass {
+    fn name(&self) -> &'static str {
+        "InstrCombine"
+    }
+
     fn run_func(&self, func: &mut crate::prelude::Function) {
         InstrCombinePass::opt_func(func);
 
@@ -49,12 +53,12 @@ impl InstrCombinePass {
     }
 
     /// Optimizes the block by combining instructions
-    pub(crate) fn opt_block(block: &mut Block) {
+    pub(crate) fn opt_block(_block: &mut Block) {
         // TODO
     }
 
     /// Optimizes the function by combining instructions
-    pub(crate) fn opt_func(func: &mut Function) {
+    pub(crate) fn opt_func(_func: &mut Function) {
         // TODO
     }
 }

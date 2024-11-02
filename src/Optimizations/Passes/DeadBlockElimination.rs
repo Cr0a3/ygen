@@ -12,6 +12,10 @@ pub fn DeadBlockElimination() -> Box<dyn Pass> {
 }
 
 impl Pass for DeadBlockElimination {
+    fn name(&self) -> &'static str {
+        "DeadBlockElimination"
+    }
+    
     fn run_func(&self, func: &mut crate::prelude::Function) {
         let mut used_blocks = Vec::new();
 
