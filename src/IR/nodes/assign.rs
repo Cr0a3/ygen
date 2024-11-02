@@ -1,3 +1,5 @@
+use std::any::TypeId;
+
 use super::*;
 
 impl Ir for Assign<Var, Type> {
@@ -201,6 +203,40 @@ impl EvalOptVisitor for Assign<Var, Const> {
     
     fn eval(&self) -> Option<Box<dyn Ir>> {
         None
+    }
+}
+
+impl<U> Assign<Var, U> where 
+    U: AsAny + 'static
+{
+    /// Returns the type of the assignment
+    pub fn getType(&self) -> TypeMetadata {
+        self.inner1.ty
+    }
+
+    /// Returns the output variable
+    pub fn getOut(&self) -> Var {
+        self.inner1.to_owned()
+    }
+
+    /// Returns if the operand is an constant
+    pub fn isOpConstVal(&self) -> bool {
+        self.inner2.type_id() == TypeId::of::<Type>()
+    }
+
+    /// Returns if the operand is an constant ptr load
+    pub fn isOpConstAdr(&self) -> bool {
+        self.inner2.type_id() == TypeId::of::<Const>()
+    }
+
+    /// Returns the operand as a constant value
+    pub fn getOpConstVal(&self) -> Type {
+        self.inner2.as_any().downcast_ref::<Type>().unwrap().clone()
+    }
+
+    /// Returns the operand as a constant adr (Const data type)
+    pub fn getOpConstAdr(&self) -> Const {
+        self.inner2.as_any().downcast_ref::<Const>().unwrap().clone()
     }
 }
 

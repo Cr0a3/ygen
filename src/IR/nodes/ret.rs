@@ -1,3 +1,5 @@
+use std::any::TypeId;
+
 use super::*;
 
 impl Ir for Return<Type> {
@@ -130,6 +132,30 @@ impl EvalOptVisitor for Return<Var> {
     
     fn eval(&self) -> Option<Box<dyn Ir>> {
         None
+    }
+}
+
+impl<T> Return<T> where 
+    T: Clone + AsAny + 'static
+{
+    /// Returns the node a constant type?
+    pub fn isRetConst(&self) -> bool {
+        self.inner1.type_id() == TypeId::of::<Type>()
+    }
+
+    /// Returns the node a variable?
+    pub fn isRetVar(&self) -> bool {
+        self.inner1.type_id() == TypeId::of::<Var>()
+    }
+
+    /// Returns the constant the node returns (else panics)
+    pub fn getRetConst(&self) -> Type {
+        self.inner1.as_any().downcast_ref::<Type>().unwrap().to_owned()
+    }
+
+    /// Returns the variable the node returns (else panics)
+    pub fn getRetVar(&self) -> Var {
+        self.inner1.as_any().downcast_ref::<Var>().unwrap().to_owned()
     }
 }
 
