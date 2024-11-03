@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::Support::ColorClass;
+use crate::Support::{AsAny, ColorClass};
 use crate::IR::block::BlockId;
 use crate::IR::{Function, Type, Var};
 
@@ -69,6 +69,15 @@ impl EvalOptVisitor for Br<BlockId> {
     
     fn eval(&self) -> Option<Box<dyn Ir>> {
         None
+    }
+}
+
+impl<T> Br<T> where
+    T: Clone + AsAny + 'static
+{
+    /// Returns the block which the br branches to
+    pub fn getBlockToBranch(&self) -> BlockId {
+        self.inner1.as_any().downcast_ref::<BlockId>().unwrap().to_owned()
     }
 }
 
@@ -147,6 +156,27 @@ impl EvalOptVisitor for BrCond<Var, BlockId, BlockId> {
         if self.inner2.name == self.inner3.name {
             Some(Br::new( self.inner3.to_owned() ))
         } else { None }
+    }
+}
+
+impl<T, U, Z> BrCond<T, U, Z> where 
+    T: Clone + AsAny + 'static,
+    U: Clone + AsAny + 'static,
+    Z: Clone + AsAny + 'static
+{
+    /// Returns the condition variable
+    pub fn getCondition(&self) -> Var {
+        self.inner1.as_any().downcast_ref::<Var>().unwrap().to_owned()
+    }
+
+    /// Returns the true branch
+    pub fn getBranchTrue(&self) -> BlockId {
+        self.inner2.as_any().downcast_ref::<BlockId>().unwrap().to_owned()
+    }
+
+    /// Returns the false branch
+    pub fn getBranchFalse(&self) -> BlockId {
+        self.inner2.as_any().downcast_ref::<BlockId>().unwrap().to_owned()
     }
 }
 

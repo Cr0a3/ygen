@@ -1,5 +1,5 @@
 use crate::IR::{Function, TypeMetadata, Var};
-use crate::Support::ColorClass;
+use crate::Support::{AsAny, ColorClass};
 
 use super::{Alloca, EvalOptVisitor, Ir};
 
@@ -56,6 +56,21 @@ impl EvalOptVisitor for Alloca<Var, TypeMetadata> {
     
     fn eval(&self) -> Option<Box<dyn Ir>> {
         None
+    }
+}
+
+impl<T, U> Alloca<T, U> where
+    T: Clone + AsAny + 'static,
+    U: Clone + AsAny + 'static
+{
+    /// Returns the output variable
+    pub fn getOut(&self) -> Var {
+        self.inner1.as_any().downcast_ref::<Var>().unwrap().to_owned()
+    }
+
+    /// Returns the type which is allocated
+    pub fn getTypeToAlloc(&self) -> TypeMetadata {
+        self.inner2.as_any().downcast_ref::<TypeMetadata>().unwrap().to_owned()
     }
 }
 

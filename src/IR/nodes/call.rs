@@ -95,6 +95,27 @@ impl Ir for Call<FuncId, Vec<Var>, Var> {
     }
 }
 
+impl<T, U, Z> Call<T, U, Z> where 
+    T: Clone + AsAny + 'static,
+    U: Clone + AsAny + 'static,
+    Z: Clone + AsAny + 'static
+{
+    /// Returns the call target
+    pub fn getCallTarget(&self) -> FuncId {
+        self.inner1.as_any().downcast_ref::<FuncId>().unwrap().to_owned()
+    }
+
+    /// Returns the arguments
+    pub fn getArgs(&self) -> Vec<Var> {
+        self.inner2.as_any().downcast_ref::<Vec<Var>>().unwrap().to_owned()
+    }
+
+    /// Returns the variable which stores the result of the call
+    pub fn getOutputVar(&self) -> Var {
+        self.inner3.as_any().downcast_ref::<Var>().unwrap().to_owned()
+    }
+}
+
 impl EvalOptVisitor for Call<FuncId, Vec<Var>, Var> {
     fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
         None

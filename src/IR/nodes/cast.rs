@@ -61,6 +61,32 @@ impl Ir for Cast<Var, TypeMetadata, Var> {
     }
 }
 
+impl<T, U, Z> Cast<T, U, Z> where 
+    T: Clone + AsAny + 'static,
+    U: Clone + AsAny + 'static,
+    Z: Clone + AsAny + 'static
+{
+    /// Returns the input variable
+    pub fn getInput(&self) -> Var {
+        self.inner1.as_any().downcast_ref::<Var>().unwrap().to_owned()
+    }
+
+    /// Returns the output variable
+    pub fn getOutput(&self) -> Var {
+        self.inner3.as_any().downcast_ref::<Var>().unwrap().to_owned()
+    }
+
+    /// Returns the type to which we cast
+    pub fn getCastType(&self) -> TypeMetadata {
+        self.inner2.as_any().downcast_ref::<TypeMetadata>().unwrap().to_owned()
+    }
+
+    /// Returns the type from which we cast
+    pub fn getFromType(&self) -> TypeMetadata {
+        self.getInput().ty
+    }
+}
+
 impl EvalOptVisitor for Cast<Var, TypeMetadata, Var> {
     fn maybe_inline(&self, vars: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
         if let Some(var) = vars.get(&self.inner1.name) {

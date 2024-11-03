@@ -123,6 +123,33 @@ impl IsNode for Cmp {
     }
 }
 
+impl Cmp {
+    /// Returns the mode with which the node compares
+    pub fn getCmpMode(&self) -> CmpMode {
+        self.mode
+    }
+
+    /// Returns the left side operand
+    pub fn getLsVar(&self) -> Var {
+        self.ls.to_owned()
+    }
+    
+    /// Returns the right side operand
+    pub fn getRsVar(&self) -> Var {
+        self.rs.to_owned()
+    }
+
+    /// Returns the output variable
+    pub fn getOutput(&self) -> Var {
+        self.out.to_owned()
+    }
+
+    /// Returns the type of the node
+    pub fn getType(&self) -> TypeMetadata {
+        self.out.ty
+    }
+}
+
 /// The trait `BuildCmp` is used to build the cmp node
 pub trait BuildCmp {
     /// builds the compare node
