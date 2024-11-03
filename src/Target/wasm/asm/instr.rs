@@ -1,7 +1,5 @@
 use std::fmt::Display;
 
-use object::RelocationEncoding;
-
 use crate::CodeGen::MCInstr;
 
 /// A wasm instruction
@@ -34,23 +32,12 @@ impl WasmMCInstr {
     pub(crate) fn encode(&self) -> Result<(Vec<u8>, Option<crate::Obj::Link>), Box<dyn std::error::Error>> {
         let mut encoded;
 
-        if let WasmMnemonic::BlockLink(target) = &self.mnemonic {
-            return Ok((Vec::new(), Some(crate::Obj::Link { 
-                from: String::new(), 
-                to: target.to_owned(), 
-                at: 0, 
-                addend: -4, 
-                special: true,
-                kind: RelocationEncoding::Generic
-            })))
-        }
-
         match self.mnemonic {
             WasmMnemonic::Get => {
-                let op1 = self.op1.expect("...get expects localidx");
+                let op1 = self.op1.as_ref().expect("...get expects localidx");
                 let op1 = match op1 {
-                    WasmOperand::Var(var) => var as u8,
-                    WasmOperand::Const(_) => panic!("...set expects localidx"),
+                    WasmOperand::Var(var) => *var as u8,
+                    _ => panic!("...set expects localidx"),
                 };
 
                 let op = match self.prefix.expect("...get expects an prefix") {
@@ -62,10 +49,10 @@ impl WasmMCInstr {
                 encoded = vec![op, op1]
             },
             WasmMnemonic::Set => {
-                let op1 = self.op1.expect("...set expects localidx");
+                let op1 = self.op1.as_ref().expect("...set expects localidx");
                 let op1 = match op1 {
-                    WasmOperand::Var(var) => var as u8,
-                    WasmOperand::Const(_) => panic!("...set expects localidx"),
+                    WasmOperand::Var(var) => *var as u8,
+                    _ => panic!("...set expects localidx"),
                 };
 
                 let op = match self.prefix.expect("...set expects an prefix") {
@@ -77,9 +64,9 @@ impl WasmMCInstr {
                 encoded = vec![op, op1]
             },
             WasmMnemonic::Const => {
-                let op1 = self.op1.expect("...const expects a imm op");
+                let op1 = self.op1.as_ref().expect("...const expects a imm op");
                 let op1 = match op1 {
-                    WasmOperand::Const(imm) => imm,
+                    WasmOperand::Const(imm) => *imm,
                     _ => panic!("...const expects a imm op"),
                 };
 
@@ -131,7 +118,7 @@ impl WasmMCInstr {
                         _ => {},
                     }
                 }
-            }
+            },
             WasmMnemonic::Add => {
                 encoded = vec![match self.prefix.expect("...add expects an prefix") {
                     WasmPrefix::i32 => 0x6a,
@@ -281,7 +268,6 @@ impl WasmMCInstr {
                     _ => unreachable!(),
                 }]
             },
-
             WasmMnemonic::And | WasmMnemonic::Or | WasmMnemonic::Shl | WasmMnemonic::Shrs | WasmMnemonic::Shru | WasmMnemonic::Xor => {
                 let prefix = self.prefix.expect("and/or/shl/shr/xor expect a prefix");
 
@@ -328,7 +314,90 @@ impl WasmMCInstr {
                     _ => panic!("neg only supports f32/f64")
                 }];
             },
-            WasmMnemonic::BlockLink(_) => encoded = Vec::new(),
+            WasmMnemonic::Extends => encoded = vec![0xac],
+            WasmMnemonic::Extendu => encoded = vec![0xad],
+            WasmMnemonic::Wrap => encoded = vec![0xa7],
+            WasmMnemonic::Promote => encoded = vec![0xbb],
+            WasmMnemonic::Demote => encoded = vec![0xb6],
+            WasmMnemonic::ConvertI32s => {
+                let prefix = self.prefix.expect("convert_i32_s expects a prefix");
+
+                encoded = vec![match prefix {
+                    WasmPrefix::f32 => 0xb2,
+                    WasmPrefix::f64 => 0xb7,
+                    _ => panic!("illegal prefix for convert_i32_s: {}", prefix),
+                }];
+            },
+            WasmMnemonic::ConvertI32u => {
+                let prefix = self.prefix.expect("convert_i32_s expects a prefix");
+
+                encoded = vec![match prefix {
+                    WasmPrefix::f32 => 0xb3,
+                    WasmPrefix::f64 => 0xb8,
+                    _ => panic!("illegal prefix for convert_i32_s: {}", prefix),
+                }];
+            },
+            WasmMnemonic::ConvertI64s => {
+                let prefix = self.prefix.expect("convert_i32_s expects a prefix");
+
+                encoded = vec![match prefix {
+                    WasmPrefix::f32 => 0xb4,
+                    WasmPrefix::f64 => 0xb9,
+                    _ => panic!("illegal prefix for convert_i32_s: {}", prefix),
+                }];
+            },    
+            WasmMnemonic::ConvertI64u => {
+                let prefix = self.prefix.expect("convert_i32_s expects a prefix");
+
+                encoded = vec![match prefix {
+                    WasmPrefix::f32 => 0xb5,
+                    WasmPrefix::f64 => 0xba,
+                    _ => panic!("illegal prefix for convert_i32_s: {}", prefix),
+                }];
+            },    
+            WasmMnemonic::TruncF32s => {
+                let prefix = self.prefix.expect("convert_i32_s expects a prefix");
+
+                encoded = vec![match prefix {
+                    WasmPrefix::i32 => 0xa8,
+                    WasmPrefix::i64 => 0xae,
+                    _ => panic!("illegal prefix for convert_i32_s: {}", prefix),
+                }];
+            },
+            WasmMnemonic::TruncF32u => {
+                let prefix = self.prefix.expect("convert_i32_s expects a prefix");
+
+                encoded = vec![match prefix {
+                    WasmPrefix::i32 => 0xa9,
+                    WasmPrefix::i64 => 0xaf,
+                    _ => panic!("illegal prefix for convert_i32_s: {}", prefix),
+                }];
+            },
+            WasmMnemonic::TruncF64s => {
+                let prefix = self.prefix.expect("convert_i32_s expects a prefix");
+
+                encoded = vec![match prefix {
+                    WasmPrefix::i32 => 0xaa,
+                    WasmPrefix::i64 => 0xb0,
+                    _ => panic!("illegal prefix for convert_i32_s: {}", prefix),
+                }];
+            },
+            WasmMnemonic::TruncF64u => {
+                let prefix = self.prefix.expect("convert_i32_s expects a prefix");
+
+                encoded = vec![match prefix {
+                    WasmPrefix::i32 => 0xab,
+                    WasmPrefix::i64 => 0xb1,
+                    _ => panic!("illegal prefix for convert_i32_s: {}", prefix),
+                }];
+            },
+            WasmMnemonic::Br => {
+                if let Some(WasmOperand::Const(target)) = self.op1 {
+                    encoded = vec![0x0c, target as u8]
+                } else {
+                    encoded = vec![0x0c, 0x00]
+                }
+            },
         }
 
         Ok((encoded, None))
@@ -376,7 +445,24 @@ pub enum WasmMnemonic {
 
     Neg,
 
-    BlockLink(/*target*/String)
+    Extends,
+    Extendu,
+
+    Wrap,
+    Promote,
+    Demote,
+
+    ConvertI32s,
+    ConvertI32u,
+    ConvertI64s,
+    ConvertI64u,
+
+    TruncF32s,
+    TruncF32u,
+    TruncF64s,
+    TruncF64u,
+
+    Br,
 }
 
 impl From<String> for WasmMnemonic {
@@ -414,6 +500,20 @@ impl From<String> for WasmMnemonic {
             "shr_s" => WasmMnemonic::Shrs,
             "shr_u" => WasmMnemonic::Shru,
             "neg" => WasmMnemonic::Neg,
+            "extend_i32_s" => WasmMnemonic::Extends,
+            "extend_i32_u" => WasmMnemonic::Extendu,
+            "wrap_i64" => WasmMnemonic::Wrap,
+            "promote_f32" => WasmMnemonic::Promote,
+            "demote_f32" => WasmMnemonic::Demote,
+            "trunc_f32_s" => WasmMnemonic::TruncF32s,
+            "trunc_f32_u" => WasmMnemonic::TruncF32u,
+            "trunc_f64_s" => WasmMnemonic::TruncF64s,
+            "trunc_f64_u" => WasmMnemonic::TruncF64u,
+            "convert_i32_s" => WasmMnemonic::ConvertI32s,
+            "convert_i32_u" => WasmMnemonic::ConvertI32u,
+            "convert_i64_s" => WasmMnemonic::ConvertI64s,
+            "convert_i64_u" => WasmMnemonic::ConvertI64u,
+            "br" => WasmMnemonic::Br,
             _ => panic!("unkown wasm mnemonic: {value}"),
         }
     }
@@ -422,40 +522,53 @@ impl From<String> for WasmMnemonic {
 impl Display for WasmMnemonic {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", match self {
-            WasmMnemonic::Get => "get".to_string(),
-            WasmMnemonic::Set => "set".to_string(),
-            WasmMnemonic::Const => "const".to_string(),
-            WasmMnemonic::Add => "add".to_string(),
-            WasmMnemonic::Mul => "mul".to_string(),
-            WasmMnemonic::Sub => "sub".to_string(),
-            WasmMnemonic::Div => "div".to_string(),
-            WasmMnemonic::Divs => "div_s".to_string(),
-            WasmMnemonic::Divu => "div_u".to_string(),
-            WasmMnemonic::Rems => "rem_s".to_string(),
-            WasmMnemonic::Remu => "rem_u".to_string(),
-            WasmMnemonic::Return => "return".to_string(),
-            WasmMnemonic::Eq => "eq".to_string(),
-            WasmMnemonic::Ne => "ne".to_string(),
-            WasmMnemonic::Gt => "gt".to_string(),
-            WasmMnemonic::Gts => "gt_s".to_string(),
-            WasmMnemonic::Gtu => "gt_u".to_string(),
-            WasmMnemonic::Lt => "lt".to_string(),
-            WasmMnemonic::Lts => "lt_s".to_string(),
-            WasmMnemonic::Ltu => "lt_u".to_string(),
-            WasmMnemonic::Ge => "ge".to_string(),
-            WasmMnemonic::Ges => "ge_s".to_string(),
-            WasmMnemonic::Geu => "ge_u".to_string(),
-            WasmMnemonic::Le => "le".to_string(),
-            WasmMnemonic::Les => "le_s".to_string(),
-            WasmMnemonic::Leu => "le_u".to_string(),
-            WasmMnemonic::And => "and".to_string(),
-            WasmMnemonic::Xor => "xor".to_string(),
-            WasmMnemonic::Or => "or".to_string(),
-            WasmMnemonic::Shl => "shl".to_string(),
-            WasmMnemonic::Shrs => "shr_s".to_string(),
-            WasmMnemonic::Shru => "shr_u".to_string(),
-            WasmMnemonic::Neg => "neg".to_string(),
-            WasmMnemonic::BlockLink(target) => format!("# link to {target}"),
+            WasmMnemonic::Get => "get",
+            WasmMnemonic::Set => "set",
+            WasmMnemonic::Const => "const",
+            WasmMnemonic::Add => "add",
+            WasmMnemonic::Mul => "mul",
+            WasmMnemonic::Sub => "sub",
+            WasmMnemonic::Div => "div",
+            WasmMnemonic::Divs => "div_s",
+            WasmMnemonic::Divu => "div_u",
+            WasmMnemonic::Rems => "rem_s",
+            WasmMnemonic::Remu => "rem_u",
+            WasmMnemonic::Return => "return",
+            WasmMnemonic::Eq => "eq",
+            WasmMnemonic::Ne => "ne",
+            WasmMnemonic::Gt => "gt",
+            WasmMnemonic::Gts => "gt_s",
+            WasmMnemonic::Gtu => "gt_u",
+            WasmMnemonic::Lt => "lt",
+            WasmMnemonic::Lts => "lt_s",
+            WasmMnemonic::Ltu => "lt_u",
+            WasmMnemonic::Ge => "ge",
+            WasmMnemonic::Ges => "ge_s",
+            WasmMnemonic::Geu => "ge_u",
+            WasmMnemonic::Le => "le",
+            WasmMnemonic::Les => "le_s",
+            WasmMnemonic::Leu => "le_u",
+            WasmMnemonic::And => "and",
+            WasmMnemonic::Xor => "xor",
+            WasmMnemonic::Or => "or",
+            WasmMnemonic::Shl => "shl",
+            WasmMnemonic::Shrs => "shr_s",
+            WasmMnemonic::Shru => "shr_u",
+            WasmMnemonic::Neg => "neg",
+            WasmMnemonic::Extends => "extend_i32_s",
+            WasmMnemonic::Extendu => "extend_i32_u",
+            WasmMnemonic::Wrap => "wrap_i64",
+            WasmMnemonic::Promote => "promote_f32",
+            WasmMnemonic::Demote => "demote_f32",
+            WasmMnemonic::ConvertI32s => "convert_i32_s",
+            WasmMnemonic::ConvertI32u => "convert_i32_u",
+            WasmMnemonic::ConvertI64s => "convert_i64_s",
+            WasmMnemonic::ConvertI64u => "convert_i64_u",
+            WasmMnemonic::TruncF32s => "trunc_f32_s",
+            WasmMnemonic::TruncF32u => "trunc_f32_u",
+            WasmMnemonic::TruncF64s => "trunc_f64_s",
+            WasmMnemonic::TruncF64u => "trunc_f64_u",
+            WasmMnemonic::Br => "br",
         })
     }
 }
@@ -502,11 +615,12 @@ impl Display for WasmPrefix {
 }
 
 /// A webassembly operand
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 #[allow(missing_docs)]
 pub enum WasmOperand {
     Var(i32),
     Const(f64),
+    BlockLink(/*target*/String),
 }
 
 impl PartialEq for WasmOperand {
@@ -514,6 +628,7 @@ impl PartialEq for WasmOperand {
         match (self, other) {
             (Self::Var(l0), Self::Var(r0)) => l0 == r0,
             (Self::Const(l0), Self::Const(r0)) => l0 == r0,
+            (Self::BlockLink(l0), Self::BlockLink(r0)) => l0 == r0,
             _ => false,
         }
     }
@@ -524,8 +639,9 @@ impl Eq for WasmOperand {}
 impl Display for WasmOperand {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", match self {
-            WasmOperand::Var(var) => format!("{}", var),
+            WasmOperand::Var(var) => format!("{var}"),
             WasmOperand::Const(imm) => format!("{:.5}", imm), 
+            WasmOperand::BlockLink(target) => format!("{target}"),
         })
     }
 }
@@ -541,7 +657,7 @@ impl Display for WasmMCInstr {
 
         fmt.push_str(&self.mnemonic.to_string());
 
-        if let Some(op1) = self.op1 {
+        if let Some(op1) = &self.op1 {
             fmt.push(' ');
             fmt.push_str(&op1.to_string());
         }
@@ -747,7 +863,52 @@ impl<'a> Into<wasm_encoder::Instruction<'a>> for WasmMCInstr {
                 WasmPrefix::f64 => Instruction::F64Neg,
                 _ => panic!(),
             }},
-            WasmMnemonic::BlockLink(_) => Instruction::Br(0),
+            WasmMnemonic::Extends => Instruction::I64Extend32S,
+            WasmMnemonic::Extendu => Instruction::I64ExtendI32U,
+            WasmMnemonic::Wrap => Instruction::I32WrapI64,
+            WasmMnemonic::Promote => Instruction::F64PromoteF32,
+            WasmMnemonic::Demote => Instruction::F32DemoteF64,
+            WasmMnemonic::ConvertI32s => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::f32 => Instruction::F32ConvertI32S,
+                WasmPrefix::f64 => Instruction::F64ConvertI32S,
+                _ => panic!(),
+            }},
+            WasmMnemonic::ConvertI32u => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::f32 => Instruction::F32ConvertI32U,
+                WasmPrefix::f64 => Instruction::F64ConvertI32U,
+                _ => panic!(),
+            }},
+            WasmMnemonic::ConvertI64s => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::f32 => Instruction::F32ConvertI64S,
+                WasmPrefix::f64 => Instruction::F64ConvertI64S,
+                _ => panic!(),
+            }},
+            WasmMnemonic::ConvertI64u => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::f32 => Instruction::F32ConvertI64U,
+                WasmPrefix::f64 => Instruction::F64ConvertI64U,
+                _ => panic!(),
+            }},
+            WasmMnemonic::TruncF32s => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32TruncF32S,
+                WasmPrefix::i64 => Instruction::I64TruncF32S,
+                _ => panic!(),
+            }},
+            WasmMnemonic::TruncF32u => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32TruncF32U,
+                WasmPrefix::i64 => Instruction::I64TruncF32U,
+                _ => panic!(),
+            }},
+            WasmMnemonic::TruncF64s => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32TruncF64S,
+                WasmPrefix::i64 => Instruction::I64TruncF64S,
+                _ => panic!(),
+            }},
+            WasmMnemonic::TruncF64u => { let Some(prefix) = self.prefix else { unreachable!()}; match prefix {
+                WasmPrefix::i32 => Instruction::I32TruncF64U,
+                WasmPrefix::i64 => Instruction::I64TruncF64U,
+                _ => panic!(),
+            }},
+            WasmMnemonic::Br => Instruction::Br(0),
         }
     }
 }

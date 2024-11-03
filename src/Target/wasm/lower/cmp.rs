@@ -5,6 +5,10 @@ pub(crate) fn wasm_lower_cmp(sink: &mut Vec<WasmMCInstr>, instr: &MachineInstr, 
     let ls = instr.operands.get(0).expect("expected ls operand for cmps");
     let rs = instr.operands.get(1).expect("expected rs operand for cmps");
 
+    let ls = (*ls).into();
+    let rs = (*rs).into();
+    let out: WasmOperand = instr.out.unwrap().into();
+
     let mnemonic = match mode {
         CmpMode::Eqal => WasmMnemonic::Eq,
         CmpMode::NotEqal => WasmMnemonic::Ne,
@@ -37,10 +41,20 @@ pub(crate) fn wasm_lower_cmp(sink: &mut Vec<WasmMCInstr>, instr: &MachineInstr, 
             WasmMnemonic::Leu
         },
     };
+    if let WasmOperand::Const(_) = ls {
+        sink.push( WasmMCInstr::with1(Some(instr.meta.into()), WasmMnemonic::Const, ls));
+    } else {
+        sink.push( WasmMCInstr::with1(Some(WasmPrefix::Local), WasmMnemonic::Get, ls));
+    }
+
+    if let WasmOperand::Const(_) = rs {
+        sink.push( WasmMCInstr::with1(Some(instr.meta.into()), WasmMnemonic::Const, rs));
+    } else {
+        sink.push( WasmMCInstr::with1(Some(WasmPrefix::Local), WasmMnemonic::Get, rs));
+    }
 
     sink.extend_from_slice(&[
-        WasmMCInstr::with1(Some(WasmPrefix::Local), WasmMnemonic::Get, (*ls).into()),
-        WasmMCInstr::with1(Some(WasmPrefix::Local), WasmMnemonic::Get, (*rs).into()),
         WasmMCInstr::with0(Some(instr.meta.into()), mnemonic),
+        WasmMCInstr::with1(Some(WasmPrefix::Local), WasmMnemonic::Set, out)
     ]);
 }
