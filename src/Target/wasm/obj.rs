@@ -1,6 +1,6 @@
-use std::{collections::HashMap, error::Error};
+use std::{collections::{BTreeMap, HashMap}, error::Error};
 use crate::{debug::DebugRegistry, Obj::ObjectBuilder, Optimizations::Optimize, Target::*, IR::TypeMetadata};
-use wasm::{asm::WasmMCInstr, lower::wasm_construct_local_types};
+use wasm::{asm::{WasmMCInstr, WasmMnemonic, WasmOperand}, lower::wasm_construct_local_types};
 use wasm_encoder::*;
 
 pub(crate) fn wasm_emit_mccode(registry: &mut TargetRegistry, debug: bool, module: &mut crate::IR::Module) -> Result<(ObjectBuilder, Option<DebugRegistry>), Box<dyn Error>> {
@@ -49,6 +49,7 @@ pub(crate) fn wasm_emit_mccode(registry: &mut TargetRegistry, debug: bool, modul
         let mut func = Function::new(locals);
 
         for instr in instrs {
+            println!("instr: {}", instr);
             func.instruction(&instr.into());
         }
 
@@ -95,23 +96,21 @@ impl Into<ValType> for TypeMetadata {
 }
 
 fn wasm_build_instrs(func: &crate::IR::Function, registry: &mut TargetRegistry, module: &mut crate::IR::Module) -> Result<(Vec<WasmMCInstr>, Vec<(u32, ValType)>), Box<dyn Error>> {
-    let mut blocked_instrs = HashMap::new();
+    let mut blocked_instrs: BTreeMap<&String, Vec<crate::CodeGen::MachineInstr>> = BTreeMap::new();
 
     for block in &func.blocks {
         let instrs = registry.buildMachineInstrsForTarget(Arch::Wasm64, block, func, module)?;
 
         blocked_instrs.insert(&block.name, instrs);
     }
-    
-    // TODOD: Add block linking here
+
+    // bring the local types into the correct format
 
     let mut merged = Vec::new();
 
-    for (_, instr) in blocked_instrs {
-        merged.extend_from_slice(&instr);
+    for (_, instrs) in &blocked_instrs {
+        merged.extend_from_slice(instrs);
     }
-
-    // bring the local types into the correct format
 
     let types = wasm_construct_local_types(&merged);
 
@@ -125,8 +124,36 @@ fn wasm_build_instrs(func: &crate::IR::Function, registry: &mut TargetRegistry, 
 
     let mut lowered = Vec::new();
     
-    for instr in merged {
-        super::lower::wasm_lower_instr(&mut lowered, instr.clone());
+    let mut indexes = HashMap::new();
+
+    let mut index = 0;
+
+    let mut first = true;
+
+    for (block, instrs) in blocked_instrs {
+        if first {
+            lowered.push(WasmMCInstr::with0(None, WasmMnemonic::Block));
+        }
+        for instr in instrs {
+            super::lower::wasm_lower_instr(&mut lowered, instr);
+        }
+        lowered.push(WasmMCInstr::with0(None, WasmMnemonic::End));
+
+        indexes.insert(block, index);
+        
+        index += 1;
+
+        first = false;
+    }
+
+    // now we finally link
+
+    for instr in &mut lowered {
+        if let Some(WasmOperand::BlockLink(ref target)) = instr.op1 {
+            let Some(index) = indexes.get(target) else { panic!("unknown block: {}", target) };
+
+            instr.op1 = Some(WasmOperand::Const(*index as f64));
+        }
     }
 
     lowered = lowered.optimize();

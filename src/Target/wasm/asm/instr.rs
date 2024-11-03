@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use wasm_encoder::{BlockType, ValType};
+
 use crate::CodeGen::MCInstr;
 
 /// A wasm instruction
@@ -398,6 +400,8 @@ impl WasmMCInstr {
                     encoded = vec![0x0c, 0x00]
                 }
             },
+            WasmMnemonic::Block => encoded = vec![0x02, 0x40],
+            WasmMnemonic::End => encoded = vec![0x0b],
         }
 
         Ok((encoded, None))
@@ -463,6 +467,9 @@ pub enum WasmMnemonic {
     TruncF64u,
 
     Br,
+
+    Block,
+    End,
 }
 
 impl From<String> for WasmMnemonic {
@@ -514,6 +521,8 @@ impl From<String> for WasmMnemonic {
             "convert_i64_s" => WasmMnemonic::ConvertI64s,
             "convert_i64_u" => WasmMnemonic::ConvertI64u,
             "br" => WasmMnemonic::Br,
+            "block" => WasmMnemonic::Block,
+            "end" => WasmMnemonic::End,
             _ => panic!("unkown wasm mnemonic: {value}"),
         }
     }
@@ -569,6 +578,8 @@ impl Display for WasmMnemonic {
             WasmMnemonic::TruncF64s => "trunc_f64_s",
             WasmMnemonic::TruncF64u => "trunc_f64_u",
             WasmMnemonic::Br => "br",
+            WasmMnemonic::Block => "block",
+            WasmMnemonic::End => "end",
         })
     }
 }
@@ -908,7 +919,9 @@ impl<'a> Into<wasm_encoder::Instruction<'a>> for WasmMCInstr {
                 WasmPrefix::i64 => Instruction::I64TruncF64U,
                 _ => panic!(),
             }},
-            WasmMnemonic::Br => Instruction::Br(0),
+            WasmMnemonic::Br => { if let Some(WasmOperand::Const(target)) = &self.op1 { Instruction::Br(*target as u32) } else { unreachable!()} },
+            WasmMnemonic::Block => Instruction::Block(BlockType::Empty),
+            WasmMnemonic::End => Instruction::End,
         }
     }
 }
