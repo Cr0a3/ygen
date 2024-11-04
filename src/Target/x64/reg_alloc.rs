@@ -96,6 +96,13 @@ pub(crate) fn x64_alloc_rv(alloc: &mut Allocator, ty: TypeMetadata) -> VarLocati
     let vec = if ty.float() { &mut alloc.ffpregs } else { &mut alloc.fregs }; // select free registers vec
 
     if let Some(reg) = vec.pop() {
+        let Reg::x64(x64) = reg else { panic!("x64 reg alloc expects x64 regs") };
+        
+        if x64.callee_saved(alloc.call.call_conv) {
+            alloc.callee_save_registers.push(Reg::x64(x64));
+            alloc.epilog = true;
+        }
+
         VarLocation::Reg(match reg { // this code here just changes the register to be the fitting type 
             Reg::x64(x64) => Reg::x64(x64.sub_ty(ty)),
             _ => panic!("the x64 register allocator just got an non x64 register")

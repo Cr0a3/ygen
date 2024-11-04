@@ -41,6 +41,7 @@ pub(crate) fn construct_compilation_helper(call_conv: CallConv) -> CompilationHe
             Reg::x64(X64Reg::Xmm13)],
 
         fregs: vec![
+            // Please do not move rbx forward, cuz then it will be select earlier and rbx is a callee saved register 
             Reg::x64(X64Reg::Rcx),
             Reg::x64(X64Reg::Rdx),
             Reg::x64(X64Reg::Rsi),
@@ -48,8 +49,7 @@ pub(crate) fn construct_compilation_helper(call_conv: CallConv) -> CompilationHe
             Reg::x64(X64Reg::R8),
             Reg::x64(X64Reg::R9),
             Reg::x64(X64Reg::R10),
-            Reg::x64(X64Reg::R11),
-            Reg::x64(X64Reg::R12),
+            Reg::x64(X64Reg::Rbx),
             Reg::x64(X64Reg::R12),
             Reg::x64(X64Reg::R13),
             Reg::x64(X64Reg::R14),
@@ -57,6 +57,8 @@ pub(crate) fn construct_compilation_helper(call_conv: CallConv) -> CompilationHe
         ],
 
         call: calling_convention,
+
+        callee_save_registers: Vec::new(), // will be set in the allocation
     };
 
     alloc.fregs.reverse();

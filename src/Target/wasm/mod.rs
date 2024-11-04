@@ -43,6 +43,7 @@ pub fn initializeWasmTarget(_: CallConv) -> TargetBackendDescr {
         fregs: Vec::new(),
         ffpregs: Vec::new(),
         call: MachineCallingConvention { call_conv: CallConv::WasmBasicCAbi },
+        callee_save_registers: Vec::new(),
     };
 
     let mut compiler = CompilationHelper::new(

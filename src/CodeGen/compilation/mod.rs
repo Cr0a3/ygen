@@ -61,6 +61,8 @@ pub struct Allocator {
     pub(crate) ffpregs: Vec<Reg>,
 
     pub(crate) call: MachineCallingConvention,
+
+    pub(crate) callee_save_registers: Vec<Reg>,
 }
 /// helps with compilation
 #[derive(Debug, Clone, PartialEq, Eq)]

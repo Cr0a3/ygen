@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::IR::TypeMetadata;
+use crate::{Target::CallConv, IR::TypeMetadata};
 
 /// A x64 register
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -37,7 +37,7 @@ impl X64Reg {
         use X64Reg::*;
         match string.to_ascii_lowercase().as_str() {
             "rax" => Some(Rax), "eax" => Some(Eax), "ax" => Some(Ax), "al" => Some(Al),
-            "rbx" => Some(Rbx), "ebx" => Some(Ebx), "bx" => Some(Bx), "bl" => Some(Bl),
+            "rbx" => Some(R11), "ebx" => Some(Ebx), "bx" => Some(Bx), "bl" => Some(Bl),
             "rcx" => Some(Rcx), "ecx" => Some(Ecx), "cx" => Some(Cx), "cl" => Some(Cl),
             "rdx" => Some(Rdx), "edx" => Some(Edx), "dx" => Some(Dx), "dl" => Some(Dl),
             "rsi" => Some(Rsi), "esi" => Some(Esi), "si" => Some(Si), "sil" => Some(Sil),
@@ -90,7 +90,7 @@ impl X64Reg {
         use X64Reg::*;
         match self {
             Rax | Eax | Ax | Al => Rax,
-            Rbx | Ebx | Bx | Bl => Rbx,
+            Rbx | Ebx | Bx | Bl => R11,
             Rcx | Ecx | Cx | Cl => Rcx,
             Rdx | Edx | Dx | Dl => Rdx,
             Rsi | Esi | Si | Sil => Rsi,
@@ -290,56 +290,31 @@ impl X64Reg {
             _ => false,
         }
     }
-
-    #[doc(hidden)]
-    pub fn enc(&self) -> u8 {
-        match self {
-            // GR
-            X64Reg::Rax | X64Reg::Eax | X64Reg::Ax | X64Reg::Al => 0,
-            X64Reg::Rcx | X64Reg::Ecx | X64Reg::Cx | X64Reg::Cl => 1,
-            X64Reg::Rdx | X64Reg::Edx | X64Reg::Dx | X64Reg::Dl => 2,
-            X64Reg::Rbx | X64Reg::Ebx | X64Reg::Bx | X64Reg::Bl => 3,
-            X64Reg::Rsi | X64Reg::Esi | X64Reg::Si | X64Reg::Sil => 6,
-            X64Reg::Rbp | X64Reg::Ebp | X64Reg::Bp | X64Reg::Bpl => 5,
-            X64Reg::Rsp | X64Reg::Esp | X64Reg::Sp | X64Reg::Spl => 4,
-            X64Reg::Rdi | X64Reg::Edi | X64Reg::Di | X64Reg::Dil => 7,
-
-            // here use a rex prefix
-            X64Reg::R8 | X64Reg::R8d | X64Reg::R8w | X64Reg::R8b => 0,
-            X64Reg::R9 | X64Reg::R9d | X64Reg::R9w | X64Reg::R9b => 1,
-            X64Reg::R10 | X64Reg::R10d | X64Reg::R10w | X64Reg::R10b => 2,
-            X64Reg::R11 | X64Reg::R11d | X64Reg::R11w | X64Reg::R11b => 3,
-            X64Reg::R12 | X64Reg::R12d | X64Reg::R12w | X64Reg::R12b => 4,
-            X64Reg::R13 | X64Reg::R13d | X64Reg::R13w | X64Reg::R13b => 5,
-            X64Reg::R14 | X64Reg::R14d | X64Reg::R14w | X64Reg::R14b => 6,
-            X64Reg::R15 | X64Reg::R15d | X64Reg::R15w | X64Reg::R15b => 7,
-
-            // Xmm
-            X64Reg::Xmm0 => 0,
-            X64Reg::Xmm1 => 1,
-            X64Reg::Xmm2 => 2,
-            X64Reg::Xmm3 => 3,
-            X64Reg::Xmm4 => 4,
-            X64Reg::Xmm5 => 5,
-            X64Reg::Xmm6 => 6,
-            X64Reg::Xmm7 => 7,
-
-            // here use a rex prefix
-            X64Reg::Xmm8 => 0,
-            X64Reg::Xmm9 => 1,
-            X64Reg::Xmm10 => 2,
-            X64Reg::Xmm11 => 3,
-            X64Reg::Xmm12 => 4,
-            X64Reg::Xmm13 => 5,
-            X64Reg::Xmm14 => 6,
-            X64Reg::Xmm15 => 7,
-
-        }
-    }
     
     #[doc(hidden)]
     pub fn as_any(&self) -> &dyn std::any::Any {
         self
+    }
+
+    /// Returns if the register is callee saved on the given calling convention
+    pub fn callee_saved(&self, call: CallConv) -> bool {
+        use X64Reg::*;
+        
+        if self.is_xmm() {
+            return if call == CallConv::WindowsFastCall {
+                match self {
+                    Xmm6 | Xmm7 | Xmm8 | 
+                    Xmm9 | Xmm10 | Xmm11 | Xmm12 | 
+                    Xmm13 | Xmm14 | Xmm15 => true,
+                    _ => false,
+                }
+            } else { false }
+        }
+
+        match self.sub64() {
+            Rbx | Rbp | R12 | R13 | R14 | R15 | Rsp => true,
+            _ => false,
+        }
     }
 }
 

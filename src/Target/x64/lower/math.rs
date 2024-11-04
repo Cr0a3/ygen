@@ -49,8 +49,8 @@ pub(crate) fn x64_lower_mul(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     if op1.is_imm() && op2.is_imm() { // theoraticly we could precalculate it here but if the user wanted us to do this he would use `-O` flag
         sink.extend_from_slice(&[
             X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)), op1),
-            X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rbx.sub_ty(instr.meta)), op2),
-            X64MCInstr::with2(Mnemonic::Imul, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)), Operand::Reg(X64Reg::Rbx.sub_ty(instr.meta))),
+            X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::R11.sub_ty(instr.meta)), op2),
+            X64MCInstr::with2(Mnemonic::Imul, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)), Operand::Reg(X64Reg::R11.sub_ty(instr.meta))),
             X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta))),
         ]);
         
@@ -162,11 +162,11 @@ pub(crate) fn x64_lower_div(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
 
     // assembly code is here
     let div_instr = if op2.is_imm() {
-        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rbx.sub_ty(instr.meta)), op2));
-        X64MCInstr::with1(div_mnemonic, Operand::Reg(X64Reg::Rbx.sub_ty(instr.meta)))
+        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::R11.sub_ty(instr.meta)), op2));
+        X64MCInstr::with1(div_mnemonic, Operand::Reg(X64Reg::R11.sub_ty(instr.meta)))
     } else if matches!(op2, Operand::Reg(X64Reg::Rdx) | Operand::Reg(X64Reg::Edx)) {
-        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rbx.sub_ty(instr.meta)), op2));
-        X64MCInstr::with1(div_mnemonic, Operand::Reg(X64Reg::Rbx.sub_ty(instr.meta)))
+        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::R11.sub_ty(instr.meta)), op2));
+        X64MCInstr::with1(div_mnemonic, Operand::Reg(X64Reg::R11.sub_ty(instr.meta)))
     } else {
         X64MCInstr::with1(div_mnemonic, op2)
     };
@@ -232,11 +232,11 @@ pub(crate) fn x64_lower_rem(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr) {
     
     // mul/imul only accept r/m
     if let Operand::Imm(_) = op2 {
-        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rbx.sub_ty(instr.meta)), op2.clone()));
-        sink.push(X64MCInstr::with1(mnemonic, Operand::Reg(X64Reg::Rbx.sub_ty(instr.meta))));
+        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::R11.sub_ty(instr.meta)), op2.clone()));
+        sink.push(X64MCInstr::with1(mnemonic, Operand::Reg(X64Reg::R11.sub_ty(instr.meta))));
     } else if let Operand::Mem(_) = op2 {
-        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rbx.sub_ty(instr.meta)), op2.clone()));
-        sink.push(X64MCInstr::with1(mnemonic, Operand::Reg(X64Reg::Rbx.sub_ty(instr.meta))));
+        sink.push(X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::R11.sub_ty(instr.meta)), op2.clone()));
+        sink.push(X64MCInstr::with1(mnemonic, Operand::Reg(X64Reg::R11.sub_ty(instr.meta))));
     } else {
         sink.push(X64MCInstr::with1(mnemonic, op2.clone()));
     }
