@@ -11,8 +11,8 @@ impl CompilationHelper {
         let mut reg_args = 0;
         let mut fp_reg_args = 0;
 
-        let args = self.call.args(self.arch, TypeMetadata::i64);
-        let fp_args = self.call.args(self.arch, TypeMetadata::f64);
+        let args = self.call.caller_saved_grs(self.arch);
+        let fp_args = self.call.caller_saved_fps(self.arch);
 
         let mut saved = HashMap::new();
         
