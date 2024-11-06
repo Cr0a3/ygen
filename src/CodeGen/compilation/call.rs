@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{prelude::Call, CodeGen::{MachineMnemonic, MachineOperand, Reg}, IR::{FuncId, TypeMetadata}};
+use crate::{prelude::Call, CodeGen::{MachineMnemonic, MachineOperand, Reg}, Target::Arch, IR::{FuncId, TypeMetadata}};
 use crate::IR::{Block, Var};
 use super::{CompilationHelper, VarLocation};
 use crate::CodeGen::MachineInstr;
@@ -11,8 +11,8 @@ impl CompilationHelper {
         let mut reg_args = 0;
         let mut fp_reg_args = 0;
 
-        let args = self.call.caller_saved_grs(self.arch);
-        let fp_args = self.call.caller_saved_fps(self.arch);
+        let caller_grs = self.call.caller_saved_grs(self.arch);
+        let caller_fps = self.call.caller_saved_fps(self.arch);
 
         let mut saved = HashMap::new();
         
@@ -21,7 +21,7 @@ impl CompilationHelper {
 
             match loc {
                 VarLocation::Reg(reg) => {
-                    if Reg::contains_reg(reg, &args) {
+                    if Reg::contains_reg(reg, &caller_grs) || Reg::contains_reg(reg, &caller_fps) {
                         // SAVE IT ONTO THE STACK
                         let mut save = MachineInstr::new( MachineMnemonic::Move );
             
@@ -43,6 +43,9 @@ impl CompilationHelper {
 
         let mut pushes = Vec::new();
 
+        let args = self.call.args(Arch::X86_64, TypeMetadata::i64);
+        let fp_args = self.call.args(Arch::X86_64, TypeMetadata::f64);
+
         for arg in &node.inner2 {
             let src = self.vars.get(&arg.name).expect(&format!("expected valid variable: {}", arg.name));
 
@@ -51,6 +54,7 @@ impl CompilationHelper {
             } else { 
                 args.get(reg_args)
             };
+
             let mut arg_reg = arg_reg.cloned();
 
             if let Some(reg) = arg_reg {
