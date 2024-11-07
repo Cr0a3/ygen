@@ -4,7 +4,7 @@ members = [
     "tools/simplelang",
     "tools/ytest", 
     "tools/ylc",
-    "src/proc", 
+    "src/proc", "tools/ycc", 
 ]
 
 [workspace.dependencies]

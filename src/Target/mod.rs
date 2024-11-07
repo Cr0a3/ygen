@@ -4,6 +4,7 @@ pub mod x64;
 pub mod wasm;
 mod registry;
 mod whitelist;
+
 pub use x64::initializeX64Target;
 pub use wasm::initializeWasmTarget;
 pub use whitelist::*;
@@ -318,4 +319,151 @@ pub enum ObjFormat {
     XCoff,
     /// Platforms default (e.g: Windows -> Coff)
     Default
+}
+
+impl std::fmt::Display for Arch {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", match self {
+            Arch::Unknown => "unknown",
+            Arch::Arm => "arm",
+            Arch::ArmEB => "armeb",
+            Arch::Aarch64 => "aarch64",
+            Arch::Aarch64BE => "aarch64_be",
+            Arch::Arc => "arc",
+            Arch::Avr => "avr",
+            Arch::Bpfel => "bpfel",
+            Arch::Bpfeb => "bpfeb",
+            Arch::Hexagon => "hexagon",
+            Arch::Mips => "mips",
+            Arch::Mipsel => "mipsel",
+            Arch::Mips64 => "mips64",
+            Arch::Mips64EL => "mips64el",
+            Arch::Msp420 => "msp430",
+            Arch::Ppc => "ppc",
+            Arch::Ppc64 => "ppc64",
+            Arch::Ppc64LE => "ppc64le",
+            Arch::R600 => "r600",
+            Arch::AmdGCN => "amdgcn",
+            Arch::Riscv32 => "riscv32",
+            Arch::Riscv64 => "riscv64",
+            Arch::Sparc => "sparc",
+            Arch::Sparcv9 => "sparcv9",
+            Arch::Sparcel => "sparcel",
+            Arch::SystemZ => "systemz",
+            Arch::Tce => "tce",
+            Arch::TceLe => "tcele",
+            Arch::Thumb => "thumb",
+            Arch::Thumbeb => "thumbeb",
+            Arch::X86 => "x86",
+            Arch::X86_64 => "x86_64",
+            Arch::Xcore => "xcore",
+            Arch::Nvptx => "nvptx",
+            Arch::Nvptx64 => "nvptx64",
+            Arch::Le32 => "le32",
+            Arch::Le64 => "le64",
+            Arch::AmdIL => "amdil",
+            Arch::AmdIL64 => "amdil64",
+            Arch::Hsail => "hsail",
+            Arch::Hsail64 => "hsail64",
+            Arch::Spir => "spir",
+            Arch::Spir64 => "spir64",
+            Arch::Kalimba => "kalimba",
+            Arch::Shave => "shave",
+            Arch::Lanai => "lanai",
+            Arch::Wasm32 => "wasm32",
+            Arch::Wasm64 => "wasm64",
+            Arch::Renderscript32 => "renderscript32",
+            Arch::Renderscript64 => "renderscript64",
+        })
+    }
+}
+
+impl std::fmt::Display for Vendor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", match self {
+            Vendor::Unknown => "unknown",
+            Vendor::Apple => "apple",
+            Vendor::Pc => "pc",
+            Vendor::Scei => "scei",
+            Vendor::Bgp => "bgp",
+            Vendor::Freescale => "freescale",
+            Vendor::Ibm => "ibm",
+            Vendor::ImaginationTechnologies => "imagination",
+            Vendor::MipsTechnologies => "mips",
+            Vendor::Nvidia => "nvidia",
+            Vendor::Csr => "csr",
+            Vendor::Myriad => "myriad",
+            Vendor::Amd => "amd",
+            Vendor::Mesa => "mesa",
+            Vendor::Suse => "suse",
+            Vendor::OpenEmbedded => "oe",
+        })
+    }
+}
+impl std::fmt::Display for OS {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", match self {
+            OS::Unknown => "unknown",
+            OS::Ananas => "ananas",
+            OS::CloudABI => "cloudabi",
+            OS::Darwin => "darwin",
+            OS::DragonFly => "dragonfly",
+            OS::FreeBSD => "freebsd",
+            OS::Fuchsia => "fuchsia",
+            OS::Ios => "ios",
+            OS::KFreeBSD => "kfreebsd",
+            OS::Linux => "linux",
+            OS::Lv2 => "lv2",
+            OS::MacOS => "macos",
+            OS::NetBSD => "netbsd",
+            OS::OpenBSD => "openbsd",
+            OS::Solaris => "solaris",
+            OS::Win32 => "windows",
+            OS::Haiku => "haiku",
+            OS::Minix => "minix",
+            OS::Rtems => "rtems",
+            OS::NaCl => "nacl",
+            OS::Cnk => "cnk",
+            OS::Aix => "aix",
+            OS::Cuda => "cuda",
+            OS::Nvcl => "nvcl",
+            OS::AmdHSA => "amdhsa",
+            OS::Ps4 => "ps4",
+            OS::ElfIAMCU => "elfiamcu",
+            OS::TvOS => "tvos",
+            OS::WatchOS => "watchos",
+            OS::Mesa3D => "mesa3d",
+            OS::Contiki => "contiki",
+            OS::AmdPAL => "amdpal",
+            OS::HermitCore => "hermitcore",
+            OS::Hurd => "hurd",
+            OS::Wasi => "wasi",
+        })
+    }
+}
+
+impl std::fmt::Display for Environment {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", match self {
+            Environment::Unknown => "unknown",
+            Environment::Gnu => "gnu",
+            Environment::GnuABIN32 => "gnun32",
+            Environment::GnuABI64 => "gnuabi64",
+            Environment::GnuEABI => "gnueabi",
+            Environment::GnuEABIHF => "gnueabihf",
+            Environment::GnuX32 => "gnux32",
+            Environment::Code16 => "code16",
+            Environment::Eabi => "eabi",
+            Environment::EabiHF => "eabihf",
+            Environment::Android => "android",
+            Environment::Musl => "musl",
+            Environment::MuslEABI => "musleabi",
+            Environment::MuslEABIHF => "musleabihf",
+            Environment::Msvc => "msvc",
+            Environment::Itanium => "itanium",
+            Environment::Cygnus => "cygnus",
+            Environment::CoreCLR => "coreclr",
+            Environment::Simulator => "simulator",
+        })
+    }
 }

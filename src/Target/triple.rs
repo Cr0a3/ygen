@@ -49,6 +49,21 @@ impl Display for TripleError {
 
 impl Error for TripleError {}
 
+impl Display for Triple {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut vendor = format!("-{}", self.vendor);
+        if self.vendor == Vendor::Unknown { vendor = String::new() };
+
+        let mut os = format!("-{}", self.os);
+        if self.os == OS::Unknown { os = String::new() };
+
+        let mut env = format!("-{}", self.env);
+        if self.env == Environment::Unknown { env = String::new() };
+
+        write!(f, "{}{}{}{}", self.arch, vendor, os, env)
+    }
+}
+
 impl Triple {
     /// Parses the target triple string. 
     /// Returns the target triple or TripleError
