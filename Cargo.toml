@@ -34,7 +34,7 @@ proc = { workspace = true }
 unescaper = "0.1.5"
 
 winapi = { version = "0.3.9", features = ["winnt", "memoryapi", "libloaderapi"], optional = true }
-libc = { version = "0.2.161", optional = true }
+libc = { version = "0.2.162", optional = true }
 iced-x86 = { version = "1.21.0", features = ["code_asm"] }
 wasm-encoder = "0.219.1"
 
