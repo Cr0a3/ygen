@@ -82,12 +82,14 @@ fn main() {
 
     let encountered_errors = lexer.errors.len() > 0; 
 
-    for error in lexer.errors {
+    for error in &lexer.errors {
         error.print(&code, &infile);
     }
 
     if encountered_errors {
         std::process::exit(-1);
     }
+
+    println!("{:#?}", lexer.tokens())
 
 }

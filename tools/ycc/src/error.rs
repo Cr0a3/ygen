@@ -7,11 +7,11 @@ pub struct ErrorLoc {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct YccError {
-    loc: ErrorLoc,
+    pub loc: ErrorLoc,
 
-    head: &'static str,
+    pub head: &'static str,
     
-    where_string: String,
+    pub where_string: String,
 }
 
 impl YccError {
@@ -23,7 +23,9 @@ impl YccError {
             self.loc.col.to_string()
         );
 
-        fab.setCodeLine(code.to_string());
+        if let Some(line) = code.split('\n').map(|x| x.to_owned()).collect::<Vec<String>>().get(self.loc.line as usize){
+            fab.setCodeLine(line.to_owned());
+        }
 
         fab.addWhere(self.where_string.to_owned(), self.loc.col, self.loc.length);
 
