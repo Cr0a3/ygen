@@ -68,13 +68,7 @@ fn main() {
     let code = utils::read_in_file(&infile);
     let out = utils::out_file(&infile, cli.arg_val("out"));
 
-    /////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////
-    // 
     // Lexing Phase
-    // 
-    /////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////
 
     let mut lexer = lexer::Lexer::new(&code);
 
@@ -90,6 +84,21 @@ fn main() {
         std::process::exit(-1);
     }
 
-    println!("{:#?}", lexer.tokens())
+    // Parsing phase
 
+    let mut parser = parser::Parser::new(&lexer.tokens);
+
+    parser.parse();
+
+    let encountered_errors = parser.errors.len() > 0; 
+
+    for error in &parser.errors {
+        error.print(&code, &infile);
+    }
+
+    if encountered_errors {
+        std::process::exit(-1);
+    }
+
+    println!("{:#?}", parser.out);
 }

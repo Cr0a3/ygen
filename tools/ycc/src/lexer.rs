@@ -184,7 +184,7 @@ pub struct Token {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Lexer<'a> {
-    tokens: Vec<Token>,
+    pub(crate) tokens: Vec<Token>,
 
     line: u64,
     col: u64,
@@ -786,9 +786,5 @@ impl<'a> Lexer<'a> {
         self.advance(); // "
 
         self.token(TokenType::StringLiteral(string))
-    }
-
-    pub fn tokens(&self) -> Vec<Token> {
-        self.tokens.to_owned()
     }
 }
