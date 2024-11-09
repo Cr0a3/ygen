@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::path::PathBuf;
 
-use crate::prelude::{Alloca, Cmp, CmpMode, DebugNode, GetElemPtr, Ir, Load, Neg, Phi, Select, Store, Switch};
+use crate::prelude::{Alloca, Cmp, CmpMode, DebugNode, GetElemPtr, IROperand, Ir, Load, Neg, Phi, Select, Store, Switch};
 use crate::Obj::Linkage;
 use crate::IR::block::BlockId;
 use crate::IR::{ir, Block, Const, FnTy, Type, TypeMetadata, Var};
@@ -511,25 +511,29 @@ impl IrParser {
         let out_ty = self.parse_type()?;
         self.input.pop_front();
 
+        let ret_op = self.parse_operand(out_ty)?;
+
+        self.input.pop_front();
+
+        Ok(ir::Return::new(ret_op))
+    }
+
+    fn parse_operand(&mut self, ty: TypeMetadata) -> Result<IROperand, IrError> {
         let curr = self.current_token()?;
 
-        let out:  Result<Box<dyn Ir>, IrError> = if let TokenType::Int(numeral) = &curr.typ {
-            Ok(ir::Return::new(Type::from_int(out_ty, *numeral)))
+        if let TokenType::Int(numeral) = &curr.typ {
+            Ok(IROperand::Type(Type::from_int(ty, *numeral)))
         } else if let TokenType::Var(var) = &curr.typ {
-            Ok(ir::Return::new(Var {
+            Ok(IROperand::Var(Var {
                 name: var.to_owned(),
-                ty: out_ty,
+                ty: ty,
             }))
         } else {
             Err(IrError::UndeterminedTokenSequence { 
                 loc: curr.loc.clone(), 
-                expected: "ints, vars - for valid return nodes".to_owned(), 
+                expected: "intenger, variable names - for valid constant assignments".to_owned() 
             })
-        };
-
-        self.input.pop_front();
-
-        out
+        }
     }
 
     fn parse_const_assing(&mut self, var: String, ty: TypeMetadata) -> Result<Box<dyn Ir>, IrError> {

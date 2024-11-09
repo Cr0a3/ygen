@@ -129,8 +129,8 @@ impl TargetBackendDescr {
                 ir_helper.helper.alloc.stack_off = helper.alloc.stack_off;
             }
 
-            if let Some(node) = node.as_any().downcast_ref::<Return<Type>>() {
-                ir_helper.compile_ret_ty(node, &block, module);
+            if let Some(node) = node.as_any().downcast_ref::<Return<IROperand>>() {
+                ir_helper.compile_ret(node, &block, module);
 
                 if self.epilog {
                     let mut epilog_instrs = vec![];
@@ -142,19 +142,6 @@ impl TargetBackendDescr {
                         last.compiled.extend_from_slice(&backup);
                     } else { unreachable!() }
 
-                }
-            } else if let Some(node) = node.as_any().downcast_ref::<Return<Var>>() {
-                ir_helper.compile_ret_var(node, &block, module);
-
-                if self.epilog {
-                    let mut epilog_instrs = vec![];
-                    helper.compile_epilog(&mut epilog_instrs);
-    
-                    if let Some(last) = ir_helper.compiled.last_mut() {
-                        let backup = last.compiled.clone();
-                        last.compiled = epilog_instrs;
-                        last.compiled.extend_from_slice(&backup);
-                    } else { unreachable!() }
                 }
             } else {
                 node.compile_dir(&mut ir_helper, &block, module);
@@ -284,8 +271,7 @@ compile_func!(compile_rem_type_type, compile_rem_type_type, Rem<Type, Type, Var>
 compile_func!(compile_shl_type_type, compile_shl_type_type, Shl<Type, Type, Var>);
 compile_func!(compile_shr_type_type, compile_shr_type_type, Shr<Type, Type, Var>);
 
-compile_func!(compile_ret_ty, compile_ret_ty, Return<Type>);
-compile_func!(compile_ret_var, compile_ret_var, Return<Var>);
+compile_func!(compile_ret, compile_ret, Return<IROperand>);
 
 compile_func!(compile_cast_var, compile_cast, Cast<Var, TypeMetadata, Var>);
 

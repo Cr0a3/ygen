@@ -4,6 +4,7 @@ use crate::prelude::Ir;
 use crate::Target::{Arch, CallConv};
 use crate::IR::{Function, TypeMetadata, Var};
 
+use super::MachineOperand;
 use super::{calling_convention::MachineCallingConvention, reg::Reg, MCInstr, MachineInstr};
 
 mod call;
@@ -171,4 +172,13 @@ impl CompilationHelper {
 pub(crate) enum VarLocation {
     Reg(Reg),
     Mem(i64, TypeMetadata),
+}
+
+impl crate::IR::ir::IROperand {
+    fn into_mi(&self, compiler: &mut CompilationHelper) -> MachineOperand {
+        match self {
+            crate::prelude::IROperand::Type(ty) => MachineOperand::Imm(ty.val()),
+            crate::prelude::IROperand::Var(var) => (*compiler.vars.get(&var.name).unwrap()).into(),
+        }
+    }
 }

@@ -286,14 +286,9 @@ impl IrCodeGenHelper {
         ir::Load<Var, Var, TypeMetadata>
     );
     ir_codegen_wrap!(
-        compile_ret_ty, 
+        compile_ret, 
         "Loweres the ret node", 
-        ir::Return<Type>
-    );
-    ir_codegen_wrap!(
-        compile_ret_var, 
-        "Loweres the ret node", 
-        ir::Return<Var>
+        ir::Return<ir::IROperand>
     );
     ir_codegen_wrap!(
         compile_store, 

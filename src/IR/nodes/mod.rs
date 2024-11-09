@@ -332,3 +332,60 @@ impl Replace<Box<dyn Ir>> for Box<dyn Ir> {
         *self = other
     }
 }
+
+/// an operand for ir nodes
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum IROperand {
+    /// A type (like i64)
+    Type(Type),
+    /// A variable (like %.)
+    Var(Var),
+}
+
+impl IROperand {
+    #[inline]
+    /// Returns if the operand is a type const (like 5 - a constant number)
+    pub fn is_type(&self) -> bool {
+        matches!(self, IROperand::Type(_))
+    }
+
+    #[inline]
+    /// Returns if the operand is a var
+    pub fn is_var(&self) -> bool {
+        matches!(self, IROperand::Var(_))
+    }
+
+    #[inline]
+    /// Returns the type of the operand
+    pub fn get_ty(&self) -> TypeMetadata {
+        match self {
+            IROperand::Type(ty) => (*ty).into(),
+            IROperand::Var(var) => var.ty,
+        }
+    }
+}
+
+impl std::fmt::Display for IROperand {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", match self {
+            IROperand::Type(ty) => match ty {
+                Type::u8(i) => format!("{i}"),
+                Type::u16(i) => format!("{i}"),
+                Type::u32(i) => format!("{i}"),
+                Type::u64(i) => format!("{i}"),
+    
+                Type::i8(i) => format!("{i}"),
+                Type::i16(i) => format!("{i}"),
+                Type::i32(i) => format!("{i}"),
+                Type::i64(i) => format!("{i}"),
+    
+                Type::ptr(adr) => format!("{adr:#04x}"),
+                Type::Void => format!("0"),
+    
+                Type::f32(i) => format!("{i}"),
+                Type::f64(i) => format!("{i}"),
+            }
+            IROperand::Var(var) => var.name.to_string(),
+        })
+    }
+}

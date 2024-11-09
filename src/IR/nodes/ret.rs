@@ -2,27 +2,28 @@ use std::any::TypeId;
 
 use super::*;
 
-impl Ir for Return<Type> {
+impl Ir for Return<IROperand> {
     fn clone_box(&self) -> Box<dyn Ir> {
         Box::new(self.clone())
     }
 
     fn dump(&self) -> String {
-        let metadata: TypeMetadata = self.inner1.into();
-        format!("ret {} {}", metadata, self.inner1.val())
+        let metadata: TypeMetadata = self.inner1.get_ty();
+        
+        format!("ret {} {}", metadata, self.inner1)
     }
 
     fn dumpColored(&self, profile: ColorProfile) -> String {
-        let metadata: TypeMetadata = self.inner1.into();
+        let metadata: TypeMetadata = self.inner1.get_ty();
         format!("{} {} {}", 
             profile.markup("ret", ColorClass::Instr),
             profile.markup(&metadata.to_string(), ColorClass::Ty), 
-            profile.markup(&self.inner1.val().to_string(), ColorClass::Var),
+            profile.markup(&self.inner1.to_string(), ColorClass::Var),
         )
     }
 
     fn verify(&self, FuncTy: FunctionType) -> Result<(), VerifyError> {
-        let ty: TypeMetadata = self.inner1.into();
+        let ty: TypeMetadata = self.inner1.get_ty();
 
         if ty != FuncTy.ret {
             Err(VerifyError::RetTyNotFnTy(ty, FuncTy.ret))?
@@ -36,11 +37,11 @@ impl Ir for Return<Type> {
     }
 
     fn compile(&self, registry: &mut TargetBackendDescr, module: &mut crate::prelude::Module) {
-        registry.compile_ret_ty(&self, module)
+        registry.compile_ret(&self, module)
     }
     
     fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
-        compiler.compile_ret_ty(&self, block, module)
+        compiler.compile_ret(&self, block, module)
     }
     
     fn inputs(&self) -> Vec<Var> {
@@ -56,78 +57,15 @@ impl Ir for Return<Type> {
     }
 }
 
-impl EvalOptVisitor for Return<Type> {
-    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        None
-    }
-    
-    fn eval(&self) -> Option<Box<dyn Ir>> {
-        None
-    }
-}
-
-impl Ir for Return<Var> {
-    fn clone_box(&self) -> Box<dyn Ir> {
-        Box::new(self.clone())
-    }
-
-    fn dump(&self) -> String {
-        format!("ret {} {}", self.inner1.ty, self.inner1.name)
-    }
-
-    fn dumpColored(&self, profile: ColorProfile) -> String {
-        format!("{} {} {}", 
-            profile.markup("ret", ColorClass::Instr), 
-            profile.markup(&self.inner1.ty.to_string(), ColorClass::Ty), 
-            profile.markup(&self.inner1.name.to_string(), ColorClass::Var),
-        )
-    }
-
-    fn verify(&self, FuncTy: FunctionType) -> Result<(), VerifyError> {
-        let ty: TypeMetadata = self.inner1.ty.into();
-
-        if ty != FuncTy.ret {
-            Err(VerifyError::RetTyNotFnTy(ty, FuncTy.ret))?
-        }
-
-        Ok(())
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn compile(&self, registry: &mut TargetBackendDescr, module: &mut crate::prelude::Module) {
-        registry.compile_ret_var(&self, module)
-    }
-
-    fn uses(&self, var: &Var) -> bool {
-        if *var == self.inner1 { true }
-        else { false }
-    }
-    
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
-        compiler.compile_ret_var(&self, &block, module)
-    }
-    
-    fn inputs(&self) -> Vec<Var> {
-        vec![self.inner1.to_owned()]
-    }
-    
-    fn inputs_mut(&mut self) -> Vec<&mut Var> {
-        vec![&mut self.inner1]
-    }
-    
-    fn output(&self) -> Option<Var> {
-        None
-    }
-}
-
-impl EvalOptVisitor for Return<Var> {
+impl EvalOptVisitor for Return<IROperand> {
     fn maybe_inline(&self, const_values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        if let Some(constant) = const_values.get(&self.inner1.name) {
-            Some( Return::new(*constant) )
-        } else { None }
+        if let IROperand::Var(var) = &self.inner1 {
+            if let Some(constant) = const_values.get(&var.name) {
+                return Some( Return::new(IROperand::Type(*constant)) );
+            } 
+        }
+
+        None
     }
     
     fn eval(&self) -> Option<Box<dyn Ir>> {
@@ -169,13 +107,13 @@ pub trait BuildReturn<T> {
 impl BuildReturn<Type> for Function {
     fn BuildRet(&mut self, val: Type) {
         self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one")
-            .push_ir(Return::new(val))
+            .push_ir(Return::new(IROperand::Type(val)))
     }
 }
 
 impl BuildReturn<Var> for Function {
     fn BuildRet(&mut self, var: Var) {
         self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one")
-            .push_ir(Return::new(var))
+            .push_ir(Return::new(IROperand::Var(var)))
     }
 }
