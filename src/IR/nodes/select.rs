@@ -1,33 +1,32 @@
-use std::any::{Any, TypeId};
-
-use super::{Assign, EvalOptVisitor, Ir, IsNode, Select};
+use super::{Assign, EvalOptVisitor, IROperand, Ir, IsNode, Select};
 use crate::{prelude::{Type, TypeMetadata, Var}, Support::{AsAny, ColorClass}, IR::Function};
 
-impl Ir for Select<Type, Type> {
+impl Ir for Select<IROperand, IROperand> {
     fn dump(&self) -> String {
-        let yes_meta: TypeMetadata = self.yes.into();
-        let no_meta: TypeMetadata = self.no.into();
+        let yes_meta: TypeMetadata = self.yes.get_ty();
+        let no_meta: TypeMetadata = self.no.get_ty();
+
         format!("{} = select {} {}, {} {}, {} {}", 
             self.out.name, 
             self.cond.ty,
             self.cond.name, 
-            yes_meta, self.yes.val(), 
-            no_meta, self.no.val()
+            yes_meta, self.yes, 
+            no_meta, self.no
         )
     }
 
     fn dumpColored(&self, profile: crate::Support::ColorProfile) -> String {
-        let yes_meta: TypeMetadata = self.yes.into();
-        let no_meta: TypeMetadata = self.no.into();
+        let yes_meta: TypeMetadata = self.yes.get_ty();
+        let no_meta: TypeMetadata = self.no.get_ty();
         format!("{} = {} {} {}, {} {}, {} {}", 
             profile.markup(&self.out.name, ColorClass::Var),
             profile.markup("select", ColorClass::Instr),
             profile.markup(&self.cond.ty.to_string(), ColorClass::Ty),
             profile.markup(&self.cond.name, ColorClass::Var),
             profile.markup(&yes_meta.to_string(), ColorClass::Ty), 
-            profile.markup(&self.yes.val().to_string(), ColorClass::Value),
+            profile.markup(&self.yes.to_string(), ColorClass::Value),
             profile.markup(&no_meta.to_string(), ColorClass::Ty),
-            profile.markup(&self.no.val().to_string(), ColorClass::Value),
+            profile.markup(&self.no.to_string(), ColorClass::Value),
         )
     }
 
@@ -44,15 +43,20 @@ impl Ir for Select<Type, Type> {
     }
 
     fn compile(&self, registry: &mut crate::Target::TargetBackendDescr, module: &mut crate::prelude::Module) {
-        registry.compile_select_tt(self, module)
+        registry.compile_select(self, module)
     }
 
     fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
-        compiler.compile_select_tt(self, block, module)
+        compiler.compile_select(self, block, module)
     }
 
     fn inputs(&self) -> Vec<Var> {
-        vec![self.cond.to_owned()]
+        let mut inputs = vec![self.cond.to_owned()];
+
+        if let IROperand::Var(var) = &self.yes { inputs.push(var.to_owned()); } 
+        if let IROperand::Var(var) = &self.no { inputs.push(var.to_owned()); } 
+
+        inputs
     }
     
     fn inputs_mut(&mut self) -> Vec<&mut Var> {
@@ -64,254 +68,58 @@ impl Ir for Select<Type, Type> {
     }
 }
 
-impl EvalOptVisitor for Select<Type, Type> {
+impl EvalOptVisitor for Select<IROperand, IROperand> {
     fn maybe_inline(&self, const_values: &std::collections::HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        if let Some(cond) = const_values.get(&self.cond.name) {
-            if cond.val() == 0.0 {
-                return Some(Assign::new(self.out.clone(), self.yes));
-            } else {
-                return Some(Assign::new(self.out.clone(), self.no));
-            }
-        }
+        match (&self.yes, &self.no) {
+            (IROperand::Type(yes), IROperand::Type(no)) => {
+                if let Some(cond) = const_values.get(&self.cond.name) {
+                    if cond.val() == 0.0 {
+                        Some(Assign::new(self.out.clone(), *yes))
+                    } else {
+                        Some(Assign::new(self.out.clone(), *no))
+                    }
+                } else { None}
+            },
 
-        None
+            (IROperand::Var(yes), IROperand::Type(no)) => {
+                if let Some(yes) = const_values.get(&yes.name) {
+                    return Some(Box::new(Select {
+                        out: self.out.clone(),
+                        cond: self.cond.clone(),
+                        yes: IROperand::Type(*yes),
+                        no: IROperand::Type(*no),
+                    }));
+                } else { None }
+            },
+
+            (IROperand::Type(yes), IROperand::Var(no)) => {
+                if let Some(no) = const_values.get(&no.name) {
+                    return Some(Box::new(Select {
+                        out: self.out.clone(),
+                        cond: self.cond.clone(),
+                        yes: IROperand::Type(*yes),
+                        no: IROperand::Type(*no),
+                    }));
+                } else { None }
+            },
+
+            _ => None,
+        }
     }
 
     fn eval(&self) -> Option<Box<dyn Ir>> {
         if self.no == self.yes {
-            return Some(Assign::new(self.out.clone(), self.yes));
+            let yes: Box<dyn Ir> = match &self.yes {
+                IROperand::Type(yes) => Assign::new(self.out.clone(), *yes),
+                IROperand::Var(yes) => Assign::new(self.out.clone(), yes.to_owned()),
+            };
+            return Some(yes);
         }
 
         None
     }
 }
 
-impl Ir for Select<Var, Type> {
-    fn dump(&self) -> String {
-        let no_meta: TypeMetadata = self.no.into();
-        format!("{} = select {} {}, {} {}, {} {}", 
-            self.out.name, 
-            self.cond.ty,
-            self.cond.name, 
-            self.yes.ty, self.yes.name, 
-            no_meta, self.no.val()
-        )
-    }
-
-    fn dumpColored(&self, profile: crate::Support::ColorProfile) -> String {
-        let no_meta: TypeMetadata = self.no.into();
-        format!("{} = {} {} {}, {} {}, {} {}", 
-            profile.markup(&self.out.name, ColorClass::Var),
-            profile.markup("select", ColorClass::Instr),
-            profile.markup(&self.cond.ty.to_string(), ColorClass::Ty),
-            profile.markup(&self.cond.name, ColorClass::Var),
-            profile.markup(&self.yes.ty.to_string(), ColorClass::Ty), 
-            profile.markup(&self.yes.name, ColorClass::Var),
-            profile.markup(&no_meta.to_string(), ColorClass::Ty),
-            profile.markup(&self.no.val().to_string(), ColorClass::Value),
-        )
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
-
-    fn verify(&self, _: crate::prelude::FunctionType) -> Result<(), crate::prelude::VerifyError> {
-        Ok(())
-    }
-
-    fn clone_box(&self) -> Box<dyn Ir> {
-        Box::from( self.clone() )
-    }
-
-    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr, module: &mut crate::prelude::Module) {
-        registry.compile_select_vt(self, module)
-    }
-
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
-        compiler.compile_select_vt(self, block, module)
-    }
-
-    fn inputs(&self) -> Vec<Var> {
-        vec![self.cond.to_owned(), self.yes.clone()]
-    }
-    
-    fn inputs_mut(&mut self) -> Vec<&mut Var> {
-        vec![&mut self.cond, &mut self.yes]
-    }
-
-    fn output(&self) -> Option<Var> {
-        Some(self.out.clone())
-    }
-}
-
-impl EvalOptVisitor for Select<Var, Type> {
-    fn maybe_inline(&self, const_values: &std::collections::HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        if let Some(yes) = const_values.get(&self.yes.name) {
-            return Some(Select {
-                out: self.out.clone(),
-                cond: self.cond.clone(),
-                yes: *yes,
-                no: self.no,
-            }.clone_box());
-        }
-        
-        None
-    }
-
-    fn eval(&self) -> Option<Box<dyn Ir>> {
-        None
-    }
-}
-
-impl Ir for Select<Type, Var> {
-    fn dump(&self) -> String {
-        let yes_meta: TypeMetadata = self.yes.into();
-        format!("{} = select {} {}, {} {}, {} {}", 
-            self.out.name, 
-            self.cond.ty,
-            self.cond.name, 
-            yes_meta, self.yes.val(), 
-            self.no.ty, self.no.name
-        )
-    }
-
-    fn dumpColored(&self, profile: crate::Support::ColorProfile) -> String {
-        let yes_meta: TypeMetadata = self.yes.into();
-        format!("{} = {} {} {}, {} {}, {} {}", 
-            profile.markup(&self.out.name, ColorClass::Var),
-            profile.markup("select", ColorClass::Instr),
-            profile.markup(&self.cond.ty.to_string(), ColorClass::Ty),
-            profile.markup(&self.cond.name, ColorClass::Var),
-            profile.markup(&yes_meta.to_string(), ColorClass::Ty), 
-            profile.markup(&self.yes.val().to_string(), ColorClass::Value),
-            profile.markup(&self.no.ty.to_string(), ColorClass::Ty),
-            profile.markup(&self.no.name, ColorClass::Var),
-        )
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
-
-    fn verify(&self, _: crate::prelude::FunctionType) -> Result<(), crate::prelude::VerifyError> {
-        Ok(())
-    }
-
-    fn clone_box(&self) -> Box<dyn Ir> {
-        Box::from( self.clone() )
-    }
-
-    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr, module: &mut crate::prelude::Module) {
-        registry.compile_select_tv(self, module)
-    }
-
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
-        compiler.compile_select_tv(self, block, module)
-    }
-
-    fn inputs(&self) -> Vec<Var> {
-        vec![self.cond.to_owned(), self.no.to_owned()]
-    }
-    
-    fn inputs_mut(&mut self) -> Vec<&mut Var> {
-        vec![&mut self.cond, &mut self.no]
-    }
-
-    fn output(&self) -> Option<Var> {
-        Some(self.out.clone())
-    }
-}
-
-impl EvalOptVisitor for Select<Type, Var> {
-    fn maybe_inline(&self, const_values: &std::collections::HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        if let Some(no) = const_values.get(&self.no.name) {
-            return Some(Select {
-                out: self.out.clone(),
-                cond: self.cond.clone(),
-                yes: self.yes,
-                no: *no,
-            }.clone_box());
-        }
-
-        None
-    }
-
-    fn eval(&self) -> Option<Box<dyn Ir>> {
-        None
-    }
-}
-
-impl Ir for Select<Var, Var> {
-    fn dump(&self) -> String {
-        format!("{} = select {} {}, {} {}, {} {}", 
-            self.out.name, 
-            self.cond.ty,
-            self.cond.name, 
-            self.yes.ty, self.yes.name, 
-            self.no.ty, self.no.name
-        )
-    }
-
-    fn dumpColored(&self, profile: crate::Support::ColorProfile) -> String {
-        format!("{} = {} {} {}, {} {}, {} {}", 
-            profile.markup(&self.out.name, ColorClass::Var),
-            profile.markup("select", ColorClass::Instr),
-            profile.markup(&self.cond.ty.to_string(), ColorClass::Ty),
-            profile.markup(&self.cond.name, ColorClass::Var),
-            profile.markup(&self.yes.ty.to_string(), ColorClass::Ty), 
-            profile.markup(&self.yes.name, ColorClass::Var),
-            profile.markup(&self.no.ty.to_string(), ColorClass::Ty),
-            profile.markup(&self.no.name, ColorClass::Var),
-        )
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
-
-    fn verify(&self, _: crate::prelude::FunctionType) -> Result<(), crate::prelude::VerifyError> {
-        Ok(())
-    }
-
-    fn clone_box(&self) -> Box<dyn Ir> {
-        Box::from( self.clone() )
-    }
-
-    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr, module: &mut crate::prelude::Module) {
-        registry.compile_select_vv(self, module)
-    }
-
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
-        compiler.compile_select_vv(self, block, module)
-    }
-
-    fn inputs(&self) -> Vec<Var> {
-        vec![self.cond.to_owned(), self.yes.to_owned(), self.no.to_owned()]
-    }
-    
-    fn inputs_mut(&mut self) -> Vec<&mut Var> {
-        vec![&mut self.cond, &mut self.yes, &mut self.no]
-    }
-
-    fn output(&self) -> Option<Var> {
-        Some(self.out.clone())
-    }
-}
-
-impl EvalOptVisitor for Select<Var, Var> {
-    fn maybe_inline(&self, _: &std::collections::HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        None
-    }
-
-    fn eval(&self) -> Option<Box<dyn Ir>> {
-        if self.yes == self.no {
-            return Some(Assign::new(self.out.clone(), self.yes.clone()));
-        }
-
-        None
-    }
-}
 
 impl<T, U> IsNode for Select<T, U> 
     where T: std::fmt::Debug + Clone + PartialEq + Eq + AsAny,
@@ -342,22 +150,22 @@ impl<T, U> Select<T, U>
 
     /// Returns if the true value is a variable
     pub fn isTrueVar(&self) -> bool {
-        self.yes.type_id() == TypeId::of::<Var>()
+        matches!(self.yes.as_any().downcast_ref::<IROperand>(), Some(IROperand::Var(_)))
     }
 
     /// Returns if the false value is a variable
     pub fn isFalseVar(&self) -> bool {
-        self.no.type_id() == TypeId::of::<Var>()
+        matches!(self.no.as_any().downcast_ref::<IROperand>(), Some(IROperand::Var(_)))
     }
 
     /// Returns if the true value is a constant
     pub fn isTrueConst(&self) -> bool {
-        self.yes.type_id() == TypeId::of::<Type>()
+        matches!(self.yes.as_any().downcast_ref::<IROperand>(), Some(IROperand::Type(_)))
     }
 
     /// Returns if the false value is a constant
     pub fn isFalseConst(&self) -> bool {
-        self.no.type_id() == TypeId::of::<Type>()
+        matches!(self.no.as_any().downcast_ref::<IROperand>(), Some(IROperand::Type(_)))
     }
 
     /// Returns the true value as a variable
@@ -366,16 +174,22 @@ impl<T, U> Select<T, U>
     /// 
     /// panics if the true value is not a variable so first check
     pub fn getTrueVar(&self) -> Var {
-        self.yes.as_any().downcast_ref::<Var>().unwrap().clone()
+        let Some(IROperand::Var(ret)) = self.yes.as_any().downcast_ref::<IROperand>() else {
+            panic!();
+        };
+        ret.to_owned()
     }
 
-    /// Returns if the false value is a variable
+    /// Returns the false value as a variable
     /// 
     /// ### Panics
     /// 
     /// panics if the false value is not a variable so first check
-    pub fn getFalseVar(&self) -> bool {
-        self.no.type_id() == TypeId::of::<Var>()
+    pub fn getFalseVar(&self) -> Var {
+        let Some(IROperand::Var(ret)) = self.no.as_any().downcast_ref::<IROperand>() else {
+            panic!();
+        };
+        ret.to_owned()
     }
 
     /// Returns the true value as a constant
@@ -384,7 +198,10 @@ impl<T, U> Select<T, U>
     /// 
     /// panics if the true value is not a constant so first check
     pub fn getTrueConst(&self) -> Type {
-        self.yes.as_any().downcast_ref::<Type>().unwrap().clone()
+        let Some(IROperand::Type(ret)) = self.yes.as_any().downcast_ref::<IROperand>() else {
+            panic!();
+        };
+        *ret
     }
 
     /// Returns the false value as a constant
@@ -393,7 +210,10 @@ impl<T, U> Select<T, U>
     /// 
     /// panics if the false value is not a constant so first check
     pub fn getFalseConst(&self) -> Type {
-        self.no.as_any().downcast_ref::<Type>().unwrap().clone()
+        let Some(IROperand::Type(ret)) = self.no.as_any().downcast_ref::<IROperand>() else {
+            panic!();
+        };
+        *ret
     }
 }
 /// This trait is used to build the select node
@@ -429,8 +249,8 @@ impl BuildSelect<Type, Type> for Function {
         block.push_ir(Box::new(Select {
             out: out.clone(),
             cond: cond,
-            yes: yes,
-            no: no,
+            yes: IROperand::Type(yes),
+            no: IROperand::Type(no),
         }));
 
         out
@@ -446,8 +266,8 @@ impl BuildSelect<Type, Var> for Function {
         block.push_ir(Box::new(Select {
             out: out.clone(),
             cond: cond,
-            yes: yes,
-            no: no,
+            yes: IROperand::Type(yes),
+            no: IROperand::Var(no),
         }));
 
         out
@@ -463,8 +283,8 @@ impl BuildSelect<Var, Type> for Function {
         block.push_ir(Box::new(Select {
             out: out.clone(),
             cond: cond,
-            yes: yes,
-            no: no,
+            yes: IROperand::Var(yes),
+            no: IROperand::Type(no),
         }));
 
         out
@@ -480,8 +300,8 @@ impl BuildSelect<Var, Var> for Function {
         block.push_ir(Box::new(Select {
             out: out.clone(),
             cond: cond,
-            yes: yes,
-            no: no,
+            yes: IROperand::Var(yes),
+            no: IROperand::Var(no),
         }));
 
         out

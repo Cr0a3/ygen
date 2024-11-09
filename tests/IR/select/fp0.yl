@@ -8,7 +8,7 @@ define f32 @test(f32 %0) {
   entry:
     %tmp = f32 1.0
     %cond = cmp eq f32 %0, %tmp
-    %ret = select f32 %cond, f32 1.2, i32 2.4
+    %ret = select i8 %cond, f32 1.2, i32 2.4
     ret f32 %ret
 }
 

@@ -7,9 +7,11 @@ pub(crate) fn x64_lower_fcmp(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr, m
     let ls = instr.operands.get(0).expect("expected valid src operand at 1. place");
     let rs = instr.operands.get(1).expect("expected valid value to compare at 2. place");
     let out = instr.out.expect("expected output");
-    let out = out.into();
+    let out: Operand = out.into();
     let ls: Operand = (*ls).into();
     let rs: Operand = (*rs).into();
+
+    sink.push(X64MCInstr::with2(Mnemonic::Mov, out.to_owned(), Operand::Imm(0)));
 
     let mnemonic = if TypeMetadata::f32 == instr.meta {
         Mnemonic::Ucomiss 

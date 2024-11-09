@@ -363,6 +363,20 @@ impl IROperand {
             IROperand::Var(var) => var.ty,
         }
     }
+
+    #[inline]
+    /// Returns the unwraped inner type value (else it panics)
+    pub fn get_typeconst(&self) -> Type {
+        let IROperand::Type(ret) = self else { panic!(); };
+        return *ret;
+    }
+
+    #[inline]
+    /// Returns the unwraped inner var value (else it panics)
+    pub fn get_var(&self) -> Var {
+        let IROperand::Var(ret) = self else { panic!(); };
+        return ret.to_owned();
+    }
 }
 
 impl std::fmt::Display for IROperand {
@@ -387,5 +401,11 @@ impl std::fmt::Display for IROperand {
             }
             IROperand::Var(var) => var.name.to_string(),
         })
+    }
+}
+
+impl AsAny for IROperand {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }

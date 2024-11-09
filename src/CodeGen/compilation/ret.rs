@@ -1,4 +1,5 @@
-use crate::{prelude::{IROperand, Return}, CodeGen::{MachineInstr, MachineMnemonic, MachineOperand}, IR::{Block, Type, Var}};
+use crate::prelude::{IROperand, Return, Block};
+use crate::CodeGen::{MachineInstr, MachineMnemonic};
 
 use super::CompilationHelper;
 

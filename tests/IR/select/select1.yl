@@ -8,8 +8,8 @@ define i32 @main() {
   entry:
     %a = i32 0
 
-    %ret = select i32 %a, i32 5, i32 2
+    %ret = select i32 %a, i32 2, i32 5
     ret i32 %ret
 }
 
-# EXIT_CODE=2
+# EXIT_CODE=5

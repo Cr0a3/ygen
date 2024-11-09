@@ -1097,11 +1097,6 @@ impl IrParser {
         let ty = self.parse_type()?;
         self.input.pop_front(); // type
 
-        let out = Var {
-            name: var,
-            ty: ty
-        };
-
         self.expect(TokenType::Var(String::new()))?;
         let cond = if let TokenType::Var(cond) = &self.current_token()?.typ {
             Var {
@@ -1114,97 +1109,29 @@ impl IrParser {
         self.expect(TokenType::Comma)?;
         self.input.pop_front(); // ,
 
-        let _op1_ty = self.parse_type()?;
+        let op1_ty = self.parse_type()?;
         self.input.pop_front(); // ty
+        let ls = self.parse_operand(op1_ty)?;
+        self.input.pop_front();
 
-        let current = self.current_token()?;
+        self.expect(TokenType::Comma)?;
+        self.input.pop_front(); // ,
 
-        if let TokenType::Var(op1) = &current.typ {
-            let op1 = Var {
-                name: op1.to_owned(),
-                ty: ty
-            };
+        let op2_ty = self.parse_type()?;
+        self.input.pop_front(); // ty
+        let rs = self.parse_operand(op2_ty)?;
+        self.input.pop_front();
 
-            self.input.pop_front(); // var1
-            self.expect(TokenType::Comma)?;
-            self.input.pop_front(); // ,
+        Ok(Box::new(Select {
+            out: Var {
+                name: var,
+                ty: op1_ty,
+            },
+            cond: cond,
+            yes: ls,
+            no: rs,
+        }))
 
-            //self.parse_type()?;
-            self.input.pop_front();
-
-            let current = self.current_token()?;
-
-            if let TokenType::Var(op2) = &current.typ {
-                let op2 = Var {
-                    name: op2.to_owned(),
-                    ty: ty
-                };
-
-                self.input.pop_front();
-
-                Ok(Box::new(Select {
-                    out: out,
-                    cond: cond,
-                    yes: op1,
-                    no: op2,
-                }))
-            } else if let TokenType::Int(op2) = &current.typ {
-                let op2 = Type::from_int(ty, *op2);
-
-                self.input.pop_front();
-
-                Ok(Box::new(Select {
-                    out: out,
-                    cond: cond,
-                    yes: op1,
-                    no: op2,
-                }))
-            } else {
-                Err(IrError::UnexpectedToken(current.clone()))
-            }
-        } else if let TokenType::Int(imm) = &current.typ {
-            let op1 = Type::from_int(ty, *imm);
-            self.input.pop_front();
-
-            self.expect(TokenType::Comma)?;
-            self.input.pop_front();
-
-            self.parse_type()?;
-            self.input.pop_front();
-
-            let current = self.current_token()?;
-
-            if let TokenType::Var(op2) = &current.typ {
-                let op2 = Var {
-                    name: op2.to_owned(),
-                    ty: ty
-                };
-
-                self.input.pop_front();
-
-                Ok(Box::new(Select {
-                    out: out,
-                    cond: cond,
-                    yes: op1,
-                    no: op2,
-                }))
-            } else if let TokenType::Int(op2) = &current.typ {
-                let op2 = Type::from_int(ty, *op2);
-
-                self.input.pop_front();
-
-                Ok(Box::new(Select {
-                    out: out,
-                    cond: cond,
-                    yes: op1,
-                    no: op2,
-                }))
-            } else {
-                Err(IrError::UnexpectedToken(current.clone()))
-            }
-        } else {
-            Err(IrError::UnexpectedToken(current.clone()))
-        }
     }
 
     fn parse_getelemptr(&mut self, var: String) -> Result<Box<dyn Ir>, IrError> {

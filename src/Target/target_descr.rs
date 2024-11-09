@@ -295,9 +295,6 @@ compile_func!(compile_switch, compile_switch, Switch);
 
 compile_func!(compile_neg, compile_neg, Neg<Var, Var>);
 
-compile_func!(compile_select_tt, compile_select_tt, Select<Type, Type>);
-compile_func!(compile_select_vt, compile_select_vt, Select<Var, Type>);
-compile_func!(compile_select_tv, compile_select_tv, Select<Type, Var>);
-compile_func!(compile_select_vv, compile_select_vv, Select<Var, Var>);
+compile_func!(compile_select, compile_select, Select<IROperand, IROperand>);
 
 compile_func!(compile_getelemptr, compile_getelemptr, GetElemPtr);

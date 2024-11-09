@@ -45,9 +45,8 @@ impl InstrCombinePass {
     /// Optimizes a single instruction into a more performant one
     pub(crate) fn opt1(node: &Box<dyn Ir>) -> Option<Box<dyn Ir>> {
         use crate::IR::ir::*;
-        use crate::IR::*;
 
-        opt1_impl!(node, is_select, InstrCombinePass::opt_select, Select<Type, Type>);
+        opt1_impl!(node, is_select, InstrCombinePass::opt_select, Select<IROperand, IROperand>);
 
         None
     }

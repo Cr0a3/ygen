@@ -14,7 +14,7 @@ define i32 @main() {
 
     %ifcond = cmp eq i32 %a, %5
 
-    %ret = select i32 %ifcond, i32 %b, i32 0
+    %ret = select i8 %ifcond, i32 %b, i32 0
     ret i32 %ret
 }
 

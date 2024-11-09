@@ -12,37 +12,44 @@ pub(crate) fn x64_lower_cmov_zero(sink: &mut Vec<X64MCInstr>, instr: &MachineIns
     let cond = (*cond).into();
 
     let value = instr.operands.get(1).expect("expected value for valid cmov");
-    let value = (*value).into();
+    let value: Operand = (*value).into();
 
     let out = instr.out.expect("expected output for valid cmov");
-    let out = out.into();
+    let out: Operand = out.into();
 
-    let cmp = if let Operand::Mem(_) = cond {
-        vec![X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::R11), Operand::Imm(0)),
-             X64MCInstr::with2(Mnemonic::Cmp, cond, Operand::Reg(X64Reg::R11))]
+    if out.is_mem() || value.is_imm() {
+        sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)), value.clone()) );
+    }
+
+     if let Operand::Mem(_) = cond {
+        sink.extend_from_slice(&[
+            X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::R11), Operand::Imm(1)),
+            X64MCInstr::with2(Mnemonic::Cmp, cond, Operand::Reg(X64Reg::R11))
+            ]
+        );
     } else {
-        vec![X64MCInstr::with2(Mnemonic::Cmp, cond, Operand::Imm(0))]
+        sink.push( X64MCInstr::with2(Mnemonic::Cmp, cond, Operand::Imm(1)));
     };
 
-    if let Operand::Reg(_) = out {
-        if let Operand::Imm(_) = value {
-            sink.extend_from_slice(&cmp);
-            sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)), value));
+    match (&out, &value) {
+        (Operand::Reg(_), Operand::Imm(_)) => {
             sink.push( X64MCInstr::with2(Mnemonic::Cmove, out, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta))));
-        } else {
-            sink.extend_from_slice(&cmp);
+        },
+        (Operand::Reg(_), Operand::Reg(_)) | (Operand::Reg(_), Operand::Mem(_)) => {
             sink.push( X64MCInstr::with2(Mnemonic::Cmove, out, value));
-        }
-    } else {
-        if let Operand::Imm(_) = value {
-            sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)), value));
-            sink.extend_from_slice(&cmp);
+        },
+
+        (Operand::Mem(_), Operand::Imm(_)) => {
             sink.push( X64MCInstr::with2(Mnemonic::Cmove, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)), Operand::Reg(X64Reg::Rax.sub_ty(instr.meta))));
-        } else {
-            sink.extend_from_slice(&cmp);
+            sink.push( X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta))));
+        },
+
+        (Operand::Mem(_), Operand::Reg(_)) | (Operand::Mem(_), Operand::Mem(_))=> {
             sink.push( X64MCInstr::with2(Mnemonic::Cmove, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)), value));
-        }
-        sink.push( X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta))));
+            sink.push( X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta))));
+        },
+
+        _ => todo!(),
     }
 }  
 
@@ -55,37 +62,44 @@ pub(crate) fn x64_lower_cmov_not_zero(sink: &mut Vec<X64MCInstr>, instr: &Machin
     let cond = (*cond).into();
 
     let value = instr.operands.get(1).expect("expected value for valid cmov");
-    let value = (*value).into();
+    let value: Operand = (*value).into();
 
     let out = instr.out.expect("expected output for valid cmov");
-    let out = out.into();
+    let out: Operand = out.into();
 
-    let cmp = if let Operand::Mem(_) = cond {
-        vec![X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::R11), Operand::Imm(0)),
-             X64MCInstr::with2(Mnemonic::Cmp, cond, Operand::Reg(X64Reg::R11))]
+    if out.is_mem() || value.is_imm() {
+        sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)), value.clone()) );
+    }
+
+     if let Operand::Mem(_) = cond {
+        sink.extend_from_slice(&[
+            X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::R11), Operand::Imm(1)),
+            X64MCInstr::with2(Mnemonic::Cmp, cond, Operand::Reg(X64Reg::R11))
+            ]
+        );
     } else {
-        vec![X64MCInstr::with2(Mnemonic::Cmp, cond, Operand::Imm(0))]
+        sink.push( X64MCInstr::with2(Mnemonic::Cmp, cond, Operand::Imm(1)));
     };
 
-    if let Operand::Reg(_) = out {
-        if let Operand::Imm(_) = value {
-            sink.extend_from_slice(&cmp);
-            sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)), value));
+    match (&out, &value) {
+        (Operand::Reg(_), Operand::Imm(_)) => {
             sink.push( X64MCInstr::with2(Mnemonic::Cmovne, out, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta))));
-        } else {
-            sink.extend_from_slice(&cmp);
+        },
+        (Operand::Reg(_), Operand::Reg(_)) | (Operand::Reg(_), Operand::Mem(_)) => {
             sink.push( X64MCInstr::with2(Mnemonic::Cmovne, out, value));
-        }
-    } else {
-        if let Operand::Imm(_) = value {
-            sink.push( X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)), value));
-            sink.extend_from_slice(&cmp);
+        },
+
+        (Operand::Mem(_), Operand::Imm(_)) => {
             sink.push( X64MCInstr::with2(Mnemonic::Cmovne, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)), Operand::Reg(X64Reg::Rax.sub_ty(instr.meta))));
-        } else {
-            sink.extend_from_slice(&cmp);
+            sink.push( X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta))));
+        },
+
+        (Operand::Mem(_), Operand::Reg(_)) | (Operand::Mem(_), Operand::Mem(_))=> {
             sink.push( X64MCInstr::with2(Mnemonic::Cmovne, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta)), value));
-        }
-        sink.push( X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta))));
+            sink.push( X64MCInstr::with2(Mnemonic::Mov, out, Operand::Reg(X64Reg::Rax.sub_ty(instr.meta))));
+        },
+
+        _ => todo!(),
     }
 }  
 
@@ -109,10 +123,10 @@ pub(crate) fn x64_lower_fcmov0(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr)
     };
 
     sink.extend_from_slice(&if let Operand::Mem(_) = cond {
-        vec![X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::R11), Operand::Imm(0)),
+        vec![X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::R11), Operand::Imm(1)),
              X64MCInstr::with2(Mnemonic::Cmp, cond, Operand::Reg(X64Reg::R11))]
     } else {
-        vec![X64MCInstr::with2(Mnemonic::Cmp, cond, Operand::Imm(0))]
+        vec![X64MCInstr::with2(Mnemonic::Cmp, cond, Operand::Imm(1))]
     });
 
     if let Operand::Reg(_) = out {
@@ -152,10 +166,10 @@ pub(crate) fn x64_lower_fcmovne0(sink: &mut Vec<X64MCInstr>, instr: &MachineInst
     };
 
     sink.extend_from_slice(&if let Operand::Mem(_) = cond {
-        vec![X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::R11), Operand::Imm(0)),
+        vec![X64MCInstr::with2(Mnemonic::Mov, Operand::Reg(X64Reg::R11), Operand::Imm(1)),
              X64MCInstr::with2(Mnemonic::Cmp, cond, Operand::Reg(X64Reg::R11))]
     } else {
-        vec![X64MCInstr::with2(Mnemonic::Cmp, cond, Operand::Imm(0))]
+        vec![X64MCInstr::with2(Mnemonic::Cmp, cond, Operand::Imm(1))]
     });
 
     if let Operand::Reg(_) = out {

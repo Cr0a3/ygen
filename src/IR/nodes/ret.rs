@@ -1,5 +1,3 @@
-use std::any::TypeId;
-
 use super::*;
 
 impl Ir for Return<IROperand> {
@@ -45,7 +43,8 @@ impl Ir for Return<IROperand> {
     }
     
     fn inputs(&self) -> Vec<Var> {
-        vec![]
+        if let IROperand::Var(ret) = &self.inner1 { vec![ret.to_owned()] }
+        else { vec![] }
     }
     
     fn inputs_mut(&mut self) -> Vec<&mut Var> {
@@ -78,22 +77,30 @@ impl<T> Return<T> where
 {
     /// Returns the node a constant type?
     pub fn isRetConst(&self) -> bool {
-        self.inner1.type_id() == TypeId::of::<Type>()
+        if let Some(op) = self.inner1.as_any().downcast_ref::<IROperand>() { 
+            op.is_type() 
+        } else { panic!() }
     }
 
     /// Returns the node a variable?
     pub fn isRetVar(&self) -> bool {
-        self.inner1.type_id() == TypeId::of::<Var>()
+        if let Some(op) = self.inner1.as_any().downcast_ref::<IROperand>() { 
+            op.is_var() 
+        } else { panic!() }
     }
 
     /// Returns the constant the node returns (else panics)
     pub fn getRetConst(&self) -> Type {
-        self.inner1.as_any().downcast_ref::<Type>().unwrap().to_owned()
+        if let Some(op) = self.inner1.as_any().downcast_ref::<IROperand>() { 
+            op.get_typeconst() 
+        } else { panic!() }
     }
 
     /// Returns the variable the node returns (else panics)
     pub fn getRetVar(&self) -> Var {
-        self.inner1.as_any().downcast_ref::<Var>().unwrap().to_owned()
+        if let Some(op) = self.inner1.as_any().downcast_ref::<IROperand>() { 
+            op.get_var() 
+        } else { panic!() }
     }
 }
 

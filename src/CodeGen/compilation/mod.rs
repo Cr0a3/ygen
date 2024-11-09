@@ -178,7 +178,7 @@ impl crate::IR::ir::IROperand {
     fn into_mi(&self, compiler: &mut CompilationHelper) -> MachineOperand {
         match self {
             crate::prelude::IROperand::Type(ty) => MachineOperand::Imm(ty.val()),
-            crate::prelude::IROperand::Var(var) => (*compiler.vars.get(&var.name).unwrap()).into(),
+            crate::prelude::IROperand::Var(var) => (*compiler.vars.get(&var.name).expect(&format!("unknown variable: {}", var.name))).into(),
         }
     }
 }
