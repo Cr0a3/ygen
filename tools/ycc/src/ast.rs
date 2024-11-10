@@ -7,6 +7,8 @@ pub enum Visibility {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AstTypeMeta {
+    Void,
+
     Bool,
     Char,
     Short,
@@ -37,40 +39,41 @@ pub enum TopLevelStmt {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FuncStmt {
-    name: String,
-    visibility: Visibility,
-    return_type: AstType,
-    args: Vec<(String, AstType)>,
-    body: Vec<Stmt>,
+    pub name: String,
+    pub visibility: Visibility,
+    pub return_type: AstType,
+    pub args: Vec<(String, AstType)>,
+    pub body: Vec<Stmt>,
+    pub only_ty_indector: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GlobalStmt {
-    name: String,
-    visibility: Visibility,
-    ty: AstType,
-    initializer: Option<Expr>, 
+    pub name: String,
+    pub visibility: Visibility,
+    pub ty: AstType,
+    pub initializer: Option<Expr>, 
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ConstStmt {
-    name: String,
-    visibility: Visibility,
-    ty: AstType,
-    initializer: Expr, 
+    pub name: String,
+    pub visibility: Visibility,
+    pub ty: AstType,
+    pub initializer: Expr, 
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EnumStmt {
-    name: String,
-    values: Vec<(String, Option<Expr>)>,
+    pub name: String,
+    pub values: Vec<(String, Option<Expr>)>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StructStmt {
-    name: String,
+    pub name: String,
 
-    fields: Vec<(String, AstType)>,
+    pub fields: Vec<(String, AstType)>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -106,6 +109,9 @@ pub enum Stmt {
     Return {
         value: Expr,
     },
+    Block {
+        body: Vec<Stmt>
+    }
 }
 
 impl PartialEq for Expr {
