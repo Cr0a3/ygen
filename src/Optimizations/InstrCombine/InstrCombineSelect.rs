@@ -1,10 +1,7 @@
 use crate::Optimizations::Passes::InstrCombinePass;
 use crate::IR::ir::*;
 
-fn optimizeSelectToCast<T, U>(SI: &Select<T, U>) -> Option<Box<dyn Ir>> where
-    T: std::fmt::Debug + Clone + PartialEq + Eq + crate::Support::AsAny + 'static,
-    U: std::fmt::Debug + Clone + PartialEq + Eq + crate::Support::AsAny + 'static
-{
+fn optimizeSelectToCast(SI: &Select) -> Option<Box<dyn Ir>> {
     if !(SI.isTrueConst() && SI.isFalseConst()) {
         return None;
     }
@@ -22,10 +19,7 @@ fn optimizeSelectToCast<T, U>(SI: &Select<T, U>) -> Option<Box<dyn Ir>> where
 
 impl InstrCombinePass {
     /// Tries to optimize an select node
-    pub(crate) fn opt_select<T, U>(SI: &Select<T, U>) -> Option<Box<dyn Ir>> where
-        T: std::fmt::Debug + Clone + PartialEq + Eq + crate::Support::AsAny + 'static,
-        U: std::fmt::Debug + Clone + PartialEq + Eq + crate::Support::AsAny + 'static
-    {
+    pub(crate) fn opt_select(SI: &Select) -> Option<Box<dyn Ir>> {
         if let Some(opt) = optimizeSelectToCast(SI) { return Some(opt) };
 
         None

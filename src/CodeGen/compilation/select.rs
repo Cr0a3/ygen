@@ -4,7 +4,7 @@ use crate::prelude::*;
 
 impl CompilationHelper {
     #[allow(missing_docs)]
-    pub fn compile_select(&mut self, node: &Select<IROperand, IROperand>, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
+    pub fn compile_select(&mut self, node: &Select, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
         let out = (*self.vars.get(&node.out.name).expect("expected valid variable")).into();
         let cond = (*self.vars.get(&node.cond.name).expect("expected valid variable")).into();
         

@@ -208,15 +208,12 @@ impl Phi {
 /// }
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Select<T, U> 
-    where T: Debug + Clone + PartialEq + Eq + AsAny,
-          U: Debug + Clone + PartialEq + Eq + AsAny,
-{
+pub struct Select {
     pub(crate) out: Var,
     pub(crate) cond: Var,
 
-    pub(crate) yes: T,
-    pub(crate) no: U,
+    pub(crate) yes: IROperand,
+    pub(crate) no: IROperand,
 }
 
 /// checks if the node is another node

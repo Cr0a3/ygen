@@ -1,7 +1,7 @@
 use super::{Assign, EvalOptVisitor, IROperand, Ir, IsNode, Select};
-use crate::{prelude::{Type, TypeMetadata, Var}, Support::{AsAny, ColorClass}, IR::Function};
+use crate::{prelude::{Type, TypeMetadata, Var}, Support::ColorClass, IR::Function};
 
-impl Ir for Select<IROperand, IROperand> {
+impl Ir for Select {
     fn dump(&self) -> String {
         let yes_meta: TypeMetadata = self.yes.get_ty();
         let no_meta: TypeMetadata = self.no.get_ty();
@@ -68,7 +68,7 @@ impl Ir for Select<IROperand, IROperand> {
     }
 }
 
-impl EvalOptVisitor for Select<IROperand, IROperand> {
+impl EvalOptVisitor for Select {
     fn maybe_inline(&self, const_values: &std::collections::HashMap<String, Type>) -> Option<Box<dyn Ir>> {
         match (&self.yes, &self.no) {
             (IROperand::Type(yes), IROperand::Type(no)) => {
@@ -121,18 +121,12 @@ impl EvalOptVisitor for Select<IROperand, IROperand> {
 }
 
 
-impl<T, U> IsNode for Select<T, U> 
-    where T: std::fmt::Debug + Clone + PartialEq + Eq + AsAny,
-        U: std::fmt::Debug + Clone + PartialEq + Eq + AsAny,
-{
+impl IsNode for Select {
     fn is_select(&self) -> bool {
         true
     }
 }
-impl<T, U> Select<T, U> 
-    where T: std::fmt::Debug + Clone + PartialEq + Eq + AsAny + 'static,
-        U: std::fmt::Debug + Clone + PartialEq + Eq + AsAny + 'static,
-{
+impl Select {
     /// Returns the condition
     pub fn getCondition(&self) -> Var {
         self.cond.to_owned()
@@ -150,22 +144,22 @@ impl<T, U> Select<T, U>
 
     /// Returns if the true value is a variable
     pub fn isTrueVar(&self) -> bool {
-        matches!(self.yes.as_any().downcast_ref::<IROperand>(), Some(IROperand::Var(_)))
+        matches!(self.yes, IROperand::Var(_))
     }
 
     /// Returns if the false value is a variable
     pub fn isFalseVar(&self) -> bool {
-        matches!(self.no.as_any().downcast_ref::<IROperand>(), Some(IROperand::Var(_)))
+        matches!(self.no, IROperand::Var(_))
     }
 
     /// Returns if the true value is a constant
     pub fn isTrueConst(&self) -> bool {
-        matches!(self.yes.as_any().downcast_ref::<IROperand>(), Some(IROperand::Type(_)))
+        matches!(self.yes, IROperand::Type(_))
     }
 
     /// Returns if the false value is a constant
     pub fn isFalseConst(&self) -> bool {
-        matches!(self.no.as_any().downcast_ref::<IROperand>(), Some(IROperand::Type(_)))
+        matches!(self.no, IROperand::Type(_))
     }
 
     /// Returns the true value as a variable
@@ -174,7 +168,7 @@ impl<T, U> Select<T, U>
     /// 
     /// panics if the true value is not a variable so first check
     pub fn getTrueVar(&self) -> Var {
-        let Some(IROperand::Var(ret)) = self.yes.as_any().downcast_ref::<IROperand>() else {
+        let IROperand::Var(ret) = &self.yes else {
             panic!();
         };
         ret.to_owned()
@@ -186,7 +180,7 @@ impl<T, U> Select<T, U>
     /// 
     /// panics if the false value is not a variable so first check
     pub fn getFalseVar(&self) -> Var {
-        let Some(IROperand::Var(ret)) = self.no.as_any().downcast_ref::<IROperand>() else {
+        let IROperand::Var(ret) = &self.no else {
             panic!();
         };
         ret.to_owned()
@@ -198,7 +192,7 @@ impl<T, U> Select<T, U>
     /// 
     /// panics if the true value is not a constant so first check
     pub fn getTrueConst(&self) -> Type {
-        let Some(IROperand::Type(ret)) = self.yes.as_any().downcast_ref::<IROperand>() else {
+        let IROperand::Type(ret) = &self.yes else {
             panic!();
         };
         *ret
@@ -210,7 +204,7 @@ impl<T, U> Select<T, U>
     /// 
     /// panics if the false value is not a constant so first check
     pub fn getFalseConst(&self) -> Type {
-        let Some(IROperand::Type(ret)) = self.no.as_any().downcast_ref::<IROperand>() else {
+        let IROperand::Type(ret) = &self.no else {
             panic!();
         };
         *ret

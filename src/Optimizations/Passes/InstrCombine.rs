@@ -46,7 +46,7 @@ impl InstrCombinePass {
     pub(crate) fn opt1(node: &Box<dyn Ir>) -> Option<Box<dyn Ir>> {
         use crate::IR::ir::*;
 
-        opt1_impl!(node, is_select, InstrCombinePass::opt_select, Select<IROperand, IROperand>);
+        opt1_impl!(node, is_select, InstrCombinePass::opt_select, Select);
 
         None
     }

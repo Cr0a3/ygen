@@ -313,7 +313,7 @@ impl IrCodeGenHelper {
     ir_codegen_wrap!(
         compile_select, 
         "Loweres the select ty ty node", 
-        ir::Select<ir::IROperand, ir::IROperand>
+        ir::Select
     );
     ir_codegen_wrap!(
         compile_getelemptr, 
