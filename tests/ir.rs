@@ -18,7 +18,7 @@ pub fn ir_optimization() {
 
     func.addBlock("entry");
 
-    let val = func.BuildCall( &other, vec![ty.arg(0), ty.arg(1)] );
+    let val = func.BuildCall( &other, vec![IROperand::Var(ty.arg(0)), IROperand::Var(ty.arg(1))] );
     let val = func.BuildAdd(val, ty.arg(0));
     
     func.BuildRet( val );

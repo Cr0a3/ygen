@@ -3,7 +3,7 @@ use crate::debug::DebugLocation;
 use crate::prelude::{ir::*, Block, Var};
 use crate::CodeGen::{IrCodeGenArea, IrCodeGenHelper, MCDocInstr, MCInstr};
 use crate::CodeGen::{compilation::CompilationHelper, MachineInstr};
-use crate::IR::{BlockId, Const, FuncId, Module, Type, TypeMetadata};
+use crate::IR::{Const, Module, Type};
 
 use super::{AsmPrinter, Triple, WhiteList};
 use super::{CallConv, Compiler, Lexer};
@@ -129,7 +129,7 @@ impl TargetBackendDescr {
                 ir_helper.helper.alloc.stack_off = helper.alloc.stack_off;
             }
 
-            if let Some(node) = node.as_any().downcast_ref::<Return<IROperand>>() {
+            if let Some(node) = node.as_any().downcast_ref::<Return>() {
                 ir_helper.compile_ret(node, &block, module);
 
                 if self.epilog {
@@ -238,62 +238,39 @@ impl TargetBackendDescr {
     }
 }
 
-compile_func!(compile_add_var_var, compile_add_var_var, Add<Var, Var, Var>);
-compile_func!(compile_and_var_var, compile_and_var_var, And<Var, Var, Var>);
-compile_func!(compile_div_var_var, compile_div_var_var, Div<Var, Var, Var>);
-compile_func!(compile_mul_var_var, compile_mul_var_var, Mul<Var, Var, Var>);
-compile_func!(compile_or_var_var,  compile_or_var_var,  Or<Var, Var, Var>);
-compile_func!(compile_sub_var_var, compile_sub_var_var, Sub<Var, Var, Var>);
-compile_func!(compile_xor_var_var, compile_xor_var_var, Xor<Var, Var, Var>);
-compile_func!(compile_rem_var_var, compile_rem_var_var, Rem<Var, Var, Var>);
-compile_func!(compile_shl_var_var, compile_shl_var_var, Shl<Var, Var, Var>);
-compile_func!(compile_shr_var_var, compile_shr_var_var, Shr<Var, Var, Var>);
+compile_func!(compile_add, compile_add, Add);
+compile_func!(compile_and, compile_and, And);
+compile_func!(compile_div, compile_div, Div);
+compile_func!(compile_mul, compile_mul, Mul);
+compile_func!(compile_or,  compile_or,  Or);
+compile_func!(compile_sub, compile_sub, Sub);
+compile_func!(compile_xor, compile_xor, Xor);
+compile_func!(compile_rem, compile_rem, Rem);
+compile_func!(compile_shl, compile_shl, Shl);
+compile_func!(compile_shr, compile_shr, Shr);
 
-compile_func!(compile_add_var_type, compile_add_var_type, Add<Var, Type, Var>);
-compile_func!(compile_and_var_type, compile_and_var_type, And<Var, Type, Var>);
-compile_func!(compile_div_var_type, compile_div_var_type, Div<Var, Type, Var>);
-compile_func!(compile_mul_var_type, compile_mul_var_type, Mul<Var, Type, Var>);
-compile_func!(compile_or_var_type,  compile_or_var_type,  Or<Var, Type, Var>);
-compile_func!(compile_sub_var_type,  compile_sub_var_type,  Sub<Var, Type, Var>);
-compile_func!(compile_xor_var_type, compile_xor_var_type, Xor<Var, Type, Var>);
-compile_func!(compile_rem_var_type, compile_rem_var_type, Rem<Var, Type, Var>);
-compile_func!(compile_shl_var_type, compile_shl_var_type, Shl<Var, Type, Var>);
-compile_func!(compile_shr_var_type, compile_shr_var_type, Shr<Var, Type, Var>);
+compile_func!(compile_ret, compile_ret, Return);
 
-compile_func!(compile_add_type_type, compile_add_type_type, Add<Type, Type, Var>);
-compile_func!(compile_and_type_type, compile_and_type_type, And<Type, Type, Var>);
-compile_func!(compile_div_type_type, compile_div_type_type, Div<Type, Type, Var>);
-compile_func!(compile_mul_type_type, compile_mul_type_type, Mul<Type, Type, Var>);
-compile_func!(compile_or_type_type,  compile_or_type_type,  Or<Type, Type, Var>);
-compile_func!(compile_sub_type_type, compile_sub_type_type, Sub<Type, Type, Var>);
-compile_func!(compile_xor_type_type, compile_xor_type_type, Xor<Type, Type, Var>);
-compile_func!(compile_rem_type_type, compile_rem_type_type, Rem<Type, Type, Var>);
-compile_func!(compile_shl_type_type, compile_shl_type_type, Shl<Type, Type, Var>);
-compile_func!(compile_shr_type_type, compile_shr_type_type, Shr<Type, Type, Var>);
+compile_func!(compile_cast_var, compile_cast, Cast);
 
-compile_func!(compile_ret, compile_ret, Return<IROperand>);
-
-compile_func!(compile_cast_var, compile_cast, Cast<Var, TypeMetadata, Var>);
-
-compile_func!(compile_call, compile_call, Call<FuncId, Vec<Var>, Var>);
+compile_func!(compile_call, compile_call, Call);
 
 compile_func!(compile_assign_var_type, compile_assign_var_type, Assign<Var, Type>);
 compile_func!(compile_assign_var_var, compile_assign_var_var, Assign<Var, Var>);
 compile_func!(compile_assign_var_const, compile_assign_var_const, Assign<Var, Const>);
 
-compile_func!(compile_br, compile_br, Br<BlockId>);
-compile_func!(compile_br_cond, compile_br_cond, BrCond<Var, BlockId, BlockId>);
+compile_func!(compile_br, compile_br, Br);
+compile_func!(compile_br_cond, compile_br_cond, BrCond);
 
 compile_func!(compile_cmp, compile_cmp, Cmp);
 
-compile_func!(compile_alloca, compile_alloca, Alloca<Var, TypeMetadata>);
-compile_func!(compile_store, compile_store, Store<Var, Var>);
-compile_func!(compile_store_ty, compile_store_ty, Store<Var, Type>);
-compile_func!(compile_load, compile_load, Load<Var, Var, TypeMetadata>);
+compile_func!(compile_alloca, compile_alloca, Alloca);
+compile_func!(compile_store, compile_store, Store);
+compile_func!(compile_load, compile_load, Load);
 
 compile_func!(compile_switch, compile_switch, Switch);
 
-compile_func!(compile_neg, compile_neg, Neg<Var, Var>);
+compile_func!(compile_neg, compile_neg, Neg);
 
 compile_func!(compile_select, compile_select, Select);
 

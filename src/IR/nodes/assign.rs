@@ -207,7 +207,7 @@ impl EvalOptVisitor for Assign<Var, Const> {
 }
 
 impl<U> Assign<Var, U> where 
-    U: AsAny + 'static
+    U: AsAny + Debug + Clone + PartialEq + Eq + 'static
 {
     /// Returns the type of the assignment
     pub fn getType(&self) -> TypeMetadata {

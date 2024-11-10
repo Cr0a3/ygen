@@ -24,7 +24,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     func.addBlock("entry");
 
     let string = func.BuildAssign(&string);
-    func.BuildCall( &other, vec![string] );
+    func.BuildCall( &other, vec![IROperand::Var(string)] );
 
     func.BuildRet( Type::Void );
 

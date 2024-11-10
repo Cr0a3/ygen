@@ -1,13 +1,12 @@
 use crate::CodeGen::{MachineInstr, MachineMnemonic};
-use crate::IR::{Block, TypeMetadata, Var, ir::Load};
+use crate::IR::{Block, ir::Load};
 
 use super::CompilationHelper;
 
 impl CompilationHelper {
     #[allow(missing_docs)]
-    pub fn compile_load(&mut self, node: &Load<Var, Var, TypeMetadata>, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
-        let ptr = *self.vars.get(&node.inner2.name).expect(&format!("expected valid variable {}", node.inner2.name));
-        let ptr = ptr.into();
+    pub fn compile_load(&mut self, node: &Load, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
+        let ptr = node.inner3.into_mi(self);
 
         let out = *self.vars.get(&node.inner1.name).unwrap();
         let out = out.into();
@@ -17,9 +16,7 @@ impl CompilationHelper {
         instr.set_out( out );
         instr.add_operand(ptr);
 
-        instr.meta = node.inner3;
-
-        instr.meta = node.inner3;
+        instr.meta = node.inner2;
 
         mc_sink.push( instr );
 

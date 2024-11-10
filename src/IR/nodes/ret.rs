@@ -1,6 +1,6 @@
 use super::*;
 
-impl Ir for Return<IROperand> {
+impl Ir for Return {
     fn clone_box(&self) -> Box<dyn Ir> {
         Box::new(self.clone())
     }
@@ -56,7 +56,7 @@ impl Ir for Return<IROperand> {
     }
 }
 
-impl EvalOptVisitor for Return<IROperand> {
+impl EvalOptVisitor for Return {
     fn maybe_inline(&self, const_values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
         if let IROperand::Var(var) = &self.inner1 {
             if let Some(constant) = const_values.get(&var.name) {
@@ -72,35 +72,25 @@ impl EvalOptVisitor for Return<IROperand> {
     }
 }
 
-impl<T> Return<T> where 
-    T: Clone + AsAny + 'static
-{
+impl Return {
     /// Returns the node a constant type?
     pub fn isRetConst(&self) -> bool {
-        if let Some(op) = self.inner1.as_any().downcast_ref::<IROperand>() { 
-            op.is_type() 
-        } else { panic!() }
+        self.inner1.is_type()
     }
 
     /// Returns the node a variable?
     pub fn isRetVar(&self) -> bool {
-        if let Some(op) = self.inner1.as_any().downcast_ref::<IROperand>() { 
-            op.is_var() 
-        } else { panic!() }
+        self.inner1.is_var()
     }
 
     /// Returns the constant the node returns (else panics)
     pub fn getRetConst(&self) -> Type {
-        if let Some(op) = self.inner1.as_any().downcast_ref::<IROperand>() { 
-            op.get_typeconst() 
-        } else { panic!() }
+        self.inner1.get_typeconst()
     }
 
     /// Returns the variable the node returns (else panics)
     pub fn getRetVar(&self) -> Var {
-        if let Some(op) = self.inner1.as_any().downcast_ref::<IROperand>() { 
-            op.get_var() 
-        } else { panic!() }
+        self.inner1.get_var()
     }
 }
 

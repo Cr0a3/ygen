@@ -5,8 +5,8 @@ use super::CompilationHelper;
 impl CompilationHelper {
     #[allow(missing_docs)]
     pub fn compile_cmp(&mut self, node: &Cmp, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
-        let ls = *self.vars.get(&node.ls.name).expect("expected valid variable");
-        let rs = *self.vars.get(&node.rs.name).expect("expected valid variable");
+        let ls = node.ls.into_mi(self);
+        let rs = node.rs.into_mi(self);
         let out =  *self.vars.get(&node.out.name).unwrap();
 
         let ls = ls.into();
@@ -21,7 +21,7 @@ impl CompilationHelper {
 
         cmp.set_out(out);
 
-        cmp.meta = node.ls.ty;
+        cmp.meta = node.ls.get_ty();
 
         mc_sink.push( cmp );
 

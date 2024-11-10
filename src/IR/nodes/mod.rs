@@ -1,6 +1,6 @@
 use std::{any::Any, fmt::Debug, hash::Hash};
 use std::collections::HashMap;
-use super::{Block, Const, Function, FunctionType, Type, TypeMetadata, Var, VerifyError};
+use super::{Block, BlockId, Const, FuncId, Function, FunctionType, Type, TypeMetadata, Var, VerifyError};
 use crate::Target::TargetBackendDescr;
 
 mod assign;
@@ -37,7 +37,7 @@ macro_rules! IrTypeWith3 {
     ($name:tt, $param1:tt, $param2:tt, $param3:tt, $is_func:ident) => {
         /// An Ir node
         #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-        pub struct $name<$param1, $param2, $param3> {
+        pub struct $name {
             /// first inner value
             pub(crate) inner1: $param1,
             /// second inner value
@@ -47,7 +47,7 @@ macro_rules! IrTypeWith3 {
         }
 
 
-        impl<$param1, $param2, $param3> $name<$param1, $param2, $param3> {
+        impl $name {
             /// Creates new instance
             #[allow(dead_code)]
             pub fn new(op0: $param1, op1: $param2, op2: $param3) -> Box<Self> {
@@ -61,7 +61,7 @@ macro_rules! IrTypeWith3 {
             }
         }
 
-        impl<$param1, $param2, $param3> IsNode for $name<$param1, $param2, $param3> {
+        impl IsNode for $name {
             fn $is_func(&self) -> bool {
                 true
             }
@@ -72,7 +72,7 @@ macro_rules! IrTypeWith2 {
     ($name:tt, $param1:tt, $param2:tt, $is_func:ident) => {
         /// An Ir node
         #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-        pub struct $name<$param1, $param2> {
+        pub struct $name {
             /// first inner value
             pub inner1: $param1,
             /// second inner value
@@ -80,7 +80,7 @@ macro_rules! IrTypeWith2 {
         }
 
 
-        impl<$param1, $param2> $name<$param1, $param2> {
+        impl $name {
             /// Creates new instance
             #[allow(dead_code)]
             pub fn new(op0: $param1, op1: $param2) -> Box<Self> {
@@ -93,7 +93,7 @@ macro_rules! IrTypeWith2 {
             }
         }
 
-        impl<$param1, $param2> IsNode for $name<$param1, $param2> {
+        impl IsNode for $name {
             fn $is_func(&self) -> bool {
                 true
             }
@@ -104,13 +104,13 @@ macro_rules! IrTypeWith1 {
     ($name:tt, $param1:tt, $is_func:ident) => {
         /// An Ir node
         #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-        pub struct $name<$param1> {
+        pub struct $name {
             /// inner value
             pub(crate) inner1: $param1,
         }
 
 
-        impl<$param1> $name<$param1> {
+        impl $name {
             /// Creates new instance
             #[allow(dead_code)]
             pub(crate) fn new(op0: $param1) -> Box<Self> {
@@ -122,7 +122,7 @@ macro_rules! IrTypeWith1 {
             }
         }
 
-        impl<$param1> IsNode for $name<$param1> {
+        impl IsNode for $name {
             fn $is_func(&self) -> bool {
                 true
             }
@@ -130,46 +130,77 @@ macro_rules! IrTypeWith1 {
     };
 }
 
-IrTypeWith1!(Return, T, is_ret);
-IrTypeWith3!(Call, T, U, Z, is_call);
+/// The assign ir node
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Assign<T, U> where 
+    T: Debug + Clone + PartialEq + Eq,
+    U: Debug + Clone + PartialEq + Eq
+{
+    pub(crate) inner1: T,
+    pub(crate) inner2: U,
+}
 
-IrTypeWith2!(Assign, T, U, is_assign);
+impl<T, U>  Assign<T, U> where 
+    T: Debug + Clone + PartialEq + Eq,
+    U: Debug + Clone + PartialEq + Eq,
+    Assign<T, U>: Ir,
+{
+    /// creates an new assign ir node
+    pub fn new(out: T, value: U) -> Box<dyn Ir> {
+        Box::new(Self {
+            inner1: out,
+            inner2: value,
+        })
+    }
+}
 
-IrTypeWith3!(Cast, T, U, Z, is_cast);
+impl<T, U> IsNode for Assign<T, U> where 
+    T: Debug + Clone + PartialEq + Eq,
+    U: Debug + Clone + PartialEq + Eq,
+    Assign<T, U>: Ir,
+{
+    fn is_assign(&self) -> bool {
+        true
+    }
+} 
 
-IrTypeWith3!(Add, T, U, Z, is_add);
-IrTypeWith3!(Sub, T, U, Z, is_sub);
-IrTypeWith3!(Xor, T, U, Z, is_xor);
-IrTypeWith3!(Or, T, U, Z, is_or);
-IrTypeWith3!(And, T, U, Z, is_and);
-IrTypeWith3!(Mul, T, U, Z, is_mul);
-IrTypeWith3!(Div, T, U, Z, is_div);
-IrTypeWith3!(Rem, T, U, Z, is_rem);
-IrTypeWith3!(Shl, T, U, Z, is_shl);
-IrTypeWith3!(Shr, T, U, Z, is_shr);
+IrTypeWith1!(Return, IROperand, is_ret);
 
-IrTypeWith1!(Br, T, is_br);
-IrTypeWith3!(BrCond, T, U, Z, is_brcond);
+IrTypeWith3!(Cast, IROperand, TypeMetadata, Var, is_cast);
 
-IrTypeWith2!(Alloca, T, U, is_alloca);
-IrTypeWith2!(Store, T, U, is_store);
-IrTypeWith3!(Load, T, U, Z, is_load);
+IrTypeWith3!(Add, IROperand, IROperand, Var, is_add);
+IrTypeWith3!(Sub, IROperand, IROperand, Var, is_sub);
+IrTypeWith3!(Xor, IROperand, IROperand, Var, is_xor);
+IrTypeWith3!(Or, IROperand, IROperand, Var, is_or);
+IrTypeWith3!(And, IROperand, IROperand, Var, is_and);
+IrTypeWith3!(Mul, IROperand, IROperand, Var, is_mul);
+IrTypeWith3!(Div, IROperand, IROperand, Var, is_div);
+IrTypeWith3!(Rem, IROperand, IROperand, Var, is_rem);
+IrTypeWith3!(Shl, IROperand, IROperand, Var, is_shl);
+IrTypeWith3!(Shr, IROperand, IROperand, Var, is_shr);
 
-IrTypeWith2!(Neg, T, U, is_neg);
+IrTypeWith1!(Br, BlockId, is_br);
+IrTypeWith3!(BrCond, Var, BlockId, BlockId, is_brcond);
+
+IrTypeWith2!(Alloca, Var, TypeMetadata, is_alloca);
+IrTypeWith2!(Store, Var, IROperand, is_store);
+IrTypeWith3!(Load, Var, TypeMetadata, IROperand, is_load);
+
+IrTypeWith2!(Neg, IROperand, Var, is_neg);
 
 /// The cmp node is used to compare values
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Cmp {
     pub(crate) mode: cmp::CmpMode,
-    pub(crate) ls: Var,
-    pub(crate) rs: Var,
+    pub(crate) ls: IROperand,
+    pub(crate) rs: IROperand,
     pub(crate) out: Var,
 }
 
 impl Cmp {
     /// Creates a new instance
     #[allow(dead_code)]
-    pub(crate) fn new(mode: cmp::CmpMode, ls: Var, rs: Var, out: Var) -> Box<Self> {
+    pub(crate) fn new(mode: cmp::CmpMode, ls: IROperand, rs: IROperand, out: Var) -> Box<Self> {
         Box::from(
             Self {
                 mode: mode,
@@ -214,6 +245,14 @@ pub struct Select {
 
     pub(crate) yes: IROperand,
     pub(crate) no: IROperand,
+}
+
+/// Call ir node
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Call {
+    pub(crate) out: Var,
+    pub(crate) func: FuncId,
+    pub(crate) args: Vec<IROperand>,
 }
 
 /// checks if the node is another node
@@ -331,7 +370,7 @@ impl Replace<Box<dyn Ir>> for Box<dyn Ir> {
 }
 
 /// an operand for ir nodes
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum IROperand {
     /// A type (like i64)
     Type(Type),

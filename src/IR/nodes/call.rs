@@ -2,30 +2,30 @@ use crate::IR::func::FuncId;
 
 use super::*;
 
-impl Ir for Call<FuncId, Vec<Var>, Var> {
+impl Ir for Call {
     fn dump(&self) -> String {
         let mut fmt = String::new();
         
-        for arg in &self.inner2 {
+        for arg in &self.args {
             fmt.push_str(&format!("{} ", arg))
         }
 
-        format!("{} = call {} {} {}", self.inner3.name, self.inner1.ty.ret, self.inner1.name, fmt)
+        format!("{} = call {} {} {}", self.out.name, self.func.ty.ret, self.func.name, fmt)
     }
 
     fn dumpColored(&self, profile: ColorProfile) -> String {
         let mut fmt = String::new();
         
-        for arg in &self.inner2 {
-            fmt.push_str(&arg.to_colored_string(profile));
+        for arg in &self.args {
+            fmt.push_str(&profile.markup(&arg.to_string(), ColorClass::Var));
             fmt.push(' ');
         }
 
         format!("{} = {} {} {} {}", 
-            profile.markup(&self.inner3.name, ColorClass::Var),
+            profile.markup(&self.out.name, ColorClass::Var),
             profile.markup("call", ColorClass::Instr),
-            profile.markup(&self.inner1.ty.ret.to_string(), ColorClass::Ty),
-            profile.markup(&self.inner1.name, ColorClass::Name),
+            profile.markup(&self.func.ty.ret.to_string(), ColorClass::Ty),
+            profile.markup(&self.func.name, ColorClass::Name),
             fmt
         )
     }
@@ -35,19 +35,19 @@ impl Ir for Call<FuncId, Vec<Var>, Var> {
     }
 
     fn verify(&self, _: FunctionType) -> Result<(), VerifyError> {
-        if self.inner3.ty != self.inner1.ty.ret {
-            Err(VerifyError::Op0Op1TyNoMatch(self.inner3.ty, self.inner1.ty.ret))?
+        if self.out.ty != self.func.ty.ret {
+            Err(VerifyError::Op0Op1TyNoMatch(self.out.ty, self.func.ty.ret))?
         }
 
         let mut index = 0;
-        let args = &self.inner1.ty.args;
-        for arg in &self.inner2 {
+        let args = &self.func.ty.args;
+        for arg in &self.args {
             if index < args.len() {
-                if matches!(args.get(index), Some((_, argty)) if *argty != (*arg).ty) {
+                if matches!(args.get(index), Some((_, argty)) if *argty != (*arg).get_ty()) {
                     Err(VerifyError::InvalidArgumentTypeFound)?
                 }
             } else {
-                if !self.inner1.ty.any_args {
+                if !self.func.ty.any_args {
                     Err(VerifyError::ToManyArgumentsWereSupplyed)?
                 }
             }
@@ -69,9 +69,11 @@ impl Ir for Call<FuncId, Vec<Var>, Var> {
     fn uses(&self, var: &Var) -> bool {
         let mut uses = false;
 
-        for arg in &self.inner2 {
-            if arg.name == var.name {
-                uses = true;
+        for arg in &self.args {
+            if let IROperand::Var(arg) = &arg {
+                if arg.name == var.name {
+                    uses = true;
+                }
             }
         }
 
@@ -83,40 +85,58 @@ impl Ir for Call<FuncId, Vec<Var>, Var> {
     }
     
     fn inputs(&self) -> Vec<Var> {
-        self.inner2.to_owned()
+        let mut inputs = Vec::new();
+
+        for arg in &self.args {
+            if let IROperand::Var(arg) = &arg {
+                inputs.push(arg.to_owned());
+            }
+        }
+
+        inputs
     }
     
     fn inputs_mut(&mut self) -> Vec<&mut Var> {
-        self.inner2.iter_mut().collect::<Vec<&mut Var>>()
+        let mut inputs = Vec::new();
+
+        for arg in &mut self.args {
+            if let IROperand::Var(arg) = arg {
+                inputs.push(arg);
+            }
+        }
+
+        inputs
     }
     
     fn output(&self) -> Option<Var> {
-        Some(self.inner3.to_owned())
+        Some(self.out.to_owned())
     }
 }
 
-impl<T, U, Z> Call<T, U, Z> where 
-    T: Clone + AsAny + 'static,
-    U: Clone + AsAny + 'static,
-    Z: Clone + AsAny + 'static
-{
+impl IsNode for Call {
+    fn is_call(&self) -> bool {
+        true
+    }
+}
+
+impl Call {
     /// Returns the call target
     pub fn getCallTarget(&self) -> FuncId {
-        self.inner1.as_any().downcast_ref::<FuncId>().unwrap().to_owned()
+        self.func.to_owned()
     }
 
     /// Returns the arguments
-    pub fn getArgs(&self) -> Vec<Var> {
-        self.inner2.as_any().downcast_ref::<Vec<Var>>().unwrap().to_owned()
+    pub fn getArgs(&self) -> Vec<IROperand> {
+        self.args.to_owned()
     }
 
     /// Returns the variable which stores the result of the call
     pub fn getOutputVar(&self) -> Var {
-        self.inner3.as_any().downcast_ref::<Var>().unwrap().to_owned()
+        self.out.to_owned()
     }
 }
 
-impl EvalOptVisitor for Call<FuncId, Vec<Var>, Var> {
+impl EvalOptVisitor for Call {
     fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
         None
     }
@@ -132,13 +152,17 @@ pub trait BuildCall<T, U> {
     /// builds a function call
     fn BuildCall(&mut self, func: T, args: U) -> Var;
 }
-impl BuildCall<&FuncId, Vec<Var>> for Function {
-    fn BuildCall(&mut self, func: &FuncId, args: Vec<Var>) -> Var {
+impl BuildCall<&FuncId, Vec<IROperand>> for Function {
+    fn BuildCall(&mut self, func: &FuncId, args: Vec<IROperand>) -> Var {
         let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
         
         let out = Var::new(block, func.ty.ret);
 
-        block.push_ir(Call::new(func.clone(), args, out.clone()));
+        block.push_ir(Box::new(Call {
+            out: out.to_owned(),
+            func: func.clone(),
+            args: args,
+        }));
 
         out 
     }

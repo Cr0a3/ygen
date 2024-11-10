@@ -599,22 +599,18 @@ impl IrParser {
 
             self.input.pop_front();
 
-            let var = self.current_token()?;
-
-            if let TokenType::Var(name) = &var.typ {
-                args.push(Var {
-                    name: name.to_string(),
-                    ty: ty
-                });
-            }
-
+            let arg = self.parse_operand(ty)?;
             self.input.pop_front();
+
+            args.push(arg);
         }
 
-        Ok(ir::Call::new(crate::IR::FuncId {
-            ty: FnTy(vec![], func_ty),
-            name: target,
-        }, args, out))
+        Ok(Box::new(ir::Call {
+            func: crate::IR::FuncId {
+                ty: FnTy(vec![], func_ty),
+                name: target,
+            }, args, out
+        }))
     }
 
     fn parse_br(&mut self) -> Result<Box<dyn Ir>, IrError> {
@@ -682,13 +678,7 @@ impl IrParser {
 
         self.expect(TokenType::Var(String::new()))?;
 
-        let in_var = if let TokenType::Var(name) = &self.current_token()?.typ {
-            Var {
-                name: name.to_owned(),
-                ty: ty,
-            }
-        } else { unreachable!() };
-
+        let in_var = self.parse_operand(ty)?;
         self.input.pop_front();
 
         self.expect_ident("to".into())?;
@@ -727,48 +717,21 @@ impl IrParser {
         let ty = self.parse_type()?;
         self.input.pop_front();
 
-        if let TokenType::Int(imm) = self.current_token()?.typ {
-            self.input.pop_front();
+        let op = self.parse_operand(ty)?;
+        self.input.pop_front();
 
-            self.expect(TokenType::Comma)?;
-            self.input.pop_front();
+        self.expect(TokenType::Comma)?;
+        self.input.pop_front();
 
-            self.expect(TokenType::Var(String::new()) )?;
+        let var = if let TokenType::Var(var) = &self.current_token()?.typ {
+            var.to_owned()
+        } else { unreachable!() };
+        self.input.pop_front();
 
-            let var = if let TokenType::Var(var) = &self.current_token()?.typ {
-                var.to_owned()
-            } else { unreachable!() };
-            self.input.pop_front();
-
-            Ok(Store::new(Var {
-                name: var,
-                ty: TypeMetadata::ptr,
-            }, Type::from_int(ty, imm)))
-        } else if let TokenType::Var(var) = self.current_token()?.typ.to_owned() {
-            self.input.pop_front();
-
-            self.expect( TokenType::Comma )?;
-            self.input.pop_front();
-
-            self.expect(TokenType::Var(String::new()))?;
-            let src = if let TokenType::Var(var) = &self.current_token()?.typ {
-                var.to_owned()
-            } else { unreachable!() };
-            self.input.pop_front();
-
-            Ok(Store::new(Var {
-                name: src,
-                ty: TypeMetadata::ptr,
-            }, Var {
-                name: var,
-                ty: ty
-            }))
-        } else {
-            Err(IrError::ExpectedTokenButFoundAnUnexpectedOne { 
-                found: self.current_token()?.clone(), 
-                expected: Token { typ: TokenType::Var(String::new()), loc: Loc::default() }
-            })
-        }
+        Ok(Store::new(Var {
+            name: var,
+            ty: TypeMetadata::ptr,
+        }, op))
     }
 
     fn parse_data_array(&mut self) -> Result<Vec<u8>, IrError> {
@@ -898,31 +861,18 @@ impl IrParser {
         let ty = self.parse_type()?;
         self.input.pop_front();
 
-        self.expect( TokenType::Var(String::new()) )?;
-        let curr = self.current_token()?;
-        let ls = if let TokenType::Var(var) = &curr.typ {
-            var.to_owned()
-        } else { unreachable!() };
+        let ls = self.parse_operand(ty)?;
         self.input.pop_front();
 
         if let TokenType::Comma = self.current_token()?.typ {
             self.input.pop_front();
         }
 
-        self.expect( TokenType::Var(String::new()) )?;
-        let curr = self.current_token()?;
-        let rs = if let TokenType::Var(var) = &curr.typ {
-            var.to_owned()
-        } else { unreachable!() };
+        
+        let rs = self.parse_operand(ty)?;
         self.input.pop_front();
 
-        Ok(Cmp::new(mode, Var {
-            name: ls,
-            ty: ty,
-        }, Var {
-            name: rs,
-            ty: ty 
-        }, Var {
+        Ok(Cmp::new(mode, ls, rs, Var {
             name: var,
             ty: TypeMetadata::u8
         }))
@@ -939,18 +889,10 @@ impl IrParser {
         };
 
         self.input.pop_front(); // ty
-        self.expect(TokenType::Var(String::new()))?;
-
-        let var = if let TokenType::Var(var) = self.current_token()?.typ.to_owned() {
-            Var {
-                name: var,
-                ty: TypeMetadata::ptr
-            }
-        } else { unreachable!() };
-
+        let var = self.parse_operand(TypeMetadata::ptr)?;
         self.input.pop_front();
 
-        Ok(Load::new(out, var, ty))
+        Ok(Load::new(out, ty, var))
     }
 
     fn parse_phi(&mut self, var: String) -> Result<Box<dyn Ir>, IrError> {
@@ -1079,16 +1021,10 @@ impl IrParser {
             ty: typ
         };
 
-        self.expect(TokenType::Var(String::new()))?;
-        let var = if let TokenType::Var(var) = &self.current_token()?.typ {
-            Var {
-                name: var.to_owned(),
-                ty: typ
-            }
-        } else { unreachable!() };
+        let op = self.parse_operand(typ)?;
         self.input.pop_front();
 
-        Ok( Neg::new(var, out) )
+        Ok( Neg::new(op, out) )
     }
 
     fn parse_select(&mut self, var: String) -> Result<Box<dyn Ir>, IrError> {
@@ -1196,78 +1132,16 @@ macro_rules! ParserImplParseMath {
                     ty: ty,
                 };
 
-                let curr = self.current_token()?;
+                let ls = self.parse_operand(ty)?;
+                self.input.pop_front();
+                
+                self.expect(TokenType::Comma)?;
+                self.input.pop_front();
 
-                Ok(match &curr.typ {
-                    TokenType::Int(op1) => {
-                        let op1 = *op1;
+                let rs = self.parse_operand(ty)?;
+                self.input.pop_front();
 
-                        self.input.pop_front(); // num1
-
-                        self.expect(TokenType::Comma)?;
-                        self.input.pop_front(); // ,
-
-                        self.expect(TokenType::Int(0.0))?;
-                        let op2;
-                        if let TokenType::Int(int) = &self.current_token()?.typ {
-                            op2 = *int;
-                        } else { unreachable!() }
-
-                        self.input.pop_front();
-
-                        let op1 = Type::from_int(ty, op1);
-                        let op2 = Type::from_int(ty, op2);
-
-                        ir::$node::new(op1, op2, out)
-                    },
-
-                    TokenType::Var(op1) => {
-                        let op1 = op1.to_owned();
-
-                        self.input.pop_front(); // op1
-
-                        self.expect(TokenType::Comma)?;
-                        self.input.pop_front();
-
-                        if let TokenType::Var(var) = &self.current_token()?.typ {
-                            let op1 = Var {
-                                name: op1,
-                                ty: ty
-                            };
-    
-                            let op2 = Var {
-                                name: var.to_owned(),
-                                ty: ty
-                            };
-
-                            self.input.pop_front();
-    
-                            ir::$node::new(op1, op2, out)
-                        } else if let TokenType::Int(op) = &self.current_token()?.typ {
-                            let op1 = Var {
-                                name: op1,
-                                ty: ty
-                            };
-    
-                            let op2 = Type::from_int(ty, *op);
-
-                            self.input.pop_front();
-    
-                            ir::$node::new(op1, op2, out)
-                        } else { 
-                            Err(IrError::ExpectedTokenButFoundAnUnexpectedOne {
-                                found: self.current_token()?.to_owned(),
-
-                                expected: Token { typ: TokenType::Var(") or Int()".into()), loc: Loc::default() },
-                            })?
-                        }
-                    },
-
-                    _ => Err(IrError::ExpectedTokenButFoundAnUnexpectedOne {
-                        expected: Token { typ: TokenType::Var(String::new()), loc: Loc::default() },
-                        found: curr.clone(),
-                    })?
-                })
+                Ok(ir::$node::new(ls, rs, out))
             }
         }
     };

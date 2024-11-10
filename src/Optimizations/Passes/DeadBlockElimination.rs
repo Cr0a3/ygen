@@ -1,5 +1,5 @@
 use crate::Optimizations::Pass;
-use crate::IR::{ir::Br, ir::BrCond, BlockId, Var};
+use crate::IR::{ir::Br, ir::BrCond};
 
 /// ## Pass DeadBlockElimination <br>
 /// deletes unused blocks
@@ -23,11 +23,11 @@ impl Pass for DeadBlockElimination {
 
         for block in &func.blocks {
             for node in &block.nodes {
-                if let Some(br) = node.as_any().downcast_ref::<Br<BlockId>>() {
+                if let Some(br) = node.as_any().downcast_ref::<Br>() {
                     used_blocks.push(br.inner1.name.to_owned());
                 }
 
-                if let Some(br) = node.as_any().downcast_ref::<BrCond<Var, BlockId, BlockId>>() {
+                if let Some(br) = node.as_any().downcast_ref::<BrCond>() {
                     used_blocks.push(br.inner2.name.to_owned());
                     used_blocks.push(br.inner3.name.to_owned());
                 }

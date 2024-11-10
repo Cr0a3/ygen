@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, HashMap};
 
 use crate::Obj::Linkage;
-use crate::IR::{BlockId, Const, FuncId, FunctionType, Type, TypeMetadata, Var};
+use crate::IR::{BlockId, Const, FunctionType, TypeMetadata, Var};
 
 use crate::prelude::ir::*;
 
@@ -124,9 +124,9 @@ impl<'a> IrSemnatic<'a> {
 
                 let mut branches = Vec::new();
 
-                if let Some(br) = node.inst.as_any().downcast_ref::<Br<BlockId>>() {
+                if let Some(br) = node.inst.as_any().downcast_ref::<Br>() {
                     branches.push(br.inner1.to_owned());
-                } else if let Some(br) = node.inst.as_any().downcast_ref::<BrCond<Var, BlockId, BlockId>>() {
+                } else if let Some(br) = node.inst.as_any().downcast_ref::<BrCond>() {
                     branches.push(br.inner2.to_owned());
                     branches.push(br.inner3.to_owned());
                 } else if let Some(switch) = node.inst.as_any().downcast_ref::<Switch>() {
@@ -171,15 +171,13 @@ impl<'a> IrSemnatic<'a> {
 
                 let any = instr.as_any();
 
-                if let Some(node) = any.downcast_ref::<Return<Type>>() {
-                    self.analiyze_ret_int(node, ret, loc.to_owned())?;
-                } else if let Some(node) = any.downcast_ref::<Return<Var>>() {
-                    self.analiyze_ret_var(&mut vars, node, ret, loc.to_owned())?;
+                if let Some(node) = any.downcast_ref::<Return>() {
+                    self.analiyze_ret(&mut vars, node, ret, loc.to_owned())?;
                 } else if let Some(node) = any.downcast_ref::<Assign<Var, Const>>() {
                     self.analiyze_assign_const(&mut vars, node, loc.to_owned())?;
-                } else if let Some(node) = any.downcast_ref::<Call<FuncId, Vec<Var>, Var>>() {
+                } else if let Some(node) = any.downcast_ref::<Call>() {
                     self.analyize_call(&mut vars, node, loc.to_owned())?;
-                } else if let Some(node) = any.downcast_ref::<Br<BlockId>>() {
+                } else if let Some(node) = any.downcast_ref::<Br>() {
                     self.analiyze_block(func, node, loc.to_owned())?;
                 } else if let Some(node) = any.downcast_ref::<Phi>() {
                     if vars.contains_key(&node.out.name) {
@@ -217,9 +215,9 @@ impl<'a> IrSemnatic<'a> {
                     }
                 }} else if let Some(node) = any.downcast_ref::<Switch>() {
                     self.analyze_switch(func, &mut vars, node, loc.to_owned())?;
-                } else if let Some(br) = any.downcast_ref::<Br<BlockId>>() {
+                } else if let Some(br) = any.downcast_ref::<Br>() {
                     self.analyze_br(func, &mut vars, br, loc.to_owned())?;
-                } else if let Some(br) = any.downcast_ref::<BrCond<Var, BlockId, BlockId>>() {
+                } else if let Some(br) = any.downcast_ref::<BrCond>() {
                     self.analyze_brcond(func, &mut vars, br, loc.to_owned())?;
                 }
 
@@ -240,8 +238,26 @@ impl<'a> IrSemnatic<'a> {
         Ok(())
     }
 
-    fn analiyze_ret_int(&mut self, node: &Return<Type>, fsig: TypeMetadata, loc: Loc) -> Result<(), IrError> {
-        let ret: TypeMetadata = node.inner1.into();
+    fn analiyze_ret(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &Return, fsig: TypeMetadata, loc: Loc) -> Result<(), IrError> {
+        let ret: TypeMetadata = node.inner1.get_ty();
+
+        if let IROperand::Var(var_to_return) = &node.inner1 {
+            if let Some(var) = vars.get(&var_to_return.name) {
+                if *var != fsig {
+                    Err(IrError::FuncWrongReturnTyoe { 
+                        expected: fsig, 
+                        found: *var, 
+                        loc: loc.to_owned()
+                    })?
+                }
+            } else {
+                Err(IrError::Unkown { 
+                    what: "variable".to_owned(), 
+                    name: var_to_return.name.to_owned(), 
+                    loc: loc.to_owned()
+                })?
+            }
+        }
 
         if ret != fsig {
             Err(IrError::FuncWrongReturnTyoe {
@@ -251,28 +267,6 @@ impl<'a> IrSemnatic<'a> {
             })?
         }
 
-        Ok(())
-    }
-
-    fn analiyze_ret_var(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &Return<Var>, fsig: TypeMetadata, loc: Loc) -> Result<(), IrError> {
-        let name = node.inner1.name.to_owned();
-
-        if let Some(var) = vars.get(&name) {
-            if *var != fsig {
-                Err(IrError::FuncWrongReturnTyoe { 
-                    expected: fsig, 
-                    found: *var, 
-                    loc: loc.to_owned()
-                })?
-            }
-        } else {
-            Err(IrError::Unkown { 
-                what: "variable".to_owned(), 
-                name: name.to_owned(), 
-                loc: loc.to_owned()
-            })?
-        }
-        
         Ok(())
     }
 
@@ -289,11 +283,11 @@ impl<'a> IrSemnatic<'a> {
         Ok(())
     }
 
-    fn analyize_call(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &Call<FuncId, Vec<Var>, Var>, loc: Loc) -> Result<(), IrError> {
-        let name = &node.inner1.name;
-        let mut sig = node.inner1.ty.to_owned();
+    fn analyize_call(&mut self, vars: &mut HashMap<String, TypeMetadata>, node: &Call, loc: Loc) -> Result<(), IrError> {
+        let name = &node.func.name;
+        let mut sig = node.func.ty.to_owned();
 
-        if let Some((ty, _, _)) = self.func_sigs.get(&node.inner1.name) {
+        if let Some((ty, _, _)) = self.func_sigs.get(&node.func.name) {
             sig = ty.to_owned();
         } else  {
             Err(IrError::Unkown {
@@ -303,26 +297,28 @@ impl<'a> IrSemnatic<'a> {
             })?
         }
 
-        if sig.ret != node.inner1.ty.ret {
+        if sig.ret != node.func.ty.ret {
             Err(IrError::FuncWrongReturnTyoe { 
                 expected: sig.ret, 
-                found: node.inner1.ty.ret, 
+                found: node.func.ty.ret, 
                 loc: loc.to_owned() 
             })?
         }
 
         let mut index = 0;
 
-        for arg in &node.inner2 {
-            let arg = if let Some(var) = vars.get(&arg.name) {
-                var
-            } else {
-                Err(IrError::Unkown { 
-                    what: "variable".to_owned(), 
-                    name: arg.name.to_owned(), 
-                    loc: loc.to_owned(), 
-                })?
-            };
+        for arg in &node.args {
+            let arg = if let IROperand::Var(arg) = arg {
+                    if let Some(var) = vars.get(&arg.name) {
+                    var
+                } else {
+                    Err(IrError::Unkown { 
+                        what: "variable".to_owned(), 
+                        name: arg.name.to_owned(), 
+                        loc: loc.to_owned(), 
+                    })?
+                }
+            } else { &arg.get_ty() };
 
             if let Some((_, expected)) = sig.args.get(index) {
                 if *expected != *arg {
@@ -349,7 +345,7 @@ impl<'a> IrSemnatic<'a> {
         Ok(())
     }
 
-    fn analiyze_block(&mut self, func: &String, node: &Br<BlockId>, loc: Loc) -> Result<(), IrError> {
+    fn analiyze_block(&mut self, func: &String, node: &Br, loc: Loc) -> Result<(), IrError> {
         let br_block = &node.inner1.name;
 
         let (_, _, blocks) = self.func_sigs.get(func).unwrap();
@@ -364,7 +360,7 @@ impl<'a> IrSemnatic<'a> {
 
         Ok(())
     }
-    fn analyze_br(&mut self, func: &String, _: &mut HashMap<String, TypeMetadata>, node: &Br<BlockId>, loc: Loc) -> Result<(), IrError> {
+    fn analyze_br(&mut self, func: &String, _: &mut HashMap<String, TypeMetadata>, node: &Br, loc: Loc) -> Result<(), IrError> {
         let (_, _, blocks) = self.func_sigs.get(func).unwrap();
 
         if !blocks.contains(&node.inner1.name) {
@@ -377,7 +373,7 @@ impl<'a> IrSemnatic<'a> {
 
         Ok(())
     }
-    fn analyze_brcond(&mut self, func: &String, vars: &mut HashMap<String, TypeMetadata>, node: &BrCond<Var, BlockId, BlockId>, loc: Loc) -> Result<(), IrError> {
+    fn analyze_brcond(&mut self, func: &String, vars: &mut HashMap<String, TypeMetadata>, node: &BrCond, loc: Loc) -> Result<(), IrError> {
         let (_, _, blocks) = self.func_sigs.get(func).unwrap();
 
         if !blocks.contains(&node.inner2.name) {

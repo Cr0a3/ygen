@@ -70,7 +70,7 @@ fn node_prep(alloc: &mut Allocator, node: &Box<dyn Ir>) {
     alloc.scopes.insert(node.dump(), scopes);
 
     // handle specific nodes here (like alloca)
-    if let Some(alloca) = node.as_any().downcast_ref::<Alloca<Var, TypeMetadata>>() {
+    if let Some(alloca) = node.as_any().downcast_ref::<Alloca>() {
         let location = x64_alloc_stack(alloc, alloca.inner2);
 
         alloc.vars.insert(alloca.inner1.name.to_owned(), location);

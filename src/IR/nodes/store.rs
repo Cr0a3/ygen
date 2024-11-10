@@ -1,20 +1,20 @@
 use std::collections::HashMap;
 
-use crate::IR::{Function, Type, TypeMetadata, Var};
+use crate::IR::{Function, Type, Var};
 use crate::Support::ColorClass;
 
-use super::{EvalOptVisitor, Ir, Store};
+use super::{EvalOptVisitor, IROperand, Ir, Store};
 
-impl Ir for Store<Var, Var> {
+impl Ir for Store {
     fn dump(&self) -> String {
-        format!("store {} {}, {}", self.inner2.ty, self.inner2.name, self.inner1.name)
+        format!("store {} {}, {}", self.inner2.get_ty(), self.inner2, self.inner1.name)
     }
 
     fn dumpColored(&self, profile: crate::Support::ColorProfile) -> String {
         format!("{} {} {} {}",
             profile.markup("store", ColorClass::Instr),
-            profile.markup(&self.inner2.ty.to_string(), ColorClass::Ty),
-            profile.markup(&self.inner2.name, ColorClass::Var),
+            profile.markup(&self.inner2.get_ty().to_string(), ColorClass::Ty),
+            profile.markup(&self.inner2.to_string(), ColorClass::Var),
             profile.markup(&self.inner1.name, ColorClass::Var),
         )
     }
@@ -36,11 +36,13 @@ impl Ir for Store<Var, Var> {
     }
 
     fn uses(&self, var: &Var) -> bool {
-        if self.inner2.name == var.name {
-            true
-        } else {
-            false
+        if let IROperand::Var(value) = &self.inner2 {
+            if value.name == var.name {
+                return true;
+            }
         }
+        
+        false
     }
     
     fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
@@ -48,11 +50,27 @@ impl Ir for Store<Var, Var> {
     }
     
     fn inputs(&self) -> Vec<Var> {
-        vec![self.inner1.to_owned(), self.inner2.to_owned()]
+        let mut inputs = Vec::new();
+        
+        if let IROperand::Var(var) = &self.inner2 {
+            inputs.push(var.to_owned());
+        }
+
+        inputs.push(self.inner1.to_owned());
+
+        inputs
     }
     
     fn inputs_mut(&mut self) -> Vec<&mut Var> {
-        vec![&mut self.inner1, &mut self.inner2]
+        let mut inputs = Vec::new();
+        
+        if let IROperand::Var(var) = &mut self.inner2 {
+            inputs.push(var);
+        }
+
+        inputs.push(&mut self.inner1);
+
+        inputs
     }
     
     fn output(&self) -> Option<Var> {
@@ -60,77 +78,21 @@ impl Ir for Store<Var, Var> {
     }
 }
 
-impl EvalOptVisitor for Store<Var, Var> {
+impl EvalOptVisitor for Store {
     fn maybe_inline(&self, const_values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        if let Some(constant) = const_values.get(&self.inner2.name) {
-            Some( Store::new(self.inner1.to_owned(), *constant) )
-        } else { None }
-    }
-    
-    fn eval(&self) -> Option<Box<dyn Ir>> {
-        None
-    }
-    
-}
-
-impl Ir for Store<Var, Type> {
-    fn dump(&self) -> String {
-        let tmp: TypeMetadata = self.inner2.into();
-        format!("store {} {}, {}", tmp, self.inner2.val(), self.inner1.name)
-    }
-
-    fn dumpColored(&self, profile: crate::Support::ColorProfile) -> String {
-        let tmp: TypeMetadata = self.inner2.into();
-
-        format!("{} {} {}, {}",
-            profile.markup("store", ColorClass::Instr),
-            profile.markup(&tmp.to_string(), ColorClass::Ty),
-            profile.markup(&self.inner2.val().to_string(), ColorClass::Value),
-            profile.markup(&self.inner1.name, ColorClass::Var),
-        )
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
-
-    fn verify(&self, _: crate::prelude::FunctionType) -> Result<(), crate::prelude::VerifyError> {
-        Ok(())
-    }
-
-    fn clone_box(&self) -> Box<dyn Ir> {
-        Box::new( self.clone() )
-    }
-
-    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr, module: &mut crate::prelude::Module) {
-        registry.compile_store_ty(self, module)
-    }
-    
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
-        compiler.compile_store_ty(&self, &block, module)
-    }
-    
-    fn inputs(&self) -> Vec<Var> {
-        vec![self.inner1.to_owned()]
-    }
-    
-    fn inputs_mut(&mut self) -> Vec<&mut Var> {
-        vec![&mut self.inner1]
-    }
-    
-    fn output(&self) -> Option<Var> {
-        None // techniclly the ptr is the output and not an argument
-    }
-}
-
-impl EvalOptVisitor for Store<Var, Type> {
-    fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
+        if let IROperand::Var(value) = &self.inner2 {
+            if let Some(constant) = const_values.get(&value.name) {
+                return Some( Store::new(self.inner1.to_owned(), IROperand::Type(*constant)) );
+            } 
+        }
+        
         None
     }
     
     fn eval(&self) -> Option<Box<dyn Ir>> {
         None
     }
+    
 }
 
 /// The `BuildStore` trait is used for overloading the `BuildStore` method
@@ -143,7 +105,7 @@ impl BuildStore<Var, Var> for Function {
     fn BuildStore(&mut self, target: Var, value: Var) {
         let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
 
-        block.push_ir( Store::new(target, value) );
+        block.push_ir( Store::new(target, IROperand::Var(value)) );
     }
 }
 
@@ -151,6 +113,6 @@ impl BuildStore<Var, Type> for Function {
     fn BuildStore(&mut self, target: Var, value: Type) {
         let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
 
-        block.push_ir( Store::new(target, value) );
+        block.push_ir( Store::new(target, IROperand::Type(value)) );
     }
 }

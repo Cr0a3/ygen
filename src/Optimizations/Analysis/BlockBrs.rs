@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::IR::{Block, BlockId, ir::*, Var};
+use crate::IR::{Block, BlockId, ir::*};
 
 /// analyzes which blocks can branch to which other blocks
 pub struct BlockBranchAnalysis<'a> {
@@ -25,9 +25,9 @@ impl<'a> BlockBranchAnalysis<'a> {
             let mut brs = Vec::new();
 
             for node in &block.nodes {
-                if let Some(br) = node.as_any().downcast_ref::<Br<BlockId>>() {
+                if let Some(br) = node.as_any().downcast_ref::<Br>() {
                     brs.push(&br.inner1);
-                } else if let Some(br) = node.as_any().downcast_ref::<BrCond<Var, BlockId, BlockId>>() {
+                } else if let Some(br) = node.as_any().downcast_ref::<BrCond>() {
                     brs.push(&br.inner2);
                     brs.push(&br.inner3);
                 } else if let Some(switch) = node.as_any().downcast_ref::<Switch>() {

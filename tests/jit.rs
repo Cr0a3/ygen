@@ -54,7 +54,7 @@ pub fn call() -> Result<(), Box<dyn Error>> {
     let test = module.add("test", &test_ty);
     test.addBlock("entry");
 
-    let out = test.BuildCall(&add, vec![test_ty.arg(0), test_ty.arg(0)]);
+    let out = test.BuildCall(&add, vec![IROperand::Var(test_ty.arg(0)), IROperand::Var(test_ty.arg(0))]);
     test.BuildRet(out);
 
     let mut funcs = module.jitMap(&mut initializeAllTargets(Triple::host())? )?;

@@ -1,11 +1,11 @@
 use crate::CodeGen::{MachineInstr, MachineMnemonic};
-use crate::IR::{Block, TypeMetadata, Var, ir::Alloca};
+use crate::IR::{Block, TypeMetadata, ir::Alloca};
 
 use super::CompilationHelper;
 
 impl CompilationHelper {
     #[allow(missing_docs)]
-    pub fn compile_alloca(&mut self, node: &Alloca<Var, TypeMetadata>, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
+    pub fn compile_alloca(&mut self, node: &Alloca, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
         let out = *self.vars.get(&node.inner1.name).unwrap();
 
         if let Some(phi_loc) = self.phi_vars.get(&node.inner1.name) {

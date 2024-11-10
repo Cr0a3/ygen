@@ -1,16 +1,16 @@
 use super::*;
 
-impl Ir for Cast<Var, TypeMetadata, Var> {
+impl Ir for Cast {
     fn dump(&self) -> String {
-        format!("{} = cast {} {} to {}", self.inner3.name, self.inner1.ty, self.inner1.name, self.inner2)
+        format!("{} = cast {} {} to {}", self.inner3.name, self.inner1.get_ty(), self.inner1, self.inner2)
     }
 
     fn dumpColored(&self, profile: ColorProfile) -> String {
         format!("{} = {} {} {} {} {}", 
             profile.markup(&self.inner3.name, ColorClass::Var), 
             profile.markup(&"cast", ColorClass::Instr),
-            profile.markup(&self.inner1.ty.to_string(), ColorClass::Ty), 
-            profile.markup(&self.inner1.name, ColorClass::Var), 
+            profile.markup(&self.inner1.get_ty().to_string(), ColorClass::Ty), 
+            profile.markup(&self.inner1.to_string(), ColorClass::Var), 
             profile.markup(&"to", ColorClass::Instr),
             profile.markup(&self.inner2.to_string(), ColorClass::Ty),
         )
@@ -30,9 +30,13 @@ impl Ir for Cast<Var, TypeMetadata, Var> {
     fn uses(&self, var: &Var) -> bool {
         let var = var.to_owned();
 
-        if var == self.inner1 || var == self.inner3 {
-            true
-        } else { false }
+        if let IROperand::Var(value) = &self.inner1 {
+            if var.name == value.name {
+                return true;
+            } 
+        }
+        
+        false
     }
 
     fn clone_box(&self) -> Box<dyn Ir> {
@@ -49,11 +53,23 @@ impl Ir for Cast<Var, TypeMetadata, Var> {
 
     
     fn inputs(&self) -> Vec<Var> {
-        vec![self.inner1.to_owned()]
+        let mut inputs = Vec::new();
+
+        if let IROperand::Var(var) = &self.inner1 {
+            inputs.push(var.to_owned());
+        }
+
+        inputs
     }
     
     fn inputs_mut(&mut self) -> Vec<&mut Var> {
-        vec![&mut self.inner1]
+        let mut inputs = Vec::new();
+
+        if let IROperand::Var(var) = &mut self.inner1 {
+            inputs.push(var);
+        }
+
+        inputs
     }
     
     fn output(&self) -> Option<Var> {
@@ -61,42 +77,60 @@ impl Ir for Cast<Var, TypeMetadata, Var> {
     }
 }
 
-impl<T, U, Z> Cast<T, U, Z> where 
-    T: Clone + AsAny + 'static,
-    U: Clone + AsAny + 'static,
-    Z: Clone + AsAny + 'static
-{
-    /// Returns the input variable
-    pub fn getInput(&self) -> Var {
-        self.inner1.as_any().downcast_ref::<Var>().unwrap().to_owned()
+impl Cast {
+    /// Returns the input as a variable
+    pub fn getInputVar(&self) -> Var {
+        self.inner1.get_var()
+    }
+
+    /// Returns if the input is a var
+    pub fn isInputVar(&self) -> bool {
+        self.inner1.is_var()
+    }
+
+    /// Returns the input as a constant number
+    pub fn getInputConst(&self) -> Type {
+        self.inner1.get_typeconst()
+    }
+
+    /// Returns if the input is a constant number
+    pub fn isInputConst(&self) -> bool {
+        self.inner1.is_type()
     }
 
     /// Returns the output variable
     pub fn getOutput(&self) -> Var {
-        self.inner3.as_any().downcast_ref::<Var>().unwrap().to_owned()
+        self.inner3.to_owned()
     }
 
     /// Returns the type to which we cast
     pub fn getCastType(&self) -> TypeMetadata {
-        self.inner2.as_any().downcast_ref::<TypeMetadata>().unwrap().to_owned()
+        self.inner2.to_owned()
     }
 
     /// Returns the type from which we cast
     pub fn getFromType(&self) -> TypeMetadata {
-        self.getInput().ty
+        self.inner1.get_ty()
     }
 }
 
-impl EvalOptVisitor for Cast<Var, TypeMetadata, Var> {
+impl EvalOptVisitor for Cast {
     fn maybe_inline(&self, vars: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        if let Some(var) = vars.get(&self.inner1.name) {
-            Some(Assign::new(self.inner3.to_owned(), *var))
-        } else { return None; }
+        if let IROperand::Var(value) = &self.inner1 {
+            if let Some(var) = vars.get(&value.name) {
+                return Some(Assign::new(self.inner3.to_owned(), *var));
+            } 
+        }
+        
+        None
     }
     
     fn eval(&self) -> Option<Box<dyn Ir>> {
-        if self.inner2 == self.inner1.ty {
-            Some(Assign::new(self.inner3.to_owned(), self.inner1.to_owned()))
+        if self.inner2 == self.inner1.get_ty() {
+            match &self.inner1 {
+                IROperand::Type(ty) => Some(Assign::new(self.inner3.to_owned(), ty.to_owned())),
+                IROperand::Var(var) => Some(Assign::new(self.inner3.to_owned(), var.to_owned())),
+            }
         } else { None }
     }
 }
@@ -105,7 +139,7 @@ impl EvalOptVisitor for Cast<Var, TypeMetadata, Var> {
 /// Used for overloading the BuildCast function
 pub trait BuildCast<T, U> {
     /// builds an cast to form one variable into another type
-    fn BuildCast(&mut self, var: T, ty: U) -> Var;
+    fn BuildCast(&mut self, value: T, ty: U) -> Var;
 }
 
 impl BuildCast<Var, TypeMetadata> for Function {
@@ -114,7 +148,19 @@ impl BuildCast<Var, TypeMetadata> for Function {
         
         let out = Var::new(block, ty);
 
-        block.push_ir(Cast::new(var, ty, out.clone()));
+        block.push_ir(Cast::new(IROperand::Var(var), ty, out.clone()));
+
+        out
+    }
+}
+
+impl BuildCast<Type, TypeMetadata> for Function {
+    fn BuildCast(&mut self, value: Type, ty: TypeMetadata) -> Var {
+        let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
+        
+        let out = Var::new(block, ty);
+
+        block.push_ir(Cast::new(IROperand::Type(value), ty, out.clone()));
 
         out
     }

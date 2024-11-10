@@ -14,7 +14,7 @@ fn optimizeSelectToCast(SI: &Select) -> Option<Box<dyn Ir>> {
     }
 
 
-    Some(Cast::new(SI.getCondition(), SI.getSelType(), SI.getOut()))
+    Some(Cast::new(IROperand::Var(SI.getCondition()), SI.getSelType(), SI.getOut()))
 }
 
 impl InstrCombinePass {

@@ -2,7 +2,7 @@ use crate::debug::DebugLocation;
 use crate::prelude::{DebugNode, Ir};
 use crate::CodeGen::MachineInstr;
 
-use crate::IR::{ir, Block, BlockId, Const, FuncId, Type, TypeMetadata, Var};
+use crate::IR::{ir, Block, Const, Type, Var};
 
 use super::CompilationHelper;
 
@@ -86,159 +86,59 @@ macro_rules! ir_codegen_wrap {
 
 impl IrCodeGenHelper {
     ir_codegen_wrap!(
-        compile_add_var_var, 
+        compile_add, 
         "Loweres the add node", 
-        ir::Add<Var, Var, Var>
+        ir::Add
     );
     ir_codegen_wrap!(
-        compile_sub_var_var, 
+        compile_sub, 
         "Loweres the sub node", 
-        ir::Sub<Var, Var, Var>
+        ir::Sub
     );
     ir_codegen_wrap!(
-        compile_and_var_var, 
-        "Loweres the and node", 
-        ir::And<Var, Var, Var>
-    );
-    ir_codegen_wrap!(
-        compile_div_var_var, 
-        "Loweres the div node", 
-        ir::Div<Var, Var, Var>
-    );
-    ir_codegen_wrap!(
-        compile_mul_var_var, 
-        "Loweres the mul node", 
-        ir::Mul<Var, Var, Var>
-    );
-    ir_codegen_wrap!(
-        compile_or_var_var, 
-        "Loweres the or node", 
-        ir::Or<Var, Var, Var>
-    );
-    ir_codegen_wrap!(
-        compile_xor_var_var, 
+        compile_xor, 
         "Loweres the xor node", 
-        ir::Xor<Var, Var, Var>
+        ir::Xor
     );
     ir_codegen_wrap!(
-        compile_rem_var_var, 
-        "Loweres the rem node", 
-        ir::Rem<Var, Var, Var>
-    );
-    ir_codegen_wrap!(
-        compile_shl_var_var, 
-        "Loweres the shl node", 
-        ir::Shl<Var, Var, Var>
-    );
-    ir_codegen_wrap!(
-        compile_shr_var_var, 
-        "Loweres the shr node", 
-        ir::Shr<Var, Var, Var>
-    );
-    ir_codegen_wrap!(
-        compile_add_var_type, 
-        "Loweres the add node", 
-        ir::Add<Var, Type, Var>
-    );
-    ir_codegen_wrap!(
-        compile_sub_var_type, 
-        "Loweres the sub node", 
-        ir::Sub<Var, Type, Var>
-    );
-    ir_codegen_wrap!(
-        compile_and_var_type, 
-        "Loweres the and node", 
-        ir::And<Var, Type, Var>
-    );
-    ir_codegen_wrap!(
-        compile_div_var_type, 
-        "Loweres the div node", 
-        ir::Div<Var, Type, Var>
-    );
-    ir_codegen_wrap!(
-        compile_mul_var_type, 
-        "Loweres the mul node", 
-        ir::Mul<Var, Type, Var>
-    );
-    ir_codegen_wrap!(
-        compile_or_var_type, 
+        compile_or, 
         "Loweres the or node", 
-        ir::Or<Var, Type, Var>
+        ir::Or
     );
     ir_codegen_wrap!(
-        compile_xor_var_type, 
-        "Loweres the xor node", 
-        ir::Xor<Var, Type, Var>
-    );
-    ir_codegen_wrap!(
-        compile_rem_var_type, 
-        "Loweres the rem node", 
-        ir::Rem<Var, Type, Var>
-    );
-    ir_codegen_wrap!(
-        compile_shl_var_type, 
-        "Loweres the shl node", 
-        ir::Shl<Var, Type, Var>
-    );
-    ir_codegen_wrap!(
-        compile_shr_var_type, 
-        "Loweres the shr node", 
-        ir::Shr<Var, Type, Var>
-    );
-    ir_codegen_wrap!(
-        compile_add_type_type, 
-        "Loweres the add node", 
-        ir::Add<Type, Type, Var>
-    );
-    ir_codegen_wrap!(
-        compile_sub_type_type, 
-        "Loweres the sub node", 
-        ir::Sub<Type, Type, Var>
-    );
-    ir_codegen_wrap!(
-        compile_and_type_type, 
+        compile_and, 
         "Loweres the and node", 
-        ir::And<Type, Type, Var>
+        ir::And
     );
     ir_codegen_wrap!(
-        compile_div_type_type, 
-        "Loweres the div node", 
-        ir::Div<Type, Type, Var>
-    );
-    ir_codegen_wrap!(
-        compile_mul_type_type, 
+        compile_mul, 
         "Loweres the mul node", 
-        ir::Mul<Type, Type, Var>
+        ir::Mul
     );
     ir_codegen_wrap!(
-        compile_or_type_type, 
-        "Loweres the or node", 
-        ir::Or<Type, Type, Var>
+        compile_div, 
+        "Loweres the div node", 
+        ir::Div
     );
     ir_codegen_wrap!(
-        compile_xor_type_type, 
-        "Loweres the xor node", 
-        ir::Xor<Type, Type, Var>
-    );
-    ir_codegen_wrap!(
-        compile_rem_type_type, 
+        compile_rem, 
         "Loweres the rem node", 
-        ir::Rem<Type, Type, Var>
+        ir::Rem
     );
     ir_codegen_wrap!(
-        compile_shl_type_type, 
+        compile_shl, 
         "Loweres the shl node", 
-        ir::Shl<Type, Type, Var>
+        ir::Shl
     );
     ir_codegen_wrap!(
-        compile_shr_type_type, 
+        compile_shr, 
         "Loweres the shr node", 
-        ir::Shr<Type, Type, Var>
+        ir::Shr
     );
     ir_codegen_wrap!(
         compile_alloca, 
         "Loweres the alloca node", 
-        ir::Alloca<Var, TypeMetadata>
+        ir::Alloca
     );
     ir_codegen_wrap!(
         compile_assign_var_type, 
@@ -258,22 +158,22 @@ impl IrCodeGenHelper {
     ir_codegen_wrap!(
         compile_br, 
         "Loweres the xor node", 
-        ir::Br<BlockId>
+        ir::Br
     );
     ir_codegen_wrap!(
         compile_br_cond, 
         "Loweres the br cond node", 
-        ir::BrCond<Var, BlockId, BlockId>
+        ir::BrCond
     );
     ir_codegen_wrap!(
         compile_call, 
         "Loweres the call node", 
-        ir::Call<FuncId, Vec<Var>, Var>
+        ir::Call
     );
     ir_codegen_wrap!(
         compile_cast, 
         "Loweres the cast node", 
-        ir::Cast<Var, TypeMetadata, Var>
+        ir::Cast
     );
     ir_codegen_wrap!(
         compile_cmp, 
@@ -283,22 +183,17 @@ impl IrCodeGenHelper {
     ir_codegen_wrap!(
         compile_load, 
         "Loweres the load node", 
-        ir::Load<Var, Var, TypeMetadata>
+        ir::Load
     );
     ir_codegen_wrap!(
         compile_ret, 
         "Loweres the ret node", 
-        ir::Return<ir::IROperand>
+        ir::Return
     );
     ir_codegen_wrap!(
         compile_store, 
         "Loweres the store node", 
-        ir::Store<Var, Var>
-    );
-    ir_codegen_wrap!(
-        compile_store_ty, 
-        "Loweres the store node", 
-        ir::Store<Var, Type> 
+        ir::Store
     );
     ir_codegen_wrap!(
         compile_switch, 
@@ -308,7 +203,7 @@ impl IrCodeGenHelper {
     ir_codegen_wrap!(
         compile_neg, 
         "Loweres the neg node", 
-        ir::Neg<Var, Var>
+        ir::Neg
     );
     ir_codegen_wrap!(
         compile_select, 

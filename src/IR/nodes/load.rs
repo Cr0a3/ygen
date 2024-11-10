@@ -3,11 +3,11 @@ use std::collections::HashMap;
 use crate::Support::ColorClass;
 use crate::IR::{Function, Type, TypeMetadata, Var};
 
-use super::{EvalOptVisitor, Ir, Load};
+use super::{EvalOptVisitor, IROperand, Ir, Load};
 
-impl Ir for Load<Var, Var, TypeMetadata> {
+impl Ir for Load {
     fn dump(&self) -> String {
-        format!("{} = load {}, {}", self.inner1.name, self.inner3, self.inner2.name)
+        format!("{} = load {}, {}", self.inner1.name, self.inner3, self.inner2)
     }
 
     fn dumpColored(&self, profile: crate::Support::ColorProfile) -> String {
@@ -15,7 +15,7 @@ impl Ir for Load<Var, Var, TypeMetadata> {
             profile.markup(&self.inner1.name, ColorClass::Var), 
             profile.markup("load", ColorClass::Instr), 
             profile.markup(&self.inner3.to_string(), ColorClass::Ty),
-            profile.markup(&self.inner2.name, ColorClass::Var),
+            profile.markup(&self.inner2.to_string(), ColorClass::Var),
         )
     }
 
@@ -36,11 +36,11 @@ impl Ir for Load<Var, Var, TypeMetadata> {
     }
 
     fn uses(&self, var: &Var) -> bool {
-        if self.inner2.name == var.name {
-            true
-        } else {
-            false
+        if let IROperand::Var(ptr) = &self.inner3 {
+            if ptr.name == var.name { return true; }
         }
+        
+        false
     }
     
     fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
@@ -48,11 +48,15 @@ impl Ir for Load<Var, Var, TypeMetadata> {
     }
     
     fn inputs(&self) -> Vec<Var> {
-        vec![self.inner2.to_owned()]
+        let mut inputs = Vec::new();
+        if let IROperand::Var(var) = &self.inner3 { inputs.push(var.to_owned()); }
+        inputs
     }
     
     fn inputs_mut(&mut self) -> Vec<&mut Var> {
-        vec![&mut self.inner2]
+        let mut inputs = Vec::new();
+        if let IROperand::Var(var) = &mut self.inner3 { inputs.push(var); }
+        inputs
     }
     
     
@@ -61,7 +65,7 @@ impl Ir for Load<Var, Var, TypeMetadata> {
     }
 }
 
-impl EvalOptVisitor for Load<Var, Var, TypeMetadata> {
+impl EvalOptVisitor for Load {
     fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
         None
     }
@@ -78,7 +82,7 @@ impl Function {
         
         let out = Var::new(block, ty);
 
-        block.push_ir( Load::new(out.clone(), ptr, ty) );
+        block.push_ir( Load::new(out.clone(), ty, IROperand::Var(ptr)) );
 
         out
     }

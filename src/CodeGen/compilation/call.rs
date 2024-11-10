@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
-use crate::{prelude::Call, CodeGen::{MachineMnemonic, MachineOperand, Reg}, Target::Arch, IR::{FuncId, TypeMetadata}};
-use crate::IR::{Block, Var};
+use crate::{prelude::{Call, IROperand}, CodeGen::{MachineMnemonic, MachineOperand, Reg}, Target::Arch, IR::TypeMetadata};
+use crate::IR::Block;
 use super::{CompilationHelper, VarLocation};
 use crate::CodeGen::MachineInstr;
 
 impl CompilationHelper {
     #[allow(missing_docs)]
-    pub fn compile_call(&mut self, node: &Call<FuncId, Vec<Var>, Var>, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
+    pub fn compile_call(&mut self, node: &Call, mc_sink: &mut Vec<MachineInstr>, _: &Block, _: &mut crate::prelude::Module) {
         let mut reg_args = 0;
         let mut fp_reg_args = 0;
 
@@ -46,71 +46,100 @@ impl CompilationHelper {
         let args = self.call.args(Arch::X86_64, TypeMetadata::i64);
         let fp_args = self.call.args(Arch::X86_64, TypeMetadata::f64);
 
-        for arg in &node.inner2 {
-            let src = self.vars.get(&arg.name).expect(&format!("expected valid variable: {}", arg.name));
-
-            let arg_reg = if TypeMetadata::f32 == arg.ty || TypeMetadata::f64 == arg.ty {
-                fp_args.get(fp_reg_args)
-            } else { 
-                args.get(reg_args)
-            };
-
-            let mut arg_reg = arg_reg.cloned();
-
-            if let Some(reg) = arg_reg {
-                arg_reg = Some(match reg {
-                    Reg::x64(x64) => Reg::x64(x64.sub_ty(arg.ty)),
-                    Reg::wasm(i, t) => Reg::wasm(i, t),
-                })
-            }
-            
-            if let Some(reg) = arg_reg {
-                if !self.allocated_vars.contains(&arg.name) {
-                    let mut instr = MachineInstr::new(MachineMnemonic::Move);
+        for arg in &node.args {
+            if let IROperand::Var(arg) = arg {
+                let src = self.vars.get(&arg.name).expect(&format!("expected valid variable: {}", arg.name));
     
-                    let mut op = src.into();
+                let arg_reg = if TypeMetadata::f32 == arg.ty || TypeMetadata::f64 == arg.ty {
+                    fp_args.get(fp_reg_args)
+                } else { 
+                    args.get(reg_args)
+                };
     
-                    if let Some((save, _)) = saved.get(&arg.name) {
-                        op = MachineOperand::Stack(save.0, save.1);
+                let mut arg_reg = arg_reg.cloned();
+    
+                if let Some(reg) = arg_reg {
+                    arg_reg = Some(match reg {
+                        Reg::x64(x64) => Reg::x64(x64.sub_ty(arg.ty)),
+                        Reg::wasm(i, t) => Reg::wasm(i, t),
+                    })
+                }
+                
+                if let Some(reg) = arg_reg {
+                    if !self.allocated_vars.contains(&arg.name) {
+                        let mut instr = MachineInstr::new(MachineMnemonic::Move);
+        
+                        let mut op = src.into();
+        
+                        if let Some((save, _)) = saved.get(&arg.name) {
+                            op = MachineOperand::Stack(save.0, save.1);
+                        }
+        
+                        instr.set_out(MachineOperand::Reg(reg));
+                        instr.add_operand(op);
+    
+                        instr.meta = arg.ty;
+    
+                        mc_sink.push( instr );
+                    } else {
+                        let mut instr = MachineInstr::new(MachineMnemonic::AdrMove);
+    
+                        instr.set_out(MachineOperand::Reg(reg));
+                        instr.add_operand(src.into());
+    
+                        instr.meta = arg.ty;
+    
+                        mc_sink.push( instr );
                     }
-    
-                    instr.set_out(MachineOperand::Reg(reg));
-                    instr.add_operand(op);
-
-                    instr.meta = arg.ty;
-
-                    mc_sink.push( instr );
                 } else {
-                    let mut instr = MachineInstr::new(MachineMnemonic::AdrMove);
-
-                    instr.set_out(MachineOperand::Reg(reg));
-                    instr.add_operand(src.into());
-
-                    instr.meta = arg.ty;
-
-                    mc_sink.push( instr );
+                    if !self.allocated_vars.contains(&arg.name) {
+                        let mut instr = MachineInstr::new(MachineMnemonic::Push);
+                        instr.add_operand(src.into());
+                        pushes.push(arg.ty);
+                        mc_sink.push( instr );
+                    } else {
+                        let mut instr = MachineInstr::new(MachineMnemonic::AdrMove);
+    
+                        instr.set_out(MachineOperand::Reg(self.tmp_reg));
+                        instr.add_operand(src.into());
+                        mc_sink.push( instr );
+    
+                        let mut instr = MachineInstr::new(MachineMnemonic::Push);
+                        instr.add_operand(MachineOperand::Reg(self.tmp_reg));
+                        pushes.push(arg.ty);
+                        mc_sink.push( instr );
+                    }
                 }
             } else {
-                if !self.allocated_vars.contains(&arg.name) {
-                    let mut instr = MachineInstr::new(MachineMnemonic::Push);
-                    instr.add_operand(src.into());
-                    pushes.push(arg.ty);
-                    mc_sink.push( instr );
+                let arg_reg = if arg.get_ty().float() {
+                    fp_args.get(fp_reg_args)
+                } else { 
+                    args.get(reg_args)
+                };
+
+                let mut arg_reg = arg_reg.cloned();
+
+                if let Some(reg) = arg_reg {
+                    arg_reg = Some(match reg {
+                        Reg::x64(x64) => Reg::x64(x64.sub_ty(arg.get_ty())),
+                        Reg::wasm(i, t) => Reg::wasm(i, t),
+                    })
+                }
+
+                if let Some(reg) = arg_reg {
+                    let mut instr = MachineInstr::new(MachineMnemonic::Move);
+                    instr.set_out(MachineOperand::Reg(reg));
+                    instr.add_operand(arg.into_mi(self));
+                    mc_sink.push(instr);
                 } else {
-                    let mut instr = MachineInstr::new(MachineMnemonic::AdrMove);
-
-                    instr.set_out(MachineOperand::Reg(self.tmp_reg));
-                    instr.add_operand(src.into());
-                    mc_sink.push( instr );
-
                     let mut instr = MachineInstr::new(MachineMnemonic::Push);
-                    instr.add_operand(MachineOperand::Reg(self.tmp_reg));
-                    pushes.push(arg.ty);
+                    instr.add_operand(arg.into_mi(self));
+                    pushes.push(arg.get_ty());
                     mc_sink.push( instr );
                 }
             }
-
-            if TypeMetadata::f32 == arg.ty || TypeMetadata::f64 == arg.ty {
+    
+            if arg.get_ty().float() {
                 fp_reg_args += 1;
             } else { 
                 reg_args += 1;
@@ -122,7 +151,7 @@ impl CompilationHelper {
         }
 
         mc_sink.push(MachineInstr::new(
-            MachineMnemonic::Call(node.inner1.name.to_string())
+            MachineMnemonic::Call(node.func.name.to_string())
         ));
         
         if !pushes.is_empty() {
@@ -147,21 +176,21 @@ impl CompilationHelper {
 
         let mut instr = MachineInstr::new(MachineMnemonic::Move);
 
-        let loc = *self.vars.get(&node.inner3.name).unwrap();
+        let loc = *self.vars.get(&node.out.name).unwrap();
 
         instr.add_operand(
             MachineOperand::Reg(
-                self.call.return_reg(self.arch, node.inner1.ty.ret)
+                self.call.return_reg(self.arch, node.func.ty.ret)
             )
         );
 
-        instr.meta = node.inner1.ty.ret;
+        instr.meta = node.func.ty.ret;
 
         instr.set_out(loc.into());
 
         mc_sink.push(instr);
 
-        if let Some(phi_loc) = self.phi_vars.get(&node.inner1.name) {
+        if let Some(phi_loc) = self.phi_vars.get(&node.func.name) {
             let mut instr = MachineInstr::new(MachineMnemonic::Move);
             instr.set_out((*phi_loc).into());
             instr.add_operand(loc.into());

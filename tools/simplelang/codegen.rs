@@ -155,7 +155,7 @@ impl CodeGenerator {
 
         for arg in &call.args {
             let var = self.gen_expr(arg, builder, vars);
-            args.push(var);
+            args.push(IROperand::Var(var));
         }
 
         builder.BuildCall(&fun, args)

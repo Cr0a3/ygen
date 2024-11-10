@@ -1,9 +1,9 @@
 use crate::IR::{Function, TypeMetadata, Var};
-use crate::Support::{AsAny, ColorClass};
+use crate::Support::ColorClass;
 
 use super::{Alloca, EvalOptVisitor, Ir};
 
-impl Ir for Alloca<Var, TypeMetadata> {
+impl Ir for Alloca {
     fn dump(&self) -> String {
         format!("{} = alloca {}", self.inner1.name, self.inner2)
     }
@@ -49,7 +49,7 @@ impl Ir for Alloca<Var, TypeMetadata> {
     }
 }
 
-impl EvalOptVisitor for Alloca<Var, TypeMetadata> {
+impl EvalOptVisitor for Alloca {
     fn maybe_inline(&self, _: &std::collections::HashMap<String, crate::prelude::Type>) -> Option<Box<dyn Ir>> {
         None
     }
@@ -59,18 +59,15 @@ impl EvalOptVisitor for Alloca<Var, TypeMetadata> {
     }
 }
 
-impl<T, U> Alloca<T, U> where
-    T: Clone + AsAny + 'static,
-    U: Clone + AsAny + 'static
-{
+impl Alloca {
     /// Returns the output variable
     pub fn getOut(&self) -> Var {
-        self.inner1.as_any().downcast_ref::<Var>().unwrap().to_owned()
+        self.inner1.to_owned()
     }
 
     /// Returns the type which is allocated
     pub fn getTypeToAlloc(&self) -> TypeMetadata {
-        self.inner2.as_any().downcast_ref::<TypeMetadata>().unwrap().to_owned()
+        self.inner2
     }
 }
 

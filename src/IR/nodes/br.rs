@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
-use crate::Support::{AsAny, ColorClass};
+use crate::Support::ColorClass;
 use crate::IR::block::BlockId;
 use crate::IR::{Function, Type, Var};
 
 use super::{Br, BrCond, EvalOptVisitor, Ir};
 
-impl Ir for Br<BlockId> {
+impl Ir for Br {
     fn dump(&self) -> String {
         format!("br {}", self.inner1.name)
     }
@@ -62,7 +62,7 @@ impl Ir for Br<BlockId> {
     }
 }
 
-impl EvalOptVisitor for Br<BlockId> {
+impl EvalOptVisitor for Br {
     fn maybe_inline(&self, _: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
         None
     }
@@ -72,16 +72,14 @@ impl EvalOptVisitor for Br<BlockId> {
     }
 }
 
-impl<T> Br<T> where
-    T: Clone + AsAny + 'static
-{
+impl Br {
     /// Returns the block which the br branches to
     pub fn getBlockToBranch(&self) -> BlockId {
-        self.inner1.as_any().downcast_ref::<BlockId>().unwrap().to_owned()
+        self.inner1.to_owned()
     }
 }
 
-impl Ir for BrCond<Var, BlockId, BlockId> {
+impl Ir for BrCond {
     fn dump(&self) -> String {
         format!("br cond {} {}, {}", self.inner1.name, self.inner2.name, self.inner3.name)
     }
@@ -139,7 +137,7 @@ impl Ir for BrCond<Var, BlockId, BlockId> {
     }
 }
 
-impl EvalOptVisitor for BrCond<Var, BlockId, BlockId> {
+impl EvalOptVisitor for BrCond {
     fn maybe_inline(&self, vars: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
         if let Some(check) = vars.get(&self.inner1.name) {
             let value = check.val() as i64;
@@ -159,24 +157,20 @@ impl EvalOptVisitor for BrCond<Var, BlockId, BlockId> {
     }
 }
 
-impl<T, U, Z> BrCond<T, U, Z> where 
-    T: Clone + AsAny + 'static,
-    U: Clone + AsAny + 'static,
-    Z: Clone + AsAny + 'static
-{
+impl BrCond {
     /// Returns the condition variable
     pub fn getCondition(&self) -> Var {
-        self.inner1.as_any().downcast_ref::<Var>().unwrap().to_owned()
+        self.inner1.to_owned()
     }
 
     /// Returns the true branch
     pub fn getBranchTrue(&self) -> BlockId {
-        self.inner2.as_any().downcast_ref::<BlockId>().unwrap().to_owned()
+        self.inner2.to_owned()
     }
 
     /// Returns the false branch
     pub fn getBranchFalse(&self) -> BlockId {
-        self.inner2.as_any().downcast_ref::<BlockId>().unwrap().to_owned()
+        self.inner2.to_owned()
     }
 }
 

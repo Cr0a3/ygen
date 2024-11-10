@@ -53,7 +53,7 @@ fn node_prep(alloc: &mut Allocator, node: &Box<dyn Ir>) {
     }
 
     // handle specific nodes here (like alloca)
-    if let Some(alloca) = node.as_any().downcast_ref::<Alloca<Var, TypeMetadata>>() {
+    if let Some(alloca) = node.as_any().downcast_ref::<Alloca>() {
         let location = wasm_alloc_var(alloc, alloca.inner2);
 
         alloc.vars.insert(alloca.inner1.name.to_owned(), location);
