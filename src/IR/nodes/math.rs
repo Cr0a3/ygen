@@ -163,100 +163,454 @@ MathIrNode!(Shr,    compile_shr,  BuildShr, BuildShr, "shr");
 
 impl EvalOptVisitor for Add {
     fn maybe_inline(&self, const_values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        todo!()
+        let mut new_ls = self.inner1.to_owned();
+        let mut new_rs = self.inner2.to_owned();
+
+        if let IROperand::Var(ls) = &self.inner1 {
+            if let Some(ls) = const_values.get(&ls.name) {
+                new_ls = IROperand::Type(*ls);
+            }
+        }
+        if let IROperand::Var(rs) = &self.inner2 {
+            if let Some(rs) = const_values.get(&rs.name) {
+                new_rs = IROperand::Type(*rs);
+            }
+        }
+
+        Some(Box::new(Add {
+            inner1: new_ls,
+            inner2: new_rs,
+            inner3: self.inner3.to_owned(),
+        }))
     }
 
     fn eval(&self) -> Option<Box<dyn Ir>> {
-        todo!()
+        if let IROperand::Type(ty) = &self.inner1 {
+            if ty.val() == 0.0 {
+                return Some(match &self.inner2 {
+                    IROperand::Type(rs) => Assign::new(self.inner3.to_owned(), *rs),
+                    IROperand::Var(rs) => Assign::new(self.inner3.to_owned(), rs.to_owned()),
+                })
+            }
+        }
+        if let IROperand::Type(ty) = &self.inner2 {
+            if ty.val() == 0.0 {
+                return Some(match &self.inner1 {
+                    IROperand::Type(ls) => Assign::new(self.inner3.to_owned(), *ls),
+                    IROperand::Var(ls) => Assign::new(self.inner3.to_owned(), ls.to_owned()),
+                })
+            }
+        }
+
+        if let IROperand::Type(ls) = &self.inner1 {
+            if let IROperand::Type(rs) = &self.inner2 {
+                let calc = ls.val() + rs.val();
+                let calc = Type::from_int(self.inner3.ty, calc);
+                return Some(Assign::new(self.inner3.to_owned(), calc));
+            }
+        }
+
+        None
     }
 }
 
 impl EvalOptVisitor for Sub {
     fn maybe_inline(&self, const_values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        todo!()
+        let mut new_ls = self.inner1.to_owned();
+        let mut new_rs = self.inner2.to_owned();
+
+        if let IROperand::Var(ls) = &self.inner1 {
+            if let Some(ls) = const_values.get(&ls.name) {
+                new_ls = IROperand::Type(*ls);
+            }
+        }
+        if let IROperand::Var(rs) = &self.inner2 {
+            if let Some(rs) = const_values.get(&rs.name) {
+                new_rs = IROperand::Type(*rs);
+            }
+        }
+
+        Some(Box::new(Sub {
+            inner1: new_ls,
+            inner2: new_rs,
+            inner3: self.inner3.to_owned(),
+        }))
     }
 
     fn eval(&self) -> Option<Box<dyn Ir>> {
-        todo!()
+        if let IROperand::Type(ty) = &self.inner2 {
+            if ty.val() == 0.0 {
+                return Some(match &self.inner1 {
+                    IROperand::Type(ls) => Assign::new(self.inner3.to_owned(), *ls),
+                    IROperand::Var(ls) => Assign::new(self.inner3.to_owned(), ls.to_owned()),
+                })
+            }
+        }
+        if let IROperand::Type(ty) = &self.inner1 {
+            if ty.val() == 0.0 {
+                return Some(match &self.inner2 {
+                    IROperand::Type(rs) => Assign::new(self.inner3.to_owned(), *rs),
+                    IROperand::Var(rs) => Assign::new(self.inner3.to_owned(), rs.to_owned()),
+                })
+            }
+        }
+
+        if self.inner1 == self.inner2 {
+            return Some(Assign::new(self.inner3.to_owned(), Type::from_int(self.inner3.ty, 0.0)))
+        }
+
+
+        if let IROperand::Type(ls) = &self.inner1 {
+            if let IROperand::Type(rs) = &self.inner2 {
+                let calc = ls.val() - rs.val();
+                let calc = Type::from_int(self.inner3.ty, calc);
+                return Some(Assign::new(self.inner3.to_owned(), calc));
+            }
+        }
+        None
     }
 }
 
 impl EvalOptVisitor for Xor {
     fn maybe_inline(&self, const_values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        todo!()
+        let mut new_ls = self.inner1.to_owned();
+        let mut new_rs = self.inner2.to_owned();
+
+        if let IROperand::Var(ls) = &self.inner1 {
+            if let Some(ls) = const_values.get(&ls.name) {
+                new_ls = IROperand::Type(*ls);
+            }
+        }
+        if let IROperand::Var(rs) = &self.inner2 {
+            if let Some(rs) = const_values.get(&rs.name) {
+                new_rs = IROperand::Type(*rs);
+            }
+        }
+
+        Some(Box::new(Xor {
+            inner1: new_ls,
+            inner2: new_rs,
+            inner3: self.inner3.to_owned(),
+        }))
     }
 
     fn eval(&self) -> Option<Box<dyn Ir>> {
-        todo!()
+        if self.inner1 == self.inner2 {
+            return Some(Assign::new(self.inner3.to_owned(), Type::from_int(self.inner3.ty, 0.0)))
+        }
+
+        if let IROperand::Type(ls) = &self.inner1 {
+            if let IROperand::Type(rs) = &self.inner2 {
+                let calc = (ls.val() as i64) ^ (rs.val() as i64);
+                let calc = Type::from_int(self.inner3.ty, calc as f64);
+                return Some(Assign::new(self.inner3.to_owned(), calc));
+            }
+        }
+
+        None
     }
 }
 
 impl EvalOptVisitor for Or {
     fn maybe_inline(&self, const_values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        todo!()
+        let mut new_ls = self.inner1.to_owned();
+        let mut new_rs = self.inner2.to_owned();
+
+        if let IROperand::Var(ls) = &self.inner1 {
+            if let Some(ls) = const_values.get(&ls.name) {
+                new_ls = IROperand::Type(*ls);
+            }
+        }
+        if let IROperand::Var(rs) = &self.inner2 {
+            if let Some(rs) = const_values.get(&rs.name) {
+                new_rs = IROperand::Type(*rs);
+            }
+        }
+
+        Some(Box::new(Or {
+            inner1: new_ls,
+            inner2: new_rs,
+            inner3: self.inner3.to_owned(),
+        }))
     }
 
     fn eval(&self) -> Option<Box<dyn Ir>> {
-        todo!()
+        if let IROperand::Type(ls) = &self.inner1 {
+            if let IROperand::Type(rs) = &self.inner2 {
+                let calc = (ls.val() as i64) | (rs.val() as i64);
+                let calc = Type::from_int(self.inner3.ty, calc as f64);
+                return Some(Assign::new(self.inner3.to_owned(), calc));
+            }
+        }
+
+        None
     }
 }
 
 impl EvalOptVisitor for And {
     fn maybe_inline(&self, const_values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        todo!()
+        let mut new_ls = self.inner1.to_owned();
+        let mut new_rs = self.inner2.to_owned();
+
+        if let IROperand::Var(ls) = &self.inner1 {
+            if let Some(ls) = const_values.get(&ls.name) {
+                new_ls = IROperand::Type(*ls);
+            }
+        }
+        if let IROperand::Var(rs) = &self.inner2 {
+            if let Some(rs) = const_values.get(&rs.name) {
+                new_rs = IROperand::Type(*rs);
+            }
+        }
+
+        Some(Box::new(And {
+            inner1: new_ls,
+            inner2: new_rs,
+            inner3: self.inner3.to_owned(),
+        }))
     }
 
     fn eval(&self) -> Option<Box<dyn Ir>> {
-        todo!()
+        if let IROperand::Type(ls) = &self.inner1 {
+            if let IROperand::Type(rs) = &self.inner2 {
+                let calc = (ls.val() as i64) & (rs.val() as i64);
+                let calc = Type::from_int(self.inner3.ty, calc as f64);
+                return Some(Assign::new(self.inner3.to_owned(), calc));
+            }
+        }
+        None
     }
 }
 
 impl EvalOptVisitor for Mul {
     fn maybe_inline(&self, const_values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        todo!()
+        let mut new_ls = self.inner1.to_owned();
+        let mut new_rs = self.inner2.to_owned();
+
+        if let IROperand::Var(ls) = &self.inner1 {
+            if let Some(ls) = const_values.get(&ls.name) {
+                new_ls = IROperand::Type(*ls);
+            }
+        }
+        if let IROperand::Var(rs) = &self.inner2 {
+            if let Some(rs) = const_values.get(&rs.name) {
+                new_rs = IROperand::Type(*rs);
+            }
+        }
+
+        Some(Box::new(Mul {
+            inner1: new_ls,
+            inner2: new_rs,
+            inner3: self.inner3.to_owned(),
+        }))
     }
 
     fn eval(&self) -> Option<Box<dyn Ir>> {
-        todo!()
+        if let IROperand::Type(ty) = &self.inner1 {
+            if ty.val() == 0.0 {
+                return Some(Assign::new(self.inner3.to_owned(), Type::from_int((*ty).into(), 0.0)));
+            } else if ty.val() == 1.0 {
+                return Some(Assign::new(self.inner3.to_owned(), Type::from_int((*ty).into(), 0.0)));
+            }
+        }
+
+        if let IROperand::Type(ty) = &self.inner2 {
+            if ty.val() == 0.0 {
+                return Some(Assign::new(self.inner3.to_owned(), Type::from_int((*ty).into(), 0.0)));
+            } else if ty.val() == 1.0 {
+                return Some(Assign::new(self.inner3.to_owned(), Type::from_int((*ty).into(), 0.0)));
+            }
+        }
+
+        if let IROperand::Type(ls) = &self.inner1 {
+            if let IROperand::Type(rs) = &self.inner2 {
+                let calc = ls.val() * rs.val();
+                let calc = Type::from_int(self.inner3.ty, calc);
+                return Some(Assign::new(self.inner3.to_owned(), calc));
+            }
+        }
+        None
     }
 }
 
 impl EvalOptVisitor for Div {
     fn maybe_inline(&self, const_values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        todo!()
+        let mut new_ls = self.inner1.to_owned();
+        let mut new_rs = self.inner2.to_owned();
+
+        if let IROperand::Var(ls) = &self.inner1 {
+            if let Some(ls) = const_values.get(&ls.name) {
+                new_ls = IROperand::Type(*ls);
+            }
+        }
+        if let IROperand::Var(rs) = &self.inner2 {
+            if let Some(rs) = const_values.get(&rs.name) {
+                new_rs = IROperand::Type(*rs);
+            }
+        }
+
+        Some(Box::new(Div {
+            inner1: new_ls,
+            inner2: new_rs,
+            inner3: self.inner3.to_owned(),
+        }))
     }
 
     fn eval(&self) -> Option<Box<dyn Ir>> {
-        todo!()
+        if self.inner1 == self.inner2 {
+            return Some(Assign::new(self.inner3.to_owned(), Type::from_int(self.inner3.ty, 1.0)));
+        }
+
+        if let IROperand::Type(ty) = &self.inner2 {
+            if ty.val() == 1.0 {
+                return Some(Assign::new(self.inner3.to_owned(), Type::from_int((*ty).into(), 1.0)));
+            } // we could check for 0 but this would hide runtime errors which (positivly) "change" runtime behauvior
+        }
+
+        if let IROperand::Type(ls) = &self.inner1 {
+            if let IROperand::Type(rs) = &self.inner2 {
+                let calc = ls.val() / rs.val();
+                let calc = Type::from_int(self.inner3.ty, calc);
+                return Some(Assign::new(self.inner3.to_owned(), calc));
+            }
+        }
+        None
     }
 }
 
 impl EvalOptVisitor for Rem {
     fn maybe_inline(&self, const_values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        todo!()
+        let mut new_ls = self.inner1.to_owned();
+        let mut new_rs = self.inner2.to_owned();
+
+        if let IROperand::Var(ls) = &self.inner1 {
+            if let Some(ls) = const_values.get(&ls.name) {
+                new_ls = IROperand::Type(*ls);
+            }
+        }
+        if let IROperand::Var(rs) = &self.inner2 {
+            if let Some(rs) = const_values.get(&rs.name) {
+                new_rs = IROperand::Type(*rs);
+            }
+        }
+
+        Some(Box::new(Rem {
+            inner1: new_ls,
+            inner2: new_rs,
+            inner3: self.inner3.to_owned(),
+        }))
     }
 
     fn eval(&self) -> Option<Box<dyn Ir>> {
-        todo!()
+        if self.inner1 == self.inner2 {
+            return Some(Assign::new(self.inner3.to_owned(), Type::from_int(self.inner3.ty, 0.0)));
+        }
+
+        if let IROperand::Type(ty) = &self.inner2 {
+            if ty.val() == 1.0 {
+                return Some(Assign::new(self.inner3.to_owned(), Type::from_int((*ty).into(), 0.0)));
+            } // we could check for 0 but this would hide runtime errors which (positivly) "change" runtime behauvior
+        }
+
+        if let IROperand::Type(ls) = &self.inner1 {
+            if let IROperand::Type(rs) = &self.inner2 {
+                let calc = ls.val() % rs.val();
+                let calc = Type::from_int(self.inner3.ty, calc);
+                return Some(Assign::new(self.inner3.to_owned(), calc));
+            }
+        }
+        None
     }
 }
 
 impl EvalOptVisitor for Shl {
     fn maybe_inline(&self, const_values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        todo!()
+        let mut new_ls = self.inner1.to_owned();
+        let mut new_rs = self.inner2.to_owned();
+
+        if let IROperand::Var(ls) = &self.inner1 {
+            if let Some(ls) = const_values.get(&ls.name) {
+                new_ls = IROperand::Type(*ls);
+            }
+        }
+        if let IROperand::Var(rs) = &self.inner2 {
+            if let Some(rs) = const_values.get(&rs.name) {
+                new_rs = IROperand::Type(*rs);
+            }
+        }
+
+        Some(Box::new(Shl {
+            inner1: new_ls,
+            inner2: new_rs,
+            inner3: self.inner3.to_owned(),
+        }))
     }
 
     fn eval(&self) -> Option<Box<dyn Ir>> {
-        todo!()
+        if let IROperand::Type(ty) = &self.inner2 {
+            if ty.val() == 0.0 {
+                return Some(match &self.inner1 {
+                    IROperand::Type(ty) => Assign::new(self.inner3.to_owned(), *ty),
+                    IROperand::Var(var) => Assign::new(self.inner3.to_owned(), var.to_owned()),
+                });
+            }
+        }
+
+        if let IROperand::Type(ls) = &self.inner1 {
+            if let IROperand::Type(rs) = &self.inner2 {
+                let calc = (ls.val() as i64) << (rs.val() as i64);
+                let calc = Type::from_int(self.inner3.ty, calc as f64);
+                return Some(Assign::new(self.inner3.to_owned(), calc));
+            }
+        }
+        None
     }
 }
 
 impl EvalOptVisitor for Shr {
     fn maybe_inline(&self, const_values: &HashMap<String, Type>) -> Option<Box<dyn Ir>> {
-        todo!()
+        let mut new_ls = self.inner1.to_owned();
+        let mut new_rs = self.inner2.to_owned();
+
+        if let IROperand::Var(ls) = &self.inner1 {
+            if let Some(ls) = const_values.get(&ls.name) {
+                new_ls = IROperand::Type(*ls);
+            }
+        }
+        if let IROperand::Var(rs) = &self.inner2 {
+            if let Some(rs) = const_values.get(&rs.name) {
+                new_rs = IROperand::Type(*rs);
+            }
+        }
+
+        Some(Box::new(Shr {
+            inner1: new_ls,
+            inner2: new_rs,
+            inner3: self.inner3.to_owned(),
+        }))
     }
 
     fn eval(&self) -> Option<Box<dyn Ir>> {
-        todo!()
+        if self.inner1 == self.inner2 {
+            return Some(Assign::new(self.inner3.to_owned(), Type::from_int(self.inner3.ty, 0.0)));
+        }
+
+        if let IROperand::Type(ty) = &self.inner2 {
+            if ty.val() == 0.0 {
+                return Some(match &self.inner1 {
+                    IROperand::Type(ty) => Assign::new(self.inner3.to_owned(), *ty),
+                    IROperand::Var(var) => Assign::new(self.inner3.to_owned(), var.to_owned()),
+                });
+            }
+        }
+
+        if let IROperand::Type(ls) = &self.inner1 {
+            if let IROperand::Type(rs) = &self.inner2 {
+                let calc = (ls.val() as i64) >> (rs.val() as i64);
+                let calc = Type::from_int(self.inner3.ty, calc as f64);
+                return Some(Assign::new(self.inner3.to_owned(), calc));
+            }
+        }
+        None
     }
 }

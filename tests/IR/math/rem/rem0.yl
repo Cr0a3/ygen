@@ -6,7 +6,7 @@ gcc out.o -o a.exe
 define i32 @main() {
  entry:
     %1 = rem i32 12, 5
-    ret u32 %1
+    ret i32 %1
 }
 
 # EXIT_CODE=2

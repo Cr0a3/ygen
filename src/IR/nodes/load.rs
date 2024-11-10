@@ -7,15 +7,15 @@ use super::{EvalOptVisitor, IROperand, Ir, Load};
 
 impl Ir for Load {
     fn dump(&self) -> String {
-        format!("{} = load {}, {}", self.inner1.name, self.inner3, self.inner2)
+        format!("{} = load {} {}", self.inner1.name, self.inner2, self.inner3)
     }
 
     fn dumpColored(&self, profile: crate::Support::ColorProfile) -> String {
-        format!("{} = {} {}, {}", 
+        format!("{} = {} {} {}", 
             profile.markup(&self.inner1.name, ColorClass::Var), 
             profile.markup("load", ColorClass::Instr), 
-            profile.markup(&self.inner3.to_string(), ColorClass::Ty),
-            profile.markup(&self.inner2.to_string(), ColorClass::Var),
+            profile.markup(&self.inner2.to_string(), ColorClass::Ty),
+            profile.markup(&self.inner3.to_string(), ColorClass::Var),
         )
     }
 
