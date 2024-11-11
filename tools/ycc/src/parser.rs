@@ -327,6 +327,125 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_expr(&mut self) -> Option<Expr> {
+        let mut ls = self.parse_bitwise_or()?;
+
+        loop {
+            let op;
+
+            let current = &self.current()?.ty;
+
+            if let TokenType::OrOr = current {
+                op = AstOperand::OrOr;
+            } else if let TokenType::AndAnd = current {
+                op = AstOperand::AndAnd;
+            } else {
+                break;
+            }
+            self.advance(); // operator
+
+            let rs = self.parse_bitwise_or()?;
+
+            ls = Box::new(Expr::Binary { ls: ls, op: op, rs: rs });
+        } 
+
+        Some(*ls)
+    }
+
+    fn parse_bitwise_or(&mut self) -> Option<Box<Expr>> {
+        let mut ls = self.parse_bitwise_xor()?;
+
+        loop {
+            let op;
+
+            let current = &self.current()?.ty;
+
+            if let TokenType::Or = current {
+                op = AstOperand::Or;
+            } else {
+                break;
+            }
+            self.advance(); // operator
+
+            let rs = self.parse_bitwise_xor()?;
+
+            ls = Box::new(Expr::Binary { ls: ls, op: op, rs: rs });
+        } 
+
+        Some(ls)
+    }
+
+    fn parse_bitwise_xor(&mut self) -> Option<Box<Expr>> {
+        let mut ls = self.parse_bitwise_and()?;
+
+        loop {
+            let op;
+
+            let current = &self.current()?.ty;
+
+            if let TokenType::Xor = current {
+                op = AstOperand::Xor;
+            } else {
+                break;
+            }
+            self.advance(); // operator
+
+            let rs = self.parse_bitwise_and()?;
+
+            ls = Box::new(Expr::Binary { ls: ls, op: op, rs: rs });
+        } 
+
+        Some(ls)
+    }
+
+    fn parse_bitwise_and(&mut self) -> Option<Box<Expr>> {
+        let mut ls = self.parse_shift()?;
+
+        loop {
+            let op;
+
+            let current = &self.current()?.ty;
+
+            if let TokenType::And = current {
+                op = AstOperand::And;
+            } else {
+                break;
+            }
+            self.advance(); // operator
+
+            let rs = self.parse_shift()?;
+
+            ls = Box::new(Expr::Binary { ls: ls, op: op, rs: rs });
+        } 
+
+        Some(ls)
+    }
+
+    fn parse_shift(&mut self) -> Option<Box<Expr>> {
+        let mut ls = self.parse_add_sub()?;
+
+        loop {
+            let op;
+
+            let current = &self.current()?.ty;
+
+            if let TokenType::ShiftLeft = current {
+                op = AstOperand::Shl;
+            } else if let TokenType::ShiftRight = current {
+                op = AstOperand::Shr;
+            } else {
+                break;
+            }
+            self.advance(); // operator
+
+            let rs = self.parse_add_sub()?;
+
+            ls = Box::new(Expr::Binary { ls: ls, op: op, rs: rs });
+        } 
+
+        Some(ls)
+    }
+
+    fn parse_add_sub(&mut self) -> Option<Box<Expr>> {
         let mut ls = self.parse_term()?;
 
         loop {
@@ -348,7 +467,7 @@ impl<'a> Parser<'a> {
             ls = Box::new(Expr::Binary { ls: ls, op: op, rs: rs });
         } 
 
-        Some(*ls)
+        Some(ls)
     }
 
     fn parse_term(&mut self) -> Option<Box<Expr>> {
@@ -363,7 +482,9 @@ impl<'a> Parser<'a> {
                 op = AstOperand::Mul;
             } else if let TokenType::Div = current {
                 op = AstOperand::Div;
-            } else {
+            } else if let TokenType::Mod = current {
+                op = AstOperand::Mod;
+            } else{
                 break;
             }
             self.advance(); // operator
@@ -377,6 +498,22 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_factor(&mut self) -> Option<Box<Expr>> {
+        // check for unary op
+
+        let op = match self.current()?.ty {
+            TokenType::Not => Some(AstOperand::Not),
+            TokenType::BitwiseNot => Some(AstOperand::BitwiseNot),
+            _ => None,
+        };
+
+        if let Some(op) = op {
+            self.advance(); // op
+            let expr = self.parse_factor()?;
+            return Some(Box::new(Expr::Unary { op: op, expr: expr}))
+        }
+
+        // normal factor
+        
         let current = self.advance().ty.to_owned();
 
         match current {

@@ -88,6 +88,10 @@ pub enum AstOperand {
     And,
     Shl,
     Shr,
+    OrOr,
+    AndAnd,
+    Not,
+    BitwiseNot,
 }
 
 #[derive(Debug, Clone)]
@@ -102,6 +106,11 @@ pub enum Expr {
     FloatLiteral(f64),
     StringLiteral(String),
     CharLiteral(char),
+
+    Unary {
+        op: AstOperand,
+        expr: Box<Expr>,
+    },
 
     Var(String),
 }
