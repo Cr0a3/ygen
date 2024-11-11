@@ -327,6 +327,87 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_expr(&mut self) -> Option<Expr> {
+        let mut ls = self.parse_term()?;
+
+        loop {
+            let op;
+
+            let current = &self.current()?.ty;
+
+            if let TokenType::Add = current {
+                op = AstOperand::Add;
+            } else if let TokenType::Sub = current {
+                op = AstOperand::Sub;
+            } else {
+                break;
+            }
+            self.advance(); // operator
+
+            let rs = self.parse_term()?;
+
+            ls = Box::new(Expr::Binary { ls: ls, op: op, rs: rs });
+        } 
+
+        Some(*ls)
+    }
+
+    fn parse_term(&mut self) -> Option<Box<Expr>> {
+        let mut ls = self.parse_factor()?;
+
+        loop {
+            let op;
+
+            let current = &self.current()?.ty;
+
+            if let TokenType::Star = current {
+                op = AstOperand::Mul;
+            } else if let TokenType::Div = current {
+                op = AstOperand::Div;
+            } else {
+                break;
+            }
+            self.advance(); // operator
+
+            let rs = self.parse_factor()?;
+
+            ls = Box::new(Expr::Binary { ls: ls, op: op, rs: rs });
+        } 
+
+        Some(ls)
+    }
+
+    fn parse_factor(&mut self) -> Option<Box<Expr>> {
+        let current = self.advance().ty.to_owned();
+
+        match current {
+            TokenType::IntLiteral(int) => Some(Box::new(Expr::IntLiteral(int))),
+            TokenType::FloatLiteral(float) => Some(Box::new(Expr::FloatLiteral(float))),
+            TokenType::StringLiteral(string) => Some(Box::new(Expr::StringLiteral(string))),
+            TokenType::CharLiteral(char) => Some(Box::new(Expr::CharLiteral(char))),
+            
+            TokenType::Ident(var) => {
+                // either a var or a call
+                if let TokenType::LeftParan = self.current()?.ty {
+                    return self.parse_call(var);
+                }
+
+                Some(Box::new(Expr::Var(var)))
+            }
+
+            _ => {
+                println!("current: {:?}", current);
+                self.errors.push(YccError {
+                    loc: self.pos(),
+                    head: "unexpected token",
+                    where_string: "expected valid token for expression".into(),
+                });
+
+                None
+            }
+        }
+    }
+
+    fn parse_call(&mut self, func: String) -> Option<Box<Expr>> {
         todo!()
     }
 }

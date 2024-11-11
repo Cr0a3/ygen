@@ -102,6 +102,8 @@ pub enum Expr {
     FloatLiteral(f64),
     StringLiteral(String),
     CharLiteral(char),
+
+    Var(String),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
