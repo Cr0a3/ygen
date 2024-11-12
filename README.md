@@ -86,10 +86,5 @@ define i32 @add( i32 %0,  i32 %1 ) {
 }
 ```
 
-### Support
-Ygen currently supports following architectures:
- - `x86-64`
- - `wasm` [WIP]
-
 ### Copyright
 This project is owned by Cr0a3 and licensed under the Apache2 License
