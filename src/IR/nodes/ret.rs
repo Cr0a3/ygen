@@ -33,14 +33,6 @@ impl Ir for Return {
     fn as_any(&self) -> &dyn Any {
         self
     }
-
-    fn compile(&self, registry: &mut TargetBackendDescr, module: &mut crate::prelude::Module) {
-        registry.compile_ret(&self, module)
-    }
-    
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
-        compiler.compile_ret(&self, block, module)
-    }
     
     fn inputs(&self) -> Vec<Var> {
         if let IROperand::Var(ret) = &self.inner1 { vec![ret.to_owned()] }

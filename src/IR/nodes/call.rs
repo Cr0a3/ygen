@@ -62,10 +62,6 @@ impl Ir for Call {
         Box::from( self.clone() )
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr, module: &mut crate::prelude::Module) {
-        registry.compile_call(&self, module)
-    }
-
     fn uses(&self, var: &Var) -> bool {
         let mut uses = false;
 
@@ -78,10 +74,6 @@ impl Ir for Call {
         }
 
         uses
-    }
-    
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
-        compiler.compile_call(&self, &block, module)
     }
     
     fn inputs(&self) -> Vec<Var> {

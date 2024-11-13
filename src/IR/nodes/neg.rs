@@ -26,14 +26,6 @@ impl Ir for Neg {
         Box::new( self.clone() )
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr, module: &mut crate::prelude::Module) {
-        registry.compile_neg(self, module)
-    }
-
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
-        compiler.compile_neg(self, block, module)
-    }
-
     fn inputs(&self) -> Vec<Var> {
         let mut inputs = Vec::new();
         if let IROperand::Var(value) = &self.inner1 { inputs.push(value.to_owned()); }

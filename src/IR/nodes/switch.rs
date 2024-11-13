@@ -72,14 +72,6 @@ impl Ir for Switch {
         Box::new( self.clone() )
     }
 
-    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr, module: &mut crate::prelude::Module) {
-        registry.compile_switch(self, module)
-    }
-
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
-        compiler.compile_switch(self, block, module)
-    }
-
     fn inputs(&self) -> Vec<Var> {
         vec![self.to_switch.to_owned()]
     }

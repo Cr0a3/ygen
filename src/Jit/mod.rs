@@ -55,7 +55,6 @@ impl Module {
         }
 
         map.deal_with_abs_symbols = match Triple::host().arch {
-            Arch::X86_64 | Arch::X86 => Some(Box::new(crate::Target::x64::abs_jit::X64AbsSymDealer {})),
             _ => None,
         };
 

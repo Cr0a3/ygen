@@ -31,10 +31,6 @@ impl Ir for Br {
     fn clone_box(&self) -> Box<dyn Ir> {
         Box::from( self.clone() )
     }
-
-    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr, module: &mut crate::prelude::Module) {
-        registry.compile_br(self, module)
-    }
     
     fn uses(&self, _: &crate::prelude::Var) -> bool {
         false
@@ -43,11 +39,6 @@ impl Ir for Br {
     fn is(&self, other: &Box<dyn Ir>) -> bool {
         other.dump() == self.dump()
     }
-    
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
-        compiler.compile_br(&self, &block, module)
-    }
-    
     
     fn inputs(&self) -> Vec<Var> {
         vec![]
@@ -107,21 +98,12 @@ impl Ir for BrCond {
     fn clone_box(&self) -> Box<dyn Ir> {
         Box::from( self.clone() )
     }
-
-    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr, module: &mut crate::prelude::Module) {
-       registry.compile_br_cond(self, module)
-    }
-
     fn uses(&self, var: &Var) -> bool {
         if self.inner1.name.to_owned() == var.name.to_owned() {
             true
         } else {
             false
         }
-    }
-    
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
-        compiler.compile_br_cond(&self, &block, module)
     }
     
     fn inputs(&self) -> Vec<Var> {

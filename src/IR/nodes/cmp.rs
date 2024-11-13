@@ -67,10 +67,6 @@ impl Ir for Cmp {
         Box::new( self.clone() )
     }
 
-    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr, module: &mut crate::prelude::Module) {
-        registry.compile_cmp(self, module)
-    }
-
     fn uses(&self, other: &Var) -> bool {
         if let IROperand::Var(ls) = &self.ls {
             if other.name == ls.name { return true; }
@@ -80,10 +76,6 @@ impl Ir for Cmp {
         }
 
         false
-    }
-    
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
-        compiler.compile_cmp(&self, &block, module)
     }
     
     fn inputs(&self) -> Vec<Var> {

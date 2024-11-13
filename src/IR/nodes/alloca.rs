@@ -27,14 +27,6 @@ impl Ir for Alloca {
     fn clone_box(&self) -> Box<dyn Ir> {
         Box::new( self.clone() )
     }
-
-    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr, module: &mut crate::prelude::Module) {
-        registry.compile_alloca(self, module)
-    }
-    
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
-        compiler.compile_alloca(&self, &block, module)
-    }
     
     fn inputs(&self) -> Vec<Var> {
         vec![]

@@ -43,14 +43,6 @@ impl Ir for Cast {
         Box::from( self.clone() )
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr, module: &mut crate::prelude::Module) {
-        registry.compile_cast_var(&self, module)
-    }
-    
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
-        compiler.compile_cast(&self, &block, module)
-    }
-
     
     fn inputs(&self) -> Vec<Var> {
         let mut inputs = Vec::new();

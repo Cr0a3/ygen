@@ -1,7 +1,6 @@
 use std::{any::Any, fmt::Debug, hash::Hash};
 use std::collections::HashMap;
 use super::{Block, BlockId, Const, FuncId, Function, FunctionType, Type, TypeMetadata, Var, VerifyError};
-use crate::Target::TargetBackendDescr;
 
 mod assign;
 mod call;
@@ -288,7 +287,7 @@ pub trait IsNode {
 
 use crate::Support::{AsAny, ColorClass, ColorProfile};
 /// The ir trait
-pub trait Ir: Debug + Any + EvalOptVisitor + IsNode {
+pub trait Ir: Debug + Any + EvalOptVisitor + IsNode + crate::CodeGen::DagVisitor {
     /// Returns the ir node as his textual representation
     fn dump(&self) -> String;
     /// Returns the ir node as his textual representation with colors
@@ -302,13 +301,6 @@ pub trait Ir: Debug + Any + EvalOptVisitor + IsNode {
 
     /// Clones the node into a box of `Box<dyn Ir>`
     fn clone_box(&self) -> Box<dyn Ir>;
-
-    /// Compiles the node based on the given target
-    #[allow(dead_code)]
-    fn compile(&self, registry: &mut TargetBackendDescr, module: &mut crate::prelude::Module);
-
-    /// Compiles the node with node information to the given target
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module);
 
     /// Returns if the node uses the variable
     fn uses(&self, _: &Var) -> bool {

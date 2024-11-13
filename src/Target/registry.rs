@@ -1,264 +1,96 @@
-use std::{collections::HashMap, error::Error, fmt::Display};
+use std::collections::HashMap;
+use crate::CodeGen::dag_builder::DagBuilder;
+use crate::CodeGen::dag_lower::DagLower;
 
-use crate::{debug::DebugLocation, prelude::Function, CodeGen::MachineInstr, Obj::Link, IR::{Block, Module}};
+use super::asm_printer::AsmPrinter;
+use super::compile::McCompile;
+use super::instr::McInstr;
+use super::parser::AsmParser;
+use super::Triple;
 
-use super::{Arch, CallConv, TargetBackendDescr, Triple};
 
-/// The target registry: manages different targets
+/// Compilation steps:
+/// 1. Build dag (`crate::CodeGen::DabBuilder::build(func)`)
+/// 2. Optimize dag (`crate::CodeGen::DabOptimizer::optimize(dag)`)
+/// 3. Lower the dag (is target specific) using the `DagLower` struct
+/// 4. Either compile the generated assembly to machine code (using `McCompile`) or print
+///    its assembly out (using `AsmPrinter`)
+pub struct BackendStepDocs;
+
+/// All required structures for a "compile-complete" backend
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BackendInfos {
+    /// The thing that turns the dag into assembly
+    pub dag: DagLower,
+    /// The thing that turns the assembly into machine code
+    pub mc: McCompile,
+    /// The thing that can print the assembly
+    pub asm_printer: AsmPrinter,
+    /// The thing that can parser target assembly
+    pub parser: AsmParser,
+}
+
+/// The target registry is the "main hub" for compiling functions ...
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TargetRegistry {
-    targets: HashMap<Arch, TargetBackendDescr>,
-    funcs: HashMap<String, TargetBackendDescr>,
+    triple: super::Triple,
 
-    pub(crate) epilogs: HashMap<String, bool>,
-
-    triple: Triple,
+    dag_lower_backends: HashMap<super::Arch, DagLower>,
+    mc_compile_backends: HashMap<super::Arch, McCompile>,
+    asm_printers: HashMap<super::Arch, AsmPrinter>,
+    asm_parser: HashMap<super::Arch, AsmParser>,
 }
 
 impl TargetRegistry {
-    /// Creates an new backend registry
-    pub fn new(triple: Triple) -> Self {
+    /// Creates a new target registry
+    pub fn new(triple: &Triple) -> Self {
         Self {
-            targets: HashMap::new(),
-            funcs: HashMap::new(),
-            epilogs: HashMap::new(),
-            triple: triple,
+            triple: *triple,
+            dag_lower_backends: HashMap::new(),
+            mc_compile_backends: HashMap::new(),
+            asm_printers: HashMap::new(),
+            asm_parser: HashMap::new(),
         }
     }
 
-    /// Adds an new target architecture
-    pub fn add(&mut self, arch: Arch, descr: TargetBackendDescr) {
-        self.targets.insert(arch, descr);
+    /// Inserts an new backend for the given architecture into the registry
+    pub fn insert(&mut self, arch: super::Arch, backend: BackendInfos) {
+        self.dag_lower_backends.insert(arch, backend.dag);
+        self.mc_compile_backends.insert(arch, backend.mc);
+        self.asm_printers.insert(arch, backend.asm_printer);
+        self.asm_parser.insert(arch, backend.parser);
     }
 
-    /// Sets the calling convention to use for the specified architecture
-    /// If it isn't found the function does noting
-    pub fn setCallingConventionForTarget(&mut self, arch: Arch, call: CallConv) {
-        if let Some(target) = self.targets.get_mut(&arch) {
-            target.call = call;
-        }
+    /// Sets the current target triple (used for selection of the backend to use)
+    pub fn make_current(&mut self, triple: &super::Triple) {
+        self.triple = *triple;
     }
 
-    /// returns the `TargetBackendDescr` for the arch (also it adjusts it's calling convention ...)
-    pub fn getBasedOnArch(&mut self, arch: Arch) -> Result<&mut TargetBackendDescr, Box<dyn Error>> {
-        if let Some(descr) = self.targets.get_mut(&arch) {
-            Ok(descr)
+    /// compiles the given function
+    pub fn compile_fn(&self, func: &crate::IR::Function) -> (Vec<u8>, Vec<crate::Obj::Link>) {
+        let dag = DagBuilder::build(&self.triple.arch, func);
+
+        println!("dag: {:?}", dag);
+        todo!()
+    }
+
+    /// compiles the given function with debug information
+    pub fn compile_dbg_fn(&self, func: &crate::IR::Function, dbg: &mut crate::debug::DebugRegistry) -> (Vec<u8>, Vec<crate::Obj::Link>) {
+        todo!()
+    }
+
+    /// Prints the assembly code of the module to a string
+    pub fn print_asm(&self, module: &crate::IR::Module) -> String {
+        todo!()
+    }
+
+    /// Parses the input assembly for the target
+    pub fn parse_asm(&self, asm: &str) -> Result<Box<dyn McInstr>, Box<dyn std::error::Error>> {
+        if let Some(parser) = self.asm_parser.get(&self.triple.arch) {
+            parser.parse(asm)
         } else {
-            Err(Box::from( 
-                RegistryError::UnsuportedArch(arch) 
-            ))
+            panic!("no registered asm parser for the given target")
         }
-    }
-
-    pub(crate) fn getBackendForFuncOrFork(&mut self, arch: Arch, funct: &Function) -> TargetBackendDescr {
-        if let Some(backend) = self.funcs.get(&funct.name) {
-            let backend = backend.to_owned();
-
-            return backend;
-        } else if let Some(to_fork) = self.targets.get(&arch) {
-            let to_fork = to_fork.to_owned();
-            self.funcs.insert(funct.name.to_owned(), to_fork);
-            self.getBackendForFuncOrFork(arch, funct)
-        } else { panic!("the arch: {:?} wasn't initialized", arch); }
-    }
-
-    fn updateFuncBackend(&mut self, name: &String, backend: TargetBackendDescr) {
-        if let Some(original) = self.funcs.get_mut(name) {
-            *original = backend;
-        }
-    }
-
-    /// emits machine instrs for target <br>
-    /// **note**: machine instrs are portable over all platforms <br>
-    /// **warning**: Does not add a prolog
-    pub fn buildMachineInstrsForTarget(&mut self, arch: Arch, block: &Block, funct: &Function, module: &mut Module) -> Result<Vec<MachineInstr>, Box<dyn Error>> {
-        let triple = self.triple;
-
-        let run_alloc = if let Some(_) = self.funcs.get(&funct.name) { false } else { true };
-        
-        let mut backend = self.getBackendForFuncOrFork(arch, funct);
-
-        if run_alloc {
-            if let Some(helper) = &mut backend.helper {
-                helper.run_alloc(&funct);
-            }
-        }
-
-        backend.block = Some(block.clone());
-        let instrs = backend.build_instrs(&triple, module);
-
-        if backend.epilog {
-            if !self.epilogs.contains_key(&funct.name) {
-                self.epilogs.insert( funct.name.to_owned(), true );
-            }
-        }
-
-        self.updateFuncBackend(&funct.name, backend);
-
-        Ok(instrs)
-    }
-
-    /// Builds the ir of the given triple into text assembly code <br>
-    /// **warning**: Does not add a prolog
-    pub fn buildAsmForTarget(&mut self, arch: Arch, block: &Block, funct: &Function, module: &mut Module) -> Result<Vec<String>, Box<dyn Error>> {
-       let triple = self.triple;
-
-       let run_alloc = if let Some(_) = self.funcs.get(&funct.name) { false } else { true };
-
-        let mut backend = self.getBackendForFuncOrFork(arch, funct);
-
-        if run_alloc {
-            if let Some(helper) = &mut backend.helper {
-                helper.run_alloc(&funct);
-            }
-        }
-
-        backend.block = Some(block.clone());
-
-        let instrs = backend.build_instrs(&triple, module);
-        let instrs = backend.lower(instrs)?;
-
-        let mut asm = vec![];
-
-        for instr in instrs {
-            asm.push(
-                instr.to_string()
-            )
-        }
-
-        if backend.epilog {
-            if !self.epilogs.contains_key(&funct.name) {
-                self.epilogs.insert(funct.name.to_string(), true);
-            }
-        }
-
-        self.updateFuncBackend(&funct.name, backend);
-
-        Ok(asm)
-    }
-
-    /// Builds the ir of the given triple into machine code <br>
-    /// **warning**: Does not add a prolog
-    pub fn buildMachineCodeForTarget(&mut self, arch: Arch, block: &Block, funct: &Function, module: &mut Module) -> Result<(Vec<u8>, Vec<Link>), Box<dyn Error>> {
-        let triple = self.triple;
-
-        let run_alloc = if let Some(_) = self.funcs.get(&funct.name) { false } else { true };
-
-        let mut backend = self.getBackendForFuncOrFork(arch, funct);
-
-        if run_alloc {
-            if let Some(helper) = &mut backend.helper {
-                helper.run_alloc(&funct);
-            }
-        }
-
-        backend.block = Some(block.clone());
-
-        let instrs = backend.build_instrs(&triple, module);
-        let instrs = backend.lower(instrs)?;
-
-        let mut res = vec![];
-        let mut links = vec![];
-
-        for instr in &instrs {
-            let (encoded, link) = &instr.encode()?;
-            res.extend_from_slice(&encoded);
-
-            if let Some(link) = link {
-                let mut link = link.clone();
-
-                if link.special {
-                    link.from = block.name.to_owned();
-                } else {
-                    link.from = funct.name.to_string();
-                }
-                link.at = res.len();
-
-                links.push(link);
-            }
-        }
-
-        if backend.epilog {
-            if !self.epilogs.contains_key(&funct.name) {
-                self.epilogs.insert(funct.name.to_string(), true);
-            }
-        }
-
-        self.updateFuncBackend(&funct.name, backend);
-
-        Ok((res, links))
-    }
-
-    /// returns if the function needs to get an added prolog
-    pub fn requires_prolog(&self, funct: &Function) -> bool {
-        if self.epilogs.contains_key(&funct.name) {
-            true
-        } else { false }
-    }
-
-    /// build the debugging information for an function
-    pub fn buildDebugInfo(&mut self, arch: Arch, block: &Block, funct: &Function, module: &mut Module) -> Result<Vec<DebugLocation>, Box<dyn Error>> {
-        let triple = self.triple;
-
-        let run_alloc = if let Some(_) = self.funcs.get(&funct.name) { false } else { true };
-
-        let mut backend = self.getBackendForFuncOrFork(arch, funct);
-
-        if run_alloc {
-            if let Some(helper) = &mut backend.helper {
-                helper.run_alloc(&funct);
-            }
-        }
-
-        backend.block = Some(block.clone());
-
-        let instrs = backend.build_instrs_with_ir_debug(&triple, module);
-        let instrs = backend.lower_debug(instrs)?;
-
-        let mut dbgs = vec![];
-
-        let mut offset = 0;
-
-        for (instrs, location) in &instrs {
-            dbgs.push(
-                DebugLocation {
-                    line: location.line,
-                    col: location.line,
-                    epilog: false,
-                    prolog: false,
-                    adr: offset,
-                }
-            );
-
-            for instr in instrs {
-                offset += instr.encode()?.0.len() as u64;
-            }    
-        }
-
-        if backend.epilog {
-            if !self.epilogs.contains_key(&funct.name) {
-                self.epilogs.insert(funct.name.to_string(), true);
-            }
-        }
-
-        self.updateFuncBackend(&funct.name, backend);
-
-        Ok(dbgs)
-    } 
-}
-
-/// Stores errors which can occure in the `getBasedOnTriple` function in the `TargetRegistry`
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum RegistryError {
-    /// An unsupported architecture
-    UnsuportedArch(Arch),
-}
-
-impl Display for RegistryError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", match self {
-            RegistryError::UnsuportedArch(arch) => format!("unsuported architecture: {:?}", arch),
-        })
+    
     }
 }
-
-impl Error for RegistryError {}

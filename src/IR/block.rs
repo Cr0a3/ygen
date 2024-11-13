@@ -89,6 +89,11 @@ impl Block {
     
         used
     }
+
+    /// Returns the name of the block
+    pub fn id(&self) -> BlockId {
+        BlockId(self.name.to_owned())
+    }
 }
 
 /// Creates an new block

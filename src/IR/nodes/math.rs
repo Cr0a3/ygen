@@ -109,19 +109,11 @@ macro_rules! MathIrNode {
                 self
             }
         
-            fn compile(&self, registry: &mut TargetBackendDescr, module: &mut crate::prelude::Module) {
-                registry.$compile_func(&self, module)
-            }
-        
             fn uses(&self, var: &Var) -> bool {
                 if *var == self.inner3 { true }
                 else { false }
             }
-    
-            fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
-                compiler.$compile_func(&self, &block, module)
-            }
-    
+            
             fn inputs(&self) -> Vec<Var> {
                 let mut inputs = Vec::new();
 

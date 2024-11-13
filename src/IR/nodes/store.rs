@@ -31,10 +31,6 @@ impl Ir for Store {
         Box::new( self.clone() )
     }
 
-    fn compile(&self, registry: &mut crate::Target::TargetBackendDescr, module: &mut crate::prelude::Module) {
-        registry.compile_store(self, module)
-    }
-
     fn uses(&self, var: &Var) -> bool {
         if let IROperand::Var(value) = &self.inner2 {
             if value.name == var.name {
@@ -43,10 +39,6 @@ impl Ir for Store {
         }
         
         false
-    }
-    
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
-        compiler.compile_store(&self, &block, module)
     }
     
     fn inputs(&self) -> Vec<Var> {

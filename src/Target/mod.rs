@@ -1,30 +1,25 @@
-mod triple;
-mod target_descr;
-pub mod x64;
-pub mod wasm;
-mod registry;
-mod whitelist;
+/// logic for triple parsing
+pub mod triple;
+pub use triple::*;
 
-pub use x64::initializeX64Target;
-pub use wasm::initializeWasmTarget;
-pub use whitelist::*;
-pub use triple::Triple;
-pub use target_descr::TargetBackendDescr;
-pub use registry::TargetRegistry;
-pub use registry::RegistryError;
-mod lexer;
-mod compiler;
-mod printer;
-pub use lexer::Lexer;
-pub use compiler::Compiler;
-pub use printer::AsmPrinter;
+/// Bundler for all target structs
+pub mod registry;
+pub use registry::*;
+
+use crate::{prelude::Ir, CodeGen::reg::Reg, IR::TypeMetadata};
+
+/// target specific assembly instruction
+pub mod instr;
+/// compilation struct for targets
+pub mod compile;
+/// asemmbly printing
+pub mod asm_printer;
+/// asm parser
+pub mod parser;
 
 /// Initializes all targets
 pub fn initializeAllTargets(triple: Triple) -> Result<TargetRegistry, triple::TripleError> {
-    let mut registry = TargetRegistry::new(triple);
-
-    registry.add( Arch::X86_64, initializeX64Target(triple.getCallConv()?) );
-    registry.add( Arch::Wasm64, wasm::initializeWasmTarget(triple.getCallConv()?) );
+    let registry = TargetRegistry::new(&triple);
 
     Ok(registry)
 }
@@ -465,5 +460,19 @@ impl std::fmt::Display for Environment {
             Environment::CoreCLR => "coreclr",
             Environment::Simulator => "simulator",
         })
+    }
+}
+
+/// Returns the custom visitor for the target if it requires a custom visitor
+pub fn own_visitor(target: &Arch, node: &Box<dyn Ir>) -> Option<fn(&Box<dyn Ir>, &mut Vec<crate::CodeGen::dag::DagNode>)> {
+    match target {
+        _ => None,
+    }
+}
+
+/// Returns the return register for the given architecture
+pub fn get_ret_reg(arch: &Arch, _ty: TypeMetadata) -> Reg {
+    match arch {
+        _ => todo!("unimplemented target: {:?}", arch)        
     }
 }

@@ -20,9 +20,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
     cli.add_opt("lex", "show-lexical-result", "Shows the tokens");
     cli.add_opt("parse", "show-parser-result", "Shows the parsed expressions");
-
-    cli.add_opt("mc", "show-machine-instrs", "Shows the generated portable machine instrs");
-
+    
     cli.add_arg("in", "input", "The input file", true);
     cli.add_arg("o", "out", "The output file", false);
     cli.add_arg("triple", "triple", "The target triple", false);
@@ -134,20 +132,6 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     }
 
     let registry = &mut initializeAllTargets(Triple::host())?;
-
-    if cli.opt("mc") {
-        let mc_map = module.emitMachineInstrs(triple, registry)?;
-
-        for (func, instrs) in &mc_map {
-            println!("{}:", func);
-
-            for instr in instrs {
-                println!("\t{}", instr);
-            }
-
-            println!();
-        }
-    }
 
     if cli.opt("asm") {
         println!("{}", module.emitAsm(triple, registry)?);

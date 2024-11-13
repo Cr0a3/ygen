@@ -35,17 +35,9 @@ impl Ir for Assign<Var, Type> {
         Box::new(self.clone())
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr, module: &mut crate::prelude::Module) {
-        registry.compile_assign_var_type(&self, module)
-    }
-
     fn uses(&self, var: &Var) -> bool {
         if *var == self.inner1 { true }
         else { false }
-    }
-    
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
-        compiler.compile_assign_var_type(&self, &block, module)
     }
 
     
@@ -105,18 +97,10 @@ impl Ir for Assign<Var, Var> {
         Box::new(self.clone())
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr, module: &mut crate::prelude::Module) {
-        registry.compile_assign_var_var(&self, module)
-    }
-
     fn uses(&self, var: &Var) -> bool {
         if *var == self.inner1 { true }
         else if *var == self.inner2 { true }
         else { false }
-    }
-    
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
-        compiler.compile_assign_var_var(&self, &block, module)
     }
     
     fn inputs(&self) -> Vec<Var> {
@@ -169,17 +153,9 @@ impl Ir for Assign<Var, Const> {
         Box::new(self.clone())
     }
 
-    fn compile(&self, registry: &mut TargetBackendDescr, module: &mut crate::prelude::Module) {
-        registry.compile_assign_var_const(&self, module)
-    }
-
     fn uses(&self, var: &Var) -> bool {
         if *var == self.inner1 { true }
         else { false }
-    }
-    
-    fn compile_dir(&self, compiler: &mut crate::CodeGen::IrCodeGenHelper, block: &crate::prelude::Block, module: &mut crate::prelude::Module) {
-        compiler.compile_assign_var_const(&self, &block, module)
     }
     
     
