@@ -2,6 +2,9 @@
 pub mod triple;
 pub use triple::*;
 
+/// The x86 backend
+pub mod x86;
+
 /// Bundler for all target structs
 pub mod registry;
 pub use registry::*;
@@ -19,7 +22,9 @@ pub mod parser;
 
 /// Initializes all targets
 pub fn initializeAllTargets(triple: Triple) -> Result<TargetRegistry, triple::TripleError> {
-    let registry = TargetRegistry::new(&triple);
+    let mut registry = TargetRegistry::new(&triple);
+
+    registry.insert(Arch::X86_64, x86::initializeX86Target(triple.getCallConv()?));
 
     Ok(registry)
 }
@@ -464,15 +469,16 @@ impl std::fmt::Display for Environment {
 }
 
 /// Returns the custom visitor for the target if it requires a custom visitor
-pub fn own_visitor(target: &Arch, node: &Box<dyn Ir>) -> Option<fn(&Box<dyn Ir>, &mut Vec<crate::CodeGen::dag::DagNode>)> {
+pub fn own_visitor(target: &Arch, _node: &Box<dyn Ir>) -> Option<fn(&Box<dyn Ir>, &mut Vec<crate::CodeGen::dag::DagNode>)> {
     match target {
         _ => None,
     }
 }
 
 /// Returns the return register for the given architecture
-pub fn get_ret_reg(arch: &Arch, _ty: TypeMetadata) -> Reg {
+pub fn get_ret_reg(arch: &Arch, ty: TypeMetadata) -> Reg {
     match arch {
+        Arch::X86_64 => x86::ret_reg(ty),
         _ => todo!("unimplemented target: {:?}", arch)        
     }
 }

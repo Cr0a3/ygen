@@ -70,7 +70,19 @@ impl TargetRegistry {
     pub fn compile_fn(&self, func: &crate::IR::Function) -> (Vec<u8>, Vec<crate::Obj::Link>) {
         let dag = DagBuilder::build(&self.triple.arch, func);
 
-        println!("dag: {:?}", dag);
+        // let dag = DagOptimizer::optimize(dag);
+        
+        let Some(lower) = self.dag_lower_backends.get(&self.triple.arch) else { 
+            panic!("unregistered dag lowering backend for {}", self.triple.arch)
+        };
+
+        let mc = lower.lower(dag);
+
+        for (_, instrs) in mc {
+            for instr in instrs {
+                println!("{}", instr.asm());
+            }
+        }
         todo!()
     }
 

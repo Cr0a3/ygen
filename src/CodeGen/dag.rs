@@ -19,13 +19,16 @@ pub struct DagNode {
     pub opcode: DagOpCode,
     /// the output
     pub out: Option<DagOp>,
+
+    /// the operands
+    pub ops: Vec<DagOp>,
 }
 
 /// A dag opcode
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[allow(missing_docs)]
 pub enum DagOpCode {
-    CopyToReg(DagOp),
+    Copy,
     Ret,
 }
 
@@ -40,10 +43,12 @@ pub struct DagOp {
 
 /// A target for an operand
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[allow(missing_docs)]
 pub enum DagOpTarget {
     Reg(Reg),
     UnallocatedVar(Var),
     Constant(Type),
+    Mem(i64),
 }
 
 impl DagNode {
@@ -52,13 +57,15 @@ impl DagNode {
         Self {
             opcode: opcode,
             out: None,
+            ops: Vec::new(),
         }
     }
     /// Creates an new dag node with an output
-    pub fn new_with_out(opcode: DagOpCode, out: DagOp) -> Self {
+    pub fn new_with_out(opcode: DagOpCode, out: DagOp, ops: Vec<DagOp>) -> Self {
         Self {
             opcode: opcode,
             out: Some(out),
+            ops: ops,            
         }
     }
 
@@ -68,7 +75,7 @@ impl DagNode {
 
     /// Creates a new copy to reg dag node
     #[inline]
-    pub fn copy_to_reg(from: DagOp, to: DagOp) -> Self { DagNode::new(DagOpCode::Ret) }
+    pub fn copy(from: DagOp, to: DagOp) -> Self { DagNode::new_with_out(DagOpCode::Copy, to, vec![from]) }
 }
 
 impl DagOp {
@@ -97,5 +104,77 @@ impl Into<DagOp> for Type {
             allocated: true, 
             target: DagOpTarget::Constant(self) 
         }
+    }
+}
+
+impl DagNode {
+    /// Returns if the nth operand is a gr register
+    pub fn is_op_gr(&self, op: usize) -> bool {
+        if let Some(op) = self.ops.get(op) {
+            if let DagOpTarget::Reg(reg) = op.target {
+                return reg.is_gr();
+            } 
+        }
+
+        false
+    }
+
+    /// Returns if the nth operand is a stack variable
+    pub fn is_op_mem(&self, op: usize) -> bool {
+        if let Some(op) = self.ops.get(op) {
+            if let DagOpTarget::Mem(_) = op.target {
+                return true;
+            } 
+        }
+
+        false
+    }
+
+    /// Returns if the nth operand is a const
+    pub fn is_op_imm(&self, op: usize) -> bool {
+        if let Some(op) = self.ops.get(op) {
+            if let DagOpTarget::Constant(_) = op.target {
+                return true;
+            } 
+        }
+
+        false
+    }
+
+    /// Returns if the output is a gr register
+    pub fn is_out_gr(&self) -> bool {
+        if let Some(out) = &self.out {
+            if let DagOpTarget::Reg(reg) = out.target {
+                return reg.is_gr();
+            } 
+        }
+
+        false
+    }
+
+    /// Returns if the output is a memory displacment
+    pub fn is_out_mem(&self) -> bool {
+        if let Some(out) = &self.out {
+            if let DagOpTarget::Mem(_) = out.target {
+                return true;
+            } 
+        }
+
+        false
+    }
+
+    /// Returns the nth operand
+    pub fn get_op(&self, op: usize) -> DagOp {
+        self.ops.get(op).expect(&format!("the node {} does not have a {op}. operand", self)).to_owned()
+    }
+
+    /// Returns the opcode
+    pub fn get_opcode(&self) -> DagOpCode {
+        self.opcode.to_owned()
+    }
+
+    /// Returns the output
+    pub fn get_out(&self) -> DagOp {
+        self.out.as_ref().unwrap().to_owned()
     }
 }

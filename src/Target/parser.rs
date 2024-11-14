@@ -8,7 +8,7 @@ pub struct AsmParser {
 
 impl AsmParser {
     /// Parses the input assembly instruction into a mc instr
-    pub fn parse(&self, input: &str) -> Result<Box<dyn McInstr>, Box<dyn std::error::Error>> {
+    pub fn parse(&self, _input: &str) -> Result<Box<dyn McInstr>, Box<dyn std::error::Error>> {
         todo!()
     }
 }

@@ -5,6 +5,7 @@ dev-guide/book
 *.o
 *.exe
 *.out
+*.def
 tmp*
 
 web/node_modules

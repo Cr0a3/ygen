@@ -9,6 +9,8 @@ mod dag_visitors;
 /// Loweres the dag
 pub mod dag_lower;
 
+mod display;
+
 /// A visitor for ir nodes for constructing the dag
 pub trait DagVisitor {
     /// visits each ir node and builds a dag node out of it
