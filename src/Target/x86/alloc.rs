@@ -16,17 +16,26 @@ pub fn arg_proc(alloc: &mut ItRegCoalAlloc) {
         panic!("no current function")
     };
 
-    let mut arg_num = 0;
-    let mut arg_stack_off = 0;
-
     let call = super::get_call();
+
+    let mut arg_num = 0;
+    let mut arg_stack_off = 8;
+
+    // windows does stuff a bit different
+    // there the first argument is rsp + 32
+    if call == CallConv::WindowsFastCall {
+        arg_stack_off += 32;
+    }
 
     for (name, ty) in &func.ty.args {
         if let Some(mut reg) = call.get_x86_arg_gr(arg_num) {
+            ydbg!("[IRC] allocating a register for arg {name}");
+
             reg.size = ty.byteSize().into();
 
             alloc.vars.insert(name.to_owned(), DagOpTarget::Reg(Reg::new_x64(reg)));
         } else {
+            ydbg!("[IRC] allocating memory for arg {name}");
             // stack vars are a little harder
             // the stack is build like that:
             // rsp

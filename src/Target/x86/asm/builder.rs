@@ -55,6 +55,7 @@ impl From<DagOp> for X64Operand {
                 crate::CodeGen::reg::TargetReg::X64(x64) => X64Operand::Reg(x64),
             },
             crate::CodeGen::dag::DagOpTarget::Constant(constant) => X64Operand::Const(constant.val() as i64),
+            crate::CodeGen::dag::DagOpTarget::Mem(mem) => X64Operand::MemDispl(mem),
             _ => panic!("variables cannot be used as a target in the x64 backend"),
         }
     }

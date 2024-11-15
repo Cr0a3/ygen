@@ -1,6 +1,6 @@
 mod builder;
 
-use crate::Target::instr::McInstr;
+use crate::{CodeGen::memory::Memory, Target::instr::McInstr};
 
 use super::reg::X64Reg;
 
@@ -27,6 +27,35 @@ pub enum X64Mnemonic {
 pub enum X64Operand {
     Reg(X64Reg),
     Const(i64),
+    MemDispl(Memory),
+}
+
+impl std::fmt::Display for X64Operand {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            X64Operand::Reg(x64) => write!(f, "{x64}")?,
+            X64Operand::Const(imm) => write!(f, "{imm}")?,
+            X64Operand::MemDispl(mem) => {
+                write!(f, "[")?;
+                if mem.fp_relativ {
+                    write!(f, "rbp ")?;
+                } else if mem.sp_relativ {
+                    write!(f, "rsp ")?;
+                }
+                
+                if mem.offset.is_negative() {
+                    write!(f, "- ")?;
+                } else {
+                    write!(f, "+ ")?;
+                }
+                
+                write!(f, "{}", mem.offset.abs())?;
+                write!(f, "]")?;
+            },
+        };
+
+        std::fmt::Result::Ok(())
+    }
 }
 
 impl std::fmt::Display for X64Instr {
@@ -37,24 +66,15 @@ impl std::fmt::Display for X64Instr {
         })?;
         
         if let Some(op) = &self.op1 {
-            write!(f, " {}", match op {
-                X64Operand::Reg(x64) => x64.to_string(),
-                X64Operand::Const(imm) => imm.to_string(),
-            })?;
+            write!(f, " {op}")?;
         }
 
         if let Some(op) = &self.op2 {
-            write!(f, ", {}", match op {
-                X64Operand::Reg(x64) => x64.to_string(),
-                X64Operand::Const(imm) => imm.to_string(),
-            })?;
+            write!(f, ", {op}")?;
         }
 
         if let Some(op) = &self.op3 {
-            write!(f, ", {}", match op {
-                X64Operand::Reg(x64) => x64.to_string(),
-                X64Operand::Const(imm) => imm.to_string(),
-            })?;
+            write!(f, ", {op}")?;
         }
 
         std::fmt::Result::Ok(())

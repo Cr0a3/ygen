@@ -33,6 +33,7 @@ impl Reg {
         }
     }
 
+    /// Creates an new x64 register
     #[inline]
     pub fn new_x64(reg: X64Reg) -> Reg {
         Reg {
@@ -49,8 +50,10 @@ impl Reg {
 
 impl Display for Reg {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self.reg {
-            TargetReg::X64(x64) => std::fmt::Display::fmt(&x64, f),
-        }
+        let fmt = match self.reg {
+            TargetReg::X64(x64) => format!("{x64}"),
+        };
+
+        write!(f, "{fmt}")
     }
 }

@@ -29,6 +29,7 @@ impl DagLower {
         }
     }
 
+    /// Returns the required temporarys used by the backend
     pub fn required_tmps(&self, node: &dag::DagNode) -> Vec<dag::DagTmpInfo> {
         if let Some(tmp) = self.tmp_info {
             tmp(node)

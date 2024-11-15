@@ -30,8 +30,8 @@ impl From<usize> for X64RegSize {
         match value {
             1 => X64RegSize::Byte,
             2 => X64RegSize::Word,
-            3 => X64RegSize::Dword,
-            4 => X64RegSize::Qword,
+            4 => X64RegSize::Dword,
+            8 => X64RegSize::Qword,
             _ => panic!("invalid size for a register: {value}")
         }
     }
