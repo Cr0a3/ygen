@@ -1,6 +1,8 @@
 use std::collections::HashMap;
+
 use crate::CodeGen::dag_builder::DagBuilder;
 use crate::CodeGen::dag_lower::DagLower;
+use crate::CodeGen::regalloc_iterated_col::ItRegCoalAllocBase;
 
 use super::asm_printer::AsmPrinter;
 use super::compile::McCompile;
@@ -28,6 +30,8 @@ pub struct BackendInfos {
     pub asm_printer: AsmPrinter,
     /// The thing that can parser target assembly
     pub parser: AsmParser,
+    /// The register allocator
+    pub allocator: ItRegCoalAllocBase,
 }
 
 /// The target registry is the "main hub" for compiling functions ...
@@ -39,6 +43,7 @@ pub struct TargetRegistry {
     mc_compile_backends: HashMap<super::Arch, McCompile>,
     asm_printers: HashMap<super::Arch, AsmPrinter>,
     asm_parser: HashMap<super::Arch, AsmParser>,
+    allocators: HashMap<super::Arch, ItRegCoalAllocBase>,
 }
 
 impl TargetRegistry {
@@ -50,6 +55,7 @@ impl TargetRegistry {
             mc_compile_backends: HashMap::new(),
             asm_printers: HashMap::new(),
             asm_parser: HashMap::new(),
+            allocators: HashMap::new(),
         }
     }
 
@@ -59,6 +65,7 @@ impl TargetRegistry {
         self.mc_compile_backends.insert(arch, backend.mc);
         self.asm_printers.insert(arch, backend.asm_printer);
         self.asm_parser.insert(arch, backend.parser);
+        self.allocators.insert(arch, backend.allocator);
     }
 
     /// Sets the current target triple (used for selection of the backend to use)
@@ -68,7 +75,7 @@ impl TargetRegistry {
 
     /// compiles the given function
     pub fn compile_fn(&self, func: &crate::IR::Function) -> (Vec<u8>, Vec<crate::Obj::Link>) {
-        let dag = DagBuilder::build(&self.triple.arch, func);
+        let mut dag = DagBuilder::build(&self.triple.arch, func);
 
         // let dag = DagOptimizer::optimize(dag);
         
@@ -76,7 +83,15 @@ impl TargetRegistry {
             panic!("unregistered dag lowering backend for {}", self.triple.arch)
         };
 
-        let mc = lower.lower(dag);
+        // Run reg alloc
+
+        let Some(alloc) = self.allocators.get(&self.triple.arch) else {
+            panic!("unregistered register allocator for {}", self.triple.arch)
+        };
+
+        let mut alloc = alloc.fork(&func);
+
+        let mc = lower.lower(&mut dag, &mut alloc);
 
         for (_, instrs) in mc {
             for instr in instrs {

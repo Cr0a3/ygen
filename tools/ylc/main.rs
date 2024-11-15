@@ -38,6 +38,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     cli.add_arg("passes", "optimization-passes", "The optimization passes to run", false);
     
     cli.add_opt("g", "debug", "Adds debugging metadata");
+    
+    cli.add_opt("dbg", "dev-mode", "Prints out internall information");
 
     cli.scan();
 
@@ -45,6 +47,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         cli.help();
     } else if cli.opt("v") {
         cli.version();
+    }
+
+    if cli.opt("dbg") {
+        ygen::activate_ygen_debugging();
     }
     
     let triple = {

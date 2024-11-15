@@ -1,6 +1,6 @@
 use std::fmt::{Debug, Display};
 
-use crate::{Target::Arch, IR::TypeMetadata};
+use crate::{Target::{x86::reg::X64Reg, Arch}, IR::TypeMetadata};
 
 /// A register
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -30,6 +30,19 @@ impl Reg {
     pub fn is_gr(&self) -> bool {
         match self.reg {
             TargetReg::X64(x64) => x64.is_gr(),
+        }
+    }
+
+    #[inline]
+    pub fn new_x64(reg: X64Reg) -> Reg {
+        Reg {
+            size: match reg.size {
+                crate::Target::x86::reg::X64RegSize::Byte => 1,
+                crate::Target::x86::reg::X64RegSize::Word => 2,
+                crate::Target::x86::reg::X64RegSize::Dword => 4,
+                crate::Target::x86::reg::X64RegSize::Qword => 8,
+            },
+            reg: TargetReg::X64(reg),
         }
     }
 }

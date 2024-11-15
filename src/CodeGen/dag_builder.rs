@@ -4,6 +4,8 @@ use crate::Target::Arch;
 use crate::IR::{Block, Function};
 use super::dag::*;
 
+use crate::{ydbg, YGEN_DEBUG};
+
 /// Builds the dag
 pub struct DagBuilder;
 
@@ -13,6 +15,8 @@ impl DagBuilder {
         unsafe {
             super::dag_visitors::DAG_ARCH = *arch;
         }
+        
+        ydbg!("==== BUILD DAG FOR {} ====", func.name);
 
         let mut blocks = HashMap::new();
 
@@ -21,9 +25,16 @@ impl DagBuilder {
             blocks.insert(block.id(), dag_nodes);
         }
 
-        DagFunction {
+
+        let dag = DagFunction {
             blocks: blocks,
+        };
+
+        if unsafe { YGEN_DEBUG } {
+            ydbg!("{}", dag);
         }
+
+        dag
     }
 
     /// builds the dag for a block

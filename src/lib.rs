@@ -82,3 +82,30 @@ pub mod prelude {
     
     pub use crate::IR::ir::*;
 }
+
+
+pub(crate) static mut YGEN_DEBUG: bool = false;
+
+/// Activates that ygen now prints debugging information
+pub fn activate_ygen_debugging() {
+    unsafe { YGEN_DEBUG = true; }
+}
+
+/// The ydbg macro is internally used in ygen to print out more
+/// complex debugging information
+/// 
+/// It will print nothing if the `activate_ygen_debugging` function 
+/// was not called
+#[macro_export]
+macro_rules! ydbg {
+    () => {
+        if unsafe { $crate::YGEN_DEBUG } {
+            print!("\n")
+        }
+    };
+    ($($arg:tt)*) => {{
+        if unsafe { $crate::YGEN_DEBUG } {
+            println!($($arg)*)
+        }
+    }};
+}

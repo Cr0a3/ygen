@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use crate::IR::{Type, TypeMetadata};
 
-use super::dag::{DagFunction, DagNode, DagOp, DagOpCode};
+use super::{dag::{DagFunction, DagNode, DagOp, DagOpCode}, memory::Memory};
 
 impl Display for DagFunction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -40,13 +40,13 @@ impl Display for DagOp {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self.target {
             super::dag::DagOpTarget::Reg(reg) => write!(f, "${reg}")?,
-            super::dag::DagOpTarget::UnallocatedVar(var) => write!(f, "${}", var.name)?,
+            super::dag::DagOpTarget::UnallocatedVar(var) => write!(f, "{}", var.name)?,
             super::dag::DagOpTarget::Constant(ty) => write!(f, "{} ${}", <Type as Into<TypeMetadata>>::into(*ty), ty.val())?,
-            super::dag::DagOpTarget::Mem(mem) => write!(f, "stack.{mem}")?,
+            super::dag::DagOpTarget::Mem(mem) => write!(f, "{mem}")?,
         }
 
         if !self.allocated {
-            write!(f, "unalloc")?;
+            write!(f, " unalloc")?;
         }
         
         std::fmt::Result::Ok(())
@@ -60,6 +60,22 @@ impl Display for DagOpCode {
             DagOpCode::Ret => write!(f, "ret")?,
         }
         
+        std::fmt::Result::Ok(())
+    }
+}
+
+impl Display for Memory {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "size_{}", self.size)?;
+
+        if self.fp_relativ {
+            write!(f, "%frame.")?;
+        } else if self.sp_relativ {
+            write!(f, "%stack.")?;
+        }
+
+        write!(f, "{}", self.offset)?;
+
         std::fmt::Result::Ok(())
     }
 }

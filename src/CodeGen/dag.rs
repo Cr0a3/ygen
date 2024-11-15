@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::IR::{BlockId, Type, Var};
 
-use super::reg::Reg;
+use super::{memory::Memory, reg::Reg};
 
 /// A dag function is just a wrapper around a hashmap for the blocks 
 /// and its dag nodes
@@ -48,7 +48,7 @@ pub enum DagOpTarget {
     Reg(Reg),
     UnallocatedVar(Var),
     Constant(Type),
-    Mem(i64),
+    Mem(Memory),
 }
 
 impl DagNode {
@@ -176,5 +176,40 @@ impl DagNode {
     /// Returns the output
     pub fn get_out(&self) -> DagOp {
         self.out.as_ref().unwrap().to_owned()
+    }
+}
+
+/// Returns information for the dag temporary
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct DagTmpInfo {
+    /// Returns the number of the temporary
+    pub tmp_num: usize,
+    /// Does the tmporary require a gr reg
+    pub requires_gr: bool,
+    /// Does the tmporary require a mem displacment
+    pub requires_mem: bool,
+    /// Does the location even matter?
+    pub shit_on_loc: bool,
+}
+
+impl DagTmpInfo {
+    /// Creates a new dag temporary
+    pub fn new(num: usize) -> Self {
+        Self {
+            tmp_num: num,
+            requires_gr: false,
+            requires_mem: false,
+            shit_on_loc: false,
+        }
+    }
+
+    /// The temporary requires a register
+    pub fn require_gr(&mut self) {
+        self.requires_gr = true;
+    }
+
+    /// The temporary requires a memory displacment
+    pub fn require_mem(&mut self) {
+        self.requires_mem = true;
     }
 }
