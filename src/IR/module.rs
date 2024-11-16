@@ -1,6 +1,7 @@
 use gimli::DwLang;
 
 use crate::debug::DebugRegistry;
+use crate::init_ygen;
 use crate::Obj::{Decl, Linkage, ObjectBuilder};
 use crate::Optimizations::PassManager;
 use crate::Support::{ColorClass, ColorProfile};
@@ -23,6 +24,7 @@ pub struct Module {
 impl Module {
     /// Creates a new module
     pub fn new() -> Self {
+        init_ygen();
         Self {
             funcs: HashMap::new(),
             consts: HashMap::new(),
