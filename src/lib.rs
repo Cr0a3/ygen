@@ -119,7 +119,7 @@ pub fn init_ygen() {
             let mut saw_ygen = false;
             
             for line in lines.clone() {
-                if !line.contains("ygen")  {
+                if !line.contains("ygen")  || line.contains("ygen::init_ygen") {
                     if !saw_ygen {
                         lines.remove(pos);
                         saw_ygen = false;
