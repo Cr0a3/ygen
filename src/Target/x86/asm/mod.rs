@@ -22,6 +22,7 @@ pub struct X64Instr {
 pub enum X64Mnemonic {
     Mov,
     Ret,
+    Add,
     Lea
 }
 
@@ -106,6 +107,7 @@ impl std::fmt::Display for X64Instr {
             X64Mnemonic::Mov => "mov",
             X64Mnemonic::Ret => "ret",
             X64Mnemonic::Lea => "lea",
+            X64Mnemonic::Add => "add",
         })?;
         
         if let Some(op) = &self.op1 {
