@@ -21,7 +21,7 @@ define u32 @main() {
     %1 = u32 9
     %2 = u32 21
 
-    %3 = call u32 func u32 %1 u32 %2
+    %3 = call u32 @func u32 %1 u32 %2
 
     %4 = add u32 %3, 6
 

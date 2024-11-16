@@ -25,7 +25,7 @@ define i32 @main() {
  entry:
     %0 = i32 5
 
-    %1 = call i32 func i32 %0
+    %1 = call i32 @func i32 %0
 
     %2 = add i32 %1, 1
     

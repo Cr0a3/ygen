@@ -14,7 +14,7 @@ define void @set(ptr %0) {
 define i32 @main() {
   entry:
 	%1 = alloca i32
-    %tmp = call void set ptr %1
+    %tmp = call void @set ptr %1
     %2 = load i32 %1
 	ret i32 %2
 }
