@@ -11,6 +11,8 @@ use super::asm::*;
 mod auto_gen {
     use super::super::asm::X64Instr as Asm;
     use super::super::asm::X64Mnemonic as Mnemonic;
+    use super::super::asm::X64MemDispl as MemoryDispl;
+    use super::super::asm::X64MemOption as MemoryOption;
     use crate::CodeGen::dag::*;
     use super::super::asm::*;
     include!("dag.def");

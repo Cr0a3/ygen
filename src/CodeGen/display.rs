@@ -58,6 +58,7 @@ impl Display for DagOpCode {
         match self {
             DagOpCode::Copy => write!(f, "copy")?,
             DagOpCode::Ret => write!(f, "ret")?,
+            DagOpCode::Add => write!(f, "add")?,
         }
         
         std::fmt::Result::Ok(())

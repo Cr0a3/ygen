@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::IR::{BlockId, Type, Var};
+use crate::{prelude::IROperand, IR::{BlockId, Type, Var}};
 
 use super::{memory::Memory, reg::Reg};
 
@@ -30,6 +30,7 @@ pub struct DagNode {
 pub enum DagOpCode {
     Copy,
     Ret,
+    Add,
 }
 
 /// A operand in the dag
@@ -76,6 +77,10 @@ impl DagNode {
     /// Creates a new copy to reg dag node
     #[inline]
     pub fn copy(from: DagOp, to: DagOp) -> Self { DagNode::new_with_out(DagOpCode::Copy, to, vec![from]) }
+    
+    /// Creates a new add dag node 
+    #[inline]
+    pub fn add(ls: DagOp, rs: DagOp, out: DagOp) -> Self { DagNode::new_with_out(DagOpCode::Add, out, vec![ls, rs]) }
 }
 
 impl DagOp {
@@ -211,5 +216,29 @@ impl DagTmpInfo {
     /// The temporary requires a memory displacment
     pub fn require_mem(&mut self) {
         self.requires_mem = true;
+    }
+}
+
+impl From<IROperand> for DagOp {
+    fn from(value: IROperand) -> Self {
+        match value {
+            IROperand::Type(ty) => DagOp {
+                allocated: true,
+                target: DagOpTarget::Constant(ty),
+            },
+            IROperand::Var(var) => DagOp::var(var),
+        }
+    }
+}
+
+impl From<&IROperand> for DagOp {
+    fn from(value: &IROperand) -> Self {
+        match value {
+            IROperand::Type(ty) => DagOp {
+                allocated: true,
+                target: DagOpTarget::Constant(*ty),
+            },
+            IROperand::Var(var) => DagOp::var(var.to_owned()),
+        }
     }
 }

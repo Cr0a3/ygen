@@ -1,8 +1,8 @@
 mod builder;
 
-use crate::{CodeGen::memory::Memory, Target::instr::McInstr};
+use crate::Target::instr::McInstr;
 
-use super::reg::X64Reg;
+use super::reg::{X64Reg, X64RegSize};
 
 /// A x64 assembly instruction
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -19,6 +19,7 @@ pub struct X64Instr {
 pub enum X64Mnemonic {
     Mov,
     Ret,
+    Lea
 }
 
 /// A x64 assembly operand
@@ -27,7 +28,25 @@ pub enum X64Mnemonic {
 pub enum X64Operand {
     Reg(X64Reg),
     Const(i64),
-    MemDispl(Memory),
+    MemDispl(X64MemDispl),
+}
+
+/// A x64 memory displacment
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct X64MemDispl {
+    base: Option<X64Reg>,
+    option: X64MemOption,
+    index: Option<X64Reg>,
+    displ: Option<i32>,
+    scale: Option<i32>,
+    size: X64RegSize,
+}
+
+/// What to do in the x64 displacment
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum X64MemOption {
+    Plus,
+    Nothing
 }
 
 impl std::fmt::Display for X64Operand {
@@ -37,19 +56,37 @@ impl std::fmt::Display for X64Operand {
             X64Operand::Const(imm) => write!(f, "{imm}")?,
             X64Operand::MemDispl(mem) => {
                 write!(f, "[")?;
-                if mem.fp_relativ {
-                    write!(f, "rbp ")?;
-                } else if mem.sp_relativ {
-                    write!(f, "rsp ")?;
+                if let Some(base) = mem.base {
+                    write!(f, "{base} ")?;
                 }
-                
-                if mem.offset.is_negative() {
-                    write!(f, "- ")?;
-                } else {
-                    write!(f, "+ ")?;
+
+                if mem.option == X64MemOption::Plus {
+                    let mut written = false;
+
+                    if let Some(displ) = mem.displ { 
+                        if displ.is_negative() { 
+                            write!(f, "- ")?;
+                            written = true;
+                        }
+                    }
+
+                    if !written {
+                        write!(f, "+ ")?;
+                    }
                 }
-                
-                write!(f, "{}", mem.offset.abs())?;
+
+                if let Some(displ) = mem.displ {
+                    write!(f, "{displ} ")?;
+                }
+
+                if let Some(index) = mem.index {
+                    write!(f, "{index} ")?;
+                }
+
+                if let Some(scale) = mem.scale {
+                    write!(f, "* {scale}")?;
+                }
+
                 write!(f, "]")?;
             },
         };
@@ -63,6 +100,7 @@ impl std::fmt::Display for X64Instr {
         write!(f, "{}", match self.mnemonic {
             X64Mnemonic::Mov => "mov",
             X64Mnemonic::Ret => "ret",
+            X64Mnemonic::Lea => "lea",
         })?;
         
         if let Some(op) = &self.op1 {
