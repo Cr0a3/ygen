@@ -142,11 +142,11 @@ impl X64Reg {
     /// Returns a score of the register
     /// 
     /// Rules:
-    /// 1. Starts at 2
-    /// 2. `-1` if it is requires a reg prefix
+    /// 1. Starts at 4
+    /// 2. `-1` if it is requires a rex prefix
     /// 3. `-2` if it is callee saved
     pub fn score(&self) -> usize {
-        let mut score = 2;
+        let mut score = 4;
 
         use X64RegVariant::*;
         match self.variant {

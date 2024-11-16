@@ -50,8 +50,8 @@ impl Intrinsic {
     /// Returns the name of the instrinc
     pub fn name(&self) -> &'static str {
         match self.instrinc {
-            DefinedIntrinsic::GetStackPtr => "ygen.instrincs.getStackPtr",
-            DefinedIntrinsic::GetFramePtr => "ygen.instrincs.getFramePtr",
+            DefinedIntrinsic::GetStackPtr => "ygen.getStackPtr",
+            DefinedIntrinsic::GetFramePtr => "ygen.getFramePtr",
         }
     }
 
@@ -73,8 +73,8 @@ impl FromStr for Intrinsic {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "ygen.instrincs.getStackPtr" => Ok(Intrinsic::get_sp()),
-            "ygen.instrincs.getFramePtr" => Ok(Intrinsic::get_fp()),
+            "ygen.getStackPtr" => Ok(Intrinsic::get_sp()),
+            "ygen.getFramePtr" => Ok(Intrinsic::get_fp()),
             _ => Err(()),
         }
     }

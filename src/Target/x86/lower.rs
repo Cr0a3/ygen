@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use opt::X86BasicOpt;
+
 use crate::ydbg;
 use crate::CodeGen::dag::DagNode;
 use crate::CodeGen::regalloc_iterated_col::ItRegCoalAlloc;
@@ -13,6 +15,7 @@ mod auto_gen {
     use super::super::asm::X64Mnemonic as Mnemonic;
     use super::super::asm::X64MemDispl as MemoryDispl;
     use super::super::asm::X64MemOption as MemoryOption;
+    use super::super::reg::X64Reg;
     use crate::CodeGen::dag::*;
     use super::super::asm::*;
     include!("dag.def");
@@ -34,6 +37,8 @@ pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc)
             super::alloc::resolve(tmps, &mut node_asm);
 
         };
+
+        X86BasicOpt::opt(&mut asm);
 
         // now turn the asemmbly into `dyn McInstr`
         let mut mc_instrs: Vec<Box<dyn McInstr>> = Vec::new();

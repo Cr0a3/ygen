@@ -250,7 +250,7 @@ impl IrLexer {
         } else {
             println!("curr: {}", self.current);
             println!("len: {}", self.input_stream.chars().count());
-            Err(IrError::OutOfChars)?
+            panic!("lexer ran out of chars");
         }
 
         if self.no_pop {
@@ -387,7 +387,9 @@ impl IrLexer {
             });
         }
 
-        self.advance()?;
+        if !self.is_at_end() {
+            self.advance()?;
+        }
 
         Ok(())
     }
@@ -487,6 +489,7 @@ impl IrLexer {
                 'a'..='z' => out.push(chr),
                 'A'..='Z' => out.push(chr),
                 '_' => out.push(chr),
+                '.' => out.push(chr),
 
                 ':' => {
                     looping = false;
@@ -540,8 +543,6 @@ impl IrLexer {
                 '0'..='9' => string.push(chr),
                 'x' => string.push('x'),
                 'b' => string.push('b'),
-
-                '.' => string.push('.'),
 
                 _ => looping = false,
             }
@@ -606,6 +607,7 @@ impl IrLexer {
                 'A'..='Z' => out.push( chr ),
                 '@' => out.push('@'),
                 '_' => out.push( '_' ),
+                '.' => out.push( '.' ),
 
                 _ => looping = false,
             }
@@ -616,6 +618,8 @@ impl IrLexer {
         }
 
         self.no_pop = true;
+
+        println!("func: {out}");
 
         Ok(TokenType::Func(out))
     }

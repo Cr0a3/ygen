@@ -572,11 +572,11 @@ impl IrParser {
         let func_ty = self.parse_type()?;
         self.input.pop_front();
 
-        self.expect(TokenType::Ident(String::from("func name")))?;
+        self.expect(TokenType::Func(String::from("func name")))?;
 
         let target = &self.current_token()?;
 
-        let target = if let TokenType::Ident(ident) = &target.typ {
+        let target = if let TokenType::Func(ident) = &target.typ {
             ident.to_owned()
         } else { unreachable!() };
 

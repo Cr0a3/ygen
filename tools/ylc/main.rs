@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use std::process::exit;
 use std::error::Error;
 
+use ygen::init_ygen;
 use ygen::prelude::{DebugNode, PassManager};
 use ygen::Optimizations::Passes;
 use ygen::Support::{ColorProfile, Colorize};
@@ -13,6 +14,7 @@ use ygen::IR::parser::{gen::IrGen, lexer::IrLexer, parser::IrParser, semnatic::I
 use ygen::IR::Module;
 
 fn main() -> Result<(), Box<dyn Error>> {
+    init_ygen();
     let mut cli = Cli::new(
         "ylc", "ygen ir compiler", "1.0", "Cr0a3"
     );

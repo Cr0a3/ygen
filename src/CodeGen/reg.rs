@@ -68,8 +68,8 @@ impl Reg {
     /// Returns an register allocation score for the given register
     /// 
     /// Rules:
-    /// 1. Starts at 2
-    /// 2. `-1` if it is requires a reg prefix
+    /// 1. Starts at 4
+    /// 2. `-1` if it is requires any kind of prefix
     /// 3. `-2` if it is callee saved
     pub fn score(&self) -> usize {
         match self.reg {

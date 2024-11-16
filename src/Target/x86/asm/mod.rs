@@ -1,5 +1,8 @@
 mod builder;
 
+/// X86 assembly optimization
+pub mod opt;
+
 use crate::Target::instr::McInstr;
 
 use super::reg::{X64Reg, X64RegSize};
