@@ -1,5 +1,6 @@
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::path::PathBuf;
+use std::str::FromStr;
 
 use crate::prelude::{Alloca, Cmp, CmpMode, DebugNode, GetElemPtr, IROperand, Ir, Load, Neg, Phi, Select, Store, Switch};
 use crate::Obj::Linkage;
@@ -605,11 +606,16 @@ impl IrParser {
             args.push(arg);
         }
 
+        let instric = if let Ok(instric) = crate::IR::instrincs::Intrinsic::from_str(&target) {
+            Some(instric)
+        } else { None };
+
         Ok(Box::new(ir::Call {
             func: crate::IR::FuncId {
                 ty: FnTy(vec![], func_ty),
                 name: target,
-            }, args, out
+            }, args, out,
+            instric: instric,
         }))
     }
 

@@ -31,6 +31,10 @@ pub enum DagOpCode {
     Copy,
     Ret,
     Add,
+
+    // Intrisnics
+    GetFramePtr,
+    GetStackPtr,
 }
 
 /// A operand in the dag

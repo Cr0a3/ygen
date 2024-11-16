@@ -154,6 +154,23 @@ impl BuildCall<&FuncId, Vec<IROperand>> for Function {
             out: out.to_owned(),
             func: func.clone(),
             args: args,
+            instric: None,
+        }));
+
+        out 
+    }
+}
+impl BuildCall<&Intrinsic, Vec<IROperand>> for Function {
+    fn BuildCall(&mut self, instric: &Intrinsic, args: Vec<IROperand>) -> Var {
+        let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
+        
+        let out = Var::new(block, instric.ret());
+
+        block.push_ir(Box::new(Call {
+            out: out.to_owned(),
+            func: FuncId { name: String::new(), ty: instric.ty.to_owned() },
+            args: args,
+            instric: Some(instric.to_owned()),
         }));
 
         out 

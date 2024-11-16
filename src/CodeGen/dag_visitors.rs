@@ -1,4 +1,5 @@
 use crate::Target::Arch;
+use crate::IR::instrincs::{DefinedIntrinsic, Intrinsic};
 use crate::IR::Const;
 use crate::IR::{ir::*, Type, Var};
 use super::reg::Reg;
@@ -48,7 +49,12 @@ impl DagVisitor for BrCond {
 }
 
 impl DagVisitor for Call {
-    fn dag_visitor(&self, _dag: &mut Vec<dag::DagNode>) {
+    fn dag_visitor(&self, dag: &mut Vec<dag::DagNode>) {
+        if let Some(intrinsic) = &self.instric {
+            intrinsic.dag_visitor(&self.out, dag);
+            return;
+        }
+
         todo!()
     }
 }
@@ -194,5 +200,14 @@ impl DagVisitor for Store {
 impl DagVisitor for Switch {
     fn dag_visitor(&self, _dag: &mut Vec<dag::DagNode>) {
         todo!()
+    }
+}
+
+impl Intrinsic {
+    fn dag_visitor(&self, out: &Var, dag: &mut Vec<dag::DagNode>) {
+        match self.instrinc {
+            DefinedIntrinsic::GetStackPtr => super::dag_intrinsic::lower_get_stack_ptr(self, out, dag),
+            DefinedIntrinsic::GetFramePtr => super::dag_intrinsic::lower_get_frame_ptr(self, out, dag),
+        }
     }
 }

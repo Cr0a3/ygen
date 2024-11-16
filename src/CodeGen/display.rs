@@ -59,6 +59,9 @@ impl Display for DagOpCode {
             DagOpCode::Copy => write!(f, "copy")?,
             DagOpCode::Ret => write!(f, "ret")?,
             DagOpCode::Add => write!(f, "add")?,
+            DagOpCode::GetFramePtr => write!(f, "intrinsics.getFramePtr")?,
+            DagOpCode::GetStackPtr => write!(f, "intrinsics.getStackPtr")?,
+            
         }
         
         std::fmt::Result::Ok(())

@@ -1,5 +1,6 @@
 use std::{any::Any, fmt::Debug, hash::Hash};
 use std::collections::HashMap;
+use super::instrincs::Intrinsic;
 use super::{Block, BlockId, Const, FuncId, Function, FunctionType, Type, TypeMetadata, Var, VerifyError};
 
 mod assign;
@@ -252,6 +253,8 @@ pub struct Call {
     pub(crate) out: Var,
     pub(crate) func: FuncId,
     pub(crate) args: Vec<IROperand>,
+    /// The call is a instric call then this is the instric
+    pub(crate) instric: Option<Intrinsic>,
 }
 
 /// checks if the node is another node

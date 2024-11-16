@@ -143,8 +143,8 @@ impl X64Reg {
     /// 
     /// Rules:
     /// 1. Starts at 2
-    /// 2. `-1` if it is not callee saved
-    /// 3. `-1` if it is doesn't require a reg prefix (`r8-r15`, `xmm8-xmm15`)
+    /// 2. `-1` if it is requires a reg prefix
+    /// 3. `-2` if it is callee saved
     pub fn score(&self) -> usize {
         let mut score = 2;
 
@@ -158,7 +158,7 @@ impl X64Reg {
         }
 
         if get_call().x86_is_callee_saved(self.variant) {
-            score -= 1;
+            score -= 2;
         }
 
         score

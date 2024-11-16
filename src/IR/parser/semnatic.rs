@@ -289,7 +289,9 @@ impl<'a> IrSemnatic<'a> {
 
         if let Some((ty, _, _)) = self.func_sigs.get(&node.func.name) {
             sig = ty.to_owned();
-        } else  {
+        } else if let Some(intrinsic) = &node.instric {
+            sig = intrinsic.ty.to_owned();
+        } else {
             Err(IrError::Unkown {
                 what: "function".to_owned(),
                 loc: loc.to_owned(),

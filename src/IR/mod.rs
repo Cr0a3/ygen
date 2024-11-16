@@ -7,6 +7,9 @@ mod constant;
 mod nodes;
 pub mod parser;
 
+/// Ygen instrincs
+pub mod instrincs;
+
 /// Stores all ir nodes and the ir trait
 pub mod ir {
     pub use crate::IR::nodes::*;

@@ -8,6 +8,8 @@ pub mod dag;
 mod dag_visitors;
 /// Loweres the dag
 pub mod dag_lower;
+/// Loweres intrinsics
+pub mod dag_intrinsic;
 
 /// Memory 
 pub mod memory;

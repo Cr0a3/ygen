@@ -17,3 +17,11 @@ def Pat<Add gr, gr -> gr> {
 def Pat<Ret> {
     asm -> ret;
 }
+
+def Pat<GetFramePtr -> gr> {
+    asm -> mov $out, X64Operand::Reg(X64Reg::Rbp()); 
+}
+
+def Pat<GetStackPtr -> gr> {
+    asm -> mov $out, X64Operand::Reg(X64Reg::Rsp()); 
+}
