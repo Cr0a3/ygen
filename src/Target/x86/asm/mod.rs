@@ -45,7 +45,9 @@ pub struct X64MemDispl {
 /// What to do in the x64 displacment
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum X64MemOption {
+    /// `base + ...`
     Plus,
+    /// no operation (like `[rax]`)
     Nothing
 }
 

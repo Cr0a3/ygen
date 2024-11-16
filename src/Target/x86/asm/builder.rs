@@ -62,6 +62,7 @@ impl From<DagOp> for X64Operand {
 }
 
 impl From<DagOp> for X64Reg {
+    #[allow(irrefutable_let_patterns)]
     fn from(value: DagOp) -> Self {
         let DagOpTarget::Reg(codegen_reg) = value.target else {
             panic!("the dag operand {value} has no register as its target")
@@ -101,6 +102,8 @@ impl From<Memory> for X64Operand {
 }
 
 impl X64MemDispl {
+    /// Creates a new x64 mem displacement which gets packed into a x64 operand with
+    /// a base, operation and index
     pub fn new(base: X64Reg, op: X64MemOption, index: X64Reg) -> X64Operand {
         X64Operand::MemDispl(Self {
             base: Some(base),

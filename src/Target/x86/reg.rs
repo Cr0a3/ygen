@@ -113,6 +113,29 @@ impl X64Reg {
             _ => false,
         }
     }
+
+    /// Returns if the register is a fp register
+    pub fn is_fp(&self) -> bool {
+        match self.variant {
+            X64RegVariant::Xmm0 |
+            X64RegVariant::Xmm1 |
+            X64RegVariant::Xmm2 |
+            X64RegVariant::Xmm3 |
+            X64RegVariant::Xmm4 |
+            X64RegVariant::Xmm5 |
+            X64RegVariant::Xmm6 |
+            X64RegVariant::Xmm7 |
+            X64RegVariant::Xmm8 |
+            X64RegVariant::Xmm9 |
+            X64RegVariant::Xmm10 |
+            X64RegVariant::Xmm11 |
+            X64RegVariant::Xmm12 |
+            X64RegVariant::Xmm13 |
+            X64RegVariant::Xmm14 |
+            X64RegVariant::Xmm15 => true,
+            _ => false,
+        }
+    }
 }
 
 impl Display for X64Reg {

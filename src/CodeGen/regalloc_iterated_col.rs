@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-use crate::{ydbg, IR::Function};
+use crate::{ydbg, IR::{Function, TypeMetadata, Var}};
 
-use super::{dag::{self, DagOpTarget}, reg::Reg};
+use super::{dag::{self, DagOp, DagOpTarget}, reg::Reg};
 
 /// Performes register allocation using iterated register coalescing
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -45,7 +45,9 @@ impl<'a> ItRegCoalAlloc<'a> {
     }
 
     /// Applys the var locations to the dag
-    pub fn apply(&self, dag: &mut dag::DagNode) {
+    pub fn apply(&mut self, dag: &mut dag::DagNode) {
+        self.alloc_for_node(dag);
+
         if let Some(out) = &mut dag.out {
             if let DagOpTarget::UnallocatedVar(var) = &out.target {
                 if let Some(target) = self.vars.get(&var.name) {
@@ -63,6 +65,64 @@ impl<'a> ItRegCoalAlloc<'a> {
                 }
             }
         }
+    }
+
+    fn alloc_for_node(&mut self, dag: &mut dag::DagNode) {
+        if !dag.out.is_some() { return; }
+
+        let out_var: Var;
+
+        let ty = if let Some(out) = &dag.out {
+            if out.allocated { 
+                if let DagOpTarget::Reg(reg) = out.target {
+                    self.regs = self.regs.iter().filter(|r| **r != reg).map(|r| *r).collect::<Vec<Reg>>();
+                }
+                return; 
+            }
+        
+            if let DagOpTarget::UnallocatedVar(v) = &out.target {
+                out_var = v.to_owned();
+                v.ty
+            } else {
+                todo!()
+            }
+        } else { unreachable!() };
+
+        let Some(mut free) = self.get_fitting_reg(ty) else {
+            todo!("implement register allocation for stack variables")
+        };
+
+        free.set_size(ty.byteSize());
+
+        dag.out = Some(DagOp::reg(free));
+        self.vars.insert(out_var.name, DagOpTarget::Reg(free));
+    }
+
+
+    /// Returns a register that fits the type
+    pub fn get_fitting_reg(&mut self, ty: TypeMetadata) -> Option<Reg> {
+        // TODOD: register wishes
+        
+        let mut index = 0;
+
+        for mut reg in self.regs.to_vec() {
+
+            if ty.float() && reg.is_fp() {
+                self.regs.remove(index);
+                reg.size = ty.byteSize();
+                return Some(reg);
+            }
+            
+            if !ty.float() && reg.is_gr() {
+                self.regs.remove(index);
+                reg.size = ty.byteSize();
+                return Some(reg);
+            }
+
+            index += 1;
+        }
+
+        None
     }
 }
 

@@ -25,11 +25,29 @@ impl Reg {
         crate::Target::get_ret_reg(&arch, ty)
     }
 
+    /// Sets the size of the register
+    #[inline]
+    pub fn set_size(&mut self, new: usize) {
+        self.size = new;
+
+        match &mut self.reg {
+            TargetReg::X64(x64_reg) => x64_reg.size = new.into(),
+        };
+    }
+
     /// Returns if the register is a general pourpus register
     #[inline]
     pub fn is_gr(&self) -> bool {
         match self.reg {
             TargetReg::X64(x64) => x64.is_gr(),
+        }
+    }
+
+    /// Returns if the register is a floating point register
+    #[inline]
+    pub fn is_fp(&self) -> bool {
+        match self.reg {
+            TargetReg::X64(x64) => x64.is_fp(),
         }
     }
 
