@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use crate::Target::x86::get_call;
+
 /// The register variants for x64
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[allow(missing_docs)]
@@ -135,6 +137,31 @@ impl X64Reg {
             X64RegVariant::Xmm15 => true,
             _ => false,
         }
+    }
+
+    /// Returns a score of the register
+    /// 
+    /// Rules:
+    /// 1. Starts at 2
+    /// 2. `-1` if it is not callee saved
+    /// 3. `-1` if it is doesn't require a reg prefix (`r8-r15`, `xmm8-xmm15`)
+    pub fn score(&self) -> usize {
+        let mut score = 2;
+
+        use X64RegVariant::*;
+        match self.variant {
+            Rax | Rbx | Rcx | Rdx |
+            Rsi | Rdi | Xmm0 | Xmm1 | 
+            Xmm2 | Xmm3 | Xmm4 | Xmm5 | 
+            Xmm6 | Xmm7 => {},
+            _ => score -= 1,
+        }
+
+        if get_call().x86_is_callee_saved(self.variant) {
+            score -= 1;
+        }
+
+        score
     }
 }
 

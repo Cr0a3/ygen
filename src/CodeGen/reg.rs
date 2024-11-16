@@ -64,6 +64,18 @@ impl Reg {
             reg: TargetReg::X64(reg),
         }
     }
+
+    /// Returns an register allocation score for the given register
+    /// 
+    /// Rules:
+    /// 1. Starts at 2
+    /// 2. `-1` if it is not callee saved
+    /// 3. `-1` if it is doesn't require a reg prefix
+    pub fn score(&self) -> usize {
+        match self.reg {
+            TargetReg::X64(x64) => x64.score(),
+        }
+    }
 }
 
 impl Display for Reg {

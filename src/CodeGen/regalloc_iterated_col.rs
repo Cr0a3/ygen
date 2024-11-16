@@ -46,6 +46,7 @@ impl<'a> ItRegCoalAlloc<'a> {
 
     /// Applys the var locations to the dag
     pub fn apply(&mut self, dag: &mut dag::DagNode) {
+        self.sort();
         self.alloc_for_node(dag);
 
         if let Some(out) = &mut dag.out {
@@ -65,6 +66,20 @@ impl<'a> ItRegCoalAlloc<'a> {
                 }
             }
         }
+    }
+
+    /// Sorts the free register list based on their score
+    pub fn sort(&mut self) {
+        self.regs.sort_by(|a, b| {
+            use std::cmp::Ordering;
+
+            if a.score() > b.score() { Ordering::Less }
+            else if a.score() < b.score() { Ordering::Greater }
+            else if a.score() == b.score() { Ordering::Equal }
+            else {
+                panic!("if something isn't bigger, smaller or equal what can it be?");
+            }
+        });
     }
 
     fn alloc_for_node(&mut self, dag: &mut dag::DagNode) {

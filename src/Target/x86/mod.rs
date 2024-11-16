@@ -88,3 +88,19 @@ pub(crate) fn ret_reg(ty: TypeMetadata) -> crate::CodeGen::reg::Reg {
         }
     }
 }
+
+impl CallConv {
+    /// Returns if the x64 register is callee saved
+    #[inline]
+    pub fn x86_is_callee_saved(&self, reg: reg::X64RegVariant) -> bool {
+        use reg::X64RegVariant::*;
+
+        match reg {
+            Rbx | Rbp | Rsp | R12 | R13 | R14 | R15 => true,
+            Xmm6 | Xmm7 | Xmm8 | Xmm9 | Xmm10 |
+            Xmm11 | Xmm12 | Xmm13 | Xmm14 |
+            Xmm15 => get_call() == CallConv::WindowsFastCall,
+            _ => false,
+        }
+    }
+}

@@ -86,7 +86,7 @@ impl DagVisitor for Load {
 impl DagVisitor for Add {
     fn dag_visitor(&self, dag: &mut Vec<dag::DagNode>) {
         dag.push(DagNode::add(
-            DagOp::from(&self.inner2), 
+            DagOp::from(&self.inner1), 
             DagOp::from(&self.inner2), 
             DagOp::var(self.inner3.to_owned()))
         );
