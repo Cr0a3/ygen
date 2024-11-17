@@ -215,6 +215,11 @@ impl DagNode {
     pub fn is_ty(&self, ty: TypeMetadata) -> bool {
         self.ty == ty
     }
+
+    /// Returns the type metadata of the node
+    pub fn get_ty(&self) -> TypeMetadata {
+        self.ty
+    }
 }
 
 /// Returns information for the dag temporary
@@ -230,17 +235,20 @@ pub struct DagTmpInfo {
     pub requires_fp: bool,
     /// Does the location even matter?
     pub shit_on_loc: bool,
+    /// The type of the temporary
+    pub ty: TypeMetadata,
 }
 
 impl DagTmpInfo {
     /// Creates a new dag temporary
-    pub fn new(num: usize) -> Self {
+    pub fn new(num: usize, ty: TypeMetadata) -> Self {
         Self {
             tmp_num: num,
             requires_gr: false,
             requires_fp: false,
             requires_mem: false,
             shit_on_loc: false,
+            ty: ty,
         }
     }
 

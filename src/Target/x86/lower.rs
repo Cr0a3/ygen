@@ -15,6 +15,7 @@ mod auto_gen {
     use super::super::asm::X64Mnemonic as Mnemonic;
     use super::super::asm::X64MemDispl as MemoryDispl;
     use super::super::asm::X64MemOption as MemoryOption;
+    use super::super::asm::X64Operand as Operand;
     use super::super::reg::X64Reg;
     use crate::CodeGen::dag::*;
     use crate::CodeGen::dag;
@@ -28,14 +29,17 @@ pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc)
     for (name, nodes) in &mut func.blocks {
         let mut asm: Vec<X64Instr> = Vec::new();
         for node in nodes {
+            alloc.apply(node);
+            
             let tmps = x86_tmps(node);
 
-            alloc.apply(node);
 
             let mut node_asm: Vec<X64Instr> = Vec::new();
-            auto_gen::compile(&mut asm, node.to_owned());
+            auto_gen::compile(&mut node_asm, node.to_owned());
 
-            super::alloc::resolve(tmps, &mut node_asm);
+            super::alloc::resolve(tmps, &mut node_asm, alloc);
+
+            asm.extend_from_slice(&node_asm);
 
         };
 
@@ -55,7 +59,5 @@ pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc)
 }
 
 pub(super) fn x86_tmps(node: &DagNode) -> Vec<dag::DagTmpInfo> {
-    ydbg!("[X86] requesting tmps for {}", node.get_opcode());
-    
     auto_gen::tmps(node)
 }

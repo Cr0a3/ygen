@@ -1,8 +1,11 @@
+use std::collections::HashMap;
+
 use crate::ydbg;
 use crate::CodeGen::dag::DagOpTarget;
 use crate::CodeGen::memory::Memory;
 use crate::CodeGen::reg::Reg;
 use crate::CodeGen::{dag::DagTmpInfo, regalloc_iterated_col::ItRegCoalAlloc};
+use crate::Target::x86::asm::X64Operand;
 use crate::Target::CallConv;
 use crate::IR::TypeMetadata;
 
@@ -62,10 +65,71 @@ pub fn arg_proc(alloc: &mut ItRegCoalAlloc) {
     }
 }
 
-pub(super) fn resolve(_tmps: Vec<DagTmpInfo>, _asm: &mut Vec<X64Instr>) {
-    ydbg!("[X86] resolving tmps for the assembly")
-    // currently there is no posibility for tmps in the assembly string 
-    // so we can just ignore it here
+pub(super) fn resolve(tmp_infos: Vec<DagTmpInfo>, asm: &mut Vec<X64Instr>, alloc: &mut ItRegCoalAlloc) {    
+    let mut tmps = HashMap::new();
+
+    for tmp in &tmp_infos {
+        let loc = alloc.request_tmp(tmp);
+        tmps.insert(tmp.tmp_num, loc);
+    }
+
+    for instr in asm.iter_mut() {
+        if let Some(op1) = &mut instr.op1 {
+            if let X64Operand::Tmp(t) = op1.to_owned() {
+                let mut resolved = false;
+                for (num,  loc) in &tmps {
+                    if *num == t {
+                        *op1 = loc.into();
+                        resolved = true;
+                        break;
+                    }
+                }
+                if !resolved {
+                    panic!("unable to resolve tmp {t}");
+                }
+            }
+        }
+        
+        if let Some(op2) = &mut instr.op2 {
+            if let X64Operand::Tmp(t) = op2.to_owned() {
+                let mut resolved = false;
+                for (num,  loc) in &tmps {
+                    if *num == t {
+                        *op2 = loc.into();
+                        resolved = true;
+                        break;
+                    }
+                }
+                if !resolved {
+                    panic!("unable to resolve tmp {t}");
+                }
+            }
+        }
+
+        if let Some(op3) = &mut instr.op3 {
+            if let X64Operand::Tmp(t) = op3.to_owned() {
+                let mut resolved = false;
+                for (num,  loc) in &tmps {
+                    if *num == t {
+                        *op3 = loc.into();
+                        resolved = true;
+                        break;
+                    }
+                }
+                if !resolved {
+                    panic!("unable to resolve tmp {t}");
+                }
+            }
+        }
+    }
+
+    for (_, tmp) in tmps {
+        if let DagOpTarget::Reg(reg) = tmp {
+            alloc.regs.push(reg);
+        }
+    }
+
+    alloc.sort();
 } 
 
 impl CallConv {

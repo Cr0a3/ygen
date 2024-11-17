@@ -10,10 +10,10 @@ use super::reg::{X64Reg, X64RegSize};
 /// A x64 assembly instruction
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct X64Instr {
-    mnemonic: X64Mnemonic,
-    op1: Option<X64Operand>,
-    op2: Option<X64Operand>,
-    op3: Option<X64Operand>,
+    pub(crate) mnemonic: X64Mnemonic,
+    pub(crate) op1: Option<X64Operand>,
+    pub(crate) op2: Option<X64Operand>,
+    pub(crate) op3: Option<X64Operand>,
 }
 
 /// A x64 assembly mnemonic
@@ -35,6 +35,7 @@ pub enum X64Operand {
     Reg(X64Reg),
     Const(i64),
     MemDispl(X64MemDispl),
+    Tmp(usize),
 }
 
 /// A x64 memory displacment
@@ -97,6 +98,7 @@ impl std::fmt::Display for X64Operand {
 
                 write!(f, "]")?;
             },
+            X64Operand::Tmp(t) => write!(f, "tmps.{t}")?,
         };
 
         std::fmt::Result::Ok(())

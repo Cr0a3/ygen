@@ -139,6 +139,19 @@ impl<'a> ItRegCoalAlloc<'a> {
 
         None
     }
+
+    /// Returns a location for the given temporary 
+    pub fn request_tmp(&mut self, tmp: &dag::DagTmpInfo) -> dag::DagOpTarget {
+        if tmp.requires_mem {
+            todo!("register allocation currently doesn't support memory displacments");
+        }
+
+        let Some(reg) = self.get_fitting_reg(tmp.ty) else {
+            panic!("unable to get fitting register\nTODO: implemnt spills and recalls for tmps");
+        };
+
+        DagOpTarget::Reg(reg)
+    }
 }
 
 /// A base for performing register allocation using iterated register coalescing

@@ -50,12 +50,31 @@ impl From<DagOp> for X64Operand {
             panic!("operand to use in dag for the x64 backend needs to be allocated");
         }
         
-        match dag.target {
+        dag.target.into()
+    }
+}
+
+impl From<DagOpTarget> for X64Operand {
+    fn from(value: DagOpTarget) -> Self {
+        match value {
             crate::CodeGen::dag::DagOpTarget::Reg(reg) => match reg.reg {
                 crate::CodeGen::reg::TargetReg::X64(x64) => X64Operand::Reg(x64),
             },
             crate::CodeGen::dag::DagOpTarget::Constant(constant) => X64Operand::Const(constant.val() as i64),
             crate::CodeGen::dag::DagOpTarget::Mem(mem) => X64Operand::MemDispl(mem.into()),
+            _ => panic!("variables cannot be used as a target in the x64 backend"),
+        }
+    }
+}
+
+impl From<&DagOpTarget> for X64Operand {
+    fn from(value: &DagOpTarget) -> Self {
+        match value {
+            crate::CodeGen::dag::DagOpTarget::Reg(reg) => match reg.reg {
+                crate::CodeGen::reg::TargetReg::X64(x64) => X64Operand::Reg(x64),
+            },
+            crate::CodeGen::dag::DagOpTarget::Constant(constant) => X64Operand::Const(constant.val() as i64),
+            crate::CodeGen::dag::DagOpTarget::Mem(mem) => X64Operand::MemDispl((*mem).into()),
             _ => panic!("variables cannot be used as a target in the x64 backend"),
         }
     }
