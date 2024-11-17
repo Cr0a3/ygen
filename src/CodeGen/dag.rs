@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{prelude::IROperand, IR::{BlockId, Type, Var}};
+use crate::{prelude::IROperand, IR::{BlockId, Type, TypeMetadata, Var}};
 
 use super::{memory::Memory, reg::Reg};
 
@@ -19,9 +19,10 @@ pub struct DagNode {
     pub opcode: DagOpCode,
     /// the output
     pub out: Option<DagOp>,
-
     /// the operands
     pub ops: Vec<DagOp>,
+    /// the type of the dag node
+    pub ty: TypeMetadata,
 }
 
 /// A dag opcode
@@ -58,33 +59,35 @@ pub enum DagOpTarget {
 
 impl DagNode {
     /// Creates an new dag node
-    pub fn new(opcode: DagOpCode) -> Self {
+    pub fn new(opcode: DagOpCode, ty: TypeMetadata) -> Self {
         Self {
             opcode: opcode,
             out: None,
             ops: Vec::new(),
+            ty: ty,
         }
     }
     /// Creates an new dag node with an output
-    pub fn new_with_out(opcode: DagOpCode, out: DagOp, ops: Vec<DagOp>) -> Self {
+    pub fn new_with_out(opcode: DagOpCode, out: DagOp, ops: Vec<DagOp>, ty: TypeMetadata) -> Self {
         Self {
             opcode: opcode,
             out: Some(out),
             ops: ops,            
+            ty: ty,
         }
     }
 
     /// Creates a new ret dag node
     #[inline]
-    pub fn ret() -> Self { DagNode::new(DagOpCode::Ret) }
+    pub fn ret(ty: TypeMetadata) -> Self { DagNode::new(DagOpCode::Ret, ty) }
 
     /// Creates a new copy to reg dag node
     #[inline]
-    pub fn copy(from: DagOp, to: DagOp) -> Self { DagNode::new_with_out(DagOpCode::Copy, to, vec![from]) }
+    pub fn copy(from: DagOp, to: DagOp, ty: TypeMetadata) -> Self { DagNode::new_with_out(DagOpCode::Copy, to, vec![from], ty) }
     
     /// Creates a new add dag node 
     #[inline]
-    pub fn add(ls: DagOp, rs: DagOp, out: DagOp) -> Self { DagNode::new_with_out(DagOpCode::Add, out, vec![ls, rs]) }
+    pub fn add(ls: DagOp, rs: DagOp, out: DagOp, ty:TypeMetadata) -> Self { DagNode::new_with_out(DagOpCode::Add, out, vec![ls, rs], ty) }
 }
 
 impl DagOp {
@@ -93,7 +96,7 @@ impl DagOp {
     pub fn var(var: Var) -> Self {
         Self {
             allocated: false,
-            target: DagOpTarget::UnallocatedVar(var),
+            target: DagOpTarget::UnallocatedVar(var)
         }
     }
 
@@ -122,6 +125,16 @@ impl DagNode {
         if let Some(op) = self.ops.get(op) {
             if let DagOpTarget::Reg(reg) = op.target {
                 return reg.is_gr();
+            } 
+        }
+
+        false
+    }
+    /// Returns if the nth operand is a fp register
+    pub fn is_op_fp(&self, op: usize) -> bool {
+        if let Some(op) = self.ops.get(op) {
+            if let DagOpTarget::Reg(reg) = op.target {
+                return reg.is_fp();
             } 
         }
 
@@ -161,6 +174,17 @@ impl DagNode {
         false
     }
 
+    /// Returns if the output is a fp register
+    pub fn is_out_fp(&self) -> bool {
+        if let Some(out) = &self.out {
+            if let DagOpTarget::Reg(reg) = out.target {
+                return reg.is_fp();
+            } 
+        }
+
+        false
+    }
+
     /// Returns if the output is a memory displacment
     pub fn is_out_mem(&self) -> bool {
         if let Some(out) = &self.out {
@@ -185,6 +209,11 @@ impl DagNode {
     /// Returns the output
     pub fn get_out(&self) -> DagOp {
         self.out.as_ref().unwrap().to_owned()
+    }
+
+    /// Is the nodes type the given type
+    pub fn is_ty(&self, ty: TypeMetadata) -> bool {
+        self.ty == ty
     }
 }
 
