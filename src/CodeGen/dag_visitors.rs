@@ -94,8 +94,9 @@ impl DagVisitor for Add {
         dag.push(DagNode::add(
             DagOp::from(&self.inner1), 
             DagOp::from(&self.inner2), 
-            DagOp::var(self.inner3.to_owned()))
-        );
+            DagOp::var(self.inner3.to_owned()),
+            self.inner3.ty,
+        ));
     }
 }
 
@@ -172,16 +173,18 @@ impl DagVisitor for Return {
         if self.isRetConst() {
             dag.push(DagNode::copy(
                 self.getRetConst().into(), 
-                DagOp::reg(ret_reg)
+                DagOp::reg(ret_reg),
+                self.inner1.get_ty(),
             ));
         } else {
             dag.push(DagNode::copy(
                 DagOp::var(self.getRetVar()),
-                DagOp::reg(ret_reg) 
+                DagOp::reg(ret_reg),
+                self.inner1.get_ty(),
             ));
         };
 
-        dag.push( DagNode::ret() );
+        dag.push( DagNode::ret(self.inner1.get_ty()) );
     }
 }
 

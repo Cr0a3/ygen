@@ -98,7 +98,7 @@ impl TargetRegistry {
                 println!("{}", instr.asm());
             }
         }
-        todo!()
+        todo!("instruction encoding")
     }
 
     /// compiles the given function with debug information

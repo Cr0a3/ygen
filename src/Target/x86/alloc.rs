@@ -4,6 +4,7 @@ use crate::CodeGen::memory::Memory;
 use crate::CodeGen::reg::Reg;
 use crate::CodeGen::{dag::DagTmpInfo, regalloc_iterated_col::ItRegCoalAlloc};
 use crate::Target::CallConv;
+use crate::IR::TypeMetadata;
 
 use super::asm::X64Instr;
 use super::reg::X64Reg;
@@ -28,8 +29,8 @@ pub fn arg_proc(alloc: &mut ItRegCoalAlloc) {
     }
 
     for (name, ty) in &func.ty.args {
-        if let Some(mut reg) = call.get_x86_arg_gr(arg_num) {
-            ydbg!("[IRC] allocating a register for arg {name}");
+        if let Some(mut reg) = call.get_x86_arg(arg_num, *ty) {
+            ydbg!("[REG] allocating a register for arg {name}");
 
             reg.size = ty.byteSize().into();
 
@@ -68,7 +69,14 @@ pub(super) fn resolve(_tmps: Vec<DagTmpInfo>, _asm: &mut Vec<X64Instr>) {
 } 
 
 impl CallConv {
-    /// Returns the nth x64 argument
+    /// Returns the nth x86 argument
+    #[inline]
+    pub fn get_x86_arg(&self, num: usize, ty: TypeMetadata) -> Option<X64Reg> {
+        if ty.float() { self.get_x86_arg_fp(num) }
+        else { self.get_x86_arg_gr(num) }
+    }
+
+    /// Returns the nth x86 gr argument
     #[inline]
     pub fn get_x86_arg_gr(&self, num: usize) -> Option<X64Reg> {
         match self {
@@ -90,5 +98,23 @@ impl CallConv {
             },
             _ => panic!("the calling convention {self:?} is not usable in the x86 backend")
         }
+    }
+
+    /// Returns the nth x86 fp argument
+    #[inline]
+    pub fn get_x86_arg_fp(&self, num: usize) -> Option<X64Reg> {match self {
+        CallConv::WindowsFastCall | CallConv::SystemV => match num {
+            0 => Some(X64Reg::Xmm0()),
+            1 => Some(X64Reg::Xmm1()),
+            2 => Some(X64Reg::Xmm2()),
+            3 => Some(X64Reg::Xmm3()),
+            4 => Some(X64Reg::Xmm4()),
+            5 => Some(X64Reg::Xmm5()),
+            6 => Some(X64Reg::Xmm6()),
+            7 => Some(X64Reg::Xmm7()),
+            _ => None,
+        },
+        _ => panic!("the calling convention {self:?} is not usable in the x86 backend")
+    }
     }
 }

@@ -21,6 +21,8 @@ pub struct X64Instr {
 #[allow(missing_docs)]
 pub enum X64Mnemonic {
     Mov,
+    Movss,
+    Movsd,
     Ret,
     Add,
     Lea
@@ -108,6 +110,8 @@ impl std::fmt::Display for X64Instr {
             X64Mnemonic::Ret => "ret",
             X64Mnemonic::Lea => "lea",
             X64Mnemonic::Add => "add",
+            X64Mnemonic::Movss => "movss",
+            X64Mnemonic::Movsd => "movsd",
         })?;
         
         if let Some(op) = &self.op1 {

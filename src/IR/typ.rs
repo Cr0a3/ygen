@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use crate::ydbg;
+
 /// Stores a type and a value of that type
 /// 
 /// If you want an empty Type consider using `TypeMetadata`
@@ -145,8 +147,8 @@ impl TypeMetadata {
             TypeMetadata::ptr => 64,
             TypeMetadata::Void => 0,
 
-            TypeMetadata::f32 => 4,
-            TypeMetadata::f64 => 8,
+            TypeMetadata::f32 => 32,
+            TypeMetadata::f64 => 64,
         }
     }
 
@@ -156,6 +158,7 @@ impl TypeMetadata {
         if *self != TypeMetadata::Void {
             self.bitSize() / 8
         } else {
+            ydbg!("[WARN] size for void is 0");
             0
         }
     }
