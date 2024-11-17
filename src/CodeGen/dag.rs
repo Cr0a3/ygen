@@ -197,6 +197,8 @@ pub struct DagTmpInfo {
     pub requires_gr: bool,
     /// Does the tmporary require a mem displacment
     pub requires_mem: bool,
+    /// Does the tmporary require a fp reg
+    pub requires_fp: bool,
     /// Does the location even matter?
     pub shit_on_loc: bool,
 }
@@ -207,14 +209,20 @@ impl DagTmpInfo {
         Self {
             tmp_num: num,
             requires_gr: false,
+            requires_fp: false,
             requires_mem: false,
             shit_on_loc: false,
         }
     }
 
-    /// The temporary requires a register
+    /// The temporary requires a gr register
     pub fn require_gr(&mut self) {
         self.requires_gr = true;
+    }
+
+    /// The temporary requires a fp register
+    pub fn require_fp(&mut self) {
+        self.requires_fp = true;
     }
 
     /// The temporary requires a memory displacment

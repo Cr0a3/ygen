@@ -17,6 +17,7 @@ mod auto_gen {
     use super::super::asm::X64MemOption as MemoryOption;
     use super::super::reg::X64Reg;
     use crate::CodeGen::dag::*;
+    use crate::CodeGen::dag;
     use super::super::asm::*;
     include!("dag.def");
 }
@@ -56,5 +57,5 @@ pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc)
 pub(super) fn x86_tmps(node: &DagNode) -> Vec<dag::DagTmpInfo> {
     ydbg!("[X86] requesting tmps for {}", node.get_opcode());
     
-    Vec::new()
+    auto_gen::tmps(node)
 }

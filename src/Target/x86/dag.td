@@ -25,3 +25,11 @@ def Pat<GetFramePtr -> gr> {
 def Pat<GetStackPtr -> gr> {
     asm -> mov $out, X64Operand::Reg(X64Reg::Rsp()); 
 }
+
+def Pat<Add fp, fp -> fp> f32 
+    map %t1, fp
+{
+    asm -> mov %t1, $1;
+    asm -> add %t1, $2;
+    asm -> mov $out, %t1;
+}
