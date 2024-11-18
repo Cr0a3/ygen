@@ -23,9 +23,15 @@ pub enum X64Mnemonic {
     Mov,
     Movss,
     Movsd,
+    Movdqa,
+
     Ret,
+
     Add,
-    Lea
+    Paddq,
+    Paddd,
+
+    Lea,
 }
 
 /// A x64 assembly operand
@@ -114,6 +120,9 @@ impl std::fmt::Display for X64Instr {
             X64Mnemonic::Add => "add",
             X64Mnemonic::Movss => "movss",
             X64Mnemonic::Movsd => "movsd",
+            X64Mnemonic::Movdqa => "movdqa",
+            X64Mnemonic::Paddq => "paddq",
+            X64Mnemonic::Paddd => "paddd",
         })?;
         
         if let Some(op) = &self.op1 {

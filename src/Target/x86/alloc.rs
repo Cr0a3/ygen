@@ -137,6 +137,7 @@ impl CallConv {
     #[inline]
     pub fn get_x86_arg(&self, num: usize, ty: TypeMetadata) -> Option<X64Reg> {
         if ty.float() { self.get_x86_arg_fp(num) }
+        else if ty.isVectorTy() { self.get_x86_arg_fp(num) } // in ygen we do vectors using sse
         else { self.get_x86_arg_gr(num) }
     }
 

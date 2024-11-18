@@ -51,6 +51,14 @@ impl Reg {
         }
     }
 
+    /// Returns if the register is a simd reg (supporting the given vector)
+    #[inline]
+    pub fn is_simd(&self, vec: &crate::IR::VecTy) -> bool {
+        match self.reg {
+            TargetReg::X64(x64) => x64.is_simd(vec),
+        }
+    }
+
     /// Creates an new x64 register
     #[inline]
     pub fn new_x64(reg: X64Reg) -> Reg {
@@ -60,6 +68,7 @@ impl Reg {
                 crate::Target::x86::reg::X64RegSize::Word => 2,
                 crate::Target::x86::reg::X64RegSize::Dword => 4,
                 crate::Target::x86::reg::X64RegSize::Qword => 8,
+                crate::Target::x86::reg::X64RegSize::SimdVec => 16, // in ygen we use sse registers for simd which are 128bit wide
             },
             reg: TargetReg::X64(reg),
         }

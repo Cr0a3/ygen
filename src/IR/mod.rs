@@ -21,8 +21,8 @@ use std::fmt::Display;
 pub use module::Module;
 pub use func::{Function, FunctionType, FnTy, Func, FuncId};
 pub use constant::Const;
-pub use typ::Type;
-pub use typ::TypeMetadata;
+pub use typ::{Type, TypeMetadata, VecTy};
+pub(crate) use typ::StdTypeMetadata;
 pub use block::{Block, BlockId};
 pub use var::Var;
 

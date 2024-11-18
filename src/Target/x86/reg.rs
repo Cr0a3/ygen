@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::Target::x86::get_call;
+use crate::{Target::x86::get_call, IR::TypeMetadata};
 
 /// The register variants for x64
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -25,6 +25,7 @@ pub enum X64RegSize {
     Word,
     Dword,
     Qword,
+    SimdVec,
 }
 
 impl From<usize> for X64RegSize {
@@ -34,18 +35,27 @@ impl From<usize> for X64RegSize {
             2 => X64RegSize::Word,
             4 => X64RegSize::Dword,
             8 => X64RegSize::Qword,
-            _ => panic!("invalid size for a register: {value}")
+            16 => X64RegSize::SimdVec,
+            _ => todo!("invalid size for a register: {value}")
         }
     }
 }
 
 /// An x64 register
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy)]
 #[allow(missing_docs)]
 pub struct X64Reg {
     pub size: X64RegSize,
     pub variant: X64RegVariant,
 }
+
+impl PartialEq for X64Reg {
+    fn eq(&self, other: &Self) -> bool {
+        self.variant == other.variant // && self.size == other.size
+    }
+}
+
+impl Eq for X64Reg {}
 
 macro_rules! reg_creator {
     ($reg_name:ident, $doc:expr) => {
@@ -163,28 +173,57 @@ impl X64Reg {
 
         score
     }
+
+    /// Returns if the register is a simd reg (supporting the given vector)
+    pub fn is_simd(&self, vec: &crate::IR::VecTy) -> bool {
+        // x86 makes simd using xmm.. registers
+        // so we should first check if it is a fp register
+        // cuz xmm.. registers are fp regs
+        
+        if !self.is_fp() { return false; }
+
+        // then we should check if ygen even supports the vector size
+        // we currently use sse so ygen should support:
+        //   2x64 (fp/int)
+        //   4x32 (fp/int)
+        //   8x16 (int)
+        //   16x8 (int)
+
+        let ty: TypeMetadata = vec.ty.into();
+        match (vec.size, ty.toSigned()) {
+            (2, TypeMetadata::i64) | (2, TypeMetadata::f64) |
+            (4, TypeMetadata::i32) | (4, TypeMetadata::f32) |
+            (8, TypeMetadata::i16) |
+            (16, TypeMetadata::i8) => {}, // allowed
+            _ => todo!("(currently) unsupported vector size in ygen: {vec}"),
+        }
+
+        // now after all checks we safely know that we have a 128bit ygen x86
+        // captible register
+        true
+    }
 }
 
 impl Display for X64Reg {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use X64RegSize::*;
         write!(f, "{}", match self.variant {
-            X64RegVariant::Rax => match self.size { Qword => "rax", Dword => "eax", Word => "ax", Byte => "al"},
-            X64RegVariant::Rbx => match self.size { Qword => "rbx", Dword => "ebx", Word => "bx", Byte => "bl"},
-            X64RegVariant::Rcx => match self.size { Qword => "rcx", Dword => "ecx", Word => "cx", Byte => "cl"},
-            X64RegVariant::Rdx => match self.size { Qword => "rdx", Dword => "edx", Word => "dx", Byte => "dl"},
-            X64RegVariant::Rdi => match self.size { Qword => "rdi", Dword => "edi", Word => "di", Byte => "dil"},
-            X64RegVariant::Rsi => match self.size { Qword => "rsi", Dword => "esi", Word => "si", Byte => "sil"},
-            X64RegVariant::Rbp => match self.size { Qword => "rbp", Dword => "ebp", Word => "bp", Byte => "bpl"},
-            X64RegVariant::Rsp => match self.size { Qword => "rsp", Dword => "esp", Word => "sp", Byte => "spl"},
-            X64RegVariant::R8 => match self.size { Qword => "r8", Dword => "r8d", Word => "r8w", Byte => "r8l"},
-            X64RegVariant::R9 => match self.size { Qword => "r9", Dword => "r9d", Word => "r9w", Byte => "r9l"},
-            X64RegVariant::R10 => match self.size { Qword => "r10", Dword => "r10d", Word => "r10w", Byte => "r10l"},
-            X64RegVariant::R11 => match self.size { Qword => "r11", Dword => "r11d", Word => "r11w", Byte => "r11l"},
-            X64RegVariant::R12 => match self.size { Qword => "r12", Dword => "r12d", Word => "r12w", Byte => "r12l"},
-            X64RegVariant::R13 => match self.size { Qword => "r13", Dword => "r13d", Word => "r13w", Byte => "r13l"},
-            X64RegVariant::R14 => match self.size { Qword => "r14", Dword => "r14d", Word => "r14w", Byte => "r14l"},
-            X64RegVariant::R15 => match self.size { Qword => "r15", Dword => "r15d", Word => "r15w", Byte => "r15l"},
+            X64RegVariant::Rax => match self.size { Dword => "eax", Word => "ax", Byte => "al", Qword | _ => "rax"},
+            X64RegVariant::Rbx => match self.size { Dword => "ebx", Word => "bx", Byte => "bl", Qword | _ => "rbx"},
+            X64RegVariant::Rcx => match self.size { Dword => "ecx", Word => "cx", Byte => "cl", Qword | _ => "rcx"},
+            X64RegVariant::Rdx => match self.size { Dword => "edx", Word => "dx", Byte => "dl", Qword | _ => "rdx"},
+            X64RegVariant::Rdi => match self.size { Dword => "edi", Word => "di", Byte => "dil", Qword | _ => "rdi"},
+            X64RegVariant::Rsi => match self.size { Dword => "esi", Word => "si", Byte => "sil", Qword | _ => "rsi"},
+            X64RegVariant::Rbp => match self.size { Dword => "ebp", Word => "bp", Byte => "bpl", Qword | _ => "rbp"},
+            X64RegVariant::Rsp => match self.size { Dword => "esp", Word => "sp", Byte => "spl", Qword | _ => "rsp"},
+            X64RegVariant::R8 => match self.size { Dword => "r8d", Word => "r8w", Byte => "r8l", Qword | _ => "r8"},
+            X64RegVariant::R9 => match self.size { Dword => "r9d", Word => "r9w", Byte => "r9l", Qword | _ => "r9"},
+            X64RegVariant::R10 => match self.size { Dword => "r10d", Word => "r10w", Byte => "r10l", Qword | _ => "r10"},
+            X64RegVariant::R11 => match self.size { Dword => "r11d", Word => "r11w", Byte => "r11l", Qword | _ => "r11"},
+            X64RegVariant::R12 => match self.size { Dword => "r12d", Word => "r12w", Byte => "r12l", Qword | _ => "r12"},
+            X64RegVariant::R13 => match self.size { Dword => "r13d", Word => "r13w", Byte => "r13l", Qword | _ => "r13"},
+            X64RegVariant::R14 => match self.size { Dword => "r14d", Word => "r14w", Byte => "r14l", Qword | _ => "r14"},
+            X64RegVariant::R15 => match self.size { Dword => "r15d", Word => "r15w", Byte => "r15l", Qword | _ => "r15"},
             X64RegVariant::Xmm0 => "xmm0",
             X64RegVariant::Xmm1 => "xmm1",
             X64RegVariant::Xmm2 => "xmm2",

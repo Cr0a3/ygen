@@ -11,7 +11,7 @@ impl X86BasicOpt {
         let mut index = 0;
         for instr in input.clone() {
             // mov x, x -> nothing
-            if instr.mnemonic == X64Mnemonic::Mov && instr.op1 == instr.op2 {
+            if matches!(instr.mnemonic, X64Mnemonic::Mov | X64Mnemonic::Movdqa | X64Mnemonic::Movsd | X64Mnemonic::Movss) && instr.op1 == instr.op2 {
                 ydbg!("[X86 OPT] removing uneccesary mov");
                 input.remove(index);
             }

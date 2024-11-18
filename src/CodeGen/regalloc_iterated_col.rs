@@ -121,14 +121,23 @@ impl<'a> ItRegCoalAlloc<'a> {
         let mut index = 0;
 
         for mut reg in self.regs.to_vec() {
+            // check for simd
+            if ty.isVectorTy() && reg.is_simd(&ty.getVectorTy()) {
+                self.regs.remove(index);
+                reg.size = ty.bitSize();
+                return Some(reg);
+            }
+
+            // normal registers here
 
             if ty.float() && reg.is_fp() {
                 self.regs.remove(index);
                 reg.size = ty.byteSize();
                 return Some(reg);
             }
+
             
-            if !ty.float() && reg.is_gr() {
+            if ty.intenger() && reg.is_gr() {
                 self.regs.remove(index);
                 reg.size = ty.byteSize();
                 return Some(reg);

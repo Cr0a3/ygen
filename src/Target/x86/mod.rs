@@ -10,8 +10,9 @@ pub mod asm;
 
 use reg::X64Reg;
 
-use crate::{CodeGen::{dag_lower::DagLower, reg::{Reg, TargetReg}, regalloc_iterated_col::ItRegCoalAllocBase}, IR::TypeMetadata};
-
+use crate::CodeGen::{dag_lower::DagLower, regalloc_iterated_col::ItRegCoalAllocBase};
+use crate::CodeGen::reg::{Reg, TargetReg};
+use crate::prelude::TypeMetadata;
 use super::{asm_printer::AsmPrinter, compile::McCompile, parser::AsmParser, BackendInfos, CallConv};
 
 pub(self) static mut CALLING_CONVENTION: CallConv = CallConv::SystemV;
@@ -77,6 +78,11 @@ pub(crate) fn ret_reg(ty: TypeMetadata) -> crate::CodeGen::reg::Reg {
     if ty.float() {
         Reg {
             size: ty.byteSize(), // actually xmm registers are 128bit wide but we just say that they exactly fit the float
+            reg: TargetReg::X64(reg::X64Reg::Xmm0()),
+        }
+    } else if ty.isVectorTy() { // simd xmm.. registers
+        Reg {
+            size: ty.bitSize(),
             reg: TargetReg::X64(reg::X64Reg::Xmm0()),
         }
     } else {

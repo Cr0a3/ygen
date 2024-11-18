@@ -41,3 +41,23 @@ def Pat<Add fp, fp -> fp> f32
     asm -> add %t1, $2;
     asm -> mov $out, %t1;
 }
+
+def Pat<Add fp, fp -> fp> <2 x i64> 
+    map %t1, fp
+{
+    asm -> movdqa %t1, $1;
+    asm -> paddq %t1, $2;
+    asm -> movdqa $out, %t1;
+}
+
+def Pat<Add fp, fp -> fp> <4 x i32> 
+    map %t1, fp
+{
+    asm -> movdqa %t1, $1;
+    asm -> paddd %t1, $2;
+    asm -> movdqa $out, %t1;
+}
+
+def Pat<Copy fp -> fp> <4 x i32> {
+    asm -> movdqa $out, $1;
+}

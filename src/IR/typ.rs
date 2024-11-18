@@ -238,6 +238,59 @@ impl TypeMetadata {
     pub fn isVectorTy(&self) -> bool {
         matches!(self, TypeMetadata::Vector(_))
     }
+
+    /// Returns the inner vector ty (if it isn't a vector it panics)
+    pub fn getVectorTy(&self) -> VecTy {
+        if let TypeMetadata::Vector(vec) = self {
+            return *vec;
+        }
+
+        panic!("the type {self} isn't a vector but there was a vector request");
+    }
+
+    /// Returns the signed representation of the type
+    pub fn toSigned(&self) -> TypeMetadata {
+        match self {
+            TypeMetadata::u8 => TypeMetadata::i8,
+            TypeMetadata::u16 => TypeMetadata::i16,
+            TypeMetadata::u32 => TypeMetadata::i32,
+            TypeMetadata::u64 => TypeMetadata::i64,
+            TypeMetadata::i8 => TypeMetadata::i8,
+            TypeMetadata::i16 => TypeMetadata::i16,
+            TypeMetadata::i32 => TypeMetadata::i32,
+            TypeMetadata::i64 => TypeMetadata::i64,
+            TypeMetadata::ptr => TypeMetadata::ptr,
+            TypeMetadata::Void => TypeMetadata::Void,
+            TypeMetadata::f32 => TypeMetadata::f32,
+            TypeMetadata::f64 => TypeMetadata::f64,
+            TypeMetadata::Vector(vec_ty) => {
+                let mut signed_vec = *vec_ty;
+
+                let ty: TypeMetadata = signed_vec.ty.into();
+                signed_vec.ty = ty.toSigned().into();
+
+                TypeMetadata::Vector(signed_vec)
+            },
+        }
+    }
+
+    /// Returns if the type is an intenger
+    #[inline]
+    pub fn intenger(&self) -> bool {
+        match self {
+            TypeMetadata::u8  |
+            TypeMetadata::u16 |
+            TypeMetadata::u32 |
+            TypeMetadata::u64 |
+            TypeMetadata::i8  |
+            TypeMetadata::i16 |
+            TypeMetadata::i32 |
+            TypeMetadata::i64 |
+            TypeMetadata::ptr | // technicly not
+            TypeMetadata::Void => true, // technicly not
+            _ => false,
+        }
+    }
 }
 
 impl Display for Type {
@@ -358,7 +411,7 @@ impl VecTy {
     /// Returns the size of the vector in bits
     pub fn bitSize(&self) -> usize {
         let ty: TypeMetadata = self.ty.into();
-        self.size as usize * 8 * ty.bitSize()
+        self.size as usize * ty.bitSize()
     }
 }
 
