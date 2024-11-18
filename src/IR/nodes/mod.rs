@@ -413,23 +413,7 @@ impl IROperand {
 impl std::fmt::Display for IROperand {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", match self {
-            IROperand::Type(ty) => match ty {
-                Type::u8(i) => format!("{i}"),
-                Type::u16(i) => format!("{i}"),
-                Type::u32(i) => format!("{i}"),
-                Type::u64(i) => format!("{i}"),
-    
-                Type::i8(i) => format!("{i}"),
-                Type::i16(i) => format!("{i}"),
-                Type::i32(i) => format!("{i}"),
-                Type::i64(i) => format!("{i}"),
-    
-                Type::ptr(adr) => format!("{adr:#04x}"),
-                Type::Void => format!("0"),
-    
-                Type::f32(i) => format!("{i}"),
-                Type::f64(i) => format!("{i}"),
-            }
+            IROperand::Type(ty) => ty.to_string(),
             IROperand::Var(var) => var.name.to_string(),
         })
     }

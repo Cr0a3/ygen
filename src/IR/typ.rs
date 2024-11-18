@@ -35,6 +35,8 @@ pub enum Type {
 
     /// A f64
     f64(f64),
+    /// A vector
+    Vector(VecTy),
 }
 
 impl PartialEq for Type {
@@ -95,6 +97,25 @@ pub enum TypeMetadata {
 
     /// f64
     f64,
+
+    /// Vector
+    Vector(VecTy),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub(crate) enum StdTypeMetadata {
+    u8,
+    u16,
+    u32,
+    u64,
+    i8,
+    i16,
+    i32,
+    i64,
+    ptr,
+    Void,
+    f32,
+    f64,
 }
 
 impl Type {
@@ -113,6 +134,7 @@ impl Type {
             Type::i8(val) => *val as f64,
             Type::f32(val) => *val as f64,
             Type::f64(val) => *val as f64,
+            Type::Vector(_) => 0.0,
         }
     }
 
@@ -131,6 +153,7 @@ impl Type {
             TypeMetadata::i8 => Type::i8(value as i8),
             TypeMetadata::f32 => Type::f32(value as f32),
             TypeMetadata::f64 => Type::f64(value as f64),
+            TypeMetadata::Vector(vec) => Type::Vector(vec),
         }
     }
 }
@@ -149,6 +172,7 @@ impl TypeMetadata {
 
             TypeMetadata::f32 => 32,
             TypeMetadata::f64 => 64,
+            TypeMetadata::Vector(vec) => vec.bitSize(),
         }
     }
 
@@ -209,6 +233,11 @@ impl TypeMetadata {
             _ => None,
         }
     }
+
+    /// Returns if the current type is a vector type
+    pub fn isVectorTy(&self) -> bool {
+        matches!(self, TypeMetadata::Vector(_))
+    }
 }
 
 impl Display for Type {
@@ -229,6 +258,8 @@ impl Display for Type {
 
             Type::f32(i) => format!("f32 {}", i),
             Type::f64(i) => format!("f64 {}", i),
+
+            Type::Vector(vec) => format!("<{vec}>"),
         })
     }
 }
@@ -241,6 +272,10 @@ impl crate::Support::AsAny for Type {
 
 impl Display for TypeMetadata {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let TypeMetadata::Vector(vec) = self {
+            return write!(f, "{vec}");
+        }
+
         write!(f, "{}", match &self {
             TypeMetadata::u8 => "u8",
             TypeMetadata::u16 => "u16",
@@ -257,6 +292,8 @@ impl Display for TypeMetadata {
 
             TypeMetadata::f32 => "f32",
             TypeMetadata::f64 => "f64",
+
+            TypeMetadata::Vector(_) => unreachable!(), // handled before
         })
     }
 }
@@ -279,6 +316,7 @@ impl From<Type> for TypeMetadata {
 
             Type::f32(_) => TypeMetadata::f32,
             Type::f64(_) => TypeMetadata::f64,
+            Type::Vector(vec) => TypeMetadata::Vector(vec),
         }
     }
 }
@@ -301,28 +339,77 @@ impl From<TypeMetadata> for Type {
 
             TypeMetadata::f32 => Type::f32(0.0),
             TypeMetadata::f64 => Type::f64(0.0),
+            TypeMetadata::Vector(vec) => Type::Vector(vec),
         }
     }
 }
 
-/*
+
 /// A vector type
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct VecType<T> 
-    where T: std::fmt::Debug + Clone + PartialEq + Eq
-{
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct VecTy {
     /// the size of the vec
-    pub size: T,
-    /// if it is a constant vector, the values of the vec
-    pub elems: Vec<Type>,
+    pub size: i32,
     /// the type of the values of the vec
-    pub ty: TypeMetadata,
+    pub(crate) ty: StdTypeMetadata,
 }
 
-impl<T> Display for VecType<T>
-  where T: std::fmt::Debug + Clone + PartialEq + Eq 
-{
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+impl VecTy {
+    /// Returns the size of the vector in bits
+    pub fn bitSize(&self) -> usize {
+        let ty: TypeMetadata = self.ty.into();
+        self.size as usize * 8 * ty.bitSize()
     }
-}*/
+}
+
+impl Display for StdTypeMetadata {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let ty: TypeMetadata = (*self).into();
+        write!(f, "{}", ty)
+    }
+}
+
+impl Display for VecTy {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} x {}", self.size, self.ty)
+    }
+}
+
+impl Into<TypeMetadata> for StdTypeMetadata {
+    fn into(self) -> TypeMetadata {
+        match self {
+            StdTypeMetadata::u8 => TypeMetadata::u8,
+            StdTypeMetadata::u16 => TypeMetadata::u16,
+            StdTypeMetadata::u32 => TypeMetadata::u32,
+            StdTypeMetadata::u64 => TypeMetadata::u64,
+            StdTypeMetadata::i8 => TypeMetadata::i8,
+            StdTypeMetadata::i16 => TypeMetadata::i16,
+            StdTypeMetadata::i32 => TypeMetadata::i32,
+            StdTypeMetadata::i64 => TypeMetadata::i64,
+            StdTypeMetadata::ptr => TypeMetadata::ptr,
+            StdTypeMetadata::Void => TypeMetadata::Void,
+            StdTypeMetadata::f32 => TypeMetadata::f32,
+            StdTypeMetadata::f64 => TypeMetadata::f64,
+        }
+    }
+}
+
+impl From<TypeMetadata> for StdTypeMetadata {
+    fn from(value: TypeMetadata) -> Self {
+        match value {
+            TypeMetadata::u8 => StdTypeMetadata::u8,
+            TypeMetadata::u16 => StdTypeMetadata::u16,
+            TypeMetadata::u32 => StdTypeMetadata::u32,
+            TypeMetadata::u64 => StdTypeMetadata::u64,
+            TypeMetadata::i8 => StdTypeMetadata::i8,
+            TypeMetadata::i16 => StdTypeMetadata::i16,
+            TypeMetadata::i32 => StdTypeMetadata::i32,
+            TypeMetadata::i64 => StdTypeMetadata::i64,
+            TypeMetadata::ptr => StdTypeMetadata::ptr,
+            TypeMetadata::Void => StdTypeMetadata::Void,
+            TypeMetadata::f32 => StdTypeMetadata::f32,
+            TypeMetadata::f64 => StdTypeMetadata::f64,
+            TypeMetadata::Vector(_) => panic!("vectors are not allowed to be `size x vector`"),
+        }
+    }
+}

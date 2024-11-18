@@ -84,6 +84,12 @@ pub enum TokenType {
 
     /// ^abc (till line end)
     UnIdent(String),
+
+    /// <
+    VecStartIndicator,
+
+    /// >
+    VecEndIndicator,
 }
 
 impl PartialEq for TokenType {
@@ -128,6 +134,8 @@ impl TokenType {
             TokenType::Cond => "cond",
             TokenType::ExclamationMark => "!",
             TokenType::UnIdent(_) => "uident",
+            TokenType::VecStartIndicator => ">",
+            TokenType::VecEndIndicator => "<",
         }.to_string()
     }
 }
@@ -373,6 +381,10 @@ impl IrLexer {
             '0'..='9' | '-' => ty = Some(self.scan_num()?),
 
             '@' => ty = Some(self.scan_func()?),
+
+
+            '<' => ty = Some(TokenType::VecStartIndicator),
+            '>' => ty = Some(TokenType::VecEndIndicator),
 
             any => Err(IrError::UnexpectedCharacter { 
                 chr: any, 

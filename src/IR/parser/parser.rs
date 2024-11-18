@@ -5,6 +5,7 @@ use std::str::FromStr;
 use crate::prelude::{Alloca, Cmp, CmpMode, DebugNode, GetElemPtr, IROperand, Ir, Load, Neg, Phi, Select, Store, Switch};
 use crate::Obj::Linkage;
 use crate::IR::block::BlockId;
+use crate::IR::typ::VecTy;
 use crate::IR::{ir, Block, Const, FnTy, Type, TypeMetadata, Var};
 
 use super::lexer::{Loc, Token, TokenType};
@@ -821,6 +822,9 @@ impl IrParser {
 
         if let TokenType::Ident(text) = &token.typ {
             ident = text.to_string();
+        } else if let TokenType::VecStartIndicator = &token.typ {
+            self.input.pop_front(); // <
+            return Ok(TypeMetadata::Vector(self.parse_vec_type()?));
         } else {
             Err(IrError::ExpectedTokenButFoundAnUnexpectedOne { 
                 found: token.clone(), 
@@ -836,6 +840,33 @@ impl IrParser {
         } else {
             Err(IrError::UnkownType(token.clone()) )
         }
+    }
+
+    fn parse_vec_type(&mut self) -> Result<VecTy, IrError> {
+        self.expect(TokenType::Int(0.0))?; // size
+        let TokenType::Int(size) = self.current_token()?.typ else { unreachable!() };
+        self.input.pop_front(); // size
+
+        self.expect(TokenType::Ident(String::from("x")))?; // times
+        let TokenType::Ident(x) = self.current_token()?.typ.to_owned() else { unreachable!() };
+
+        if x.as_str() != "x" {
+            let curr = self.current_token()?;
+            Err(IrError::ExpectedTokenButFoundAnUnexpectedOne { 
+                found: curr.to_owned(), 
+                expected: Token { typ: TokenType::Ident(String::from("x")), loc: curr.loc.to_owned() },
+            })?;
+        }
+
+        self.input.pop_front();
+
+        let ty = self.parse_type()?;
+        self.input.pop_front();
+
+        Ok(VecTy {
+            size: size as i32,
+            ty: ty.into(),
+        })
     }
 
     fn parse_cmp(&mut self, var: String) -> Result<Box<dyn Ir>, IrError> {

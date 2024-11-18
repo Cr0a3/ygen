@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use opt::X86BasicOpt;
 
-use crate::ydbg;
 use crate::CodeGen::dag::DagNode;
 use crate::CodeGen::regalloc_iterated_col::ItRegCoalAlloc;
 use crate::IR::BlockId;
