@@ -35,6 +35,15 @@ pub struct Cli {
     app_version: String,
     app_name: String,
     app_author: String,
+
+    unpositional_arg: Option<UnpositionalArg>,
+}
+
+struct UnpositionalArg {
+    pub(crate) name: String,
+    pub(crate) was_there: bool,
+    pub(crate) required: bool,
+    pub(crate) value: Option<String>,
 }
 
 impl Cli {
@@ -48,6 +57,7 @@ impl Cli {
             app_desc: desc.to_string(),
             app_version: version.to_string(),
             app_author: author.to_string(),
+            unpositional_arg: None,
         }
     }
 
@@ -57,8 +67,22 @@ impl Cli {
     }
 
     /// Adds an argument which is seperated by a `=`
-    pub fn add_arg(&mut self, short: &str, long: &str, desc: &str, required: bool,) {
+    pub fn add_arg(&mut self, short: &str, long: &str, desc: &str, required: bool) {
         self.args.push(CliArg { short: short.to_string(), long: long.to_string(), desc: desc.to_string(), required: required, was_there: false, value: String::new() })
+    }
+
+    /// Adds an argument which does not need a name
+    pub fn add_unpositional(&mut self, name: &str, required: bool) {
+        if self.unpositional_arg.is_some() {
+            panic!("you cannot have two unpositional arguments in ygen");
+        }
+
+        self.unpositional_arg = Some(UnpositionalArg { 
+            name: name.to_string(), 
+            was_there: false,
+            required: required,
+            value: None,
+        })
     }
 
     /// Prints the version and description
@@ -75,7 +99,11 @@ impl Cli {
 
         println!();
 
-        println!("{} {} [OPTIONS] [ARGS]", "Usage:".bold(), args[0]);
+        if let Some(unpositional) = &self.unpositional_arg {
+            println!("{} {} [OPTIONS] [ARGS] <{}>", "Usage:".bold(), args[0], unpositional.name);
+        } else {
+            println!("{} {} [OPTIONS] [ARGS]", "Usage:".bold(), args[0]);
+        }
 
         println!("{}", "Options:".bold());
 
@@ -159,6 +187,13 @@ impl Cli {
             }
 
             if !handeld {
+                if let Some(unpos) = &mut self.unpositional_arg {
+                    if !unpos.was_there {
+                        unpos.value = Some(arg);
+                        unpos.was_there = true;
+                        continue;
+                    }
+                }
                 println!("{} unexpected arg/opt: '{}'", "ERROR:".bold().red(), arg);
                 self.help();
                 exit(-1);
@@ -181,6 +216,14 @@ impl Cli {
                 println!("{} required argument: '-{}=<val>' wasn't given", "ERROR:".bold().red(), arg.short);
                 self.help();
                 exit(-1);
+            }
+        }
+
+        if let Some(unpos) = &self.unpositional_arg {
+            if unpos.required && !unpos.was_there {
+                println!("{} required argument: '<{}>' wasn't given", "ERROR:".bold().red(), unpos.name);
+                self.help();
+                exit(-1)
             }
         }
 
@@ -213,6 +256,12 @@ impl Cli {
         for arg in &self.args {
             if (arg.short == name || arg.long == name) && arg.was_there {
                 return Some(arg.value.clone());
+            }
+        }
+
+        if let Some(unpos) = &self.unpositional_arg {
+            if unpos.name == name {
+                return unpos.value.clone();
             }
         }
 
