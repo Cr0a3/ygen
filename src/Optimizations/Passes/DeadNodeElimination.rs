@@ -1,5 +1,5 @@
+use crate::Optimizations::Analysis::LivenessAnalysis;
 use crate::Optimizations::Pass;
-use crate::IR::ir::Phi;
 
 /// ## Pass DeadNodeElimination <br>
 /// deletes unused nodes
@@ -16,65 +16,28 @@ impl Pass for DeadNodeElimination_ {
     }
     
     fn run_func(&self, func: &mut crate::prelude::Function) {
-        for _ in 0..2 { // iterate two times, cuz then we can remove dependants with a dept of 1
-            let mut used: Vec<String> = Vec::new();
+        let liveness = LivenessAnalysis::analayze(func);
 
-            let mut to_remove = Vec::new();
+        // now we can iterate over all normal nodes
 
-            // first iterate over all phis
+        let mut index = 0;
 
-            for block in func.blocks.iter() {
-                for node in &block.nodes {
-                    if let Some(phi) = node.as_any().downcast_ref::<Phi>() {
-                        for (_, reciver) in &phi.recive_from_blocks {
-                            used.push(reciver.name.to_owned());
-                        }
+        for block in &mut func.blocks {
+            for node in block.nodes.clone() {
+
+                let mut removed = false;
+
+                if let Some(output) = node.output() {
+                    if liveness.is_dead(&output) && !node.is_call() {
+                        block.nodes.remove(index);
+                        removed = true;
                     }
                 }
-            }
 
-            // now we can iterate over all normal nodes
-
-            for block in func.blocks.iter().rev() {
-                let iter = block.nodes.iter();
-                let iter = iter.rev();
-
-                let mut index = iter.len();
-
-                for node in iter {
-                    let inputs =  node.inputs();
-                    let out = node.output();
-        
-                    for input in inputs {
-                        if !used.contains(&input.name) {
-                            used.push(input.name);
-                        }
-                    }
-
-                    if let Some(out) = out {
-                        if !used.contains(&out.name) {
-                            if !node.is_call() {
-                                // node isn't a call
-                                to_remove.push((block.name.clone(), index - 1));
-                            }
-                        }
-                    }
-
-                    index -= 1;
+                if !removed {
+                    index += 1;
                 }
             }
-
-            for block in &mut func.blocks {
-                let off = 0;
-
-                for (target_block, node) in &to_remove {
-                    if target_block == &block.name {
-                        block.nodes.remove((*node - off) as usize);
-
-                        //off += 1;
-                    }
-                }
-            }
-        }  
+        } 
     }
 }
