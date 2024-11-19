@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 
 use ir::Ir;
-use crate::IR::*;
+use crate::{Optimizations::Analysis::CFGAnalysis::CFGAnalysis, IR::*};
 
 /// Analysis the livness of variables
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LivenessAnalysis {
     users: HashMap<Var, Vec<Box<dyn Ir>>>,
+    last_uses: HashMap<Var, Option<BlockId>>,
 }
 
 impl LivenessAnalysis {
@@ -14,11 +15,14 @@ impl LivenessAnalysis {
     pub fn analayze(func: &Function) -> Self {
         let mut analyzer = Self {
             users: HashMap::new(),
+            last_uses: HashMap::new(),
         };
 
         for block in &func.blocks {
             analyzer.analyze_block(block);
         }
+
+        analyzer.analyze_last_uses(func);
 
         analyzer
     }
@@ -42,6 +46,12 @@ impl LivenessAnalysis {
                 }
             }
         }
+    }
+
+    /// Analyzes in which ir node the variable is used latest
+    pub fn analyze_last_uses(&mut self, func: &Function) {
+        let cfg = CFGAnalysis::analyze(func);
+        todo!()
     }
 
     /// Returns all ir nodes which uses the ir variable
