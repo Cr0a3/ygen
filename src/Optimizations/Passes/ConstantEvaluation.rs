@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{prelude::*, Optimizations::Pass};
+use crate::{prelude::*, ydbg, Optimizations::Pass};
 
 /// ## Pass ConstantEvaluation <br>
 /// precomputes constant values
@@ -17,6 +17,8 @@ impl Pass for ConstantEvaluation {
     }
 
     fn run(&self, block: &mut crate::prelude::Block) {
+        ydbg!("[ConstEval] running constant evaluation");
+
         let mut const_values = HashMap::new();
 
         for node in block.nodes.iter_mut() {

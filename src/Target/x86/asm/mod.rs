@@ -31,6 +31,12 @@ pub enum X64Mnemonic {
     Paddq,
     Paddd,
 
+    Sub,
+    Psubq,
+    Psubd,
+    Psubw,
+    Psubb,
+
     Lea,
 }
 
@@ -123,6 +129,11 @@ impl std::fmt::Display for X64Instr {
             X64Mnemonic::Movdqa => "movdqa",
             X64Mnemonic::Paddq => "paddq",
             X64Mnemonic::Paddd => "paddd",
+            X64Mnemonic::Sub => "sub",
+            X64Mnemonic::Psubb => "psubq",
+            X64Mnemonic::Psubw => "psubw",
+            X64Mnemonic::Psubd => "psubd",
+            X64Mnemonic::Psubq => "psubq",
         })?;
         
         if let Some(op) = &self.op1 {

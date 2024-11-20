@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use crate::IR::{Block, BlockId, ir::*};
 
 /// analyzes which blocks can branch to which other blocks
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BlockBranchAnalysis<'a> {
     pub(crate) branches: HashMap<&'a String, Vec<&'a BlockId>>,
 }

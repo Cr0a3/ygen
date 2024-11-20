@@ -10,10 +10,13 @@ impl X86BasicOpt {
     pub fn opt(input: &mut Vec<X64Instr>) {
         let mut index = 0;
         for instr in input.clone() {
+            let mut removed = false;
+
             // mov x, x -> nothing
             if matches!(instr.mnemonic, X64Mnemonic::Mov | X64Mnemonic::Movdqa | X64Mnemonic::Movsd | X64Mnemonic::Movss) && instr.op1 == instr.op2 {
                 ydbg!("[X86 OPT] removing uneccesary mov");
                 input.remove(index);
+                removed = true;
             }
 
             // lea x, [y + x] -> add x, y
@@ -39,7 +42,10 @@ impl X86BasicOpt {
                     }
                 }
             }
-            index += 1;
+            
+            if !removed {
+                index += 1;
+            }
         }
     }
 }

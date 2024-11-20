@@ -1,3 +1,4 @@
+use crate::ydbg;
 use crate::Optimizations::Pass;
 use crate::IR::{ir::Br, ir::BrCond};
 
@@ -17,6 +18,7 @@ impl Pass for DeadBlockElimination {
     }
     
     fn run_func(&self, func: &mut crate::prelude::Function) {
+        ydbg!("[DBE] running dead block elimination");
         let mut used_blocks = Vec::new();
 
         // CHECK FOR ALL USED BLOCKS

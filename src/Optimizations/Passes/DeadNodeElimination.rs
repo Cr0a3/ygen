@@ -1,3 +1,4 @@
+use crate::ydbg;
 use crate::Optimizations::Analysis::LivenessAnalysis;
 use crate::Optimizations::Pass;
 
@@ -16,6 +17,8 @@ impl Pass for DeadNodeElimination_ {
     }
     
     fn run_func(&self, func: &mut crate::prelude::Function) {
+        ydbg!("[DNE] running dead node elimination");
+        
         let liveness = LivenessAnalysis::analayze(func);
 
         // now we can iterate over all normal nodes

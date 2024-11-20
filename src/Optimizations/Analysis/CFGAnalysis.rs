@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
-use crate::IR::{ir, Block, BlockId, Function};
+use crate::{ydbg, IR::{ir, Block, BlockId, Function}};
+
+use super::BlockBranchAnalysis;
 
 /// Analysis which blocks are the successors and predecessors
 /// of the block
@@ -17,7 +19,7 @@ impl CFGAnalysis {
     pub fn analyze(func: &Function) -> Self {
         let mut analyzer = Self {
             succesors: HashMap::new(),
-            predecessors: HashMap::new(),
+            predecessors: HashMap::new()
         };
 
         for block in &func.blocks {
@@ -64,5 +66,66 @@ impl CFGAnalysis {
         };
 
         preds
+    }
+
+    /// Returns if the block `dominator` dominates the block `block`
+    pub fn dominates(&self, dominator: &BlockId, block: &BlockId) -> bool {
+        let Some(succs) = self.succesors.get(block) else {
+            panic!("unanalyzed block: {}", block.name)
+        };  
+
+        succs.contains(dominator)
+    }
+
+    /// Returns if the block `predecator` predecates the block `block`
+    pub fn predicates(&self, predecator: &BlockId, block: &BlockId) -> bool {
+        let Some(preds) = self.predecessors.get(block) else {
+            panic!("unanalyzed block: {}", block.name)
+        };  
+
+        preds.contains(predecator)
+    }
+
+    /// Returns if the given block branches to the block
+    pub fn branches_to(&self, from: &BlockId, source: &BlockId) -> bool {
+        let mut branch = false;
+        
+        for succs in self.successors(from) {
+            for succ in self.successors(succs) {
+
+            }
+        }
+
+        branch
+    }
+
+    /// A back edge exists if a successor block (header) dominates its predecessor (current).
+    pub fn back_edge(&self, block: &BlockId) -> bool {
+        // block -> itself 
+
+        let mut back_edge = false;
+        
+        let succs = self.successors(block);
+        for succ in succs {
+            if succ != block {
+                if self.dominates(succ, block) && self.branches_to(block, succ) {
+                    back_edge = true;
+                    break;
+                }
+            }
+        } 
+
+        if back_edge {
+            ydbg!("[CFG] the block {} has a back edge", block.name);
+        }
+
+        back_edge
+    }
+
+    /// Orders the block vector
+    pub fn order(blocks: &Vec<Block>) -> Vec<Block> {
+        let mut ordered = Vec::new();
+
+        ordered
     }
 }
