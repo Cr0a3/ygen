@@ -18,11 +18,15 @@ def Pat<Copy mem -> gr> {
     asm -> mov $out, $1;
 }
 
-def Pat<Add gr, gr -> gr> {
-    asm -> lea $out, [$1 + $2];
+def Pat<Add .., .. -> ..> int
+    map %t1, gr
+{
+    asm -> mov %t1, $1;
+    asm -> add %t1, $2;
+    asm -> mov $out, %t1;
 }
 
-def Pat<Sub gr, gr -> gr> int
+def Pat<Sub .., .. -> ..> int
     map %t1, gr
 {
     asm -> mov %t1, $1;

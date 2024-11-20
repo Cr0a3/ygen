@@ -3,7 +3,7 @@ use std::fmt::Display;
 use crate::{Target::x86::get_call, IR::TypeMetadata};
 
 /// The register variants for x64
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[allow(missing_docs)]
 pub enum X64RegVariant {
     Rax, Rbx, Rcx, Rdx,
@@ -18,7 +18,7 @@ pub enum X64RegVariant {
 }
 
 /// The size for a register or memory displacment in the x64 backend
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[allow(missing_docs)]
 pub enum X64RegSize {
     Byte,
@@ -42,7 +42,7 @@ impl From<usize> for X64RegSize {
 }
 
 /// An x64 register
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Hash)]
 #[allow(missing_docs)]
 pub struct X64Reg {
     pub size: X64RegSize,
