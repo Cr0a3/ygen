@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use opt::X86BasicOpt;
 
@@ -19,11 +19,17 @@ mod auto_gen {
     use crate::CodeGen::dag::*;
     use crate::CodeGen::dag;
     use super::super::asm::*;
+
+    fn lower_br(asm: &mut Vec<Asm>, node: DagNode) {
+        let DagOpCode::Br(target) = node.get_opcode() else { unreachable!() };
+        asm.push( Asm::with1(Mnemonic::Jmp, Operand::BlockRel(crate::Target::x86::add_block_rel(target))));
+    }
+
     include!("dag.def");
 }
 
-pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc) -> HashMap<BlockId, Vec<Box<dyn McInstr>>> {
-    let mut blocks = HashMap::new();
+pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc) -> Vec<(BlockId, Vec<Box<dyn McInstr>>)> {
+    let mut blocks = Vec::new();
     
     for (name, nodes) in &mut func.blocks {
         let mut asm: Vec<X64Instr> = Vec::new();
@@ -51,7 +57,7 @@ pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc)
                 mc_instrs.push(Box::new(instr));
         }
 
-        blocks.insert(name.to_owned(), mc_instrs);
+        blocks.push((name.to_owned(), mc_instrs));
     };
 
     blocks

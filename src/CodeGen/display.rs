@@ -62,6 +62,7 @@ impl Display for DagOpCode {
             DagOpCode::Sub => write!(f, "sub")?,
             DagOpCode::GetFramePtr => write!(f, "intrinsics.getFramePtr")?,
             DagOpCode::GetStackPtr => write!(f, "intrinsics.getStackPtr")?,
+            DagOpCode::Br(block) => write!(f, "branch {block}")?,
             
         }
         

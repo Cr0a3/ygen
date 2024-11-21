@@ -8,6 +8,9 @@ pub mod alloc;
 /// X64 assembly
 pub mod asm;
 
+use std::collections::HashMap;
+use std::sync::{Mutex, Once};
+
 use reg::X64Reg;
 
 use crate::CodeGen::{dag_lower::DagLower, regalloc_iterated_col::ItRegCoalAllocBase};
@@ -109,4 +112,47 @@ impl CallConv {
             _ => false,
         }
     }
+}
+
+static mut BLOCK_RELS: Option<Mutex<HashMap<i64, String>>> = None;
+static mut BLOCK_RELS_LAST: i64 = 0;
+static BLOCK_RELS_INIT: Once = Once::new();
+
+fn add_block_rel(target: String) -> i64 {
+    if unsafe { BLOCK_RELS.is_none()} {
+        unsafe {
+            BLOCK_RELS_INIT.call_once(|| {
+                BLOCK_RELS = Some(Mutex::new(HashMap::new()));
+            })
+        }
+    }
+
+    let map = unsafe { BLOCK_RELS.as_ref().expect("Global hashmap not initialized") };
+
+    let mut lock = map.lock().expect("Locking failed");
+
+    lock.insert(unsafe { BLOCK_RELS_LAST }, target);
+
+    unsafe {
+        BLOCK_RELS_LAST += 1;
+        BLOCK_RELS_LAST - 1
+    } 
+}
+
+fn get_block_rel(target: i64) -> String {
+    if unsafe { BLOCK_RELS.is_none()} {
+        unsafe {
+            BLOCK_RELS_INIT.call_once(|| {
+                BLOCK_RELS = Some(Mutex::new(HashMap::new()));
+            })
+        }
+    }
+
+    let map = unsafe { BLOCK_RELS.as_ref().expect("Global hashmap not initialized") };
+
+    let lock = map.lock().expect("Locking failed");
+
+    let target = lock.get(&target).expect("unknown block");
+
+    target.to_owned()
 }

@@ -631,8 +631,6 @@ impl IrLexer {
 
         self.no_pop = true;
 
-        println!("func: {out}");
-
         Ok(TokenType::Func(out))
     }
 }

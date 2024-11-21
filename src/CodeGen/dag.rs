@@ -1,15 +1,13 @@
-use std::collections::HashMap;
-
 use crate::{prelude::IROperand, IR::{BlockId, Type, TypeMetadata, Var}};
 
 use super::{memory::Memory, reg::Reg};
 
-/// A dag function is just a wrapper around a hashmap for the blocks 
+/// A dag function is just a wrapper around a vec for the blocks 
 /// and its dag nodes
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DagFunction {
     /// A block with its dag nodes
-    pub blocks: HashMap<BlockId, Vec<DagNode>>
+    pub blocks: Vec<(BlockId, Vec<DagNode>)>
 }
 
 /// A dag node
@@ -35,6 +33,9 @@ pub enum DagOpCode {
     // Math
     Add,
     Sub,
+
+    // Branches
+    Br(String),
 
     // Intrisnics
     GetFramePtr,

@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::Target::Arch;
 use crate::IR::{Block, Function};
 use super::dag::*;
@@ -18,11 +16,11 @@ impl DagBuilder {
         
         ydbg!("==== BUILD DAG FOR {} ====", func.name);
 
-        let mut blocks = HashMap::new();
+        let mut blocks = Vec::new();
 
         for block in &func.blocks {
             let dag_nodes = DagBuilder::build_block(arch, block);
-            blocks.insert(block.id(), dag_nodes);
+            blocks.push((block.id(), dag_nodes));
         }
 
 

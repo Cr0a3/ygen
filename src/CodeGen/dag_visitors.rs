@@ -1,6 +1,6 @@
 use crate::Target::Arch;
 use crate::IR::instrincs::{DefinedIntrinsic, Intrinsic};
-use crate::IR::Const;
+use crate::IR::{Const, TypeMetadata};
 use crate::IR::{ir::*, Type, Var};
 use super::reg::Reg;
 use super::DagVisitor;
@@ -19,8 +19,11 @@ impl DagVisitor for Alloca {
 }
 
 impl DagVisitor for Br {
-    fn dag_visitor(&self, _dag: &mut Vec<dag::DagNode>) {
-        todo!()
+    fn dag_visitor(&self, dag: &mut Vec<dag::DagNode>) {
+        dag.push( DagNode::new(
+            dag::DagOpCode::Br(self.inner1.name.to_owned()),
+            TypeMetadata::ptr, // doesn't matter
+        ));
     }
 }
 

@@ -105,3 +105,5 @@ def Pat<Sub fp, fp -> fp> <16 x i8>
 def Pat<Copy fp -> fp> <4 x i32> {
     asm -> movdqa $out, $1;
 }
+
+def Pat<Br(_)> hook lower_br {}

@@ -93,12 +93,67 @@ impl TargetRegistry {
 
         let mc = lower.lower(&mut dag, &mut alloc);
 
-        for (_, instrs) in mc {
+        for (name, instrs) in &mc {
+            println!(".{}", name.name);
             for instr in instrs {
-                println!("{}", instr.asm());
+                println!("  {}", instr.asm());
             }
         }
-        todo!("instruction encoding")
+
+        // now we do block linking
+
+        let mut positions = HashMap::new();
+
+        let mut machine_code = HashMap::new();
+        let mut machine_code_len = 0;
+
+        let mut links = Vec::new();
+        let mut block_links = Vec::new();
+
+        for (block, instrs) in mc {
+            positions.insert(block.to_owned(), machine_code_len);
+
+            let mut encoded = Vec::new();
+            for instr in instrs {
+                encoded.extend_from_slice(&instr.encode());
+
+                if let Some(mut reloc) = instr.relocation() {
+                    reloc.at += encoded.len();
+                    
+                    links.push(reloc);
+                }
+
+                if let Some(mut reloc) = instr.branch_to_block() {
+                    reloc.at += encoded.len();
+                    block_links.push((reloc, block.to_owned()));
+                }
+            }
+
+            machine_code_len += encoded.len();
+            machine_code.insert(block.to_owned(), encoded);
+        }
+
+        for (reloc, start) in block_links {
+            let bytes = machine_code.get_mut(&start).unwrap();
+
+            let to = *positions.get(&crate::IR::BlockId{ name: reloc.to }).unwrap() as i32;
+            let from = *positions.get(&start).unwrap() as i32;
+            
+            let mut target = to - from;
+            target += reloc.at as i32;
+            target += reloc.addend as i32;
+            target -= 1;
+
+            let target = target.to_be_bytes();
+
+            let pos = reloc.at as i32 + reloc.addend as i32;
+
+            for idx in 0..4 {
+                bytes[(pos + idx) as usize] = target[(4 - idx) as usize];
+            }
+        }
+
+        todo!();
     }
 
     /// compiles the given function with debug information

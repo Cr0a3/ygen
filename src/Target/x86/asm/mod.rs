@@ -38,6 +38,8 @@ pub enum X64Mnemonic {
     Psubb,
 
     Lea,
+
+    Jmp,
 }
 
 /// A x64 assembly operand
@@ -48,6 +50,7 @@ pub enum X64Operand {
     Const(i64),
     MemDispl(X64MemDispl),
     Tmp(usize),
+    BlockRel(i64),
 }
 
 /// A x64 memory displacment
@@ -111,6 +114,10 @@ impl std::fmt::Display for X64Operand {
                 write!(f, "]")?;
             },
             X64Operand::Tmp(t) => write!(f, "tmps.{t}")?,
+            X64Operand::BlockRel(block) => {
+                let block = crate::Target::x86::get_block_rel(*block);
+                write!(f, ".{block}")?;
+            },
         };
 
         std::fmt::Result::Ok(())
@@ -134,6 +141,7 @@ impl std::fmt::Display for X64Instr {
             X64Mnemonic::Psubw => "psubw",
             X64Mnemonic::Psubd => "psubd",
             X64Mnemonic::Psubq => "psubq",
+            X64Mnemonic::Jmp => "jmp",
         })?;
         
         if let Some(op) = &self.op1 {
@@ -154,10 +162,18 @@ impl std::fmt::Display for X64Instr {
 
 impl McInstr for X64Instr {
     fn asm(&self) -> String {
-        format!("{}", self)
+        format!("{self}")
     }
 
     fn encode(&self) -> Vec<u8> {
-        todo!("x64 instructions do not support encoding yet")
+        todo!()
+    }
+
+    fn branch_to_block(&self) -> Option<crate::Obj::Link> {
+        todo!()
+    }
+
+    fn relocation(&self) -> Option<crate::Obj::Link> {
+        todo!()
     }
 }
