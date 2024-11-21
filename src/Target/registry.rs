@@ -93,11 +93,13 @@ impl TargetRegistry {
 
         let mc = lower.lower(&mut dag, &mut alloc);
 
+        let mut first = true;
         for (name, instrs) in &mc {
-            println!(".{}", name.name);
+            if !first { println!(".{}", name.name); }
             for instr in instrs {
                 println!("  {}", instr.asm());
             }
+            first = false;
         }
 
         // now we do block linking

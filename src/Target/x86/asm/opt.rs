@@ -26,30 +26,6 @@ impl X86BasicOpt {
                 input.remove(index);
                 removed = true;
             }
-
-            // lea x, [y + x] -> add x, y
-            if instr.mnemonic == X64Mnemonic::Lea {
-                if let Some(X64Operand::MemDispl(mem)) = instr.op2 {
-                    if instr.op1 == Some(X64Operand::Reg(mem.base.unwrap_or(X64Reg::Xmm15()))) && mem.index.is_some() {
-                        ydbg!("[X86 OPT] folding lea into add");
-                        input[index] = X64Instr {
-                            mnemonic: X64Mnemonic::Add,
-                            op1: instr.op1,
-                            op2: Some(X64Operand::Reg(mem.index.unwrap())),
-                            op3: None,
-                        };
-                    }
-                    if instr.op1 == Some(X64Operand::Reg(mem.index.unwrap_or(X64Reg::Xmm15()))) && mem.base.is_some() {
-                        ydbg!("[X86 OPT] folding lea into add");
-                        input[index] = X64Instr {
-                            mnemonic: X64Mnemonic::Add,
-                            op1: instr.op1,
-                            op2: Some(X64Operand::Reg(mem.base.unwrap())),
-                            op3: None,
-                        };
-                    }
-                }
-            }
             
             if !removed {
                 index += 1;
@@ -59,36 +35,85 @@ impl X86BasicOpt {
 
     /// Inlines some registers for the given assembly code
     pub fn inline_regs(input: &mut Vec<X64Instr>) {
-        let is_mov = |instr: X64Instr| {
+        let is_mov = |instr: &X64Instr| {
             matches!(instr.mnemonic, X64Mnemonic::Mov | X64Mnemonic::Movdqa | X64Mnemonic::Movsd | X64Mnemonic::Movss)
         };
 
-        let inline_op = |op: X64Operand, map: &HashMap<X64Reg, X64Operand>| -> X64Operand {
-            if let X64Operand::Reg(reg) = op {
-                map.get(&reg).cloned().unwrap_or(op)
-            } else { op }
-        };
+        // How it works:
+        // 1. It creates a list of all temporarys and their value
+        // 2. It checks if the location of the original value gets overriten
+        //  |-> If not it removes the temporary and directly uses its value
 
-        let mut reg_map = HashMap::new();
+        // This here is the "gathering" step
 
-        for instr in input {
-            if is_mov(instr.to_owned()) {
-                if let (Some(X64Operand::Reg(dest)), Some(value)) = (instr.op1, instr.op2) {
-                    reg_map.insert(dest, value);
+        let mut tmps = HashMap::new();
+        let mut original_tmp_assignments = HashMap::new();
+        let mut required_tmps = Vec::new();
+
+        let mut index = 0;
+
+        for instr in input.iter() {
+            if is_mov(instr) {
+                if let Some(X64Operand::Tmp(tmp)) = instr.op1 {
+                    if !tmps.contains_key(&tmp) {
+                        original_tmp_assignments.insert(tmp, index);
+                    } else { panic!("tmps already contains key {tmp}"); }
+                    tmps.insert(tmp, instr.op2.expect("mov expects second operand"));
                 }
             }
 
-            // inline registers
-
-            if !is_mov(instr.to_owned()) {
-                instr.op1 = instr.op1.map(|op| inline_op(op, &reg_map));
-                instr.op2 = instr.op2.map(|op| inline_op(op, &reg_map));
-                instr.op3 = instr.op3.map(|op| inline_op(op, &reg_map));
-
-                if let Some(X64Operand::Reg(dst)) = instr.op1 {
-                    reg_map.remove(&dst);
+            if let Some(op) = &instr.op1 {
+                for (tmp, value) in &tmps {
+                    if op == value {
+                        required_tmps.push(*tmp);
+                    }
                 }
             }
+
+            index += 1;
+        }
+
+        // Then we now have the transformation step
+
+        let mut index = 0;
+        let mut vindex = 0;
+
+        let mut to_remove = Vec::new();
+
+        for instr in input.iter_mut() {
+            let mut marked_as_remove = false;
+
+            for (tmp, value) in &tmps {
+                if required_tmps.contains(tmp) { continue; }
+
+                for (_, key) in &original_tmp_assignments {
+                    if *key == vindex {
+                        marked_as_remove = true;
+                    }
+                }
+
+                if let Some(X64Operand::Tmp(ref used_tmp)) = instr.op2 {
+                    if tmp == used_tmp {
+                        instr.op2 = Some(value.to_owned())
+                    } 
+                }
+                if let Some(X64Operand::Tmp(ref used_tmp)) = instr.op3 {
+                    if tmp == used_tmp {
+                        instr.op3 = Some(value.to_owned())
+                    } 
+                }
+            }
+            
+            if marked_as_remove { to_remove.push(index); }
+            else { index += 1; }
+
+            vindex += 1;
+        }
+
+        // now finally we remove the unrequired assignments
+
+        for idx in to_remove {
+            input.remove(idx);
         }
     }
 }

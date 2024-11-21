@@ -40,6 +40,14 @@ pub enum X64Mnemonic {
     Lea,
 
     Jmp,
+
+    Sete,
+    Setne,
+    Setl,
+    Setle,
+    Setg,
+    Setge,
+    Cmp,
 }
 
 /// A x64 assembly operand
@@ -142,6 +150,13 @@ impl std::fmt::Display for X64Instr {
             X64Mnemonic::Psubd => "psubd",
             X64Mnemonic::Psubq => "psubq",
             X64Mnemonic::Jmp => "jmp",
+            X64Mnemonic::Cmp => "cmp",
+            X64Mnemonic::Sete => "sete",
+            X64Mnemonic::Setne => "setne",
+            X64Mnemonic::Setl => "setl",
+            X64Mnemonic::Setle => "setle",
+            X64Mnemonic::Setg => "setg",
+            X64Mnemonic::Setge => "setge",
         })?;
         
         if let Some(op) = &self.op1 {

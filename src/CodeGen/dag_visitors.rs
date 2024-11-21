@@ -69,8 +69,25 @@ impl DagVisitor for Cast {
 }
 
 impl DagVisitor for Cmp {
-    fn dag_visitor(&self, _dag: &mut Vec<dag::DagNode>) {
-        todo!()
+    fn dag_visitor(&self, dag: &mut Vec<dag::DagNode>) {
+        let opcode = match self.getCmpMode() {
+            CmpMode::Eqal => dag::DagOpCode::CmpEq,
+            CmpMode::NotEqal => dag::DagOpCode::CmpNe,
+            CmpMode::GreaterThan => dag::DagOpCode::CmpGt,
+            CmpMode::LessThan => dag::DagOpCode::CmpLt,
+            CmpMode::GreaterThanOrEqual => dag::DagOpCode::CmpGte,
+            CmpMode::LessThanOrEqual => dag::DagOpCode::CmpLte,
+        };
+
+        dag.push( DagNode::new_with_out(
+            opcode, 
+            DagOp::var(self.getOutput()), 
+            vec![
+                DagOp::from(&self.ls), 
+                DagOp::from(&self.rs)
+            ],
+            self.getType()
+        ));
     }
 }
 

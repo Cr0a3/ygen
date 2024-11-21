@@ -103,7 +103,7 @@ impl<'a> ItRegCoalAlloc<'a> {
             }
         } else { unreachable!() };
 
-        let Some(mut free) = self.get_fitting_reg(ty) else {
+        let Some(mut free) = self.get_fitting_reg(dag, ty) else {
             todo!("implement register allocation for stack variables")
         };
 
@@ -115,9 +115,15 @@ impl<'a> ItRegCoalAlloc<'a> {
 
 
     /// Returns a register that fits the type
-    pub fn get_fitting_reg(&mut self, ty: TypeMetadata) -> Option<Reg> {
+    pub fn get_fitting_reg(&mut self, node: &dag::DagNode, mut ty: TypeMetadata) -> Option<Reg> {
         // TODOD: register wishes
         
+        // output of a cmp is not the same as the input type - it's a bool
+        use dag::DagOpCode::*;
+        if matches!(node.opcode, CmpEq | CmpNe | CmpLt | CmpGt | CmpLte | CmpGte) {
+            ty = TypeMetadata::i8;
+        }
+
         let mut index = 0;
 
         for mut reg in self.regs.to_vec() {
@@ -155,8 +161,9 @@ impl<'a> ItRegCoalAlloc<'a> {
             todo!("register allocation currently doesn't support memory displacments");
         }
 
-        let Some(reg) = self.get_fitting_reg(tmp.ty) else {
-            panic!("unable to get fitting register\nTODO: implemnt spills and recalls for tmps");
+        // we pass in any node - it just doesn't matter which one
+        let Some(reg) = self.get_fitting_reg(&&dag::DagNode::ret(TypeMetadata::u8), tmp.ty) else {
+            panic!("unable to get fitting register\nTODO: implement spills and recalls for tmps");
         };
 
         DagOpTarget::Reg(reg)

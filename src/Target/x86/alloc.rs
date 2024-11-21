@@ -38,6 +38,8 @@ pub fn arg_proc(alloc: &mut ItRegCoalAlloc) {
             reg.size = ty.byteSize().into();
 
             alloc.vars.insert(name.to_owned(), DagOpTarget::Reg(Reg::new_x64(reg)));
+            
+            alloc.regs.retain(|listed_reg| *listed_reg != Reg::new_x64(reg) );
         } else {
             ydbg!("[IRC] allocating memory for arg {name}");
             // stack vars are a little harder

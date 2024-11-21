@@ -63,7 +63,12 @@ impl Display for DagOpCode {
             DagOpCode::GetFramePtr => write!(f, "intrinsics.getFramePtr")?,
             DagOpCode::GetStackPtr => write!(f, "intrinsics.getStackPtr")?,
             DagOpCode::Br(block) => write!(f, "branch {block}")?,
-            
+            DagOpCode::CmpEq => write!(f, "cmp.eq")?,            
+            DagOpCode::CmpNe => write!(f, "cmp.ne")?,            
+            DagOpCode::CmpLt => write!(f, "cmp.lt")?,            
+            DagOpCode::CmpGt => write!(f, "cmp.gt")?,            
+            DagOpCode::CmpLte => write!(f, "cmp.lte")?,            
+            DagOpCode::CmpGte => write!(f, "cmp.gte")?,            
         }
         
         std::fmt::Result::Ok(())

@@ -39,11 +39,11 @@ def Pat<Ret> {
 }
 
 def Pat<GetFramePtr -> gr> {
-    asm -> mov $out, X64Operand::Reg(X64Reg::Rbp()); 
+    asm -> mov $out, Operand::Reg(X64Reg::Rbp()); 
 }
 
 def Pat<GetStackPtr -> gr> {
-    asm -> mov $out, X64Operand::Reg(X64Reg::Rsp()); 
+    asm -> mov $out, Operand::Reg(X64Reg::Rsp()); 
 }
 
 def Pat<Add fp, fp -> fp> f32 
@@ -107,3 +107,70 @@ def Pat<Copy fp -> fp> <4 x i32> {
 }
 
 def Pat<Br(_)> hook lower_br {}
+
+
+def Pat<CmpEq .., .. -> ..> int 
+    map %t1, gr
+    map %t2, gr
+{
+    asm -> mov %t1, $2;
+    asm -> mov %t2, $1;
+    asm -> mov $out, Operand::Const(0);
+    asm -> cmp %t1, %t1;
+    asm -> sete $out;
+}
+
+def Pat<CmpNe .., .. -> ..> int 
+    map %t1, gr
+    map %t2, gr
+{
+    asm -> mov %t1, $2;
+    asm -> mov %t2, $1;
+    asm -> mov $out, Operand::Const(0);
+    asm -> cmp %t1, %t1;
+    asm -> setne $out;
+}
+
+def Pat<CmpLt .., .. -> ..> int 
+    map %t1, gr
+    map %t2, gr
+{
+    asm -> mov %t1, $2;
+    asm -> mov %t2, $1;
+    asm -> mov $out, Operand::Const(0);
+    asm -> cmp %t1, %t1;
+    asm -> setl $out;
+}
+
+def Pat<CmpLte .., .. -> ..> int 
+    map %t1, gr
+    map %t2, gr
+{
+    asm -> mov %t1, $2;
+    asm -> mov %t2, $1;
+    asm -> mov $out, Operand::Const(0);
+    asm -> cmp %t1, %t1;
+    asm -> setle $out;
+}
+
+def Pat<CmpGt .., .. -> ..> int 
+    map %t1, gr
+    map %t2, gr
+{
+    asm -> mov %t1, $2;
+    asm -> mov %t2, $1;
+    asm -> mov $out, Operand::Const(0);
+    asm -> cmp %t1, %t1;
+    asm -> setg $out;
+}
+
+def Pat<CmpGte .., .. -> ..> int 
+    map %t1, gr
+    map %t2, gr
+{
+    asm -> mov %t1, $2;
+    asm -> mov %t2, $1;
+    asm -> mov $out, Operand::Const(0);
+    asm -> cmp %t1, %t1;
+    asm -> setge $out;
+}

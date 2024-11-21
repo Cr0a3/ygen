@@ -198,7 +198,7 @@ impl Cmp {
 
     /// Returns the type of the node
     pub fn getType(&self) -> TypeMetadata {
-        self.out.ty
+        self.ls.get_ty()
     }
 }
 

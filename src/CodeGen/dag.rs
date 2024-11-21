@@ -40,6 +40,13 @@ pub enum DagOpCode {
     // Intrisnics
     GetFramePtr,
     GetStackPtr,
+
+    CmpEq,
+    CmpNe,
+    CmpLt,
+    CmpGt,
+    CmpLte,
+    CmpGte,
 }
 
 /// A operand in the dag

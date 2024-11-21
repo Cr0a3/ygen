@@ -1,5 +1,3 @@
-use std::collections::{BTreeMap, HashMap};
-
 use opt::X86BasicOpt;
 
 use crate::CodeGen::dag::DagNode;
@@ -41,6 +39,8 @@ pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc)
 
             let mut node_asm: Vec<X64Instr> = Vec::new();
             auto_gen::compile(&mut node_asm, node.to_owned());
+
+            X86BasicOpt::opt(&mut node_asm);
 
             super::alloc::resolve(tmps, &mut node_asm, alloc);
 
