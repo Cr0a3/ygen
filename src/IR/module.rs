@@ -1,7 +1,7 @@
 use gimli::DwLang;
 
 use crate::debug::DebugRegistry;
-use crate::init_ygen;
+use crate::{init_ygen, ydbg};
 use crate::Obj::{Decl, Linkage, ObjectBuilder};
 use crate::Optimizations::PassManager;
 use crate::Support::{ColorClass, ColorProfile};
@@ -167,8 +167,10 @@ impl Module {
     pub fn runPassMngr(&mut self, mngr: PassManager) {
         for pass in &mngr.passes {
             if self.debug_passes {
-                eprintln!("Running pass: {}", pass.name());
+                ydbg!("Running pass: {}", pass.name());
             }
+
+            pass.run_mod(self);
 
             for (_, func) in &mut self.funcs {
                 pass.run_func(func);
@@ -177,6 +179,7 @@ impl Module {
                     pass.run(block);
                 }
             }
+
         }
     }
 

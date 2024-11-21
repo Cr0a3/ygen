@@ -181,6 +181,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 "dne" | "dead_node" | "dead_node_elim" | "dead-node" | "dead-node-elimination" =>   Some( Passes::DeadNodeElimination() ),
                 "dbe" | "dead_block" | "dead_block_elim" | "dead-block" | "dead-block-elimination" =>   Some( Passes::DeadBlockElimination() ),
                 "instcombine" | "instrcombine" =>   Some( Passes::InstrCombine() ),
+                "ucr" =>   Some( Passes::UnusedCallRemovement() ),
                 _ => {eprintln!("unkown pass: {}", pass); None },
             };
 
@@ -195,6 +196,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         opts.add( Passes::InstrCombine() );
         opts.add( Passes::ConstantEvaluation() );
+        opts.add( Passes::UnusedCallRemovement() );
         opts.add( Passes::DeadBlockElimination() );
         opts.add( Passes::DeadNodeElimination() );
 

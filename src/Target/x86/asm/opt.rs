@@ -15,10 +15,7 @@ impl X86BasicOpt {
         };
 
         let mut index = 0;
-        
-        for instr in input.iter() { println!("{instr}"); }
         X86BasicOpt::inline_regs(input);
-        //return;
 
         for instr in input.clone() {
             let mut removed = false;

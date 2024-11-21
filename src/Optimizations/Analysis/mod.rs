@@ -1,10 +1,10 @@
-#[allow(hidden_glob_reexports)]
 mod BlockBrs;
-#[allow(hidden_glob_reexports)]
 mod Liveness;
-#[allow(hidden_glob_reexports)]
-mod CFGAnalysis;
+mod CfgAnalysis;
+
+mod LeafFunc;
 
 pub use BlockBrs::*;
 pub use Liveness::*;
-pub use CFGAnalysis::*;
+pub use CfgAnalysis::*;
+pub use LeafFunc::*;

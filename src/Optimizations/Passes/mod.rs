@@ -6,8 +6,11 @@ mod DeadNodeElimination;
 mod DeadBlockElimination;
 #[allow(hidden_glob_reexports)]
 mod InstrCombine;
+#[allow(hidden_glob_reexports)]
+mod UnusedCallRemovement;
 
 pub use ConstantEvaluation::*;
 pub use DeadNodeElimination::*;
 pub use DeadBlockElimination::*;
 pub use InstrCombine::*;
+pub use UnusedCallRemovement::*;
