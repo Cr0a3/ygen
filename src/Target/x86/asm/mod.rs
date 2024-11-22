@@ -5,21 +5,21 @@ pub mod opt;
 
 use crate::Target::instr::McInstr;
 
-use super::reg::{X64Reg, X64RegSize};
+use super::reg::{X86Reg, X86RegSize};
 
-/// A x64 assembly instruction
+/// A X86 assembly instruction
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct X64Instr {
-    pub(crate) mnemonic: X64Mnemonic,
-    pub(crate) op1: Option<X64Operand>,
-    pub(crate) op2: Option<X64Operand>,
-    pub(crate) op3: Option<X64Operand>,
+pub struct X86Instr {
+    pub(crate) mnemonic: X86Mnemonic,
+    pub(crate) op1: Option<X86Operand>,
+    pub(crate) op2: Option<X86Operand>,
+    pub(crate) op3: Option<X86Operand>,
 }
 
-/// A x64 assembly mnemonic
+/// A X86 assembly mnemonic
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[allow(missing_docs)]
-pub enum X64Mnemonic {
+pub enum X86Mnemonic {
     Mov,
     Movss,
     Movsd,
@@ -50,49 +50,49 @@ pub enum X64Mnemonic {
     Cmp,
 }
 
-/// A x64 assembly operand
+/// A X86 assembly operand
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[allow(missing_docs)]
-pub enum X64Operand {
-    Reg(X64Reg),
+pub enum X86Operand {
+    Reg(X86Reg),
     Const(i64),
-    MemDispl(X64MemDispl),
+    MemDispl(X86MemDispl),
     Tmp(usize),
     BlockRel(i64),
 }
 
-/// A x64 memory displacment
+/// A X86 memory displacment
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct X64MemDispl {
-    base: Option<X64Reg>,
-    option: X64MemOption,
-    index: Option<X64Reg>,
+pub struct X86MemDispl {
+    base: Option<X86Reg>,
+    option: X86MemOption,
+    index: Option<X86Reg>,
     displ: Option<i32>,
     scale: Option<i32>,
-    size: X64RegSize,
+    size: X86RegSize,
 }
 
-/// What to do in the x64 displacment
+/// What to do in the X86 displacment
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum X64MemOption {
+pub enum X86MemOption {
     /// `base + ...`
     Plus,
     /// no operation (like `[rax]`)
     Nothing
 }
 
-impl std::fmt::Display for X64Operand {
+impl std::fmt::Display for X86Operand {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            X64Operand::Reg(x64) => write!(f, "{x64}")?,
-            X64Operand::Const(imm) => write!(f, "{imm}")?,
-            X64Operand::MemDispl(mem) => {
+            X86Operand::Reg(X86) => write!(f, "{X86}")?,
+            X86Operand::Const(imm) => write!(f, "{imm}")?,
+            X86Operand::MemDispl(mem) => {
                 write!(f, "[")?;
                 if let Some(base) = mem.base {
                     write!(f, "{base} ")?;
                 }
 
-                if mem.option == X64MemOption::Plus {
+                if mem.option == X86MemOption::Plus {
                     let mut written = false;
 
                     if let Some(displ) = mem.displ { 
@@ -121,8 +121,8 @@ impl std::fmt::Display for X64Operand {
 
                 write!(f, "]")?;
             },
-            X64Operand::Tmp(t) => write!(f, "tmps.{t}")?,
-            X64Operand::BlockRel(block) => {
+            X86Operand::Tmp(t) => write!(f, "tmps.{t}")?,
+            X86Operand::BlockRel(block) => {
                 let block = crate::Target::x86::get_block_rel(*block);
                 write!(f, ".{block}")?;
             },
@@ -132,31 +132,31 @@ impl std::fmt::Display for X64Operand {
     }
 }
 
-impl std::fmt::Display for X64Instr {
+impl std::fmt::Display for X86Instr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", match self.mnemonic {
-            X64Mnemonic::Mov => "mov",
-            X64Mnemonic::Ret => "ret",
-            X64Mnemonic::Lea => "lea",
-            X64Mnemonic::Add => "add",
-            X64Mnemonic::Movss => "movss",
-            X64Mnemonic::Movsd => "movsd",
-            X64Mnemonic::Movdqa => "movdqa",
-            X64Mnemonic::Paddq => "paddq",
-            X64Mnemonic::Paddd => "paddd",
-            X64Mnemonic::Sub => "sub",
-            X64Mnemonic::Psubb => "psubq",
-            X64Mnemonic::Psubw => "psubw",
-            X64Mnemonic::Psubd => "psubd",
-            X64Mnemonic::Psubq => "psubq",
-            X64Mnemonic::Jmp => "jmp",
-            X64Mnemonic::Cmp => "cmp",
-            X64Mnemonic::Sete => "sete",
-            X64Mnemonic::Setne => "setne",
-            X64Mnemonic::Setl => "setl",
-            X64Mnemonic::Setle => "setle",
-            X64Mnemonic::Setg => "setg",
-            X64Mnemonic::Setge => "setge",
+            X86Mnemonic::Mov => "mov",
+            X86Mnemonic::Ret => "ret",
+            X86Mnemonic::Lea => "lea",
+            X86Mnemonic::Add => "add",
+            X86Mnemonic::Movss => "movss",
+            X86Mnemonic::Movsd => "movsd",
+            X86Mnemonic::Movdqa => "movdqa",
+            X86Mnemonic::Paddq => "paddq",
+            X86Mnemonic::Paddd => "paddd",
+            X86Mnemonic::Sub => "sub",
+            X86Mnemonic::Psubb => "psubq",
+            X86Mnemonic::Psubw => "psubw",
+            X86Mnemonic::Psubd => "psubd",
+            X86Mnemonic::Psubq => "psubq",
+            X86Mnemonic::Jmp => "jmp",
+            X86Mnemonic::Cmp => "cmp",
+            X86Mnemonic::Sete => "sete",
+            X86Mnemonic::Setne => "setne",
+            X86Mnemonic::Setl => "setl",
+            X86Mnemonic::Setle => "setle",
+            X86Mnemonic::Setg => "setg",
+            X86Mnemonic::Setge => "setge",
         })?;
         
         if let Some(op) = &self.op1 {
@@ -175,7 +175,7 @@ impl std::fmt::Display for X64Instr {
     }
 }
 
-impl McInstr for X64Instr {
+impl McInstr for X86Instr {
     fn asm(&self) -> String {
         format!("{self}")
     }

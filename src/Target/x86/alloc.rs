@@ -5,14 +5,14 @@ use crate::CodeGen::dag::DagOpTarget;
 use crate::CodeGen::memory::Memory;
 use crate::CodeGen::reg::Reg;
 use crate::CodeGen::{dag::DagTmpInfo, regalloc_iterated_col::ItRegCoalAlloc};
-use crate::Target::x86::asm::X64Operand;
+use crate::Target::x86::asm::X86Operand;
 use crate::Target::CallConv;
 use crate::IR::TypeMetadata;
 
-use super::asm::X64Instr;
-use super::reg::X64Reg;
+use super::asm::X86Instr;
+use super::reg::X86Reg;
 
-/// Runs x64 argument allocation
+/// Runs X86 argument allocation
 pub fn arg_proc(alloc: &mut ItRegCoalAlloc) {
     ydbg!("[X86] Running argument register allocation");
 
@@ -37,9 +37,9 @@ pub fn arg_proc(alloc: &mut ItRegCoalAlloc) {
 
             reg.size = ty.byteSize().into();
 
-            alloc.vars.insert(name.to_owned(), DagOpTarget::Reg(Reg::new_x64(reg)));
+            alloc.vars.insert(name.to_owned(), DagOpTarget::Reg(Reg::new_x86(reg)));
             
-            alloc.regs.retain(|listed_reg| *listed_reg != Reg::new_x64(reg) );
+            alloc.regs.retain(|listed_reg| *listed_reg != Reg::new_x86(reg) );
         } else {
             ydbg!("[IRC] allocating memory for arg {name}");
             // stack vars are a little harder
@@ -67,7 +67,7 @@ pub fn arg_proc(alloc: &mut ItRegCoalAlloc) {
     }
 }
 
-pub(super) fn resolve(tmp_infos: Vec<DagTmpInfo>, asm: &mut Vec<X64Instr>, alloc: &mut ItRegCoalAlloc) {    
+pub(super) fn resolve(tmp_infos: Vec<DagTmpInfo>, asm: &mut Vec<X86Instr>, alloc: &mut ItRegCoalAlloc) {    
     let mut tmps = HashMap::new();
 
     for tmp in &tmp_infos {
@@ -77,7 +77,7 @@ pub(super) fn resolve(tmp_infos: Vec<DagTmpInfo>, asm: &mut Vec<X64Instr>, alloc
 
     for instr in asm.iter_mut() {
         if let Some(op1) = &mut instr.op1 {
-            if let X64Operand::Tmp(t) = op1.to_owned() {
+            if let X86Operand::Tmp(t) = op1.to_owned() {
                 let mut resolved = false;
                 for (num,  loc) in &tmps {
                     if *num == t {
@@ -93,7 +93,7 @@ pub(super) fn resolve(tmp_infos: Vec<DagTmpInfo>, asm: &mut Vec<X64Instr>, alloc
         }
         
         if let Some(op2) = &mut instr.op2 {
-            if let X64Operand::Tmp(t) = op2.to_owned() {
+            if let X86Operand::Tmp(t) = op2.to_owned() {
                 let mut resolved = false;
                 for (num,  loc) in &tmps {
                     if *num == t {
@@ -109,7 +109,7 @@ pub(super) fn resolve(tmp_infos: Vec<DagTmpInfo>, asm: &mut Vec<X64Instr>, alloc
         }
 
         if let Some(op3) = &mut instr.op3 {
-            if let X64Operand::Tmp(t) = op3.to_owned() {
+            if let X86Operand::Tmp(t) = op3.to_owned() {
                 let mut resolved = false;
                 for (num,  loc) in &tmps {
                     if *num == t {
@@ -137,7 +137,7 @@ pub(super) fn resolve(tmp_infos: Vec<DagTmpInfo>, asm: &mut Vec<X64Instr>, alloc
 impl CallConv {
     /// Returns the nth x86 argument
     #[inline]
-    pub fn get_x86_arg(&self, num: usize, ty: TypeMetadata) -> Option<X64Reg> {
+    pub fn get_x86_arg(&self, num: usize, ty: TypeMetadata) -> Option<X86Reg> {
         if ty.float() { self.get_x86_arg_fp(num) }
         else if ty.isVectorTy() { self.get_x86_arg_fp(num) } // in ygen we do vectors using sse
         else { self.get_x86_arg_gr(num) }
@@ -145,22 +145,22 @@ impl CallConv {
 
     /// Returns the nth x86 gr argument
     #[inline]
-    pub fn get_x86_arg_gr(&self, num: usize) -> Option<X64Reg> {
+    pub fn get_x86_arg_gr(&self, num: usize) -> Option<X86Reg> {
         match self {
             CallConv::WindowsFastCall => match num {
-                0 => Some(X64Reg::Rcx()),
-                1 => Some(X64Reg::Rdx()),
-                2 => Some(X64Reg::R8()),
-                3 => Some(X64Reg::R9()),
+                0 => Some(X86Reg::Rcx()),
+                1 => Some(X86Reg::Rdx()),
+                2 => Some(X86Reg::R8()),
+                3 => Some(X86Reg::R9()),
                 _ => None,
             },
             CallConv::SystemV => match num {
-                0 => Some(X64Reg::Rdi()),
-                1 => Some(X64Reg::Rsi()),
-                2 => Some(X64Reg::Rcx()),
-                3 => Some(X64Reg::Rdx()),
-                4 => Some(X64Reg::R8()),
-                5 => Some(X64Reg::R9()),
+                0 => Some(X86Reg::Rdi()),
+                1 => Some(X86Reg::Rsi()),
+                2 => Some(X86Reg::Rcx()),
+                3 => Some(X86Reg::Rdx()),
+                4 => Some(X86Reg::R8()),
+                5 => Some(X86Reg::R9()),
                 _ => None,
             },
             _ => panic!("the calling convention {self:?} is not usable in the x86 backend")
@@ -169,16 +169,16 @@ impl CallConv {
 
     /// Returns the nth x86 fp argument
     #[inline]
-    pub fn get_x86_arg_fp(&self, num: usize) -> Option<X64Reg> {match self {
+    pub fn get_x86_arg_fp(&self, num: usize) -> Option<X86Reg> {match self {
         CallConv::WindowsFastCall | CallConv::SystemV => match num {
-            0 => Some(X64Reg::Xmm0()),
-            1 => Some(X64Reg::Xmm1()),
-            2 => Some(X64Reg::Xmm2()),
-            3 => Some(X64Reg::Xmm3()),
-            4 => Some(X64Reg::Xmm4()),
-            5 => Some(X64Reg::Xmm5()),
-            6 => Some(X64Reg::Xmm6()),
-            7 => Some(X64Reg::Xmm7()),
+            0 => Some(X86Reg::Xmm0()),
+            1 => Some(X86Reg::Xmm1()),
+            2 => Some(X86Reg::Xmm2()),
+            3 => Some(X86Reg::Xmm3()),
+            4 => Some(X86Reg::Xmm4()),
+            5 => Some(X86Reg::Xmm5()),
+            6 => Some(X86Reg::Xmm6()),
+            7 => Some(X86Reg::Xmm7()),
             _ => None,
         },
         _ => panic!("the calling convention {self:?} is not usable in the x86 backend")

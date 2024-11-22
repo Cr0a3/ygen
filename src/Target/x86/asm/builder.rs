@@ -1,11 +1,11 @@
-use crate::{CodeGen::{dag::{DagOp, DagOpTarget}, memory::Memory, reg::TargetReg}, Target::x86::reg::{X64Reg, X64RegSize}};
+use crate::{CodeGen::{dag::{DagOp, DagOpTarget}, memory::Memory, reg::TargetReg}, Target::x86::reg::{X86Reg, X86RegSize}};
 
-use super::{X64MemDispl, X64MemOption, X64Instr, X64Mnemonic, X64Operand};
+use super::{X86MemDispl, X86MemOption, X86Instr, X86Mnemonic, X86Operand};
 
-impl X64Instr {
-    /// Creates a new x64 assembly instruction with 0 operands
-    pub fn with0(mnemonic: X64Mnemonic) -> X64Instr {
-        X64Instr {
+impl X86Instr {
+    /// Creates a new X86 assembly instruction with 0 operands
+    pub fn with0(mnemonic: X86Mnemonic) -> X86Instr {
+        X86Instr {
             mnemonic: mnemonic,
             op1: None,
             op2: None,
@@ -13,9 +13,9 @@ impl X64Instr {
         }
     }
 
-    /// Creates a new x64 assembly instruction with 1 operand
-    pub fn with1(mnemonic: X64Mnemonic, op: X64Operand) -> X64Instr {
-        X64Instr {
+    /// Creates a new X86 assembly instruction with 1 operand
+    pub fn with1(mnemonic: X86Mnemonic, op: X86Operand) -> X86Instr {
+        X86Instr {
             mnemonic: mnemonic,
             op1: Some(op),
             op2: None,
@@ -23,9 +23,9 @@ impl X64Instr {
         }
     }
 
-    /// Creates a new x64 assembly instruction with 2 operands
-    pub fn with2(mnemonic: X64Mnemonic, op1: X64Operand, op2: X64Operand) -> X64Instr {
-        X64Instr {
+    /// Creates a new X86 assembly instruction with 2 operands
+    pub fn with2(mnemonic: X86Mnemonic, op1: X86Operand, op2: X86Operand) -> X86Instr {
+        X86Instr {
             mnemonic: mnemonic,
             op1: Some(op1),
             op2: Some(op2),
@@ -33,9 +33,9 @@ impl X64Instr {
         }
     }
 
-    /// Creates a new x64 assembly instruction with 3 operands
-    pub fn with3(mnemonic: X64Mnemonic, op1: X64Operand, op2: X64Operand, op3: X64Operand) -> X64Instr {
-        X64Instr {
+    /// Creates a new X86 assembly instruction with 3 operands
+    pub fn with3(mnemonic: X86Mnemonic, op1: X86Operand, op2: X86Operand, op3: X86Operand) -> X86Instr {
+        X86Instr {
             mnemonic: mnemonic,
             op1: Some(op1),
             op2: Some(op2),
@@ -44,68 +44,68 @@ impl X64Instr {
     }
 }
 
-impl From<DagOp> for X64Operand {
+impl From<DagOp> for X86Operand {
     fn from(dag: DagOp) -> Self {
         if !dag.allocated {
-            panic!("operand to use in dag for the x64 backend needs to be allocated");
+            panic!("operand to use in dag for the X86 backend needs to be allocated");
         }
         
         dag.target.into()
     }
 }
 
-impl From<DagOpTarget> for X64Operand {
+impl From<DagOpTarget> for X86Operand {
     fn from(value: DagOpTarget) -> Self {
         match value {
             crate::CodeGen::dag::DagOpTarget::Reg(reg) => match reg.reg {
-                crate::CodeGen::reg::TargetReg::X64(x64) => X64Operand::Reg(x64),
+                crate::CodeGen::reg::TargetReg::X86(X86) => X86Operand::Reg(X86),
             },
-            crate::CodeGen::dag::DagOpTarget::Constant(constant) => X64Operand::Const(constant.val() as i64),
-            crate::CodeGen::dag::DagOpTarget::Mem(mem) => X64Operand::MemDispl(mem.into()),
-            _ => panic!("variables cannot be used as a target in the x64 backend"),
+            crate::CodeGen::dag::DagOpTarget::Constant(constant) => X86Operand::Const(constant.val() as i64),
+            crate::CodeGen::dag::DagOpTarget::Mem(mem) => X86Operand::MemDispl(mem.into()),
+            _ => panic!("variables cannot be used as a target in the X86 backend"),
         }
     }
 }
 
-impl From<&DagOpTarget> for X64Operand {
+impl From<&DagOpTarget> for X86Operand {
     fn from(value: &DagOpTarget) -> Self {
         match value {
             crate::CodeGen::dag::DagOpTarget::Reg(reg) => match reg.reg {
-                crate::CodeGen::reg::TargetReg::X64(x64) => X64Operand::Reg(x64),
+                crate::CodeGen::reg::TargetReg::X86(X86) => X86Operand::Reg(X86),
             },
-            crate::CodeGen::dag::DagOpTarget::Constant(constant) => X64Operand::Const(constant.val() as i64),
-            crate::CodeGen::dag::DagOpTarget::Mem(mem) => X64Operand::MemDispl((*mem).into()),
-            _ => panic!("variables cannot be used as a target in the x64 backend"),
+            crate::CodeGen::dag::DagOpTarget::Constant(constant) => X86Operand::Const(constant.val() as i64),
+            crate::CodeGen::dag::DagOpTarget::Mem(mem) => X86Operand::MemDispl((*mem).into()),
+            _ => panic!("variables cannot be used as a target in the X86 backend"),
         }
     }
 }
 
-impl From<DagOp> for X64Reg {
+impl From<DagOp> for X86Reg {
     #[allow(irrefutable_let_patterns)]
     fn from(value: DagOp) -> Self {
         let DagOpTarget::Reg(codegen_reg) = value.target else {
             panic!("the dag operand {value} has no register as its target")
         };
 
-        let TargetReg::X64(x64_reg) = codegen_reg.reg else {
-            panic!("the dag operand {value} doesn't has a x64 reg as its target");
+        let TargetReg::X86(x86) = codegen_reg.reg else {
+            panic!("the dag operand {value} doesn't has a X86 reg as its target");
         };
 
-        x64_reg
+        x86
     }
 }
 
-impl From<Memory> for X64MemDispl {
+impl From<Memory> for X86MemDispl {
     fn from(mem: Memory) -> Self {
         let base = if mem.fp_relativ {
-            Some(X64Reg::Rbp())
+            Some(X86Reg::Rbp())
         } else if mem.sp_relativ {
-            Some(X64Reg::Rsp())
+            Some(X86Reg::Rsp())
         } else { None };
 
-        X64MemDispl { 
+        X86MemDispl { 
             base: base, 
-            option: X64MemOption::Plus, 
+            option: X86MemOption::Plus, 
             index: None, 
             displ: Some(mem.offset), 
             scale: None, 
@@ -114,23 +114,23 @@ impl From<Memory> for X64MemDispl {
     }
 }
 
-impl From<Memory> for X64Operand {
+impl From<Memory> for X86Operand {
     fn from(mem: Memory) -> Self {
-        X64Operand::MemDispl(mem.into())         
+        X86Operand::MemDispl(mem.into())         
     }
 }
 
-impl X64MemDispl {
-    /// Creates a new x64 mem displacement which gets packed into a x64 operand with
+impl X86MemDispl {
+    /// Creates a new X86 mem displacement which gets packed into a X86 operand with
     /// a base, operation and index
-    pub fn new(base: X64Reg, op: X64MemOption, index: X64Reg) -> X64Operand {
-        X64Operand::MemDispl(Self {
+    pub fn new(base: X86Reg, op: X86MemOption, index: X86Reg) -> X86Operand {
+        X86Operand::MemDispl(Self {
             base: Some(base),
             option: op,
             index: Some(index),
             displ: None,
             scale: None,
-            size: X64RegSize::Qword,
+            size: X86RegSize::Qword,
         })
     }
 }

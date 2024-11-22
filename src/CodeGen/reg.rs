@@ -1,6 +1,6 @@
 use std::fmt::{Debug, Display};
 
-use crate::{Target::{x86::reg::X64Reg, Arch}, IR::TypeMetadata};
+use crate::{Target::{x86::reg::X86Reg, Arch}, IR::TypeMetadata};
 
 /// A register
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -15,7 +15,7 @@ pub struct Reg {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[allow(missing_docs)]
 pub enum TargetReg {
-    X64(crate::Target::x86::reg::X64Reg)
+    X86(crate::Target::x86::reg::X86Reg)
 }
 
 impl Reg {
@@ -31,7 +31,7 @@ impl Reg {
         self.size = new;
 
         match &mut self.reg {
-            TargetReg::X64(x64_reg) => x64_reg.size = new.into(),
+            TargetReg::X86(x86) => x86.size = new.into(),
         };
     }
 
@@ -39,7 +39,7 @@ impl Reg {
     #[inline]
     pub fn is_gr(&self) -> bool {
         match self.reg {
-            TargetReg::X64(x64) => x64.is_gr(),
+            TargetReg::X86(X86) => X86.is_gr(),
         }
     }
 
@@ -47,7 +47,7 @@ impl Reg {
     #[inline]
     pub fn is_fp(&self) -> bool {
         match self.reg {
-            TargetReg::X64(x64) => x64.is_fp(),
+            TargetReg::X86(X86) => X86.is_fp(),
         }
     }
 
@@ -55,22 +55,22 @@ impl Reg {
     #[inline]
     pub fn is_simd(&self, vec: &crate::IR::VecTy) -> bool {
         match self.reg {
-            TargetReg::X64(x64) => x64.is_simd(vec),
+            TargetReg::X86(X86) => X86.is_simd(vec),
         }
     }
 
-    /// Creates an new x64 register
+    /// Creates an new X86 register
     #[inline]
-    pub fn new_x64(reg: X64Reg) -> Reg {
+    pub fn new_x86(reg: X86Reg) -> Reg {
         Reg {
             size: match reg.size {
-                crate::Target::x86::reg::X64RegSize::Byte => 1,
-                crate::Target::x86::reg::X64RegSize::Word => 2,
-                crate::Target::x86::reg::X64RegSize::Dword => 4,
-                crate::Target::x86::reg::X64RegSize::Qword => 8,
-                crate::Target::x86::reg::X64RegSize::SimdVec => 16, // in ygen we use sse registers for simd which are 128bit wide
+                crate::Target::x86::reg::X86RegSize::Byte => 1,
+                crate::Target::x86::reg::X86RegSize::Word => 2,
+                crate::Target::x86::reg::X86RegSize::Dword => 4,
+                crate::Target::x86::reg::X86RegSize::Qword => 8,
+                crate::Target::x86::reg::X86RegSize::SimdVec => 16, // in ygen we use sse registers for simd which are 128bit wide
             },
-            reg: TargetReg::X64(reg),
+            reg: TargetReg::X86(reg),
         }
     }
 
@@ -82,7 +82,7 @@ impl Reg {
     /// 3. `-2` if it is callee saved
     pub fn score(&self) -> usize {
         match self.reg {
-            TargetReg::X64(x64) => x64.score(),
+            TargetReg::X86(X86) => X86.score(),
         }
     }
 }
@@ -90,7 +90,7 @@ impl Reg {
 impl Display for Reg {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let fmt = match self.reg {
-            TargetReg::X64(x64) => format!("{x64}"),
+            TargetReg::X86(X86) => format!("{X86}"),
         };
 
         write!(f, "{fmt}")

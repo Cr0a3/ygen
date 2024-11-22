@@ -9,9 +9,9 @@ pub struct X86BasicOpt;
 
 impl X86BasicOpt {
     /// Optimizes the given input
-    pub fn opt(input: &mut Vec<X64Instr>) {
-        let is_mov = |instr: X64Instr| {
-            matches!(instr.mnemonic, X64Mnemonic::Mov | X64Mnemonic::Movdqa | X64Mnemonic::Movsd | X64Mnemonic::Movss)
+    pub fn opt(input: &mut Vec<X86Instr>) {
+        let is_mov = |instr: X86Instr| {
+            matches!(instr.mnemonic, X86Mnemonic::Mov | X86Mnemonic::Movdqa | X86Mnemonic::Movsd | X86Mnemonic::Movss)
         };
 
         let mut index = 0;
@@ -34,9 +34,9 @@ impl X86BasicOpt {
     }
 
     /// Inlines some registers for the given assembly code
-    pub fn inline_regs(input: &mut Vec<X64Instr>) {
-        let is_mov = |instr: &X64Instr| {
-            matches!(instr.mnemonic, X64Mnemonic::Mov | X64Mnemonic::Movdqa | X64Mnemonic::Movsd | X64Mnemonic::Movss)
+    pub fn inline_regs(input: &mut Vec<X86Instr>) {
+        let is_mov = |instr: &X86Instr| {
+            matches!(instr.mnemonic, X86Mnemonic::Mov | X86Mnemonic::Movdqa | X86Mnemonic::Movsd | X86Mnemonic::Movss)
         };
 
         // How it works:
@@ -54,7 +54,7 @@ impl X86BasicOpt {
 
         for instr in input.iter() {
             if is_mov(instr) {
-                if let Some(X64Operand::Tmp(tmp)) = instr.op1 {
+                if let Some(X86Operand::Tmp(tmp)) = instr.op1 {
                     if !tmps.contains_key(&tmp) {
                         original_tmp_assignments.insert(tmp, index);
                     } else { panic!("tmps already contains key {tmp}"); }
@@ -92,12 +92,12 @@ impl X86BasicOpt {
                     }
                 }
 
-                if let Some(X64Operand::Tmp(ref used_tmp)) = instr.op2 {
+                if let Some(X86Operand::Tmp(ref used_tmp)) = instr.op2 {
                     if tmp == used_tmp {
                         instr.op2 = Some(value.to_owned())
                     } 
                 }
-                if let Some(X64Operand::Tmp(ref used_tmp)) = instr.op3 {
+                if let Some(X86Operand::Tmp(ref used_tmp)) = instr.op3 {
                     if tmp == used_tmp {
                         instr.op3 = Some(value.to_owned())
                     } 

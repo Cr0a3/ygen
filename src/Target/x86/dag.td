@@ -39,11 +39,11 @@ def Pat<Ret> {
 }
 
 def Pat<GetFramePtr -> gr> {
-    asm -> mov $out, Operand::Reg(X64Reg::Rbp()); 
+    asm -> mov $out, Operand::Reg(X86Reg::Rbp()); 
 }
 
 def Pat<GetStackPtr -> gr> {
-    asm -> mov $out, Operand::Reg(X64Reg::Rsp()); 
+    asm -> mov $out, Operand::Reg(X86Reg::Rsp()); 
 }
 
 def Pat<Add fp, fp -> fp> f32 

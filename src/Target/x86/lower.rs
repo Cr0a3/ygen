@@ -8,12 +8,12 @@ use super::asm::*;
 
 #[allow(warnings)]
 mod auto_gen {
-    use super::super::asm::X64Instr as Asm;
-    use super::super::asm::X64Mnemonic as Mnemonic;
-    use super::super::asm::X64MemDispl as MemoryDispl;
-    use super::super::asm::X64MemOption as MemoryOption;
-    use super::super::asm::X64Operand as Operand;
-    use super::super::reg::X64Reg;
+    use super::super::asm::X86Instr as Asm;
+    use super::super::asm::X86Mnemonic as Mnemonic;
+    use super::super::asm::X86MemDispl as MemoryDispl;
+    use super::super::asm::X86MemOption as MemoryOption;
+    use super::super::asm::X86Operand as Operand;
+    use super::super::reg::X86Reg;
     use crate::CodeGen::dag::*;
     use crate::CodeGen::dag;
     use super::super::asm::*;
@@ -30,14 +30,14 @@ pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc)
     let mut blocks = Vec::new();
     
     for (name, nodes) in &mut func.blocks {
-        let mut asm: Vec<X64Instr> = Vec::new();
+        let mut asm: Vec<X86Instr> = Vec::new();
         for node in nodes {
             alloc.apply(node);
             
             let tmps = x86_tmps(node);
 
 
-            let mut node_asm: Vec<X64Instr> = Vec::new();
+            let mut node_asm: Vec<X86Instr> = Vec::new();
             auto_gen::compile(&mut node_asm, node.to_owned());
 
             X86BasicOpt::opt(&mut node_asm);

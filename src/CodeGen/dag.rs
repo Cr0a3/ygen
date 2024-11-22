@@ -56,6 +56,19 @@ pub struct DagOp {
     pub allocated: bool,
     /// the actual location
     pub target: DagOpTarget,
+    /// What to do with the operand
+    pub operation: DagOperandOption,
+}
+
+/// What to do with the operand target
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DagOperandOption {
+    /// value gets loaded
+    Load,
+    /// a constant imm
+    ConstantImm,
+    /// a constant float
+    ConstantFp,
 }
 
 /// A target for an operand
@@ -112,7 +125,8 @@ impl DagOp {
     pub fn var(var: Var) -> Self {
         Self {
             allocated: false,
-            target: DagOpTarget::UnallocatedVar(var)
+            target: DagOpTarget::UnallocatedVar(var),
+            operation: DagOperandOption::Load,
         }
     }
 
@@ -121,8 +135,43 @@ impl DagOp {
     pub fn reg(reg: Reg) -> Self {
         Self { 
             allocated: true, 
-            target: DagOpTarget::Reg(reg) 
+            target: DagOpTarget::Reg(reg),
+            operation: DagOperandOption::Load,
         }
+    }
+
+    /// Creates the dag operand as a imm
+    #[inline]
+    pub fn imm(imm: Type) -> Self {
+        Self { 
+            allocated: true, 
+            target: DagOpTarget::Constant(imm),
+            operation: DagOperandOption::ConstantImm,
+        }
+    }
+
+    /// Returns the operation of the dag operand
+    #[inline]
+    pub fn get_operation(&self) -> DagOperandOption {
+        self.operation
+    }
+
+    /// Returns if the operation is load
+    #[inline]
+    pub fn is_operation_load(&self) -> bool {
+        self.get_operation() == DagOperandOption::Load
+    }
+
+    /// Returns if the operation is a constant imm
+    #[inline]
+    pub fn is_operation_cimm(&self) -> bool {
+        self.get_operation() == DagOperandOption::ConstantImm
+    }
+
+    /// Returns if the operation is a constant fp
+    #[inline]
+    pub fn is_operation_cfp(&self) -> bool {
+        self.get_operation() == DagOperandOption::ConstantFp
     }
 }
 
@@ -130,7 +179,12 @@ impl Into<DagOp> for Type {
     fn into(self) -> DagOp {
         DagOp { 
             allocated: true, 
-            target: DagOpTarget::Constant(self) 
+            target: DagOpTarget::Constant(self),
+            operation: {
+                let ty: TypeMetadata = self.into();
+                if ty.float() { DagOperandOption::ConstantFp }
+                else { DagOperandOption::ConstantImm }
+            }
         }
     }
 }
@@ -290,6 +344,14 @@ impl From<IROperand> for DagOp {
             IROperand::Type(ty) => DagOp {
                 allocated: true,
                 target: DagOpTarget::Constant(ty),
+                operation: {
+                    if let IROperand::Var(_) = value { DagOperandOption::Load }
+                    else if let IROperand::Type(_) = value {
+                        let ty: TypeMetadata = value.get_ty();
+                        if ty.float() { DagOperandOption::ConstantFp }
+                        else { DagOperandOption::ConstantImm }
+                    } else { unreachable!() }
+                }
             },
             IROperand::Var(var) => DagOp::var(var),
         }
@@ -302,8 +364,42 @@ impl From<&IROperand> for DagOp {
             IROperand::Type(ty) => DagOp {
                 allocated: true,
                 target: DagOpTarget::Constant(*ty),
+                operation: {
+                    if let IROperand::Var(_) = value { DagOperandOption::Load }
+                    else if let IROperand::Type(_) = value {
+                        let ty: TypeMetadata = value.get_ty();
+                        if ty.float() { DagOperandOption::ConstantFp }
+                        else { DagOperandOption::ConstantImm }
+                    } else { unreachable!() }
+                }
             },
             IROperand::Var(var) => DagOp::var(var.to_owned()),
         }
     }
+}
+
+/// Operation compilation has two possible states which are returned by a function using a boolean
+/// 1. Operation is just a instruction operand
+/// 2. Operation inserts instructions
+/// 3. Operation requires new constant (e.g: x86 constant fps)
+pub trait OperationHandler {
+    /// The type of the operand
+    type Operand;
+    /// The type of the instruction
+    type Instr;
+
+    /// Returns if the operation can just be representet as a operand
+    fn just_op(&self, op: &DagOp) -> bool;
+
+    /// Returns if the operation inserts instructions
+    fn inserts_instrs(&self, op: &DagOp) -> bool;
+
+    /// Returns if the operation requires a new constant (e.g: x86 constant fps)
+    fn requires_new_const(&self, op: &DagOp) -> bool;
+
+    /// Compiles the operation to a operand
+    fn compile_op(&self, op: &DagOp, _constant: Option<&crate::IR::Const>) -> Option<Self::Operand>;
+
+    /// Compiles the operation to a vec of instrs
+    fn compile_instrs(&self, op: &DagOp, _constant: Option<&crate::IR::Const>) -> Option<Vec<Self::Instr>>;
 }
