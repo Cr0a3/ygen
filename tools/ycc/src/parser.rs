@@ -287,7 +287,7 @@ impl<'a> Parser<'a> {
         Some(())
     }
 
-    fn parse_global(&mut self, ty: AstType, name: String) -> Option<()> {
+    fn parse_global(&mut self, _ty: AstType, _name: String) -> Option<()> {
         todo!()
     }
 
@@ -544,7 +544,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_call(&mut self, func: String) -> Option<Box<Expr>> {
+    fn parse_call(&mut self, _func: String) -> Option<Box<Expr>> {
         todo!()
     }
 }

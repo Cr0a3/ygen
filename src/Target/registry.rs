@@ -171,12 +171,12 @@ impl TargetRegistry {
     }
 
     /// compiles the given function with debug information
-    pub fn compile_dbg_fn(&self, func: &crate::IR::Function, dbg: &mut crate::debug::DebugRegistry) -> (Vec<u8>, Vec<crate::Obj::Link>) {
+    pub fn compile_dbg_fn(&self, _func: &crate::IR::Function, _dbg: &mut crate::debug::DebugRegistry) -> (Vec<u8>, Vec<crate::Obj::Link>) {
         todo!()
     }
 
     /// Prints the assembly code of the module to a string
-    pub fn print_asm(&self, module: &crate::IR::Module) -> String {
+    pub fn print_asm(&self, _module: &crate::IR::Module) -> String {
         todo!()
     }
 

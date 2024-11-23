@@ -48,7 +48,7 @@ impl OperationHandler for X86OperationHandler {
             operand = Some(match op.target {
                 DagOpTarget::Mem(mem) => X86Operand::MemDispl(mem.into()),
                 DagOpTarget::Reg(reg) => X86Operand::Reg({
-                    let TargetReg::X86(x86) = reg.reg else { panic!("a non x86 reg in the x86 target is sub-optimial"); };
+                    let TargetReg::X86(x86) = reg.reg;// else { panic!("a non x86 reg in the x86 target is sub-optimial"); };
 
                     x86
                 }),

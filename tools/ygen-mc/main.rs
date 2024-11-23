@@ -1,4 +1,4 @@
-use std::{error::Error, process::exit};
+use std::error::Error;
 
 use ygen::Support::Colorize;
 use ygen::Target::{initializeAllTargets, Triple};

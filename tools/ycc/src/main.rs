@@ -1,5 +1,6 @@
 use ygen::{Support::Cli, Target::Triple};
 
+#[allow(dead_code)]
 mod ast;
 mod codegen;
 mod error;
@@ -49,7 +50,7 @@ fn main() {
         println!("Host-Target: {}", Triple::host());
     }
     
-    let triple = {
+    let _triple = {
         if let Some(triple) = cli.arg_val("triple") {
             match Triple::parse(&triple) {
                 Ok(triple) => triple,
@@ -66,7 +67,7 @@ fn main() {
     let infile = cli.arg_val("in").unwrap();
 
     let code = utils::read_in_file(&infile);
-    let out = utils::out_file(&infile, cli.arg_val("out"));
+    let _out = utils::out_file(&infile, cli.arg_val("out"));
 
     // Lexing Phase
 

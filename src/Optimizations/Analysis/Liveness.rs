@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use ir::Ir;
-use crate::{Optimizations::Analysis::CfgAnalysis::CFGAnalysis, IR::*};
+use crate::IR::*;
 
 /// Analysis the livness of variables
 #[derive(Debug, Clone, PartialEq, Eq)]

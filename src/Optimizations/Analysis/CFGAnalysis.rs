@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{ydbg, IR::{ir, Block, BlockId, Function}};
-
-use super::BlockBranchAnalysis;
+use crate::IR::{ir, Block, BlockId, Function};
 
 /// Analysis which blocks are the successors and predecessors
 /// of the block
@@ -84,48 +82,5 @@ impl CFGAnalysis {
         };  
 
         preds.contains(predecator)
-    }
-
-    /// Returns if the given block branches to the block
-    pub fn branches_to(&self, from: &BlockId, source: &BlockId) -> bool {
-        let mut branch = false;
-        
-        for succs in self.successors(from) {
-            for succ in self.successors(succs) {
-
-            }
-        }
-
-        branch
-    }
-
-    /// A back edge exists if a successor block (header) dominates its predecessor (current).
-    pub fn back_edge(&self, block: &BlockId) -> bool {
-        // block -> itself 
-
-        let mut back_edge = false;
-        
-        let succs = self.successors(block);
-        for succ in succs {
-            if succ != block {
-                if self.dominates(succ, block) && self.branches_to(block, succ) {
-                    back_edge = true;
-                    break;
-                }
-            }
-        } 
-
-        if back_edge {
-            ydbg!("[CFG] the block {} has a back edge", block.name);
-        }
-
-        back_edge
-    }
-
-    /// Orders the block vector
-    pub fn order(blocks: &Vec<Block>) -> Vec<Block> {
-        let mut ordered = Vec::new();
-
-        ordered
     }
 }
