@@ -47,6 +47,7 @@ pub struct TargetRegistry {
     asm_printers: HashMap<super::Arch, AsmPrinter>,
     asm_parser: HashMap<super::Arch, AsmParser>,
     allocators: HashMap<super::Arch, ItRegCoalAllocBase>,
+    allowments: HashMap<super::Arch, TargetBlackList>,
 }
 
 impl TargetRegistry {
@@ -59,6 +60,7 @@ impl TargetRegistry {
             asm_printers: HashMap::new(),
             asm_parser: HashMap::new(),
             allocators: HashMap::new(),
+            allowments: HashMap::new()
         }
     }
 
@@ -69,6 +71,7 @@ impl TargetRegistry {
         self.asm_printers.insert(arch, backend.asm_printer);
         self.asm_parser.insert(arch, backend.parser);
         self.allocators.insert(arch, backend.allocator);
+        self.allowments.insert(arch, backend.allowment);
     }
 
     /// Sets the current target triple (used for selection of the backend to use)
@@ -78,6 +81,12 @@ impl TargetRegistry {
 
     /// compiles the given function
     pub fn compile_fn(&self, func: &crate::IR::Function) -> (Vec<u8>, Vec<crate::Obj::Link>) {
+        let Some(allowment) = self.allowments.get(&self.triple.arch) else {
+            panic!("unregistered type rule list for backend {}", self.triple.arch);
+        };
+
+        allowment.check(&func);
+
         let mut dag = DagBuilder::build(&self.triple.arch, func);
 
         // let dag = DagOptimizer::optimize(dag);
