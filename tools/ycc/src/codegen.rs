@@ -46,25 +46,28 @@ impl CodeGeneration {
 
         let mut fn_ty = FunctionType::new(Vec::new(), ret);
 
-        let DerivedDeclarator::Function(func) = &parsed_args.get(0).unwrap().node else { unreachable!() };
-        let func = func.node.to_owned();
-
-        if func.ellipsis == Ellipsis::Some {
-            fn_ty.activate_dynamic_arguments();
+        if let Some(node) = parsed_args.get(0).cloned() {
+            if let DerivedDeclarator::Function(func) = node.node {
+                let func = func.node.to_owned();
+    
+                if func.ellipsis == Ellipsis::Some {
+                    fn_ty.activate_dynamic_arguments();
+                }
+    
+                for arg in func.parameters {
+                    let DeclaratorKind::Identifier(name) = arg.node.declarator.expect("expected argument name").node.kind.node else {panic!("expected ident")};
+                    let name = name.node.name;
+    
+                    let DeclarationSpecifier::TypeSpecifier(ty) = arg.node.specifiers.get(0).unwrap().to_owned().node else { panic!("exepected type")};
+                    let ty: TypeWrapper = ty.node.into();
+                    let ty: TypeMetadata = ty.into();
+    
+                    
+                    fn_ty.args.push((format!("%{name}"), ty));
+                }
+            }
         }
 
-        for arg in func.parameters {
-            let DeclaratorKind::Identifier(name) = arg.node.declarator.expect("expected argument name").node.kind.node else {panic!("expected ident")};
-            let name = name.node.name;
-
-            let DeclarationSpecifier::TypeSpecifier(ty) = arg.node.specifiers.get(0).unwrap().to_owned().node else { panic!("exepected type")};
-            let ty: TypeWrapper = ty.node.into();
-            let ty: TypeMetadata = ty.into();
-
-            
-            fn_ty.args.push((format!("%{name}"), ty));
-        }
-        
         let mut func = Function::new(name, fn_ty);
 
         func.addBlock("entry");
@@ -105,7 +108,12 @@ impl CodeGeneration {
         match stmt {
             Statement::Labeled(node) => todo!(),
             Statement::Compound(vec) => todo!(),
-            Statement::Expression(node) => todo!(),
+            Statement::Expression(node) => {
+                if let Some(expr) = node {
+                    let expr = expr.node;
+                    self.gen_stmt_expression(func, vars, expr)
+                } else { panic!("empty expressions are currently not supported") }
+            },
             Statement::If(node) => todo!(),
             Statement::Switch(node) => todo!(),
             Statement::While(node) => todo!(),
@@ -133,23 +141,31 @@ impl CodeGeneration {
     fn gen_expression(&mut self, func: &mut Function, vars: &mut HashMap<String, (Var, TypeMetadata)>, expr: Expression) -> Var {
         match expr {
             Expression::Identifier(node) => self.gen_load_var(func, vars, node),
-            Expression::Constant(node) => todo!(),
+            Expression::Constant(node) => self.gen_const(func, node),
             Expression::StringLiteral(node) => todo!(),
             Expression::GenericSelection(node) => todo!(),
             Expression::Member(node) => todo!(),
-            Expression::Call(node) => todo!(),
+            Expression::Call(node) => self.gen_call(func, vars, node.node),
             Expression::CompoundLiteral(node) => todo!(),
             Expression::SizeOfTy(node) => todo!(),
             Expression::SizeOfVal(node) => todo!(),
             Expression::AlignOf(node) => todo!(),
             Expression::UnaryOperator(node) => todo!(),
             Expression::Cast(node) => todo!(),
-            Expression::BinaryOperator(node) => todo!(),
+            Expression::BinaryOperator(node) => self.gen_binary(func, vars, node.node),
             Expression::Conditional(node) => todo!(),
             Expression::Comma(vec) => todo!(),
             Expression::OffsetOf(node) => todo!(),
             Expression::Statement(node) => todo!(),
             Expression::VaArg(node) => todo!("va_args are unsuported"),
+        }
+    }
+
+    fn gen_stmt_expression(&mut self, func: &mut Function, vars: &mut HashMap<String, (Var, TypeMetadata)>, expr: Expression) {
+        match expr {
+            Expression::Call(node) => self.gen_call_wret(func, vars, node.node),
+            Expression::Statement(node) => self.gen_stmt(func, vars, node.node),
+            _ => todo!(),
         }
     }
 
@@ -159,6 +175,77 @@ impl CodeGeneration {
         let (ptr, value_ty) = vars.get(&name).expect(&format!("unallocated variable: {name}"));
 
         func.BuildLoad(ptr.to_owned(), *value_ty)
+    }
+
+    fn gen_const(&mut self, func: &mut Function, node: Box<Node<Constant>>) -> Var {
+        let val = node.node;
+        
+        match val {
+            Constant::Integer(integer) => {
+                let val = match integer.base {
+                    IntegerBase::Decimal => (*integer.number).parse::<i64>().expect("number parsing error"),
+                    IntegerBase::Octal => todo!(),
+                    IntegerBase::Hexadecimal => todo!(),
+                    IntegerBase::Binary => todo!(),
+                };
+
+                let ty = match integer.suffix.size {
+                    IntegerSize::Int => if integer.suffix.unsigned { TypeMetadata::u32 } else { TypeMetadata::i32 },
+                    IntegerSize::Long | IntegerSize::LongLong => if integer.suffix.unsigned { TypeMetadata::u64 } else { TypeMetadata::i64 },
+                };
+
+                func.BuildAssign(Type::from_int(ty, val as f64))
+            },
+            Constant::Float(float) => todo!(),
+            Constant::Character(chr) => todo!(),
+        }
+    }
+
+    fn gen_call_wret(&mut self, func: &mut Function, vars: &mut HashMap<String, (Var, TypeMetadata)>, node: CallExpression) {
+        self.gen_call(func, vars, node);
+    }
+
+    fn gen_call(&mut self, func: &mut Function, vars: &mut HashMap<String, (Var, TypeMetadata)>, node: CallExpression) -> Var {
+        todo!()
+
+    }
+
+    fn gen_binary(&mut self, func: &mut Function, vars: &mut HashMap<String, (Var, TypeMetadata)>, expr: BinaryOperatorExpression) -> Var {
+        let ls = self.gen_expression(func, vars, expr.lhs.node);
+        let rs = self.gen_expression(func, vars, expr.rhs.node);
+
+        match expr.operator.node {
+            BinaryOperator::Index => todo!(),
+            BinaryOperator::Multiply => func.BuildMul(ls, rs),
+            BinaryOperator::Divide => func.BuildDiv(ls, rs),
+            BinaryOperator::Modulo => func.BuildRem(ls, rs),
+            BinaryOperator::Plus => func.BuildAdd(ls, rs),
+            BinaryOperator::Minus => func.BuildSub(ls, rs),
+            BinaryOperator::ShiftLeft => func.BuildShl(ls, rs),
+            BinaryOperator::ShiftRight => func.BuildShr(ls, rs),
+            BinaryOperator::Less => func.BuildCmp(CmpMode::LessThan, ls, rs),
+            BinaryOperator::Greater => func.BuildCmp(CmpMode::GreaterThan, ls, rs),
+            BinaryOperator::LessOrEqual => func.BuildCmp(CmpMode::LessThanOrEqual, ls, rs),
+            BinaryOperator::GreaterOrEqual => func.BuildCmp(CmpMode::GreaterThanOrEqual, ls, rs),
+            BinaryOperator::Equals => func.BuildCmp(CmpMode::Equal, ls, rs),
+            BinaryOperator::NotEquals => func.BuildCmp(CmpMode::NotEuqal, ls, rs),
+            BinaryOperator::BitwiseAnd => func.BuildAnd(ls, rs),
+            BinaryOperator::BitwiseXor => func.BuildXor(ls, rs),
+            BinaryOperator::BitwiseOr => func.BuildOr(ls, rs),
+            BinaryOperator::LogicalAnd => todo!(),
+            BinaryOperator::LogicalOr => todo!(),
+            BinaryOperator::Assign => todo!(),
+            BinaryOperator::AssignMultiply => todo!(),
+            BinaryOperator::AssignDivide => todo!(),
+            BinaryOperator::AssignModulo => todo!(),
+            BinaryOperator::AssignPlus => todo!(),
+            BinaryOperator::AssignMinus => todo!(),
+            BinaryOperator::AssignShiftLeft => todo!(),
+            BinaryOperator::AssignShiftRight => todo!(),
+            BinaryOperator::AssignBitwiseAnd => todo!(),
+            BinaryOperator::AssignBitwiseXor => todo!(),
+            BinaryOperator::AssignBitwiseOr => todo!(),
+        }
     }
 }
 
