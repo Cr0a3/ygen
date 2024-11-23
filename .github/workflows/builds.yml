@@ -2,7 +2,7 @@ name: Release build
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "rewrite" ]
 
 env:
     CARGO_INCREMENTAL: 0
