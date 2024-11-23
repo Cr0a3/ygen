@@ -19,6 +19,8 @@ use reg::X86Reg;
 use crate::CodeGen::{dag_lower::DagLower, regalloc_iterated_col::ItRegCoalAllocBase};
 use crate::CodeGen::reg::{Reg, TargetReg};
 use crate::prelude::TypeMetadata;
+use crate::IR::VecTy;
+use super::black_list::TargetBlackList;
 use super::{asm_printer::AsmPrinter, compile::McCompile, parser::AsmParser, BackendInfos, CallConv};
 
 pub(self) static mut CALLING_CONVENTION: CallConv = CallConv::SystemV;
@@ -71,12 +73,31 @@ pub fn initializeX86Target(call_conv: CallConv) -> BackendInfos {
         arg_processor: Some(alloc::arg_proc),
     };
 
+    let mut allow = TargetBlackList::new();
+
+    allow.disalow_vecs(); // so only our allowed vectors are allowed
+
+    allow.add_supported_vec(VecTy { size: 2, ty: TypeMetadata::i64.into() });
+    allow.add_supported_vec(VecTy { size: 2, ty: TypeMetadata::u64.into() });
+    allow.add_supported_vec(VecTy { size: 2, ty: TypeMetadata::f64.into() });
+
+    allow.add_supported_vec(VecTy { size: 4, ty: TypeMetadata::i32.into() });
+    allow.add_supported_vec(VecTy { size: 4, ty: TypeMetadata::u32.into() });
+    allow.add_supported_vec(VecTy { size: 4, ty: TypeMetadata::f32.into() });
+
+    allow.add_supported_vec(VecTy { size: 8, ty: TypeMetadata::i16.into() });
+    allow.add_supported_vec(VecTy { size: 8, ty: TypeMetadata::u16.into() });
+
+    allow.add_supported_vec(VecTy { size: 16, ty: TypeMetadata::i8.into() });
+    allow.add_supported_vec(VecTy { size: 16, ty: TypeMetadata::u8.into() });
+
     BackendInfos {
         dag: DagLower::new(lower::x86_lower, lower::x86_tmps),
         mc: McCompile {},
         asm_printer: AsmPrinter {},
         parser: AsmParser {},
         allocator: alloc,
+        allowment: allow,
     }
 }
 

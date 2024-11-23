@@ -137,6 +137,10 @@ macro_rules! MathIrNode {
             fn output(&self) -> Option<Var> {
                 Some(self.inner3.to_owned())
             }
+
+            fn ty(&self) -> Option<TypeMetadata> {
+                Some(self.inner1.get_ty())
+            }
         }
         
     };

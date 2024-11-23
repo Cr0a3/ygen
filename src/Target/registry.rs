@@ -5,6 +5,7 @@ use crate::CodeGen::dag_lower::DagLower;
 use crate::CodeGen::regalloc_iterated_col::ItRegCoalAllocBase;
 
 use super::asm_printer::AsmPrinter;
+use super::black_list::TargetBlackList;
 use super::compile::McCompile;
 use super::instr::McInstr;
 use super::parser::AsmParser;
@@ -32,6 +33,8 @@ pub struct BackendInfos {
     pub parser: AsmParser,
     /// The register allocator
     pub allocator: ItRegCoalAllocBase,
+    /// Which types are allowed and which ones aren't
+    pub allowment: TargetBlackList,
 }
 
 /// The target registry is the "main hub" for compiling functions ...

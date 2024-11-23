@@ -51,6 +51,10 @@ impl Ir for Br {
     fn output(&self) -> Option<Var> {
         None
     }
+
+    fn ty(&self) -> Option<crate::prelude::TypeMetadata> {
+        None
+    }
 }
 
 impl EvalOptVisitor for Br {
@@ -115,6 +119,10 @@ impl Ir for BrCond {
     }
     
     fn output(&self) -> Option<Var> {
+        None
+    }
+
+    fn ty(&self) -> Option<crate::prelude::TypeMetadata> {
         None
     }
 }

@@ -39,6 +39,10 @@ impl Ir for Alloca {
     fn output(&self) -> Option<Var> {
         Some(self.inner1.to_owned())
     }
+
+    fn ty(&self) -> Option<crate::prelude::TypeMetadata> {
+        Some(self.getTypeToAlloc()) // techniclly the output type is a ptr
+    }
 }
 
 impl EvalOptVisitor for Alloca {

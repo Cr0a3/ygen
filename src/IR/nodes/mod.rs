@@ -323,6 +323,9 @@ pub trait Ir: Debug + Any + EvalOptVisitor + IsNode + crate::CodeGen::DagVisitor
 
     /// returns the output var
     fn output(&self) -> Option<Var>;
+
+    /// returns the type of the node
+    fn ty(&self) -> Option<TypeMetadata>;
 }
 
 /// A trait used for constant propagination

@@ -41,6 +41,10 @@ impl Ir for Neg {
     fn output(&self) -> Option<Var> {
         Some(self.inner2.to_owned())
     }
+
+    fn ty(&self) -> Option<TypeMetadata> {
+        Some(self.inner1.get_ty())
+    }
 }
 
 impl EvalOptVisitor for Neg {

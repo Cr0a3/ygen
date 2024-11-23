@@ -55,6 +55,10 @@ impl Ir for Load {
     fn output(&self) -> Option<Var> {
         Some(self.inner1.to_owned())
     }
+
+    fn ty(&self) -> Option<TypeMetadata> {
+        Some(self.inner2)
+    }
 }
 
 impl EvalOptVisitor for Load {

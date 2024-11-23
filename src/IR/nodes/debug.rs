@@ -53,6 +53,10 @@ impl Ir for DebugNode {
     fn output(&self) -> Option<crate::prelude::Var> {
         None
     }
+
+    fn ty(&self) -> Option<crate::prelude::TypeMetadata> {
+        None
+    }
 }
 
 impl EvalOptVisitor for DebugNode {

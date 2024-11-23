@@ -67,6 +67,10 @@ impl Ir for Cast {
     fn output(&self) -> Option<Var> {
         Some(self.inner3.to_owned())
     }
+
+    fn ty(&self) -> Option<TypeMetadata> {
+        Some(self.getCastType())
+    }
 }
 
 impl Cast {

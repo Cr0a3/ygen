@@ -107,6 +107,10 @@ impl Ir for Cmp {
     fn output(&self) -> Option<Var> {
         Some(self.out.to_owned())
     }
+
+    fn ty(&self) -> Option<TypeMetadata> {
+        Some(self.getType())
+    }
 }
 
 fn calc_based_on_mode(mode: &CmpMode, ls: &Type, rs: &Type, out: Var) -> Option<Box<dyn Ir>> {

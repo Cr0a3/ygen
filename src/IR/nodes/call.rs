@@ -103,6 +103,10 @@ impl Ir for Call {
     fn output(&self) -> Option<Var> {
         Some(self.out.to_owned())
     }
+
+    fn ty(&self) -> Option<TypeMetadata> {
+        Some(self.func.ty.ret)
+    }
 }
 
 impl IsNode for Call {

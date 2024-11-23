@@ -69,6 +69,10 @@ impl Ir for Phi {
     fn output(&self) -> Option<crate::prelude::Var> {
         Some(self.out.to_owned())
     }
+
+    fn ty(&self) -> Option<TypeMetadata> {
+        Some(self.typ)
+    }
 }
 
 impl EvalOptVisitor for Phi {

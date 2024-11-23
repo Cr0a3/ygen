@@ -62,6 +62,10 @@ impl Ir for GetElemPtr {
     fn output(&self) -> Option<Var> {
         Some(self.out.to_owned())
     }
+
+    fn ty(&self) -> Option<TypeMetadata> {
+        Some(self.ty)
+    }
 }
 
 impl EvalOptVisitor for GetElemPtr {

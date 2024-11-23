@@ -58,6 +58,10 @@ impl Ir for Select {
     fn output(&self) -> Option<Var> {
         Some(self.out.clone())
     }
+    
+    fn ty(&self) -> Option<TypeMetadata> {
+        Some(self.getSelType())
+    }
 }
 
 impl EvalOptVisitor for Select {

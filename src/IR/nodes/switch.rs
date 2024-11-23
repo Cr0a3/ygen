@@ -83,6 +83,10 @@ impl Ir for Switch {
     fn output(&self) -> Option<Var> {
         None
     }
+
+    fn ty(&self) -> Option<TypeMetadata> {
+        Some(self.typ)
+    }
 }
 
 impl EvalOptVisitor for Switch {

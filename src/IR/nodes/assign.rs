@@ -52,6 +52,10 @@ impl Ir for Assign<Var, Type> {
     fn output(&self) -> Option<Var> {
         Some(self.inner1.to_owned())
     }
+
+    fn ty(&self) -> Option<TypeMetadata> {
+        Some(self.getType())
+    }
 }
 
 impl EvalOptVisitor for Assign<Var, Type> {
@@ -114,6 +118,10 @@ impl Ir for Assign<Var, Var> {
     fn output(&self) -> Option<Var> {
         Some(self.inner1.to_owned())
     }
+
+    fn ty(&self) -> Option<TypeMetadata> {
+        Some(self.getType())
+    }
 }
 
 impl EvalOptVisitor for Assign<Var, Var> {
@@ -169,6 +177,10 @@ impl Ir for Assign<Var, Const> {
     
     fn output(&self) -> Option<Var> {
         Some(self.inner1.to_owned())
+    }
+
+    fn ty(&self) -> Option<TypeMetadata> {
+        Some(TypeMetadata::ptr)
     }
 }
 

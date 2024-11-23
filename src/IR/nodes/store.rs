@@ -68,6 +68,10 @@ impl Ir for Store {
     fn output(&self) -> Option<Var> {
         None // technicly the ptr is the output
     }
+
+    fn ty(&self) -> Option<crate::prelude::TypeMetadata> {
+        Some(self.inner2.get_ty())
+    }
 }
 
 impl EvalOptVisitor for Store {

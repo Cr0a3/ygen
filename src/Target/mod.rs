@@ -20,6 +20,9 @@ pub mod asm_printer;
 /// asm parser
 pub mod parser;
 
+/// allows/forbidds target specific stuff
+pub mod black_list;
+
 /// Initializes all targets
 pub fn initializeAllTargets(triple: Triple) -> Result<TargetRegistry, triple::TripleError> {
     let mut registry = TargetRegistry::new(&triple);

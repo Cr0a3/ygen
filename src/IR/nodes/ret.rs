@@ -36,15 +36,20 @@ impl Ir for Return {
     
     fn inputs(&self) -> Vec<Var> {
         if let IROperand::Var(ret) = &self.inner1 { vec![ret.to_owned()] }
-        else { vec![] }
+        else { Vec::new() }
     }
     
     fn inputs_mut(&mut self) -> Vec<&mut Var> {
-        vec![]
+        if let IROperand::Var(ret) = &mut self.inner1 { vec![ret] }
+        else { Vec::new() }
     }
     
     fn output(&self) -> Option<Var> {
         None
+    }
+
+    fn ty(&self) -> Option<TypeMetadata> {
+        Some(self.inner1.get_ty())
     }
 }
 
