@@ -1,10 +1,9 @@
-use ygen::{Support::Cli, Target::Triple};
+use std::process::exit;
 
-mod ast;
+use ygen::{Support::Cli, Target::Triple};
+use lang_c::driver::*;
+
 mod codegen;
-mod error;
-mod lexer;
-mod parser;
 mod utils;
 
 fn main() {
@@ -64,41 +63,24 @@ fn main() {
     };
 
     let infile = cli.arg_val("in").unwrap();
-
-    let code = utils::read_in_file(&infile);
     let out = utils::out_file(&infile, cli.arg_val("out"));
+    
+    let config = Config::default();
+    let parsed = parse(&config, infile);
 
-    // Lexing Phase
-
-    let mut lexer = lexer::Lexer::new(&code);
-
-    lexer.lex();
-
-    let encountered_errors = lexer.errors.len() > 0; 
-
-    for error in &lexer.errors {
-        error.print(&code, &infile);
+    if let Err(err) = parsed {
+        println!("{err}");
+        exit(-1);
     }
 
-    if encountered_errors {
-        std::process::exit(-1);
-    }
 
-    // Parsing phase
+    let parsed = parsed.unwrap();
 
-    let mut parser = parser::Parser::new(&lexer.tokens);
+    let mut codegen = codegen::CodeGeneration::new(parsed.unit.0, triple);
 
-    parser.parse();
+    codegen.codegen();
 
-    let encountered_errors = parser.errors.len() > 0; 
+    let ir = codegen.module.dump();
 
-    for error in &parser.errors {
-        error.print(&code, &infile);
-    }
-
-    if encountered_errors {
-        std::process::exit(-1);
-    }
-
-    println!("{:#?}", parser.out);
+    println!("{}", ir);
 }
