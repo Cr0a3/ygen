@@ -20,6 +20,9 @@ jobs:
             - name: Install Rust toolchain
               run: rustup update --no-self-update stable
 
+            - name: Install deps
+              run: cargo install --git https://github.com/Cr0a3/ygen-backend-gen.git
+
             - name: Create Directorys
               run: |
                 mkdir bin
