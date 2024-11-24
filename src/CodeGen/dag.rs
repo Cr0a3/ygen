@@ -1,4 +1,4 @@
-use crate::{prelude::IROperand, IR::{BlockId, Type, TypeMetadata, Var}};
+use crate::{prelude::IROperand, IR::{BlockId, Const, Type, TypeMetadata, Var}};
 
 use super::{memory::Memory, reg::Reg};
 
@@ -47,6 +47,8 @@ pub enum DagOpCode {
     CmpGt,
     CmpLte,
     CmpGte,
+
+    VecInsrt
 }
 
 /// A operand in the dag
@@ -378,6 +380,8 @@ impl From<&IROperand> for DagOp {
     }
 }
 
+static mut OP_CONSTS: usize = 0;
+
 /// Operation compilation has two possible states which are returned by a function using a boolean
 /// 1. Operation is just a instruction operand
 /// 2. Operation inserts instructions
@@ -400,6 +404,17 @@ pub trait OperationHandler {
     /// Compiles the operation to a operand
     fn compile_op(&self, op: &DagOp, _constant: Option<&crate::IR::Const>) -> Option<Self::Operand>;
 
+    /// Creates a constant 
+    fn create_const(&self, module: &mut crate::IR::Module) -> Const {
+        let num = unsafe { let t = OP_CONSTS; OP_CONSTS += 1; t };
+
+        module.addConst(&format!("bc{num}")).to_owned()
+    }
+
+    /// Returns the temporary in a vector (either 0 or 1 element - for auto generation
+    /// porupises)
+    fn tmp(&self, op: &DagOp, num: usize) -> Vec<DagTmpInfo>;
+
     /// Compiles the operation to a vec of instrs
-    fn compile_instrs(&self, op: &DagOp, _constant: Option<&crate::IR::Const>) -> Option<Vec<Self::Instr>>;
+    fn compile_instrs(&self, op: &DagOp, _constant: Option<&crate::IR::Const>, tmp: DagTmpInfo) -> Option<Vec<Self::Instr>>;
 }

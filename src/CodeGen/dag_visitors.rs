@@ -231,6 +231,21 @@ impl DagVisitor for Switch {
     }
 }
 
+impl DagVisitor for VecInsert {
+    fn dag_visitor(&self, dag: &mut Vec<dag::DagNode>) {
+        dag.push(DagNode::new_with_out(
+            dag::DagOpCode::VecInsrt,
+            DagOp::var(self.out.to_owned()), 
+            vec![
+                DagOp::var(self.vec.to_owned()),
+                DagOp::from(self.elem.to_owned()),
+                DagOp::imm(Type::i64(self.position as i64)),
+            ], 
+            self.vec.ty
+        ));
+    }
+}
+
 impl Intrinsic {
     fn dag_visitor(&self, out: &Var, dag: &mut Vec<dag::DagNode>) {
         match self.instrinc {

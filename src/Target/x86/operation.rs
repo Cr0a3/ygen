@@ -1,4 +1,4 @@
-use crate::CodeGen::{dag::{DagOp, DagOpTarget, DagOperandOption, OperationHandler}, reg::TargetReg};
+use crate::{CodeGen::{dag::{DagOp, DagOpTarget, DagOperandOption, DagTmpInfo, OperationHandler}, reg::TargetReg}, IR::TypeMetadata};
 
 use super::asm::{X86Instr, X86Operand};
 
@@ -59,9 +59,30 @@ impl OperationHandler for X86OperationHandler {
         operand
     }
 
-    fn compile_instrs(&self, op: &DagOp, _constant: Option<&crate::IR::Const>) -> Option<Vec<Self::Instr>> {
+    fn compile_instrs(&self, op: &DagOp, _constant: Option<&crate::IR::Const>, _tmp: DagTmpInfo) -> Option<Vec<Self::Instr>> {
         assert_eq!(op.get_operation(), DagOperandOption::ConstantFp);
 
+        // movd target, [rel {}]
+
         todo!("implement constant fp operation")
+    }
+
+    fn tmp(&self, op: &DagOp, num: usize) -> Vec<DagTmpInfo> {
+        if op.get_operation() != DagOperandOption::ConstantFp {
+            return Vec::new();
+        }
+
+        let mut tfp = DagTmpInfo::new(num, TypeMetadata::f32);
+
+        tfp.require_fp();
+
+        vec![tfp]
+    }
+}
+
+impl X86OperationHandler {
+    /// Creates a new Operation Handler for the X86 backend
+    pub fn new() -> Self {
+        Self {}
     }
 }

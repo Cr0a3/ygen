@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use crate::CodeGen::dag_builder::DagBuilder;
 use crate::CodeGen::dag_lower::DagLower;
 use crate::CodeGen::regalloc_iterated_col::ItRegCoalAllocBase;
+use crate::IR::Module;
 
 use super::asm_printer::AsmPrinter;
 use super::black_list::TargetBlackList;
@@ -80,7 +81,7 @@ impl TargetRegistry {
     }
 
     /// compiles the given function
-    pub fn compile_fn(&self, func: &crate::IR::Function) -> (Vec<u8>, Vec<crate::Obj::Link>) {
+    pub fn compile_fn(&self, func: &crate::IR::Function, module: &mut Module) -> (Vec<u8>, Vec<crate::Obj::Link>) {
         let Some(allowment) = self.allowments.get(&self.triple.arch) else {
             panic!("unregistered type rule list for backend {}", self.triple.arch);
         };
@@ -103,7 +104,7 @@ impl TargetRegistry {
 
         let mut alloc = alloc.fork(&func);
 
-        let mc = lower.lower(&mut dag, &mut alloc);
+        let mc = lower.lower(&mut dag, &mut alloc, module);
 
         let mut first = true;
         for (name, instrs) in &mc {

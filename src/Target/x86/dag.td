@@ -174,3 +174,11 @@ def Pat<CmpGte .., .. -> ..> int
     asm -> cmp %t1, %t1;
     asm -> setge $out;
 }
+
+def Pat<VecInsrt fp, imm, imm -> fp> <4 x i32> 
+    map %t1, gr
+{
+    asm -> mov %t1, $3;
+    asm -> movdqa $out, $1;
+    asm -> pinsrd $out, $2;
+}

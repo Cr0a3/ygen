@@ -1,17 +1,17 @@
 use super::{dag, regalloc_iterated_col::ItRegCoalAlloc};
-use crate::Target::instr::McInstr;
+use crate::{Target::instr::McInstr, IR::Module};
 
 /// Loweres the dag to assembly
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DagLower {
-    lower_func: Option<fn(&mut dag::DagFunction, &mut ItRegCoalAlloc) -> Vec<(crate::IR::BlockId, Vec<Box<dyn McInstr>>)>>,
+    lower_func: Option<fn(&mut dag::DagFunction, &mut ItRegCoalAlloc, &mut Module) -> Vec<(crate::IR::BlockId, Vec<Box<dyn McInstr>>)>>,
     tmp_info: Option<fn(&dag::DagNode) -> Vec<dag::DagTmpInfo>>,
 }
 
 impl DagLower {
     /// Creates a new dag lower
     pub fn new(
-        lower: fn(&mut dag::DagFunction, &mut ItRegCoalAlloc) -> Vec<(crate::IR::BlockId, Vec<Box<dyn McInstr>>)>, 
+        lower: fn(&mut dag::DagFunction, &mut ItRegCoalAlloc, &mut Module) -> Vec<(crate::IR::BlockId, Vec<Box<dyn McInstr>>)>, 
         tmp_info: fn(&dag::DagNode) -> Vec<dag::DagTmpInfo>
     ) -> Self {
         Self {
@@ -21,9 +21,9 @@ impl DagLower {
     }
 
     /// Lowers the dag to assembly
-    pub fn lower(&self, func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc) -> Vec<(crate::IR::BlockId, Vec<Box<dyn McInstr>>)> {
+    pub fn lower(&self, func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc, module: &mut Module) -> Vec<(crate::IR::BlockId, Vec<Box<dyn McInstr>>)> {
         if let Some(lower_func) = self.lower_func {
-            lower_func(func, alloc)
+            lower_func(func, alloc, module)
         } else {
             panic!("no registered dag lowering function")
         }

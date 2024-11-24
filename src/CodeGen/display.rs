@@ -68,7 +68,8 @@ impl Display for DagOpCode {
             DagOpCode::CmpLt => write!(f, "cmp.lt")?,            
             DagOpCode::CmpGt => write!(f, "cmp.gt")?,            
             DagOpCode::CmpLte => write!(f, "cmp.lte")?,            
-            DagOpCode::CmpGte => write!(f, "cmp.gte")?,            
+            DagOpCode::CmpGte => write!(f, "cmp.gte")?,        
+            DagOpCode::VecInsrt => write!(f, "vec.insrt")?,    
         }
         
         std::fmt::Result::Ok(())

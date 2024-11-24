@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::path::PathBuf;
 use std::str::FromStr;
 
-use crate::prelude::{Alloca, Cmp, CmpMode, DebugNode, GetElemPtr, IROperand, Ir, Load, Neg, Phi, Select, Store, Switch};
+use crate::prelude::{Alloca, Cmp, CmpMode, DebugNode, GetElemPtr, IROperand, Ir, Load, Neg, Phi, Select, Store, Switch, VecInsert};
 use crate::Obj::Linkage;
 use crate::IR::block::BlockId;
 use crate::IR::typ::VecTy;
@@ -444,6 +444,7 @@ impl IrParser {
                         "shl" => self.parse_shl(name)?,
                         "shr" => self.parse_shr(name)?,
                         "getelemptr" => self.parse_getelemptr(name)?,
+                        "vec_insert" => self.parse_vec_insrt(name)?,
                         _ => {
                             let ty = self.parse_type()?;
                             self.input.pop_front(); // the type
@@ -1153,6 +1154,46 @@ impl IrParser {
             },
             index: index,
         }.clone_box())
+    }
+
+    fn parse_vec_insrt(&mut self, out_name: String) -> Result<Box<dyn Ir>, IrError> {
+        self.input.pop_front();
+
+        let ty = self.parse_type()?;
+        self.input.pop_front();
+
+        self.expect(TokenType::Var(String::new()))?;
+        let vec = if let TokenType::Var(vec) = &self.current_token()?.typ {
+            Var {
+                name: vec.to_owned(),
+                ty
+            }
+        } else { unreachable!() };
+        self.input.pop_front();
+
+        self.expect(TokenType::Comma)?;
+        self.input.pop_front();
+
+        let op_ty = self.parse_type()?;
+        self.input.pop_front();
+        let elem = self.parse_operand(op_ty)?;
+        self.input.pop_front();
+
+        self.expect(TokenType::Comma)?;
+        self.input.pop_front();
+
+        self.expect(TokenType::Int(0.0))?;
+        let pos = if let TokenType::Int(pos) = &self.current_token()?.typ { 
+            *pos as usize 
+        } else { unreachable!() };
+        self.input.pop_front();
+
+        Ok(Box::new(VecInsert {
+            out: Var { name: out_name, ty},
+            vec: vec,
+            elem: elem,
+            position: pos,
+        }))
     }
 }
 

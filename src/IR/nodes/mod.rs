@@ -19,6 +19,7 @@ mod switch;
 mod neg;
 mod select;
 mod getelemptr;
+mod vec_insr_extr;
 
 pub use assign::*;
 pub use call::*;
@@ -188,6 +189,22 @@ IrTypeWith3!(Load, Var, TypeMetadata, IROperand, is_load);
 
 IrTypeWith2!(Neg, IROperand, Var, is_neg);
 
+IrTypeWith3!(VecExtract, /*out*/Var, Var, usize, is_vec_extract);
+
+/// Inserts a value into a vector
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct VecInsert {
+    pub out: Var,
+    pub vec: Var,
+    pub elem: IROperand,
+    pub position: usize,
+}
+
+impl IsNode for VecInsert {
+    fn is_vec_insert(&self) -> bool {
+        true
+    }
+}
 /// The cmp node is used to compare values
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Cmp {
@@ -286,6 +303,8 @@ pub trait IsNode {
     fn is_select(&self) -> bool { false }
     fn is_store(&self) -> bool { false }
     fn is_switch(&self) -> bool { false }
+    fn is_vec_insert(&self) -> bool { false }
+    fn is_vec_extract(&self) -> bool { false }
 }
 
 use crate::Support::{AsAny, ColorClass, ColorProfile};

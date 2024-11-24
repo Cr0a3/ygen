@@ -17,6 +17,9 @@ mod auto_gen {
     use crate::CodeGen::dag::*;
     use crate::CodeGen::dag;
     use super::super::asm::*;
+    use crate::Target::x86::operation::X86OperationHandler as OperationHandler;
+
+    use crate::CodeGen::dag::OperationHandler as oph;
 
     fn lower_br(asm: &mut Vec<Asm>, node: DagNode) {
         let DagOpCode::Br(target) = node.get_opcode() else { unreachable!() };
@@ -26,7 +29,7 @@ mod auto_gen {
     include!("dag.def");
 }
 
-pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc) -> Vec<(BlockId, Vec<Box<dyn McInstr>>)> {
+pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc, module: &mut crate::IR::Module) -> Vec<(BlockId, Vec<Box<dyn McInstr>>)> {
     let mut blocks = Vec::new();
     
     for (name, nodes) in &mut func.blocks {
@@ -38,7 +41,7 @@ pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc)
 
 
             let mut node_asm: Vec<X86Instr> = Vec::new();
-            auto_gen::compile(&mut node_asm, node.to_owned());
+            auto_gen::compile(&mut node_asm, node.to_owned(), module);
 
             X86BasicOpt::opt(&mut node_asm);
 

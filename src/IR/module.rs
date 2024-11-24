@@ -195,7 +195,7 @@ impl Module {
                     registry.compile_dbg_fn(&func, dbg)
                 } else { panic!("debugging needs to be initialized in order to use debugging information")}
             } else {
-                registry.compile_fn(&func)
+                registry.compile_fn(&func, self)
             };
 
             for link in links {

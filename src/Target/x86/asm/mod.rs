@@ -48,6 +48,11 @@ pub enum X86Mnemonic {
     Setg,
     Setge,
     Cmp,
+
+    Pinsrb,
+    Pinsrw,
+    Pinsrd,
+    Pinsrq,
 }
 
 /// A X86 assembly operand
@@ -157,6 +162,10 @@ impl std::fmt::Display for X86Instr {
             X86Mnemonic::Setle => "setle",
             X86Mnemonic::Setg => "setg",
             X86Mnemonic::Setge => "setge",
+            X86Mnemonic::Pinsrb => "pinsrb",
+            X86Mnemonic::Pinsrw => "pinsrw",
+            X86Mnemonic::Pinsrd => "pinsrd",
+            X86Mnemonic::Pinsrq => "pinsrq",
         })?;
         
         if let Some(op) = &self.op1 {
