@@ -121,7 +121,7 @@ impl<'a> ItRegCoalAlloc<'a> {
         // output of a cmp is not the same as the input type - it's a bool
         use dag::DagOpCode::*;
         if matches!(node.opcode, CmpEq | CmpNe | CmpLt | CmpGt | CmpLte | CmpGte) {
-            ty = TypeMetadata::i8;
+            ty = TypeMetadata::u8;
         }
 
         let mut index = 0;
