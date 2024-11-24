@@ -218,7 +218,7 @@ pub trait BuildCmp<T, U> {
 
 impl BuildCmp<Var, Var> for Function {
     fn BuildCmp(&mut self, mode: CmpMode, ls: Var, rs: Var) -> Var {
-        let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.get_mut(self.curr_block).expect("invalid current block");
         
         let out = Var::new(block, TypeMetadata::u8);
 
@@ -230,7 +230,7 @@ impl BuildCmp<Var, Var> for Function {
 
 impl BuildCmp<Var, Type> for Function {
     fn BuildCmp(&mut self, mode: CmpMode, ls: Var, rs: Type) -> Var {
-        let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.get_mut(self.curr_block).expect("invalid current block");
         
         let out = Var::new(block, TypeMetadata::u8);
 
@@ -242,7 +242,7 @@ impl BuildCmp<Var, Type> for Function {
 
 impl BuildCmp<Type, Var> for Function {
     fn BuildCmp(&mut self, mode: CmpMode, ls: Type, rs: Var) -> Var {
-        let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.get_mut(self.curr_block).expect("invalid current block");
         
         let out = Var::new(block, TypeMetadata::u8);
 
@@ -254,7 +254,7 @@ impl BuildCmp<Type, Var> for Function {
 
 impl BuildCmp<Type, Type> for Function {
     fn BuildCmp(&mut self, mode: CmpMode, ls: Type, rs: Type) -> Var {
-        let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.get_mut(self.curr_block).expect("invalid current block");
         
         let out = Var::new(block, TypeMetadata::u8);
 

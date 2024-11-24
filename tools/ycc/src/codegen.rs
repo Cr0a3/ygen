@@ -6,16 +6,16 @@ use ygen::{prelude::*, Target::Triple, IR::{FunctionType, Module, TypeMetadata}}
 /// Code generation using ygen
 pub struct CodeGeneration {
     src: Vec<Node<ExternalDeclaration>>,
-    triple: Triple,
     pub module: Module,
+    if_count: usize,
 
 }
 
 impl CodeGeneration {
-    pub fn new(src: Vec<Node<ExternalDeclaration>>, triple: Triple) -> Self {
+    pub fn new(src: Vec<Node<ExternalDeclaration>>) -> Self {
         Self {
-            src,
-            triple,
+            if_count: 0,
+            src: src,
             module: Module::new(),
         }
     }
@@ -31,11 +31,33 @@ impl CodeGeneration {
     }
 
     fn gen_func(&mut self, node: Node<FunctionDefinition>) {
-        let ret = node.node.specifiers.get(0).expect("expected return type").node.clone();
-        let ret: TypeWrapper = if let DeclarationSpecifier::TypeSpecifier(ty) = ret {
-            ty.node.into()
-        } else { panic!("{:?}", ret) };
-        let ret: TypeMetadata = ret.into();
+        let mut extrn = false;
+        let mut ret: Option<TypeMetadata> = None;
+
+        for specifier in node.node.specifiers {
+            let specifier = specifier.node;
+
+            if let DeclarationSpecifier::StorageClass(storage_class) = &specifier {
+                let storage_class = &storage_class.node;
+
+                match storage_class {
+                    StorageClassSpecifier::Typedef => todo!(),
+                    StorageClassSpecifier::Extern => extrn = true,
+                    StorageClassSpecifier::Static => todo!(),
+                    StorageClassSpecifier::ThreadLocal => todo!(),
+                    StorageClassSpecifier::Auto => todo!(),
+                    StorageClassSpecifier::Register => todo!(),
+                }
+            }
+
+            if let DeclarationSpecifier::TypeSpecifier(ty) = specifier {
+                let ty = ty.node;
+                let ty: TypeWrapper = ty.into();
+                ret = Some(ty.into());
+            }
+        }
+
+        let ret = ret.expect("expected return type");
 
         let name = match node.node.declarator.node.kind.node {
             lang_c::ast::DeclaratorKind::Identifier(node) => node.node.name,
@@ -70,6 +92,10 @@ impl CodeGeneration {
 
         let mut func = Function::new(name, fn_ty);
 
+        if extrn {
+            func.extrn();
+        }
+
         func.addBlock("entry");
 
         let mut vars = HashMap::new();
@@ -91,39 +117,43 @@ impl CodeGeneration {
 
         let Statement::Compound(body) = node.node.statement.node else { unreachable!() };
 
-        for stmt in body {
-            let stmt = stmt.node;
-
-            match stmt {
-                BlockItem::Statement(node) => self.gen_stmt(&mut func, &mut vars, node.node),
-                BlockItem::Declaration(_node) => todo!("declerations"),
-                BlockItem::StaticAssert(_) => todo!("static asserts"),
-            }
-        }
+        self.gen_compount(&mut func, &mut vars, body);
         
         self.module.add_raw(func);
     }
 
+    fn gen_compount(&mut self, func: &mut Function, vars: &mut HashMap<String, (Var, TypeMetadata)>, comp: Vec<Node<BlockItem>>) {
+        for block in comp {
+            let block = block.node;
+
+            match block {
+                BlockItem::Statement(node) => self.gen_stmt(func, vars, node.node),
+                BlockItem::Declaration(node) => self.gen_decl(func, vars, node.node),
+                BlockItem::StaticAssert(_) => todo!("static asserts"),
+            }
+        }
+    }
+
     fn gen_stmt(&mut self, func: &mut Function, vars: &mut HashMap<String, (Var, TypeMetadata)>, stmt: Statement) {
         match stmt {
-            Statement::Labeled(node) => todo!(),
-            Statement::Compound(vec) => todo!(),
+            Statement::Labeled(_node) => todo!(),
+            Statement::Compound(comp) => self.gen_compount(func, vars, comp),
             Statement::Expression(node) => {
                 if let Some(expr) = node {
                     let expr = expr.node;
                     self.gen_stmt_expression(func, vars, expr)
                 } else { panic!("empty expressions are currently not supported") }
             },
-            Statement::If(node) => todo!(),
+            Statement::If(node) => self.gen_if(func, vars, node.node),
             Statement::Switch(node) => todo!(),
             Statement::While(node) => todo!(),
             Statement::DoWhile(node) => todo!(),
             Statement::For(node) => todo!(),
-            Statement::Goto(node) => todo!(),
+            Statement::Goto(_node) => todo!(),
             Statement::Continue => todo!(),
             Statement::Break => todo!(),
             Statement::Return(node) => self.gen_return(func, vars, node),
-            Statement::Asm(node) => todo!(),
+            Statement::Asm(_node) => todo!(),
         }
     }
 
@@ -246,6 +276,75 @@ impl CodeGeneration {
             BinaryOperator::AssignBitwiseXor => todo!(),
             BinaryOperator::AssignBitwiseOr => todo!(),
         }
+    }
+
+    fn gen_decl(&mut self, func: &mut Function, vars: &mut HashMap<String, (Var, TypeMetadata)>, decl: Declaration) {
+        let mut var_ty = None;
+
+        for specifier in decl.specifiers {
+            if let DeclarationSpecifier::TypeSpecifier(ty) = &specifier.node {
+                let ty = ty.node.to_owned();
+                let ty: TypeWrapper = ty.into();
+
+                var_ty = Some(ty.into());
+            }
+        }
+
+        let var_ty: TypeMetadata = var_ty.expect("expected type");
+    
+        for decl in decl.declarators {
+            let decl = decl.node;
+
+            let name = match decl.declarator.node.kind.node {
+                DeclaratorKind::Identifier(node) => node.node.name,
+                DeclaratorKind::Abstract => todo!(),
+                DeclaratorKind::Declarator(_) => todo!(),
+            };
+
+            let ptr = func.BuildAlloca(var_ty);
+
+            if let Some(init) = decl.initializer {
+                let init = init.node;
+
+                if let Initializer::Expression(expr) = init {
+                    let expr = expr.node;
+
+                    let tmp= self.gen_expression(func, vars, expr);
+                    
+                    func.BuildStore(ptr.clone(), tmp);
+                } else { todo!("list initializer") }
+            };
+
+            vars.insert(name, (ptr, var_ty));
+        }
+    }
+
+    fn gen_if(&mut self, func: &mut Function, vars: &mut HashMap<String, (Var, TypeMetadata)>, if_stmt: IfStatement) {
+        let cond = self.gen_expression(func, vars, if_stmt.condition.node);
+
+        let curr = func.currentBlock();
+        let then_block = func.addBlock(&format!("if{}.then", self.if_count));
+        let else_block = func.addBlock(&format!("if{}.else", self.if_count));
+        let after_block = func.addBlock(&format!("if{}.after", self.if_count));
+        
+        func.setCurrBlock(curr);
+        self.if_count += 1;
+
+        func.BuildBrCond(cond, &then_block, &else_block);
+
+        func.setCurrBlock(then_block);
+        self.gen_stmt(func, vars, if_stmt.then_statement.node);
+        func.BuildBr(&after_block);
+
+        func.setCurrBlock(else_block);
+        
+        if let Some(else_stmt) = if_stmt.else_statement {
+            self.gen_stmt(func, vars, else_stmt.node);
+        }
+
+        func.BuildBr(&after_block);
+
+        func.setCurrBlock(after_block);
     }
 }
 

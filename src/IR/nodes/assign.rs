@@ -247,7 +247,7 @@ pub trait BuildAssign<T> {
 }
 impl BuildAssign<Type> for Function {
     fn BuildAssign(&mut self, value: Type) -> Var {
-        let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.get_mut(self.curr_block).expect("invalid current block");
         
         let out = Var::new(block, value.into());
 
@@ -259,7 +259,7 @@ impl BuildAssign<Type> for Function {
 
 impl BuildAssign<Var> for Function {
     fn BuildAssign(&mut self, value: Var) -> Var {
-        let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.get_mut(self.curr_block).expect("invalid current block");
         
         let out = Var::new(block, value.ty);
 
@@ -271,7 +271,7 @@ impl BuildAssign<Var> for Function {
 
 impl BuildAssign<&Const> for Function {
     fn BuildAssign(&mut self, value: &Const) -> Var {
-        let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.get_mut(self.curr_block).expect("invalid current block");
         
         let out = Var::new(block, TypeMetadata::ptr);
 

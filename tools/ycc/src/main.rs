@@ -1,12 +1,12 @@
-use std::process::exit;
+use std::{io::Write, process::exit};
 
-use ygen::{Support::Cli, Target::Triple};
+use ygen::{Support::Cli, Target::{initializeAllTargets, Triple}};
 use lang_c::driver::*;
 
 mod codegen;
 mod utils;
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>>{
     let mut cli = Cli::new("ycc", "Ygens c compiler", "(latest)", "Cr0a3");
 
     // Standart stuff
@@ -46,6 +46,12 @@ fn main() {
     } else if cli.opt("vv") { // verbose version information
         println!("ycc v(latest) (c) Cr0a3");
         println!("Host-Target: {}", Triple::host());
+        std::process::exit(0);
+    }
+
+    if cli.opt("S") && cli.opt("emit-ir") {
+        println!("Error: ir and assembly can't be emitted at the same time");
+        std::process::exit(-1);
     }
     
     let triple = {
@@ -63,7 +69,7 @@ fn main() {
     };
 
     let infile = cli.arg_val("in").unwrap();
-    let out = utils::out_file(&infile, cli.arg_val("out"));
+    let mut out = utils::out_file(&infile, cli.arg_val("out"), cli.opt("S"), cli.opt("emit-ir"));
     
     let config = Config::default();
     let parsed = parse(&config, infile);
@@ -76,11 +82,25 @@ fn main() {
 
     let parsed = parsed.unwrap();
 
-    let mut codegen = codegen::CodeGeneration::new(parsed.unit.0, triple);
+    let mut codegen = codegen::CodeGeneration::new(parsed.unit.0);
 
     codegen.codegen();
 
-    let ir = codegen.module.dump();
+    let mut targets = initializeAllTargets(triple)?;
 
-    println!("{}", ir);
+    if cli.opt("emit-ir") {
+        let ir = codegen.module.dump();
+
+        out.write_all(&ir.into_bytes())?;
+    } else if cli.opt("S") {
+        let asm = codegen.module.emitAsm(triple, &mut targets)?;
+
+        out.write_all(&asm.into_bytes())?;
+    } else {
+        let (obj, _) = codegen.module.emitMachineCode(triple, &mut targets, false)?;
+    
+        obj.emit(out, None)?;
+    }
+
+    Ok(())
 }
