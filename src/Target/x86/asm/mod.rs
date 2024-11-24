@@ -53,6 +53,7 @@ pub enum X86Mnemonic {
     Pinsrw,
     Pinsrd,
     Pinsrq,
+    Insertps
 }
 
 /// A X86 assembly operand
@@ -166,6 +167,7 @@ impl std::fmt::Display for X86Instr {
             X86Mnemonic::Pinsrw => "pinsrw",
             X86Mnemonic::Pinsrd => "pinsrd",
             X86Mnemonic::Pinsrq => "pinsrq",
+            X86Mnemonic::Insertps => "insertps",
         })?;
         
         if let Some(op) = &self.op1 {
