@@ -1,4 +1,4 @@
-use crate::{ydbg, IR::{ir, Const, FuncId, Module, Var}};
+use crate::{ydbg, Obj::Linkage, IR::{ir, Const, FuncId, Module, Var}};
 
 /// Analyses which functions are leaf functions
 /// 
@@ -17,7 +17,12 @@ impl LeafFunctionAnalysis {
         let mut leaf_funcs = Vec::new();
 
         for (_, func) in &module.funcs {
-            leaf_funcs.push(func.id());
+            // first check here:
+            // is func a extern function
+
+            if func.linkage != Linkage::Extern {
+                leaf_funcs.push(func.id());
+            }
         }
 
         LeafFunctionAnalysis::filter_call(&mut leaf_funcs, module);

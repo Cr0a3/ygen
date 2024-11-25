@@ -20,7 +20,11 @@ impl Pass for UnusedCallRemovementPass {
         let leafs = LeafFunctionAnalysis::analyze(&module);
         
         for (_, func) in &mut module.funcs {
-            let livness = LivenessAnalysis::analayze(&func);
+            // Fix me: remove this analysis pass call, it's only temporary
+            let mut loops = crate::Optimizations::Analysis::LoopAnalysis::new(&func);
+            loops.analyze();
+
+            let livness = LivenessAnalysis::analyze(&func);
 
             for block in &mut func.blocks {
                 let mut index = 0;

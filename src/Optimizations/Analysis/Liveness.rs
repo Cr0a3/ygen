@@ -12,7 +12,7 @@ pub struct LivenessAnalysis {
 
 impl LivenessAnalysis {
     /// Analyzes the entire function
-    pub fn analayze(func: &Function) -> Self {
+    pub fn analyze(func: &Function) -> Self {
         let mut analyzer = Self {
             users: HashMap::new(),
             last_uses: HashMap::new(),
@@ -78,7 +78,29 @@ impl LivenessAnalysis {
             }
 
             if let Some(out) = user.output() {
-                all_users_dead = self.is_dead(&out);
+                all_users_dead = self.is_dead_sub(&out);
+            }
+        }
+
+        all_users_dead
+    }
+
+    fn is_dead_sub(&self, var: &Var) -> bool {
+        let users = self.users(var);
+
+        if users.len() == 0 { return true; }
+
+        let mut all_users_dead = false;
+
+        for user in users {
+            if all_users_dead {
+                break
+            }
+
+            if let Some(out) = user.output() {
+                if out.name == var.name {
+                    all_users_dead = self.is_dead(&out);
+                }
             }
         }
 

@@ -1,6 +1,6 @@
 use crate::ydbg;
 use crate::Optimizations::Pass;
-use crate::IR::{ir::Br, ir::BrCond};
+use crate::IR::{ir::Br, ir::BrCond, ir::Switch};
 
 /// ## Pass DeadBlockElimination <br>
 /// deletes unused blocks
@@ -32,6 +32,12 @@ impl Pass for DeadBlockElimination {
                 if let Some(br) = node.as_any().downcast_ref::<BrCond>() {
                     used_blocks.push(br.inner2.name.to_owned());
                     used_blocks.push(br.inner3.name.to_owned());
+                }
+
+                if let Some(switch) = node.as_any().downcast_ref::<Switch>() {
+                    for (_, case) in &switch.cases {
+                        used_blocks.push(case.name.to_owned());
+                    }
                 }
             }
         }

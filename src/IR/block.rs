@@ -102,7 +102,7 @@ pub fn Block(name: &str, func: &Function) -> Block {
 }
 
 /// Describes the block 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct BlockId {
     pub(crate) name: String,
 }
@@ -110,5 +110,11 @@ pub struct BlockId {
 pub(crate) fn BlockId(name: String) -> BlockId {
     BlockId {
         name: name
+    }
+}
+
+impl std::fmt::Debug for BlockId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.name)
     }
 }

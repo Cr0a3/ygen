@@ -234,6 +234,17 @@ impl Function {
             ty: self.ty.to_owned(),
         }
     }
+
+    /// Returns the given block for the given id
+    pub(crate) fn get_block_for(&self, id: &BlockId) -> Option<&Block> {
+        for block in &self.blocks {
+            if &block.id() == id {
+                return Some(block);
+            }
+        }
+
+        None
+    }
 }
 
 /// Creates a new function type
