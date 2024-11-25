@@ -10,6 +10,9 @@ pub struct CFGAnalysis {
     succesors: HashMap<BlockId, Vec<BlockId>>,
     /// predecessors - blocks which were before
     predecessors: HashMap<BlockId, Vec<BlockId>>,
+
+    /// successors  - blocks which follows
+    succesors_direct: HashMap<BlockId, Vec<BlockId>>,
 }
 
 impl CFGAnalysis {
@@ -17,7 +20,9 @@ impl CFGAnalysis {
     pub fn analyze(func: &Function) -> Self {
         let mut analyzer = Self {
             succesors: HashMap::new(),
-            predecessors: HashMap::new()
+            predecessors: HashMap::new(),
+
+            succesors_direct: HashMap::new(),
         };
 
         for block in &func.blocks {
@@ -33,12 +38,15 @@ impl CFGAnalysis {
         self.succesors.entry(block.id()).or_insert(Vec::new());
         self.predecessors.entry(block.id()).or_insert(Vec::new());
 
+        self.succesors_direct.entry(block.id()).or_insert(Vec::new());
+
         let mut insert = |br_to_block: &BlockId, head: &Block| {
                 // block -> br.block (so the successor  of block is br.block)
                 // block -> br.block (so the predecessor of br.block is block)
 
-                self.succesors.entry(head.id()).or_insert_with(|| Vec::new()).push(br_to_block.to_owned());
-                self.predecessors.entry(br_to_block.to_owned()).or_insert_with(|| Vec::new()).push(head.id());
+            self.succesors.entry(head.id()).or_insert_with(|| Vec::new()).push(br_to_block.to_owned());
+            self.succesors_direct.entry(head.id()).or_insert_with(|| Vec::new()).push(br_to_block.to_owned());
+            self.predecessors.entry(br_to_block.to_owned()).or_insert_with(|| Vec::new()).push(head.id());
         };
 
 
@@ -86,6 +94,15 @@ impl CFGAnalysis {
     /// Returns the sucessors for the given block
     pub fn successors(&self, block: &BlockId) -> &Vec<BlockId> {
         let Some(succs) = self.succesors.get(block) else {
+            panic!("unanalysed block: {}", block.name);
+        };
+
+        succs
+    }
+
+    /// Returns the direct sucessors for the given block
+    pub fn successors_direct(&self, block: &BlockId) -> &Vec<BlockId> {
+        let Some(succs) = self.succesors_direct.get(block) else {
             panic!("unanalysed block: {}", block.name);
         };
 

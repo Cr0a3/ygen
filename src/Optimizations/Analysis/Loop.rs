@@ -13,14 +13,18 @@ pub struct LoopInfo {
     body: Vec<BlockId>,
     /// The loop condition
     cond_block: Option<BlockId>,
+
     /// A block which is called after the loop finished
     exit_block: Option<BlockId>,
+    /// A block which branches to the exit 
+    exititing_block: Option<BlockId>,
 
     /// The exact preheader node
     preheader: Option<Box<dyn Ir>>,
     /// The exact condition node
     cond: Option<Box<dyn Ir>>,
-    /// The exact exit node
+
+    /// The exact node which branches to the exit block
     exit: Option<Box<dyn Ir>>,
 
     /// other loop in the body
@@ -38,7 +42,8 @@ impl LoopInfo {
             preheader: None,
             cond: None,
             exit: None,
-            nested: None
+            nested: None,
+            exititing_block: None,
         }
     }
 
@@ -71,6 +76,11 @@ impl LoopInfo {
     /// Returns the exit block
     pub fn exit_block(&self) -> &BlockId {
         self.exit_block.as_ref().expect("expected exit block")
+    }
+
+    /// Returns the exiting block
+    pub fn exiting_block(&self) -> &BlockId {
+        self.exititing_block.as_ref().expect("expected exiting block")
     }
 
     /// Returns the exit node
@@ -161,6 +171,9 @@ impl<'a> LoopAnalysis<'a> {
         // now where we found the rough loops we need to look for nested ones
         // which is TODO
 
+        // now we can check for the exit blocks
+        self.analyze_exit_blocks();
+
         // we now need to compute the exact nodes for the loop condition, exit
         self.analyze_nodes();
 
@@ -173,7 +186,7 @@ impl<'a> LoopAnalysis<'a> {
 
     }
 
-    /// Analyizes the exact nodes of the loop 
+    /// Analyzes the exact nodes of the loop 
     fn analyze_nodes(&mut self) {
         for li in &mut self.loops {
             // Check node for cond
@@ -185,6 +198,66 @@ impl<'a> LoopAnalysis<'a> {
             let preheader =  self.func.get_block_for(li.preheader_block()).expect("expected valid preheader block");
             let branch = self.cfg.branch_in_block(preheader).expect("expected correct preheader ir node");
             li.preheader = Some(branch.to_owned());
+
+            // Check node for exit
+            let exit =  self.func.get_block_for(li.exiting_block()).expect("expected valid exit block");
+            let branch = self.cfg.branch_in_block(exit).expect("expected correct exit ir node");
+            li.exit = Some(branch.to_owned());
+        }
+    }
+
+    /// Analyzes the exit blocks for the loops
+    fn analyze_exit_blocks(&mut self) {
+        // 1. analyze exit block
+        for li in &mut self.loops {
+            for block in &self.func.blocks {
+                let block = block.id();
+
+                let mut branches = false; // does the loop even branches to the block
+                let header = true;
+
+                // Let's check if the block is not in the loop
+
+                // body
+                if li.body.contains(&block) { continue; }
+
+                // cond
+                if li.condition_block() == &block { continue; }
+
+                // We now check if the loop can even branch to the block
+                for body in &li.body {
+                    if self.cfg.successors_direct(&body).contains(&block) {
+                        branches = true;
+                    }
+                }
+
+                if self.cfg.successors_direct(&li.condition_block()).contains(&block) {
+                    branches = true;
+                }
+
+                if branches && header {
+                    li.exit_block = Some(block)
+                }
+            }
+        }
+        
+        // 2. analyze exiting block
+        for li in &mut self.loops {
+            let exit = li.exit_block();
+
+            let mut exiting = None;
+
+            for block in &li.body {
+                if self.cfg.successors_direct(block).contains(exit) {
+                    exiting = Some(block.to_owned());
+                }
+            }
+
+            if self.cfg.successors_direct(li.condition_block()).contains(exit) {
+                exiting = Some(li.cond_block.clone().unwrap());
+            }
+
+            li.exititing_block = exiting;
         }
     }
 
