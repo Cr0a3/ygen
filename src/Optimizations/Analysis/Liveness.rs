@@ -7,6 +7,10 @@ use crate::IR::*;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LivenessAnalysis {
     users: HashMap<Var, Vec<Box<dyn Ir>>>,
+
+    /// The node which outputs the given variable 
+    maker: HashMap<Var, Box<dyn Ir>>,
+
     last_uses: HashMap<Var, Option<BlockId>>,
 }
 
@@ -16,6 +20,7 @@ impl LivenessAnalysis {
         let mut analyzer = Self {
             users: HashMap::new(),
             last_uses: HashMap::new(),
+            maker: HashMap::new(),
         };
 
         for block in &func.blocks {
@@ -41,6 +46,8 @@ impl LivenessAnalysis {
             }
 
             if let Some(output) = node.output() {
+                self.maker.insert(output.clone(), node.to_owned());
+
                 if !self.users.contains_key(&output) {
                     self.users.insert(output, Vec::new());
                 }
@@ -105,5 +112,10 @@ impl LivenessAnalysis {
         }
 
         all_users_dead
+    }
+
+    /// Returns the node which "made" the variable
+    pub fn maker(&self, var: &Var) -> &Box<dyn Ir> {
+        self.maker.get(var).as_ref().expect("no node found")
     }
 }

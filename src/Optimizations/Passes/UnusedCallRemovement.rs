@@ -21,7 +21,7 @@ impl Pass for UnusedCallRemovementPass {
         
         for (_, func) in &mut module.funcs {
             // Fix me: remove this analysis pass call, it's only temporary
-            let mut loops = crate::Optimizations::Analysis::LoopAnalysis::new(&func);
+            let mut loops = crate::Optimizations::Analysis::AdvancedLoopAnalysis::new(&func);
             loops.analyze();
 
             let livness = LivenessAnalysis::analyze(&func);
