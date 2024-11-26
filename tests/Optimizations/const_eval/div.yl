@@ -1,5 +1,5 @@
 # RUN:
-cargo run -p ylc -- -in=%s -O -fmt -passes=cp
+cargo run -p ylc -- %s -O -fmt -passes=cp
 # IN:
 
 define i32 @div(i32 %0) {

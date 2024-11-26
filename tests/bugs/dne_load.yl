@@ -1,5 +1,5 @@
 # RUN:
-cargo run -p ylc -- -in=%s -passes=dne,cp
+cargo run -p ylc -- %s -passes=dne,cp
 
 # IN:
 

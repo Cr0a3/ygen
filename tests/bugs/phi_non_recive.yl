@@ -1,5 +1,5 @@
 # RUN:
-cargo run -p ylc -- -in=%s -fmt
+cargo run -p ylc -- %s -fmt
 # IN:
 
 define void @main() {

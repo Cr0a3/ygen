@@ -1,5 +1,5 @@
 # RUN:
-cargo run -p ylc -- -in=%s -passes=dbe -fmt
+cargo run -p ylc -- %s -passes=dbe -fmt
 # IN:
 
 define i32 @main() {

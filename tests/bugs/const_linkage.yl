@@ -1,5 +1,5 @@
 # RUN:
-cargo run -p ylc -- -in=%s
+cargo run -p ylc -- %s
 
 # IN:
 
