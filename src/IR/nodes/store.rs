@@ -7,7 +7,7 @@ use super::{EvalOptVisitor, IROperand, Ir, Store};
 
 impl Ir for Store {
     fn dump(&self) -> String {
-        format!("store {} {}, {}", self.inner2.get_ty(), self.inner2, self.inner1.name)
+        format!("store {}, {}", self.inner2, self.inner1.name)
     }
 
     fn dumpColored(&self, profile: crate::Support::ColorProfile) -> String {

@@ -2,7 +2,7 @@ use super::*;
 
 impl Ir for Cast {
     fn dump(&self) -> String {
-        format!("{} = cast {} {} to {}", self.inner3.name, self.inner1.get_ty(), self.inner1, self.inner2)
+        format!("{} = cast {} to {}", self.inner3.name, self.inner1, self.inner2)
     }
 
     fn dumpColored(&self, profile: ColorProfile) -> String {

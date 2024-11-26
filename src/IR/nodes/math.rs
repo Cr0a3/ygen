@@ -74,7 +74,7 @@ macro_rules! MathIrNode {
             }
         
             fn dump(&self) -> String {
-                format!("{} = {} {} {}, {}", self.inner3.name, $dump, self.inner3.ty, self.inner1, self.inner2)
+                format!("{} = {} {}, {}", self.inner3.name, $dump, self.inner1, self.inner2.fmt_2())
             }
         
             fn dumpColored(&self, profile: ColorProfile) -> String {

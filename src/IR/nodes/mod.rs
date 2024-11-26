@@ -430,13 +430,39 @@ impl IROperand {
         let IROperand::Var(ret) = self else { panic!(); };
         return ret.to_owned();
     }
+
+    /// Formats the operand without the type
+    pub(crate) fn fmt_2(&self) -> String {
+        match self {
+            IROperand::Type(ty) => match ty {
+                Type::u8(i) => format!("{}", i),
+                Type::u16(i) => format!("{}", i),
+                Type::u32(i) => format!("{}", i),
+                Type::u64(i) => format!("{}", i),
+    
+                Type::i8(i) => format!("{}", i),
+                Type::i16(i) => format!("{}", i),
+                Type::i32(i) => format!("{}", i),
+                Type::i64(i) => format!("{}", i),
+    
+                Type::ptr(adr) => format!("{:#04x}", adr),
+                Type::Void => format!("0"),
+    
+                Type::f32(i) => format!("{}", i),
+                Type::f64(i) => format!("{}", i),
+    
+                Type::Vector(vec) => format!("<{vec}>"),   
+            },
+            IROperand::Var(var) => var.name.to_string(),
+        }
+    }
 }
 
 impl std::fmt::Display for IROperand {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", match self {
             IROperand::Type(ty) => ty.to_string(),
-            IROperand::Var(var) => var.name.to_string(),
+            IROperand::Var(var) => format!("{} {}", var.ty, var.name),
         })
     }
 }

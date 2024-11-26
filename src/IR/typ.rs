@@ -307,7 +307,7 @@ impl Display for Type {
             Type::i64(i) => format!("i64 {}", i),
 
             Type::ptr(adr) => format!("ptr {:#04x}", adr),
-            Type::Void => format!("void"),
+            Type::Void => format!("void 0"),
 
             Type::f32(i) => format!("f32 {}", i),
             Type::f64(i) => format!("f64 {}", i),
