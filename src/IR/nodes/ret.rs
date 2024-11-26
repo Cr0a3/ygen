@@ -6,9 +6,7 @@ impl Ir for Return {
     }
 
     fn dump(&self) -> String {
-        let metadata: TypeMetadata = self.inner1.get_ty();
-        
-        format!("ret {} {}", metadata, self.inner1)
+        format!("ret {}", self.inner1)
     }
 
     fn dumpColored(&self, profile: ColorProfile) -> String {
