@@ -34,8 +34,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     cli.add_opt("lex", "show-lexed", "Shows the assembly tokens");
     cli.add_opt("exprs", "show-parser-result", "Shows the parsed result");
 
-    cli.add_opt("fmt-clr", "format-colored", "Reprints the ir to stderr with color information");
-    cli.add_opt("fmt", "format", "Prints the ir formatted to stdout");
+    cli.add_opt("fmt-clr", "format-colored", "Reprints the ir to stderr with color and exits");
+    cli.add_opt("fmt", "format", "Prints the ir formatted to stdout and exits");
     
     cli.add_opt("O", "optimize-simple", "Run simple optimizations");
     cli.add_arg("passes", "optimization-passes", "The optimization passes to run", false);
@@ -205,10 +205,12 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     if cli.opt("fmt-clr") {
         eprintln!("{}", module.dumpColored(ColorProfile::default()));
+        return Ok(());
     }
 
     if cli.opt("fmt") {
         println!("{}", module.dump());
+        return Ok(());
     }
 
     if cli.opt("asm-clr") {

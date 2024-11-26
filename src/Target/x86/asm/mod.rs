@@ -3,6 +3,8 @@ mod builder;
 /// X86 assembly optimization
 pub mod opt;
 
+mod encode;
+
 use crate::Target::instr::McInstr;
 
 use super::reg::{X86Reg, X86RegSize};
@@ -192,14 +194,27 @@ impl McInstr for X86Instr {
     }
 
     fn encode(&self) -> Vec<u8> {
-        todo!()
+        self.encode()
     }
 
     fn branch_to_block(&self) -> Option<crate::Obj::Link> {
-        todo!()
+        if let Some(X86Operand::BlockRel(branch)) = &self.op1 {
+            return Some(crate::Obj::Link {
+                from: String::new(),
+                to: crate::Target::x86::get_block_rel(*branch),
+                at: 0,
+                addend: -4,
+                special: true,
+                kind: object::RelocationEncoding::X86Branch,
+            });
+        }
+
+        None
     }
 
     fn relocation(&self) -> Option<crate::Obj::Link> {
-        todo!()
+        // TODO
+        
+        None
     }
 }

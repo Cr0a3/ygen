@@ -193,6 +193,11 @@ impl DagVisitor for Phi {
 
 impl DagVisitor for Return {
     fn dag_visitor(&self, dag: &mut Vec<dag::DagNode>) {
+        if self.inner1.get_ty() == TypeMetadata::Void {
+            dag.push( DagNode::ret(TypeMetadata::Void) );
+            return;
+        }
+
         let ret_reg = Reg::ret(dag_arch(), self.inner1.get_ty()); 
 
         if self.isRetConst() {

@@ -168,7 +168,15 @@ impl TargetRegistry {
             }
         }
 
-        todo!();
+        // MERGING TIME!
+
+        let mut out = Vec::new();
+
+        for (_, code) in &machine_code {
+            out.extend_from_slice(&code);
+        }
+
+        (out, links)
     }
 
     /// compiles the given function with debug information

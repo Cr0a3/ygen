@@ -34,7 +34,7 @@ impl From<usize> for X86RegSize {
             1 => X86RegSize::Byte,
             2 => X86RegSize::Word,
             4 => X86RegSize::Dword,
-            8 => X86RegSize::Qword,
+            8 | 0 => X86RegSize::Qword, // 0 => void (idk why i included it here)
             16 => X86RegSize::SimdVec,
             _ => todo!("invalid size for a register: {value}")
         }
