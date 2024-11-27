@@ -147,13 +147,8 @@ fn main() {
 
         found_stderr.push_str( &stderr );
 
-        let status = match cmd.status() {
-            Ok(stat) => stat.code().expect("expected exit code"),
-            Err(err) => {
-                println!("{}: {}", "Error".red().bold(), err);
-                exit(-1);
-            }
-        };
+
+        let status = cmd.status().expect("execution error").code().expect("expected exit code");
 
         code = status;
 
@@ -161,7 +156,7 @@ fn main() {
             continue;
         }
 
-        if status != 1 && cmds != index {
+        if status != 0 && cmds != index {
             println!("{}: the programm didn't exit sucessfull with code {}", "Error".red().bold(), status);
             exit(-1);
         }
