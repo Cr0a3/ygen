@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::ydbg;
-use crate::CodeGen::dag::DagOpTarget;
+use crate::CodeGen::dag::{DagNode, DagOpTarget};
 use crate::CodeGen::memory::Memory;
 use crate::CodeGen::reg::Reg;
 use crate::CodeGen::{dag::DagTmpInfo, regalloc_iterated_col::ItRegCoalAlloc};
@@ -133,6 +133,33 @@ pub(super) fn resolve(tmp_infos: Vec<DagTmpInfo>, asm: &mut Vec<X86Instr>, alloc
 
     alloc.sort();
 } 
+
+pub(super) fn mem_proc(alloc: &mut ItRegCoalAlloc, _: &DagNode, ty: TypeMetadata) -> Memory {
+    let mut out_mem = Memory {
+        offset: alloc.stack,
+        sp_relativ: false,
+        fp_relativ: true,
+        size: ty.byteSize(),
+    };
+
+    alloc.stack -= ty.byteSize() as i32;
+
+    if ty.byteSize() < 4 {
+        let t1 =  4 - ty.byteSize(); // keep it aligned on 2 bytes
+        alloc.stack -= t1 as i32;
+    }
+
+    // maybe it is in the DEAD ZONE
+    // (first 16 bytes in linux)
+
+    if super::get_call() == CallConv::SystemV {
+        if out_mem.offset < 16 {
+            out_mem.sp_relativ = true;
+        }
+    }
+
+    out_mem
+}
 
 impl CallConv {
     /// Returns the nth x86 argument

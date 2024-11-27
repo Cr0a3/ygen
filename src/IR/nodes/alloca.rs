@@ -37,7 +37,10 @@ impl Ir for Alloca {
     }
     
     fn output(&self) -> Option<Var> {
-        Some(self.inner1.to_owned())
+        let mut out = self.inner1.to_owned();
+        out.ty = self.getTypeToAlloc();
+
+        Some(out)
     }
 
     fn ty(&self) -> Option<crate::prelude::TypeMetadata> {

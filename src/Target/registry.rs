@@ -119,7 +119,7 @@ impl TargetRegistry {
 
         let mut positions = HashMap::new();
 
-        let mut machine_code = HashMap::new();
+        let mut machine_code = Vec::new();
         let mut machine_code_len = 0;
 
         let mut links = Vec::new();
@@ -145,17 +145,26 @@ impl TargetRegistry {
             }
 
             machine_code_len += encoded.len();
-            machine_code.insert(block.to_owned(), encoded);
+            machine_code.push((block.to_owned(), encoded));
         }
 
         for (reloc, start) in block_links {
-            let bytes = machine_code.get_mut(&start).unwrap();
+            let mut bytes = None;
+
+            for (block, block_bytes) in &mut machine_code {
+                if block.name != start.name { continue; }
+
+                bytes = Some(block_bytes);
+
+                break;
+            }
+
+            let bytes = bytes.expect("block wasn't found");
 
             let to = *positions.get(&crate::IR::BlockId{ name: reloc.to }).unwrap() as i32;
             let from = *positions.get(&start).unwrap() as i32;
             
             let mut target = to - from;
-            target += reloc.at as i32;
             target += reloc.addend as i32;
             target -= 1;
 
@@ -164,7 +173,7 @@ impl TargetRegistry {
             let pos = reloc.at as i32 + reloc.addend as i32;
 
             for idx in 0..4 {
-                bytes[(pos + idx) as usize] = target[(4 - idx) as usize];
+                bytes[(pos + idx) as usize] = target[(4 - idx - 1) as usize];
             }
         }
 

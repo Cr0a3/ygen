@@ -68,7 +68,9 @@ impl TargetBlackList {
                 }
 
                 if node.is_alloca() {
-                    panic!("function {} has a unsupported type: {}", func.name, TypeMetadata::ptr);
+                    if !self.check_ty(&TypeMetadata::ptr) {
+                        panic!("function {} has a unsupported type: {}", func.name, TypeMetadata::ptr);
+                    }
                 }
             }
         }

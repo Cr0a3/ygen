@@ -71,6 +71,8 @@ pub fn initializeX86Target(call_conv: CallConv) -> BackendInfos {
     let alloc = ItRegCoalAllocBase {
         regs: free_regs,
         arg_processor: Some(alloc::arg_proc),
+        mem_processor: Some(alloc::mem_proc),
+        stack: -8,
     };
 
     let mut allow = TargetBlackList::new();

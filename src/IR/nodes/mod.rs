@@ -193,6 +193,7 @@ IrTypeWith3!(VecExtract, /*out*/Var, Var, usize, is_vec_extract);
 
 /// Inserts a value into a vector
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[allow(missing_docs)]
 pub struct VecInsert {
     pub out: Var,
     pub vec: Var,

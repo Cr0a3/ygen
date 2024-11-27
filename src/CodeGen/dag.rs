@@ -60,6 +60,8 @@ pub struct DagOp {
     pub target: DagOpTarget,
     /// What to do with the operand
     pub operation: DagOperandOption,
+    /// Should the operand be a memory location
+    pub should_be_mem: bool,
 }
 
 /// What to do with the operand target
@@ -126,21 +128,35 @@ impl DagOp {
     #[inline]
     pub fn var(var: Var) -> Self {
         Self {
+            should_be_mem: var.ty == TypeMetadata::ptr,
             allocated: false,
             target: DagOpTarget::UnallocatedVar(var),
             operation: DagOperandOption::Load,
         }
     }
 
-    /// Creates the dag operand as a variable
+    /// Creates the dag operand as a register
     #[inline]
     pub fn reg(reg: Reg) -> Self {
         Self { 
             allocated: true, 
             target: DagOpTarget::Reg(reg),
             operation: DagOperandOption::Load,
+            should_be_mem: false,
         }
     }
+
+    /// Creates the dag operand as a memory position
+    #[inline]
+    pub fn mem(mem: Memory) -> Self {
+        Self { 
+            allocated: true, 
+            target: DagOpTarget::Mem(mem),
+            operation: DagOperandOption::Load,
+            should_be_mem: true,
+        }
+    }
+
 
     /// Creates the dag operand as a imm
     #[inline]
@@ -149,6 +165,7 @@ impl DagOp {
             allocated: true, 
             target: DagOpTarget::Constant(imm),
             operation: DagOperandOption::ConstantImm,
+            should_be_mem: false,
         }
     }
 
@@ -186,7 +203,8 @@ impl Into<DagOp> for Type {
                 let ty: TypeMetadata = self.into();
                 if ty.float() { DagOperandOption::ConstantFp }
                 else { DagOperandOption::ConstantImm }
-            }
+            },
+            should_be_mem: false,
         }
     }
 }
@@ -353,7 +371,8 @@ impl From<IROperand> for DagOp {
                         if ty.float() { DagOperandOption::ConstantFp }
                         else { DagOperandOption::ConstantImm }
                     } else { unreachable!() }
-                }
+                },
+                should_be_mem: false,
             },
             IROperand::Var(var) => DagOp::var(var),
         }
@@ -373,7 +392,8 @@ impl From<&IROperand> for DagOp {
                         if ty.float() { DagOperandOption::ConstantFp }
                         else { DagOperandOption::ConstantImm }
                     } else { unreachable!() }
-                }
+                },
+                should_be_mem: false,
             },
             IROperand::Var(var) => DagOp::var(var.to_owned()),
         }

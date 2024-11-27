@@ -14,7 +14,8 @@ fn dag_arch() -> Arch {
 
 impl DagVisitor for Alloca {
     fn dag_visitor(&self, _dag: &mut Vec<dag::DagNode>) {
-        todo!()
+        // Alloca only influences the register allocation and 
+        // operand selection for variables
     }
 }
 
@@ -28,14 +29,22 @@ impl DagVisitor for Br {
 }
 
 impl DagVisitor for Assign<Var, Var> {
-    fn dag_visitor(&self, _dag: &mut Vec<dag::DagNode>) {
-        todo!()
+    fn dag_visitor(&self, dag: &mut Vec<dag::DagNode>) {
+        dag.push(dag::DagNode::copy(
+            DagOp::var(self.inner2.to_owned()), 
+            DagOp::var(self.inner1.to_owned()), 
+            self.ty().unwrap()
+        ))
     }
 }
 
 impl DagVisitor for Assign<Var, Type> {
-    fn dag_visitor(&self, _dag: &mut Vec<dag::DagNode>) {
-        todo!()
+    fn dag_visitor(&self, dag: &mut Vec<dag::DagNode>) {
+        dag.push(dag::DagNode::copy(
+            DagOp::imm(self.inner2), 
+            DagOp::var(self.inner1.to_owned()), 
+            self.ty().unwrap()
+        ))
     }
 }
 
@@ -104,8 +113,14 @@ impl DagVisitor for GetElemPtr {
 }
 
 impl DagVisitor for Load {
-    fn dag_visitor(&self, _dag: &mut Vec<dag::DagNode>) {
-        todo!()
+    fn dag_visitor(&self, dag: &mut Vec<dag::DagNode>) {
+        // We just do loading using a copy dag node
+        // - copys the value of the ptr to the out var
+        dag.push(DagNode::copy(
+            DagOp::from(self.inner3.clone()), 
+            DagOp::var(self.inner1.clone()), 
+            self.inner2
+        ));
     }
 }
 
@@ -225,8 +240,17 @@ impl DagVisitor for Select {
 }
 
 impl DagVisitor for Store {
-    fn dag_visitor(&self, _dag: &mut Vec<dag::DagNode>) {
-        todo!()
+    fn dag_visitor(&self, dag: &mut Vec<dag::DagNode>) {
+        // a store is also just basiclly a copy operation
+        // we copy the value -> to the pointer
+        let mut ptr = DagOp::var(self.inner1.to_owned());
+        ptr.should_be_mem = true;
+
+        dag.push(DagNode::copy(
+            DagOp::from(self.inner2.to_owned()), 
+            ptr,
+            self.inner2.get_ty()
+        ));
     }
 }
 

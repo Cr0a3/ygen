@@ -5,6 +5,7 @@
 #![allow(rustdoc::invalid_html_tags)]
 #![allow(rustdoc::invalid_codeblock_attributes)]
 #![allow(non_camel_case_types)]
+#![allow(irrefutable_let_patterns)]
 
 //! # Ygen - <b>Y</b>et another Code <b>Gen</b>erator
 //! ### Description

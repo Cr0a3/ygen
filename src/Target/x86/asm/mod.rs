@@ -116,7 +116,7 @@ impl std::fmt::Display for X86Operand {
                 }
 
                 if let Some(displ) = mem.displ {
-                    write!(f, "{displ} ")?;
+                    write!(f, "{} ", displ.abs())?;
                 }
 
                 if let Some(index) = mem.index {

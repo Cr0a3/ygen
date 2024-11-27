@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{ydbg, IR::{Function, TypeMetadata, Var}};
 
-use super::{dag::{self, DagOp, DagOpTarget}, reg::Reg};
+use super::{dag::{self, DagOp, DagOpTarget}, memory::Memory, reg::Reg};
 
 /// Performes register allocation using iterated register coalescing
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -13,6 +13,8 @@ pub struct ItRegCoalAlloc<'a> {
     pub curr_func: Option<&'a Function>,
     /// The target specific argument processor
     pub arg_processor: Option<fn(&mut ItRegCoalAlloc)>,
+    /// The target specific memory processor
+    pub mem_resolver: Option<fn(&mut ItRegCoalAlloc, &dag::DagNode, TypeMetadata) -> Memory>,
     /// The allocated vars
     pub vars: HashMap<String, DagOpTarget>,
     /// The current stack off
@@ -21,11 +23,12 @@ pub struct ItRegCoalAlloc<'a> {
 
 impl<'a> ItRegCoalAlloc<'a> {
     /// Creates a new iterated register coalescing register allocator
-    pub fn new(regs: Vec<Reg>, arg_proc: fn(&mut ItRegCoalAlloc)) -> Self {
+    pub fn new(regs: Vec<Reg>, arg_proc: fn(&mut ItRegCoalAlloc), mem_proc: fn(&mut ItRegCoalAlloc, &dag::DagNode, TypeMetadata) -> Memory) -> Self {
         Self {
             regs: regs,
             curr_func: None,
             arg_processor: Some(arg_proc),
+            mem_resolver: Some(mem_proc),
             vars: HashMap::new(),
             stack: 0,
         }
@@ -33,7 +36,7 @@ impl<'a> ItRegCoalAlloc<'a> {
 
     /// Runs the ircy allocator on the given input function
     pub fn init(&mut self, func: &'a Function) {
-        ydbg!("[INIT] Iterated Register Coalescing Allocator for {}", func.name);
+        ydbg!("[INIT] Register Allocator for {}", func.name);
 
         self.curr_func = Some(func);
 
@@ -103,16 +106,18 @@ impl<'a> ItRegCoalAlloc<'a> {
             }
         } else { unreachable!() };
 
-        let Some(mut free) = self.get_fitting_reg(dag, ty) else {
-            todo!("implement register allocation for stack variables")
+        if let Some(mut free) = self.get_fitting_reg(dag, ty) {
+            free.set_size(ty.byteSize());
+    
+            dag.out = Some(DagOp::reg(free));
+            self.vars.insert(out_var.name, DagOpTarget::Reg(free));
+        } else {
+            let mem = self.alloc_stack(dag, ty);
+        
+            dag.out = Some(DagOp::mem(mem));
+            self.vars.insert(out_var.name, DagOpTarget::Mem(mem));
         };
-
-        free.set_size(ty.byteSize());
-
-        dag.out = Some(DagOp::reg(free));
-        self.vars.insert(out_var.name, DagOpTarget::Reg(free));
     }
-
 
     /// Returns a register that fits the type
     pub fn get_fitting_reg(&mut self, node: &dag::DagNode, mut ty: TypeMetadata) -> Option<Reg> {
@@ -122,6 +127,12 @@ impl<'a> ItRegCoalAlloc<'a> {
         use dag::DagOpCode::*;
         if matches!(node.opcode, CmpEq | CmpNe | CmpLt | CmpGt | CmpLte | CmpGte) {
             ty = TypeMetadata::u8;
+        }
+
+        if let Some(out) = &node.out {
+            if out.should_be_mem {
+                return None; // now our allocator thinks: FUCK THE REGISTERS RAN OUT i need to now use the stack
+            }
         }
 
         let mut index = 0;
@@ -155,10 +166,27 @@ impl<'a> ItRegCoalAlloc<'a> {
         None
     }
 
+    /// Allocates a stack position
+    pub fn alloc_stack(&mut self, node: &dag::DagNode, mut ty: TypeMetadata) -> Memory {
+        // output of a cmp is not the same as the input type - it's a bool
+        use dag::DagOpCode::*;
+        if matches!(node.opcode, CmpEq | CmpNe | CmpLt | CmpGt | CmpLte | CmpGte) {
+            ty = TypeMetadata::u8;
+        }
+
+        let Some(mem_resolver) = self.mem_resolver else {
+            panic!("no registered target mem_resolver")
+        };
+
+        mem_resolver(self, node, ty)
+    }
+
     /// Returns a location for the given temporary 
     pub fn request_tmp(&mut self, tmp: &dag::DagTmpInfo) -> dag::DagOpTarget {
         if tmp.requires_mem {
-            todo!("register allocation currently doesn't support memory displacments");
+            let mem = self.alloc_stack(&&dag::DagNode::ret(TypeMetadata::u8), tmp.size);
+        
+            return DagOpTarget::Mem(mem);
         }
 
         // we pass in any node - it just doesn't matter which one
@@ -176,15 +204,25 @@ pub struct ItRegCoalAllocBase {
     /// The free registers which are possibiy usable
     pub regs: Vec<Reg>,
     /// The target specific argument processor
-    pub arg_processor: Option<fn(&mut ItRegCoalAlloc)>
+    pub arg_processor: Option<fn(&mut ItRegCoalAlloc)>,
+    /// The target specific memory processor
+    pub mem_processor: Option<fn(&mut ItRegCoalAlloc, &dag::DagNode, TypeMetadata) -> Memory>,
+    /// stack offset
+    pub stack: i32,
 }
 
 impl ItRegCoalAllocBase {
     /// Creates a new irc reg allocator with the given function
     /// and runs register allocation for the arguments
     pub fn fork<'a>(&self, func: &'a Function) -> ItRegCoalAlloc<'a> {
-        let mut alloc = ItRegCoalAlloc::new(self.regs.to_owned(), self.arg_processor.to_owned().unwrap());
-    
+        let mut alloc = ItRegCoalAlloc::new(
+            self.regs.to_owned(), 
+            self.arg_processor.to_owned().unwrap(), 
+            self.mem_processor.to_owned().unwrap()
+        );
+        
+
+        alloc.stack = self.stack;
         alloc.init(func);
 
         alloc

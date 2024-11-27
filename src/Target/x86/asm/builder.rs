@@ -109,11 +109,13 @@ impl From<Memory> for X86MemDispl {
             Some(X86Reg::Rsp())
         } else { None };
 
+        let displ = mem.offset;
+
         X86MemDispl { 
             base: base, 
             option: X86MemOption::Plus, 
             index: None, 
-            displ: Some(mem.offset), 
+            displ: Some(displ), 
             scale: None, 
             size: mem.size.into(),
         }            

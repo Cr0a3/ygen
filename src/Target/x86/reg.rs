@@ -266,3 +266,15 @@ impl From<&Reg> for X86Reg {
         (*value).into()
     }
 }
+
+impl Into<u32> for X86RegSize {
+    fn into(self) -> u32 {
+        match self {
+            X86RegSize::Byte => 1,
+            X86RegSize::Word => 2,
+            X86RegSize::Dword => 4,
+            X86RegSize::Qword => 8,
+            X86RegSize::SimdVec => 16,
+        }
+    }
+}
