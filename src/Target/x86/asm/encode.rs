@@ -38,7 +38,7 @@ impl X86Instr {
 
     fn encode_mov(&self) -> Vec<u8> {
         let dst = self.op1.expect("expected dst");
-        let src = self.op1.expect("expected src");
+        let src = self.op2.expect("expected src");
         
         let instr = match (dst, src) {
             (X86Operand::Reg(dst), X86Operand::Reg(src)) => {
@@ -79,15 +79,15 @@ impl X86Instr {
             },
             (X86Operand::MemDispl(dst), X86Operand::Const(src)) => {
                 match dst.size {
-                    X86RegSize::Byte => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Mov_rm8_r8, dst.into(), src as i32),
-                    X86RegSize::Word => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Mov_rm16_r16, dst.into(), src as i32),
-                    X86RegSize::Dword => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Mov_rm32_r32, dst.into(), src as i32),
-                    X86RegSize::Qword => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Mov_rm64_r64, dst.into(), src as i32),
+                    X86RegSize::Byte => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Mov_rm8_imm8, dst.into(), src as i32),
+                    X86RegSize::Word => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Mov_rm16_imm16, dst.into(), src as i32),
+                    X86RegSize::Dword => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Mov_rm32_imm32, dst.into(), src as i32),
+                    X86RegSize::Qword => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Mov_rm64_imm32, dst.into(), src as i32),
                     X86RegSize::SimdVec => panic!("mov deosn't support simd vecs"),
                 }
             },
 
-            _ => panic!("invalid variant: mov {dst}, {src} (maybe unresolved tmps?)"),
+            _ => panic!("invalid variant: {self} (maybe unresolved tmps?)"),
         }.expect("invalid instruction");
 
         BlockEncoder::encode(
@@ -98,15 +98,60 @@ impl X86Instr {
     }
 
     fn encode_movss(&self) -> Vec<u8> {
-        todo!()
+        let dst = self.op1.expect("expected dst");
+        let src = self.op2.expect("expected src");
+
+        let instr = match (dst, src) {
+            (X86Operand::Reg(dst), X86Operand::Reg(src)) => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Movss_xmm_xmmm32, dst.into(), src.into()),
+            (X86Operand::Reg(dst), X86Operand::MemDispl(src)) => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Movss_xmm_xmmm32, dst.into(), src.into()),
+            (X86Operand::MemDispl(dst), X86Operand::Reg(src)) => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Movss_xmmm32_xmm, dst.into(), src.into()),
+
+            _ => panic!("illegal variant: {self} (maybe unsresolved tmps?)"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
     }
 
     fn encode_movsd(&self) -> Vec<u8> {
-        todo!()
+        let dst = self.op1.expect("expected dst");
+        let src = self.op2.expect("expected src");
+
+        let instr = match (dst, src) {
+            (X86Operand::Reg(dst), X86Operand::Reg(src)) => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Movsd_xmm_xmmm64, dst.into(), src.into()),
+            (X86Operand::Reg(dst), X86Operand::MemDispl(src)) => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Movsd_xmm_xmmm64, dst.into(), src.into()),
+            (X86Operand::MemDispl(dst), X86Operand::Reg(src)) => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Movsd_xmmm64_xmm, dst.into(), src.into()),
+
+            _ => panic!("illegal variant: {self} (maybe unsresolved tmps?)"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
     }
 
     fn encode_movdqa(&self) -> Vec<u8> {
-        todo!()
+        let dst = self.op1.expect("expected dst");
+        let src = self.op2.expect("expected src");
+
+        let instr = match (dst, src) {
+            (X86Operand::Reg(dst), X86Operand::Reg(src)) => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Movdqa_xmm_xmmm128, dst.into(), src.into()),
+            (X86Operand::Reg(dst), X86Operand::MemDispl(src)) => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Movdqa_xmm_xmmm128, dst.into(), src.into()),
+            (X86Operand::MemDispl(dst), X86Operand::Reg(src)) => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Movdqa_xmmm128_xmm, dst.into(), src.into()),
+
+            _ => panic!("illegal variant: {self} (maybe unsresolved tmps?)"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
     }
 
     fn encode_ret(&self) -> Vec<u8> {
@@ -114,7 +159,64 @@ impl X86Instr {
     }
 
     fn encode_add(&self) -> Vec<u8> {
-        todo!()
+        let dst = self.op1.expect("expected dst");
+        let src = self.op2.expect("expected src");
+        
+        let instr = match (dst, src) {
+            (X86Operand::Reg(dst), X86Operand::Reg(src)) => {
+                match dst.size {
+                    X86RegSize::Byte => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Add_r8_rm8, dst.into(), src.into()),
+                    X86RegSize::Word => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Add_r16_rm16, dst.into(), src.into()),
+                    X86RegSize::Dword => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Add_r32_rm32, dst.into(), src.into()),
+                    X86RegSize::Qword => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Add_r64_rm64, dst.into(), src.into()),
+                    X86RegSize::SimdVec => panic!("add deosn't support simd vecs"),
+                }
+            },
+            (X86Operand::Reg(dst), X86Operand::Const(src)) => {
+                match dst.size {
+                    X86RegSize::Byte => Instruction::with2::<iced_x86::Register, i32>(Code::Add_rm8_imm8, dst.into(), src as i32),
+                    X86RegSize::Word => Instruction::with2::<iced_x86::Register, i32>(Code::Add_rm16_imm16, dst.into(), src as i32),
+                    X86RegSize::Dword => Instruction::with2::<iced_x86::Register, i32>(Code::Add_rm32_imm32, dst.into(), src as i32),
+                    X86RegSize::Qword => Instruction::with2::<iced_x86::Register, i32>(Code::Add_rm64_imm32, dst.into(), src as i32),
+                    X86RegSize::SimdVec => panic!("add deosn't support simd vecs"),
+                }
+            },
+            (X86Operand::Reg(dst), X86Operand::MemDispl(src)) => {
+                match dst.size {
+                    X86RegSize::Byte => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Add_r8_rm8, dst.into(), src.into()),
+                    X86RegSize::Word => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Add_r16_rm16, dst.into(), src.into()),
+                    X86RegSize::Dword => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Add_r32_rm32, dst.into(), src.into()),
+                    X86RegSize::Qword => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Add_r64_rm64, dst.into(), src.into()),
+                    X86RegSize::SimdVec => panic!("add deosn't support simd vecs"),
+                }
+            },
+            (X86Operand::MemDispl(dst), X86Operand::Reg(src)) => {
+                match dst.size {
+                    X86RegSize::Byte => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Add_rm8_r8, dst.into(), src.into()),
+                    X86RegSize::Word => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Add_rm16_r16, dst.into(), src.into()),
+                    X86RegSize::Dword => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Add_rm32_r32, dst.into(), src.into()),
+                    X86RegSize::Qword => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Add_rm64_r64, dst.into(), src.into()),
+                    X86RegSize::SimdVec => panic!("add deosn't support simd vecs"),
+                }
+            },
+            (X86Operand::MemDispl(dst), X86Operand::Const(src)) => {
+                match dst.size {
+                    X86RegSize::Byte => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Add_rm8_imm8, dst.into(), src as i32),
+                    X86RegSize::Word => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Add_rm16_imm16, dst.into(), src as i32),
+                    X86RegSize::Dword => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Add_rm32_imm32, dst.into(), src as i32),
+                    X86RegSize::Qword => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Add_rm64_imm32, dst.into(), src as i32),
+                    X86RegSize::SimdVec => panic!("add deosn't support simd vecs"),
+                }
+            },
+
+            _ => panic!("invalid variant: {self} (maybe unresolved tmps?)"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
     }
 
     fn encode_paddq(&self) -> Vec<u8> {
@@ -126,7 +228,64 @@ impl X86Instr {
     }
 
     fn encode_sub(&self) -> Vec<u8> {
-        todo!()
+        let dst = self.op1.expect("expected dst");
+        let src = self.op2.expect("expected src");
+        
+        let instr = match (dst, src) {
+            (X86Operand::Reg(dst), X86Operand::Reg(src)) => {
+                match dst.size {
+                    X86RegSize::Byte => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Sub_r8_rm8, dst.into(), src.into()),
+                    X86RegSize::Word => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Sub_r16_rm16, dst.into(), src.into()),
+                    X86RegSize::Dword => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Sub_r32_rm32, dst.into(), src.into()),
+                    X86RegSize::Qword => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Sub_r64_rm64, dst.into(), src.into()),
+                    X86RegSize::SimdVec => panic!("sub deosn't support simd vecs"),
+                }
+            },
+            (X86Operand::Reg(dst), X86Operand::Const(src)) => {
+                match dst.size {
+                    X86RegSize::Byte => Instruction::with2::<iced_x86::Register, i32>(Code::Sub_rm8_imm8, dst.into(), src as i32),
+                    X86RegSize::Word => Instruction::with2::<iced_x86::Register, i32>(Code::Sub_rm16_imm16, dst.into(), src as i32),
+                    X86RegSize::Dword => Instruction::with2::<iced_x86::Register, i32>(Code::Sub_rm32_imm32, dst.into(), src as i32),
+                    X86RegSize::Qword => Instruction::with2::<iced_x86::Register, i32>(Code::Sub_rm64_imm32, dst.into(), src as i32),
+                    X86RegSize::SimdVec => panic!("sub deosn't support simd vecs"),
+                }
+            },
+            (X86Operand::Reg(dst), X86Operand::MemDispl(src)) => {
+                match dst.size {
+                    X86RegSize::Byte => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Sub_r8_rm8, dst.into(), src.into()),
+                    X86RegSize::Word => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Sub_r16_rm16, dst.into(), src.into()),
+                    X86RegSize::Dword => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Sub_r32_rm32, dst.into(), src.into()),
+                    X86RegSize::Qword => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Sub_r64_rm64, dst.into(), src.into()),
+                    X86RegSize::SimdVec => panic!("sub deosn't support simd vecs"),
+                }
+            },
+            (X86Operand::MemDispl(dst), X86Operand::Reg(src)) => {
+                match dst.size {
+                    X86RegSize::Byte => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Sub_rm8_r8, dst.into(), src.into()),
+                    X86RegSize::Word => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Sub_rm16_r16, dst.into(), src.into()),
+                    X86RegSize::Dword => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Sub_rm32_r32, dst.into(), src.into()),
+                    X86RegSize::Qword => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Sub_rm64_r64, dst.into(), src.into()),
+                    X86RegSize::SimdVec => panic!("sub deosn't support simd vecs"),
+                }
+            },
+            (X86Operand::MemDispl(dst), X86Operand::Const(src)) => {
+                match dst.size {
+                    X86RegSize::Byte => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Sub_rm8_imm8, dst.into(), src as i32),
+                    X86RegSize::Word => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Sub_rm16_imm16, dst.into(), src as i32),
+                    X86RegSize::Dword => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Sub_rm32_imm32, dst.into(), src as i32),
+                    X86RegSize::Qword => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Sub_rm64_imm32, dst.into(), src as i32),
+                    X86RegSize::SimdVec => panic!("szb deosn't support simd vecs"),
+                }
+            },
+
+            _ => panic!("invalid variant: {self} (maybe unresolved tmps?)"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
     }
 
     fn encode_psubq(&self) -> Vec<u8> {
@@ -146,59 +305,314 @@ impl X86Instr {
     }
 
     fn encode_lea(&self) -> Vec<u8> {
-        todo!()
+        let Some(X86Operand::Reg(dst)) = self.op1 else { panic!("invalid variant: {self}") };
+        let Some(X86Operand::MemDispl(src)) = self.op2 else { panic!("invalid variant: {self}") };
+
+        let instr = match dst.size {
+            X86RegSize::Byte => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Lea_r16_m, {
+                // we need to modify the size of dst to be 16bits
+                let mut dst = dst;
+                dst.size = X86RegSize::Word;
+                dst.into()
+            }, src.into()),
+            X86RegSize::Word => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Lea_r16_m, dst.into(), src.into()),
+            X86RegSize::Dword => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Lea_r32_m, dst.into(), src.into()),
+            X86RegSize::Qword => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Lea_r64_m, dst.into(), src.into()),
+            X86RegSize::SimdVec => panic!("invalid size for lea: {:?}", dst.size),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
     }
 
     fn encode_jmp(&self) -> Vec<u8> {
-        todo!()
+        let target = self.op1.expect("expected jump target");
+
+        let instr = match target {
+            X86Operand::Reg(reg) => Instruction::with1::<iced_x86::Register>(Code::Jmp_rm64, reg.into()),
+            X86Operand::Const(imm) => Instruction::with1(Code::Jmp_rel32_64, imm as i32),
+            X86Operand::MemDispl(mem) => Instruction::with1::<iced_x86::MemoryOperand>(Code::Jmp_rm64, mem.into()),
+            X86Operand::BlockRel(_) => Instruction::with1(Code::Jmp_rel32_64, 0), // branch will be resolved later
+            _ => panic!("invalid variant: {self}"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
     }
 
     fn encode_sete(&self) -> Vec<u8> {
-        todo!()
+        let dst = self.op1.expect("expected op1");
+
+        let instr = match dst {
+            X86Operand::Reg(reg) => Instruction::with1::<iced_x86::Register>(Code::Sete_rm8, reg.into()),
+            X86Operand::MemDispl(mem) => Instruction::with1::<iced_x86::MemoryOperand>(Code::Sete_rm8, mem.into()),
+            _ => panic!("invalid variant: {self}"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
     }
 
     fn encode_setne(&self) -> Vec<u8> {
-        todo!()
+        let dst = self.op1.expect("expected op1");
+
+        let instr = match dst {
+            X86Operand::Reg(reg) => Instruction::with1::<iced_x86::Register>(Code::Setne_rm8, reg.into()),
+            X86Operand::MemDispl(mem) => Instruction::with1::<iced_x86::MemoryOperand>(Code::Setne_rm8, mem.into()),
+            _ => panic!("invalid variant: {self}"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
     }
 
     fn encode_setl(&self) -> Vec<u8> {
-        todo!()
+        let dst = self.op1.expect("expected op1");
+
+        let instr = match dst {
+            X86Operand::Reg(reg) => Instruction::with1::<iced_x86::Register>(Code::Setl_rm8, reg.into()),
+            X86Operand::MemDispl(mem) => Instruction::with1::<iced_x86::MemoryOperand>(Code::Setl_rm8, mem.into()),
+            _ => panic!("invalid variant: {self}"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
     }
 
     fn encode_setle(&self) -> Vec<u8> {
-        todo!()
+        let dst = self.op1.expect("expected op1");
+
+        let instr = match dst {
+            X86Operand::Reg(reg) => Instruction::with1::<iced_x86::Register>(Code::Setle_rm8, reg.into()),
+            X86Operand::MemDispl(mem) => Instruction::with1::<iced_x86::MemoryOperand>(Code::Setle_rm8, mem.into()),
+            _ => panic!("invalid variant: {self}"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
     }
 
     fn encode_setg(&self) -> Vec<u8> {
-        todo!()
+        let dst = self.op1.expect("expected op1");
+
+        let instr = match dst {
+            X86Operand::Reg(reg) => Instruction::with1::<iced_x86::Register>(Code::Setg_rm8, reg.into()),
+            X86Operand::MemDispl(mem) => Instruction::with1::<iced_x86::MemoryOperand>(Code::Setg_rm8, mem.into()),
+            _ => panic!("invalid variant: {self}"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
     }
 
     fn encode_setge(&self) -> Vec<u8> {
-        todo!()
+        let dst = self.op1.expect("expected op1");
+
+        let instr = match dst {
+            X86Operand::Reg(reg) => Instruction::with1::<iced_x86::Register>(Code::Setge_rm8, reg.into()),
+            X86Operand::MemDispl(mem) => Instruction::with1::<iced_x86::MemoryOperand>(Code::Setge_rm8, mem.into()),
+            _ => panic!("invalid variant: {self}"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
     }
 
     fn encode_cmp(&self) -> Vec<u8> {
-        todo!()
+        let dst = self.op1.expect("expected dst");
+        let src = self.op2.expect("expected src");
+        
+        let instr = match (dst, src) {
+            (X86Operand::Reg(dst), X86Operand::Reg(src)) => {
+                match dst.size {
+                    X86RegSize::Byte => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Cmp_r8_rm8, dst.into(), src.into()),
+                    X86RegSize::Word => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Cmp_r16_rm16, dst.into(), src.into()),
+                    X86RegSize::Dword => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Cmp_r32_rm32, dst.into(), src.into()),
+                    X86RegSize::Qword => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Cmp_r64_rm64, dst.into(), src.into()),
+                    X86RegSize::SimdVec => panic!("cmp deosn't support simd vecs"),
+                }
+            },
+            (X86Operand::Reg(dst), X86Operand::Const(src)) => {
+                match dst.size {
+                    X86RegSize::Byte => Instruction::with2::<iced_x86::Register, i32>(Code::Cmp_rm8_imm8, dst.into(), src as i32),
+                    X86RegSize::Word => Instruction::with2::<iced_x86::Register, i32>(Code::Cmp_rm16_imm16, dst.into(), src as i32),
+                    X86RegSize::Dword => Instruction::with2::<iced_x86::Register, i32>(Code::Cmp_rm32_imm32, dst.into(), src as i32),
+                    X86RegSize::Qword => Instruction::with2::<iced_x86::Register, i32>(Code::Cmp_rm64_imm32, dst.into(), src as i32),
+                    X86RegSize::SimdVec => panic!("cmp deosn't support simd vecs"),
+                }
+            },
+            (X86Operand::Reg(dst), X86Operand::MemDispl(src)) => {
+                match dst.size {
+                    X86RegSize::Byte => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Cmp_r8_rm8, dst.into(), src.into()),
+                    X86RegSize::Word => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Cmp_r16_rm16, dst.into(), src.into()),
+                    X86RegSize::Dword => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Cmp_r32_rm32, dst.into(), src.into()),
+                    X86RegSize::Qword => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Cmp_r64_rm64, dst.into(), src.into()),
+                    X86RegSize::SimdVec => panic!("cmp deosn't support simd vecs"),
+                }
+            },
+            (X86Operand::MemDispl(dst), X86Operand::Reg(src)) => {
+                match dst.size {
+                    X86RegSize::Byte => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Cmp_rm8_r8, dst.into(), src.into()),
+                    X86RegSize::Word => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Cmp_rm16_r16, dst.into(), src.into()),
+                    X86RegSize::Dword => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Cmp_rm32_r32, dst.into(), src.into()),
+                    X86RegSize::Qword => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Cmp_rm64_r64, dst.into(), src.into()),
+                    X86RegSize::SimdVec => panic!("cmp deosn't support simd vecs"),
+                }
+            },
+            (X86Operand::MemDispl(dst), X86Operand::Const(src)) => {
+                match dst.size {
+                    X86RegSize::Byte => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Cmp_rm8_imm8, dst.into(), src as i32),
+                    X86RegSize::Word => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Cmp_rm16_imm16, dst.into(), src as i32),
+                    X86RegSize::Dword => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Cmp_rm32_imm32, dst.into(), src as i32),
+                    X86RegSize::Qword => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Cmp_rm64_imm32, dst.into(), src as i32),
+                    X86RegSize::SimdVec => panic!("cmp deosn't support simd vecs"),
+                }
+            },
+
+            _ => panic!("invalid variant: {self} (maybe unresolved tmps?)"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
     }
 
     fn encode_pinsrb(&self) -> Vec<u8> {
-        todo!()
+        let Some(X86Operand::Reg(dst)) = self.op1 else { panic!("invalid variant"); };
+        let Some(src) = self.op2 else { panic!("invalid variant"); };
+        let Some(X86Operand::Const(pos)) = self.op3 else { panic!("invalid variant"); };
+
+        let instr = match src {
+            X86Operand::Reg(src) => {
+                match src.size {
+                    X86RegSize::Dword => Instruction::with3::<iced_x86::Register, iced_x86::Register, i32>(Code::Pinsrb_xmm_r32m8_imm8, dst.into(), src.into(), pos as i32),
+                    X86RegSize::Qword => Instruction::with3::<iced_x86::Register, iced_x86::Register, i32>(Code::Pinsrb_xmm_r64m8_imm8, dst.into(), src.into(), pos as i32),
+                    _ => panic!("invalid variant: {self}"),
+                }
+            },
+            X86Operand::MemDispl(mem) => Instruction::with3::<iced_x86::Register, iced_x86::MemoryOperand, i32>(Code::Pinsrb_xmm_r64m8_imm8, dst.into(), mem.into(), pos as i32),
+            _ => panic!("invalid variant: {self}"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
     }
 
     fn encode_pinsrw(&self) -> Vec<u8> {
-        todo!()
+        let Some(X86Operand::Reg(dst)) = self.op1 else { panic!("invalid variant"); };
+        let Some(src) = self.op2 else { panic!("invalid variant"); };
+        let Some(X86Operand::Const(pos)) = self.op3 else { panic!("invalid variant"); };
+
+        let instr = match src {
+            X86Operand::Reg(src) => {
+                match src.size {
+                    X86RegSize::Dword => Instruction::with3::<iced_x86::Register, iced_x86::Register, i32>(Code::Pinsrw_xmm_r32m16_imm8, dst.into(), src.into(), pos as i32),
+                    X86RegSize::Qword => Instruction::with3::<iced_x86::Register, iced_x86::Register, i32>(Code::Pinsrw_xmm_r64m16_imm8, dst.into(), src.into(), pos as i32),
+                    _ => panic!("invalid variant: {self}"),
+                }
+            },
+            X86Operand::MemDispl(mem) => Instruction::with3::<iced_x86::Register, iced_x86::MemoryOperand, i32>(Code::Pinsrw_xmm_r64m16_imm8, dst.into(), mem.into(), pos as i32),
+            _ => panic!("invalid variant: {self}"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
     }
 
     fn encode_pinsrd(&self) -> Vec<u8> {
-        todo!()
+        let Some(X86Operand::Reg(dst)) = self.op1 else { panic!("invalid variant"); };
+        let Some(src) = self.op2 else { panic!("invalid variant"); };
+        let Some(X86Operand::Const(pos)) = self.op3 else { panic!("invalid variant"); };
+
+        let instr = match src {
+            X86Operand::Reg(src) => {
+                match src.size {
+                    X86RegSize::Dword => Instruction::with3::<iced_x86::Register, iced_x86::Register, i32>(Code::Pinsrd_xmm_rm32_imm8, dst.into(), src.into(), pos as i32),
+                    _ => panic!("invalid variant: {self}"),
+                }
+            },
+            X86Operand::MemDispl(mem) => Instruction::with3::<iced_x86::Register, iced_x86::MemoryOperand, i32>(Code::Pinsrd_xmm_rm32_imm8, dst.into(), mem.into(), pos as i32),
+            _ => panic!("invalid variant: {self}"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
     }
 
     fn encode_pinsrq(&self) -> Vec<u8> {
-        todo!()
+        let Some(X86Operand::Reg(dst)) = self.op1 else { panic!("invalid variant"); };
+        let Some(src) = self.op2 else { panic!("invalid variant"); };
+        let Some(X86Operand::Const(pos)) = self.op3 else { panic!("invalid variant"); };
+
+        let instr = match src {
+            X86Operand::Reg(src) => {
+                match src.size {
+                    X86RegSize::Qword => Instruction::with3::<iced_x86::Register, iced_x86::Register, i32>(Code::Pinsrq_xmm_rm64_imm8, dst.into(), src.into(), pos as i32),
+                    _ => panic!("invalid variant: {self}"),
+                }
+            },
+            X86Operand::MemDispl(mem) => Instruction::with3::<iced_x86::Register, iced_x86::MemoryOperand, i32>(Code::Pinsrq_xmm_rm64_imm8, dst.into(), mem.into(), pos as i32),
+            _ => panic!("invalid variant: {self}"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
     }
 
     fn encode_insertps(&self) -> Vec<u8> {
-        todo!()
+        let Some(X86Operand::Reg(dst)) = self.op1 else { panic!("invalid variant"); };
+        let Some(src) = self.op2 else { panic!("invalid variant"); };
+        let Some(X86Operand::Const(pos)) = self.op3 else { panic!("invalid variant"); };
+
+        let instr = match src {
+            X86Operand::Reg(src) => Instruction::with3::<iced_x86::Register, iced_x86::Register, i32>(Code::Insertps_xmm_xmmm32_imm8, dst.into(), src.into(), pos as i32),
+            X86Operand::MemDispl(mem) => Instruction::with3::<iced_x86::Register, iced_x86::MemoryOperand, i32>(Code::Insertps_xmm_xmmm32_imm8, dst.into(), mem.into(), pos as i32),
+            _ => panic!("invalid variant: {self}"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
     }
 }
 

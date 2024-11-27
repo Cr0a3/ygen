@@ -43,7 +43,7 @@ pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc,
             let mut node_asm: Vec<X86Instr> = Vec::new();
             auto_gen::compile(&mut node_asm, node.to_owned(), module);
 
-            X86BasicOpt::opt(&mut node_asm);
+            //X86BasicOpt::opt(&mut node_asm);
 
             super::alloc::resolve(tmps, &mut node_asm, alloc);
 
@@ -51,7 +51,7 @@ pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc,
 
         };
 
-        X86BasicOpt::opt(&mut asm);
+        //X86BasicOpt::opt(&mut asm);
 
         // now turn the asemmbly into `dyn McInstr`
         let mut mc_instrs: Vec<Box<dyn McInstr>> = Vec::new();

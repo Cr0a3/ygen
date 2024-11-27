@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::{Target::x86::get_call, IR::TypeMetadata};
+use crate::{CodeGen::reg::{Reg, TargetReg}, Target::x86::get_call, IR::TypeMetadata};
 
 /// The register variants for X86
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -241,5 +241,28 @@ impl Display for X86Reg {
             X86RegVariant::Xmm14 => "xmm14",
             X86RegVariant::Xmm15 => "xmm15",
         })
+    }
+}
+
+impl Into<Reg> for X86Reg {
+    fn into(self) -> Reg {
+        Reg::new_x86(self)
+    }
+}
+
+impl From<Reg> for X86Reg {
+    fn from(value: Reg) -> Self {
+        let TargetReg::X86(mut reg) = value.reg else {
+            panic!("X86 backend expectes x86 registers")
+        };
+
+        reg.size = value.size.into();
+
+        reg
+    }
+}
+impl From<&Reg> for X86Reg {
+    fn from(value: &Reg) -> Self {
+        (*value).into()
     }
 }

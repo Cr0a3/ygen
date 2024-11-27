@@ -1,4 +1,4 @@
-use crate::{CodeGen::{dag::{DagOp, DagOpTarget}, memory::Memory, reg::TargetReg}, Target::x86::reg::{X86Reg, X86RegSize}};
+use crate::{CodeGen::{dag::{DagOp, DagOpTarget}, memory::Memory, reg::{Reg, TargetReg}}, Target::x86::reg::{X86Reg, X86RegSize}};
 
 use super::{X86MemDispl, X86MemOption, X86Instr, X86Mnemonic, X86Operand};
 
@@ -70,13 +70,19 @@ impl From<DagOpTarget> for X86Operand {
 impl From<&DagOpTarget> for X86Operand {
     fn from(value: &DagOpTarget) -> Self {
         match value {
-            crate::CodeGen::dag::DagOpTarget::Reg(reg) => match reg.reg {
-                crate::CodeGen::reg::TargetReg::X86(X86) => X86Operand::Reg(X86),
-            },
+            crate::CodeGen::dag::DagOpTarget::Reg(reg) => reg.into(),
             crate::CodeGen::dag::DagOpTarget::Constant(constant) => X86Operand::Const(constant.val() as i64),
             crate::CodeGen::dag::DagOpTarget::Mem(mem) => X86Operand::MemDispl((*mem).into()),
             _ => panic!("variables cannot be used as a target in the X86 backend"),
         }
+    }
+}
+
+impl From<&Reg> for X86Operand {
+    fn from(value: &Reg) -> Self {
+        let reg: X86Reg = value.into();
+
+        X86Operand::Reg(reg)
     }
 }
 

@@ -307,8 +307,8 @@ pub struct DagTmpInfo {
     pub requires_fp: bool,
     /// Does the location even matter?
     pub shit_on_loc: bool,
-    /// The type of the temporary
-    pub ty: TypeMetadata,
+    /// The size of the temporary
+    pub size: TypeMetadata,
 }
 
 impl DagTmpInfo {
@@ -320,7 +320,7 @@ impl DagTmpInfo {
             requires_fp: false,
             requires_mem: false,
             shit_on_loc: false,
-            ty: ty,
+            size: ty,
         }
     }
 

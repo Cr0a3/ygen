@@ -162,7 +162,7 @@ impl<'a> ItRegCoalAlloc<'a> {
         }
 
         // we pass in any node - it just doesn't matter which one
-        let Some(reg) = self.get_fitting_reg(&&dag::DagNode::ret(TypeMetadata::u8), tmp.ty) else {
+        let Some(reg) = self.get_fitting_reg(&&dag::DagNode::ret(TypeMetadata::u8), tmp.size) else {
             panic!("unable to get fitting register\nTODO: implement spills and recalls for tmps");
         };
 
