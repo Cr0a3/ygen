@@ -18,7 +18,7 @@ fn main() {
     cli.add_opt("no-exit", "no-exit-on-error", "Ytest does not quite when an error occurs");
     cli.add_opt("neg-exit", "exit-code-neg", "Ytest exits automaticly even with `no-exit` if the programm returned with code -1");
 
-    cli.add_arg("t", "test", "The file to the testcase", true);
+    cli.add_unpositional("test", true);
 
     cli.scan();
 
@@ -28,7 +28,7 @@ fn main() {
         cli.version();
     }
 
-    let file = cli.arg_val("t").expect("We said it was required");
+    let file = cli.arg_val("test").expect("We said it was required");
     let mut file = match File::open(file) {
         Ok(f) => f,
         Err(err) => {
@@ -104,7 +104,12 @@ fn main() {
 
     let mut code = 0;
 
+    let cmds = parsed.cmd.len();
+    let mut index = 0;
+
     for cmd in parsed.cmd {
+        index += 1;
+
         let mut args = cmd  .replace("%s", path_str)
                                 .replace("%c", path2_str);
         if cfg!(target_os = "windows") {
@@ -142,43 +147,24 @@ fn main() {
 
         found_stderr.push_str( &stderr );
 
-        match cmd.status() {
-            Ok(status) => {
-                if parsed.ignore_fail {
-                    code = status.code().expect("expected exit code") as u32;
-                    continue;
-                }
-
-                if !status.success() {
-                    if let Some(exit_code) = status.code() {
-                        code = exit_code as u32;
-
-                        if let Some(expected_code) = parsed.expected_code {
-                            if (expected_code == 0 || (cli.opt("exit")) && code == (-1i32 as u32)) && !parsed.ignore_fail {
-                                println!("{}: the programm didn't exit sucessfull with code {}", "Error".red().bold(), exit_code);
-                                if !cli.opt("no-exit") {
-                                    exit(-1);
-                                }
-                            }
-                        }  else if !parsed.ignore_fail {
-                            println!("{}: the programm didn't exit sucessfull with code {}", "Error".red().bold(), exit_code);
-                            exit(-1);
-                        }
-                    } else if !parsed.ignore_fail {
-                        println!("{}: the programm didn't exit sucessfull", "Error".red().bold());
-                        if !cli.opt("no-exit") {
-                            exit(-1)
-                        }
-                    }
-                }
-            },
+        let status = match cmd.status() {
+            Ok(stat) => stat.code().expect("expected exit code"),
             Err(err) => {
                 println!("{}: {}", "Error".red().bold(), err);
-                if !cli.opt("no-exit") {
-                    exit(-1)
-                }
+                exit(-1);
             }
         };
+
+        code = status;
+
+        if parsed.ignore_fail {
+            continue;
+        }
+
+        if status != 1 && cmds != index {
+            println!("{}: the programm didn't exit sucessfull with code {}", "Error".red().bold(), status);
+            exit(-1);
+        }
     }
 
     let _ = std::fs::remove_file(&path);
@@ -205,7 +191,7 @@ fn main() {
     }
 
     if let Some(expected_code) = parsed.expected_code {
-        if expected_code as u32 != code {
+        if expected_code != code {
             println!("{}: expected exit code: {} found {}", "Error".red().bold(), expected_code, code);
             if !cli.opt("no-exit") {
                 exit(-1)

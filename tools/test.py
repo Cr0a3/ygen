@@ -12,7 +12,7 @@ failed = 0
 passed = 0
 
 for test in tests:
-    process = subprocess.run(["cargo", "run", "-p", "ytest", "--", f"-t={test}"], capture_output=True)
+    process = subprocess.run(["cargo", "run", "-p", "ytest", "--", test], capture_output=True)
     if process.returncode == 0:
         print(Fore.GREEN + "SUCESS " + test + Style.RESET_ALL)
         passed += 1
