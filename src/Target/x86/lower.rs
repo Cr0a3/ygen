@@ -44,8 +44,23 @@ pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc,
         for node in nodes {
             alloc.apply(node);
             
-            let tmps = x86_tmps(node);
+            for overwrite in auto_gen::overwrittes(&node) {
+                // 1. Check if the value which is overwritten is currently in use
+                if !alloc.regs.contains(&crate::CodeGen::reg::Reg::new_x86(overwrite)) {
+                    continue;
+                }
 
+                // 2. Allocate new spill location
+                // we feed random values into the mem processor cuz they will be ignored
+                let stack = super::alloc::mem_proc(alloc, &DagNode::new(dag::DagOpCode::Copy, crate::IR::TypeMetadata::Void), crate::IR::TypeMetadata::i64);
+
+                // We now create our instruction
+                let instr = super::asm::X86Instr::with2(X86Mnemonic::Mov, stack.into(), X86Operand::Reg(overwrite));
+
+                asm.push(instr);
+            }
+
+            let tmps = x86_tmps(node);
 
             let mut node_asm: Vec<X86Instr> = Vec::new();
             auto_gen::compile(&mut node_asm, node.to_owned(), module);

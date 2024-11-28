@@ -35,6 +35,7 @@ impl X86Instr {
             X86Mnemonic::Pinsrd => self.encode_pinsrd(),
             X86Mnemonic::Pinsrq => self.encode_pinsrq(),
             X86Mnemonic::Insertps => self.encode_insertps(),
+            X86Mnemonic::Imul => self.encode_imul(),
         }
     }
 
@@ -641,6 +642,80 @@ impl X86Instr {
             X86Operand::Reg(src) => Instruction::with3::<iced_x86::Register, iced_x86::Register, i32>(Code::Insertps_xmm_xmmm32_imm8, dst.into(), src.into(), pos as i32),
             X86Operand::MemDispl(mem) => Instruction::with3::<iced_x86::Register, iced_x86::MemoryOperand, i32>(Code::Insertps_xmm_xmmm32_imm8, dst.into(), mem.into(), pos as i32),
             _ => panic!("invalid variant: {self}"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
+    }
+
+    fn encode_imul(&self) -> Vec<u8> {
+        let instr = {
+            if self.op1.is_some() && self.op2.is_none() && self.op3.is_none() { // maybe its imul r/m
+                let Some(op1) = self.op1 else { unreachable!() };
+                match op1 {
+                    X86Operand::Reg(reg) => match reg.size {
+                        X86RegSize::Byte => Instruction::with1::<iced_x86::Register>(Code::Imul_rm8, reg.into()),
+                        X86RegSize::Word => Instruction::with1::<iced_x86::Register>(Code::Imul_rm16, reg.into()),
+                        X86RegSize::Dword => Instruction::with1::<iced_x86::Register>(Code::Imul_rm32, reg.into()),
+                        X86RegSize::Qword => Instruction::with1::<iced_x86::Register>(Code::Imul_rm64, reg.into()),
+                        X86RegSize::SimdVec => panic!("imul doesn't support simd vectors")
+                    },
+                    X86Operand::MemDispl(mem) => match mem.size {
+                        X86RegSize::Byte => Instruction::with1::<iced_x86::MemoryOperand>(Code::Imul_rm8, mem.into()),
+                        X86RegSize::Word => Instruction::with1::<iced_x86::MemoryOperand>(Code::Imul_rm16, mem.into()),
+                        X86RegSize::Dword => Instruction::with1::<iced_x86::MemoryOperand>(Code::Imul_rm32, mem.into()),
+                        X86RegSize::Qword => Instruction::with1::<iced_x86::MemoryOperand>(Code::Imul_rm64, mem.into()),
+                        X86RegSize::SimdVec => panic!("imul doesn't support simd vectors")
+                    },
+                    _ => panic!("invalid variant: {self}"),
+                }
+            } else if self.op1.is_some() && self.op2.is_some() && self.op3.is_none() { // maybe its imul r/m, r/m
+                let Some(op1) = self.op1 else { unreachable!() };
+                let Some(op2) = self.op2 else { unreachable!() };
+
+                match (op1, op2) {
+                    (X86Operand::Reg(op1), X86Operand::Reg(op2)) => match op1.size {
+                        X86RegSize::Byte => panic!("imul doesn't support rm8"),
+                        X86RegSize::Word => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Imul_r16_rm16, op1.into(), op2.into()),
+                        X86RegSize::Dword => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Imul_r32_rm32, op1.into(), op2.into()),
+                        X86RegSize::Qword => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Imul_r64_rm64, op1.into(), op2.into()),
+                        X86RegSize::SimdVec => panic!("imul doesn't support simd vectors")
+                    },
+                    (X86Operand::Reg(op1), X86Operand::MemDispl(op2)) => match op1.size {
+                        X86RegSize::Byte => panic!("imul doesn't support rm8"),
+                        X86RegSize::Word => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Imul_r16_rm16, op1.into(), op2.into()),
+                        X86RegSize::Dword => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Imul_r32_rm32, op1.into(), op2.into()),
+                        X86RegSize::Qword => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Imul_r64_rm64, op1.into(), op2.into()),
+                        X86RegSize::SimdVec => panic!("imul doesn't support simd vectors")
+                    },
+                    _ => panic!("invalid variant: {self}"),
+                }
+            } else {
+                let Some(X86Operand::Reg(op1)) = self.op1 else { panic!("expected op1") };
+                let Some(op2) = self.op2 else { panic!("expected op2") };
+                let Some(X86Operand::Const(op3)) = self.op3 else { panic!("expected op3") };
+
+                match op2 {
+                    X86Operand::Reg(reg) => match reg.size {
+                        X86RegSize::Byte => panic!("imul doesn't support rm8"),
+                        X86RegSize::Word => Instruction::with3::<iced_x86::Register, iced_x86::Register, i32>(Code::Imul_r16_rm16_imm16, op1.into(), reg.into(), op3 as i32),
+                        X86RegSize::Dword => Instruction::with3::<iced_x86::Register, iced_x86::Register, i32>(Code::Imul_r32_rm32_imm32, op1.into(), reg.into(), op3 as i32),
+                        X86RegSize::Qword => Instruction::with3::<iced_x86::Register, iced_x86::Register, i32>(Code::Imul_r64_rm64_imm32, op1.into(), reg.into(), op3 as i32),
+                        X86RegSize::SimdVec => panic!("imul doesn't support simd vectors")
+                    },
+                    X86Operand::MemDispl(mem) => match mem.size {
+                        X86RegSize::Byte => panic!("imul doesn't support rm8"),
+                        X86RegSize::Word => Instruction::with3::<iced_x86::Register, iced_x86::MemoryOperand, i32>(Code::Imul_r16_rm16_imm16, op1.into(), mem.into(), op3 as i32),
+                        X86RegSize::Dword => Instruction::with3::<iced_x86::Register, iced_x86::MemoryOperand, i32>(Code::Imul_r32_rm32_imm32, op1.into(), mem.into(), op3 as i32),
+                        X86RegSize::Qword => Instruction::with3::<iced_x86::Register, iced_x86::MemoryOperand, i32>(Code::Imul_r64_rm64_imm32, op1.into(), mem.into(), op3 as i32),
+                        X86RegSize::SimdVec => panic!("imul doesn't support simd vectors")
+                    },
+                    _ => panic!("invalid variant: {self}"),
+                }
+            }
         }.expect("invalid instruction");
 
         BlockEncoder::encode(

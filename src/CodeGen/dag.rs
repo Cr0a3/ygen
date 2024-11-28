@@ -33,6 +33,7 @@ pub enum DagOpCode {
     // Math
     Add,
     Sub,
+    Mul,
 
     // Branches
     Br(String),
@@ -133,6 +134,10 @@ impl DagNode {
     /// Creates a new sub dag node 
     #[inline]
     pub fn sub(ls: DagOp, rs: DagOp, out: DagOp, ty:TypeMetadata) -> Self { DagNode::new_with_out(DagOpCode::Sub, out, vec![ls, rs], ty) }
+
+    /// Creates a new mul dag node 
+    #[inline]
+    pub fn mul(ls: DagOp, rs: DagOp, out: DagOp, ty:TypeMetadata) -> Self { DagNode::new_with_out(DagOpCode::Mul, out, vec![ls, rs], ty) }
 
 }
 
