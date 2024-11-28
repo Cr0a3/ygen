@@ -34,6 +34,7 @@ pub enum DagOpCode {
     Add,
     Sub,
     Mul,
+    And,
 
     // Branches
     Br(String),
@@ -138,6 +139,10 @@ impl DagNode {
     /// Creates a new mul dag node 
     #[inline]
     pub fn mul(ls: DagOp, rs: DagOp, out: DagOp, ty:TypeMetadata) -> Self { DagNode::new_with_out(DagOpCode::Mul, out, vec![ls, rs], ty) }
+
+    /// Creates a new and dag node 
+    #[inline]
+    pub fn and(ls: DagOp, rs: DagOp, out: DagOp, ty:TypeMetadata) -> Self { DagNode::new_with_out(DagOpCode::And, out, vec![ls, rs], ty) }
 
 }
 

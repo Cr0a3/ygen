@@ -60,6 +60,8 @@ pub enum X86Mnemonic {
     Insertps,
 
     Imul,
+
+    And,
 }
 
 /// A X86 assembly operand
@@ -177,6 +179,7 @@ impl std::fmt::Display for X86Instr {
             X86Mnemonic::Insertps => "insertps",
             X86Mnemonic::Addss => "addss",
             X86Mnemonic::Imul => "imul",
+            X86Mnemonic::And => "and",
         })?;
         
         if let Some(op) = &self.op1 {

@@ -59,6 +59,7 @@ impl Display for DagOpCode {
             DagOpCode::Copy => write!(f, "copy")?,
             DagOpCode::Ret => write!(f, "ret")?,
             DagOpCode::Add => write!(f, "add")?,
+            DagOpCode::And => write!(f, "and")?,
             DagOpCode::Sub => write!(f, "sub")?,
             DagOpCode::Mul => write!(f, "mul")?,
             DagOpCode::GetFramePtr => write!(f, "intrinsics.getFramePtr")?,

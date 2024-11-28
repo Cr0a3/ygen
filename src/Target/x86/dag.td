@@ -30,6 +30,14 @@ def Pat<Add .., .. -> ..> int
     asm -> mov $out, %t1;
 }
 
+def Pat<And .., .. -> ..> int
+    map %t1, gr
+{
+    asm -> mov %t1, $1;
+    asm -> and %t1, $2;
+    asm -> mov $out, %t1;
+}
+
 def Pat<Mul .., .. -> ..> int
     map %t1, gr
 {
