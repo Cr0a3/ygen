@@ -48,7 +48,9 @@ pub enum DagOpCode {
     CmpLte,
     CmpGte,
 
-    VecInsrt
+    VecInsrt,
+
+    BrIfEq(String),
 }
 
 /// A operand in the dag
@@ -86,7 +88,7 @@ pub enum DagOpTarget {
 }
 
 impl DagNode {
-    /// Creates an new dag node
+    /// Creates a new dag node
     pub fn new(opcode: DagOpCode, ty: TypeMetadata) -> Self {
         Self {
             opcode: opcode,
@@ -95,7 +97,18 @@ impl DagNode {
             ty: ty,
         }
     }
-    /// Creates an new dag node with an output
+
+    /// Creates a new dag node with operands
+    pub fn new_with_ops(opcode: DagOpCode, ops: Vec<DagOp>, ty: TypeMetadata) -> Self {
+        Self {
+            opcode: opcode,
+            out: None,
+            ops: ops,
+            ty: ty,
+        }
+    }
+
+    /// Creates a new dag node with a output
     pub fn new_with_out(opcode: DagOpCode, out: DagOp, ops: Vec<DagOp>, ty: TypeMetadata) -> Self {
         Self {
             opcode: opcode,

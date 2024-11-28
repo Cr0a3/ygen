@@ -30,6 +30,7 @@ pub enum X86Mnemonic {
     Ret,
 
     Add,
+    Addss,
     Paddq,
     Paddd,
 
@@ -42,6 +43,7 @@ pub enum X86Mnemonic {
     Lea,
 
     Jmp,
+    Je,
 
     Sete,
     Setne,
@@ -158,6 +160,7 @@ impl std::fmt::Display for X86Instr {
             X86Mnemonic::Psubd => "psubd",
             X86Mnemonic::Psubq => "psubq",
             X86Mnemonic::Jmp => "jmp",
+            X86Mnemonic::Je => "je",
             X86Mnemonic::Cmp => "cmp",
             X86Mnemonic::Sete => "sete",
             X86Mnemonic::Setne => "setne",
@@ -170,6 +173,7 @@ impl std::fmt::Display for X86Instr {
             X86Mnemonic::Pinsrd => "pinsrd",
             X86Mnemonic::Pinsrq => "pinsrq",
             X86Mnemonic::Insertps => "insertps",
+            X86Mnemonic::Addss => "addss",
         })?;
         
         if let Some(op) = &self.op1 {

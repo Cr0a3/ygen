@@ -55,8 +55,16 @@ impl DagVisitor for Assign<Var, Const> {
 }
 
 impl DagVisitor for BrCond {
-    fn dag_visitor(&self, _dag: &mut Vec<dag::DagNode>) {
-        todo!()
+    fn dag_visitor(&self, dag: &mut Vec<dag::DagNode>) {
+        dag.push(DagNode::new_with_ops(
+            dag::DagOpCode::BrIfEq(self.inner2.name.to_owned()), 
+            vec![
+                DagOp::var(self.inner1.clone()),
+                DagOp::imm(Type::i32(1)),
+            ],
+            TypeMetadata::ptr
+        ));
+        dag.push(DagNode::new(dag::DagOpCode::Br(self.inner3.name.to_owned()), TypeMetadata::ptr));
     }
 }
 

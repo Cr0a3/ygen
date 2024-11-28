@@ -12,6 +12,7 @@ impl X86Instr {
             X86Mnemonic::Movdqa =>self.encode_movdqa(),
             X86Mnemonic::Ret => self.encode_ret(),
             X86Mnemonic::Add => self.encode_add(),
+            X86Mnemonic::Addss => self.encode_addss(),
             X86Mnemonic::Paddq => self.encode_paddq(),
             X86Mnemonic::Paddd => self.encode_paddd(),
             X86Mnemonic::Sub => self.encode_sub(),
@@ -21,6 +22,7 @@ impl X86Instr {
             X86Mnemonic::Psubb => self.encode_psubb(),
             X86Mnemonic::Lea => self.encode_lea(),
             X86Mnemonic::Jmp => self.encode_jmp(),
+            X86Mnemonic::Je => self.encode_je(),
             X86Mnemonic::Sete => self.encode_sete(),
             X86Mnemonic::Setne => self.encode_setne(),
             X86Mnemonic::Setl => self.encode_setl(),
@@ -219,6 +221,23 @@ impl X86Instr {
         ).expect("encoding error").code_buffer
     }
 
+    fn encode_addss(&self) -> Vec<u8> {
+        let dst = self.op1.expect("expected dst");
+        let src = self.op2.expect("expected src");
+
+        let instr = match (dst, src) {
+            (X86Operand::Reg(dst), X86Operand::Reg(src)) => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Addss_xmm_xmmm32, dst.into(), src.into()),
+            (X86Operand::Reg(dst), X86Operand::MemDispl(src)) => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Addss_xmm_xmmm32, dst.into(), src.into()),
+            _ => panic!("invalid variant: {self}"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
+    }
+
     fn encode_paddq(&self) -> Vec<u8> {
         todo!()
     }
@@ -336,6 +355,22 @@ impl X86Instr {
             X86Operand::Const(imm) => Instruction::with1(Code::Jmp_rel32_64, imm as i32),
             X86Operand::MemDispl(mem) => Instruction::with1::<iced_x86::MemoryOperand>(Code::Jmp_rm64, mem.into()),
             X86Operand::BlockRel(_) => Instruction::with_branch(Code::Jmp_rel32_64, 0), // branch will be resolved later
+            _ => panic!("invalid variant: {self}"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
+    }
+
+    fn encode_je(&self) -> Vec<u8> {
+        let target = self.op1.expect("expected je target");
+
+        let instr = match target {
+            X86Operand::Const(imm) => Instruction::with1(Code::Je_rel32_64, imm as i32),
+            X86Operand::BlockRel(_) => Instruction::with_branch(Code::Je_rel32_64, 0), // branch will be resolved later
             _ => panic!("invalid variant: {self}"),
         }.expect("invalid instruction");
 

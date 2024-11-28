@@ -13,6 +13,7 @@ mod auto_gen {
     use super::super::asm::X86MemDispl as MemoryDispl;
     use super::super::asm::X86MemOption as MemoryOption;
     use super::super::asm::X86Operand as Operand;
+    use super::super::reg::X86Reg as Reg;
     use super::super::reg::X86Reg;
     use crate::CodeGen::dag::*;
     use crate::CodeGen::dag;
@@ -25,6 +26,12 @@ mod auto_gen {
         let DagOpCode::Br(target) = node.get_opcode() else { unreachable!() };
         asm.push( Asm::with1(Mnemonic::Jmp, Operand::BlockRel(crate::Target::x86::add_block_rel(target))));
     }
+
+    fn lower_breq(asm: &mut Vec<Asm>, node: DagNode) {
+        let DagOpCode::BrIfEq(target) = node.get_opcode() else { unreachable!() };
+        asm.push( Asm::with1(Mnemonic::Je, Operand::BlockRel(crate::Target::x86::add_block_rel(target))));
+    }
+
 
     include!("dag.def");
 }

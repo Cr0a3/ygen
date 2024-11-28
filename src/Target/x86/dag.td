@@ -53,9 +53,9 @@ def Pat<GetStackPtr -> gr> {
 def Pat<Add fp, fp -> fp> f32 
     map %t1, fp
 {
-    asm -> mov %t1, $1;
-    asm -> add %t1, $2;
-    asm -> mov $out, %t1;
+    asm -> movss %t1, $1;
+    asm -> addss %t1, $2;
+    asm -> movss $out, %t1;
 }
 
 def Pat<Add fp, fp -> fp> <2 x i64> 
@@ -111,7 +111,13 @@ def Pat<Copy fp -> fp> <4 x i32> {
 }
 
 def Pat<Br(_)> hook lower_br {}
-
+def Pat<BrIfEq(_) gr, ..> 
+    map %t1, gr
+    hook lower_breq 
+{
+    asm -> mov %t1, $2;
+    asm -> cmp $1, %t1;
+}
 
 def Pat<CmpEq .., .. -> ..> int 
     map %t1, gr

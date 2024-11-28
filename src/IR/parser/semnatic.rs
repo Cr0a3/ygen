@@ -150,7 +150,11 @@ impl<'a> IrSemnatic<'a> {
                         })?
                     }
 
-                    vars.insert(out.name, out.ty);
+                    if node.inst.is_alloca() {
+                        vars.insert(out.name, TypeMetadata::ptr);
+                    } else {
+                        vars.insert(out.name, out.ty);
+                    }
                 }
             }
         }

@@ -161,12 +161,12 @@ impl TargetRegistry {
 
             let bytes = bytes.expect("block wasn't found");
 
-            let to = *positions.get(&crate::IR::BlockId{ name: reloc.to }).unwrap() as i32;
-            let from = *positions.get(&start).unwrap() as i32;
+            let to = *positions.get(&crate::IR::BlockId{ name: reloc.to }).unwrap();
+            let mut from = *positions.get(&start).unwrap();
+            from += reloc.at;
             
-            let mut target = to - from;
-            target += reloc.addend as i32;
-            target -= 1;
+            let target = to - from;
+            let target = target as i32;
 
             let target = target.to_be_bytes();
 
