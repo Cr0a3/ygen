@@ -19,6 +19,8 @@ pub struct ItRegCoalAlloc<'a> {
     pub vars: HashMap<String, DagOpTarget>,
     /// The current stack off
     pub stack: i32,
+    /// Real types for allocated variables
+    pub alloced_vars: HashMap::<String, TypeMetadata>
 }
 
 impl<'a> ItRegCoalAlloc<'a> {
@@ -30,6 +32,7 @@ impl<'a> ItRegCoalAlloc<'a> {
             arg_processor: Some(arg_proc),
             mem_resolver: Some(mem_proc),
             vars: HashMap::new(),
+            alloced_vars: HashMap::new(),
             stack: 0,
         }
     }
@@ -43,6 +46,14 @@ impl<'a> ItRegCoalAlloc<'a> {
         let Some(arg_proc) = self.arg_processor else {
             panic!("no current arg processor");
         };
+
+        for block in &func.blocks {
+            for node in &block.nodes {
+                if let Some(alloca) = node.as_any().downcast_ref::<crate::prelude::Alloca>() {
+                    self.alloced_vars.insert(alloca.inner1.name.to_owned(), alloca.inner2);
+                }
+            }
+        }
 
         arg_proc(self);
     }
@@ -90,7 +101,7 @@ impl<'a> ItRegCoalAlloc<'a> {
 
         let out_var: Var;
 
-        let ty = if let Some(out) = &dag.out {
+        let mut ty = if let Some(out) = &dag.out {
             if out.allocated { 
                 if let DagOpTarget::Reg(reg) = out.target {
                     self.regs = self.regs.iter().filter(|r| **r != reg).map(|r| *r).collect::<Vec<Reg>>();
@@ -105,6 +116,10 @@ impl<'a> ItRegCoalAlloc<'a> {
                 todo!()
             }
         } else { unreachable!() };
+
+        if let Some(real_ty) = self.alloced_vars.get(&out_var.name) {
+            ty = *real_ty;
+        }
 
         if let Some(mut free) = self.get_fitting_reg(dag, ty) {
             free.set_size(ty.byteSize());

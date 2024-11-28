@@ -62,6 +62,7 @@ pub enum X86Mnemonic {
     Imul,
 
     And,
+    Or,
 }
 
 /// A X86 assembly operand
@@ -180,6 +181,7 @@ impl std::fmt::Display for X86Instr {
             X86Mnemonic::Addss => "addss",
             X86Mnemonic::Imul => "imul",
             X86Mnemonic::And => "and",
+            X86Mnemonic::Or => "or",
         })?;
         
         if let Some(op) = &self.op1 {
