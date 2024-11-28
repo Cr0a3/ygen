@@ -38,6 +38,7 @@ impl X86Instr {
             X86Mnemonic::Imul => self.encode_imul(),
             X86Mnemonic::And => self.encode_and(),
             X86Mnemonic::Or => self.encode_or(),
+            X86Mnemonic::Xor => self.encode_xor(),
         }
     }
 
@@ -788,7 +789,6 @@ impl X86Instr {
         ).expect("encoding error").code_buffer
     }
 
-    
     fn encode_or(&self) -> Vec<u8> {
         let dst = self.op1.expect("expected dst");
         let src = self.op2.expect("expected src");
@@ -837,6 +837,67 @@ impl X86Instr {
                     X86RegSize::Dword => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Or_rm32_imm32, dst.into(), src as i32),
                     X86RegSize::Qword => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Or_rm64_imm32, dst.into(), src as i32),
                     X86RegSize::SimdVec => panic!("Or deosn't support simd vecs"),
+                }
+            },
+
+            _ => panic!("invalid variant: {self} (maybe unresolved tmps?)"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
+    }
+    
+    fn encode_xor(&self) -> Vec<u8> {
+        let dst = self.op1.expect("expected dst");
+        let src = self.op2.expect("expected src");
+        
+        let instr = match (dst, src) {
+            (X86Operand::Reg(dst), X86Operand::Reg(src)) => {
+                match dst.size {
+                    X86RegSize::Byte => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Xor_r8_rm8, dst.into(), src.into()),
+                    X86RegSize::Word => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Xor_r16_rm16, dst.into(), src.into()),
+                    X86RegSize::Dword => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Xor_r32_rm32, dst.into(), src.into()),
+                    X86RegSize::Qword => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Xor_r64_rm64, dst.into(), src.into()),
+                    X86RegSize::SimdVec => panic!("Xor deosn't support simd vecs"),
+                }
+            },
+            (X86Operand::Reg(dst), X86Operand::Const(src)) => {
+                match dst.size {
+                    X86RegSize::Byte => Instruction::with2::<iced_x86::Register, i32>(Code::Xor_rm8_imm8, dst.into(), src as i32),
+                    X86RegSize::Word => Instruction::with2::<iced_x86::Register, i32>(Code::Xor_rm16_imm16, dst.into(), src as i32),
+                    X86RegSize::Dword => Instruction::with2::<iced_x86::Register, i32>(Code::Xor_rm32_imm32, dst.into(), src as i32),
+                    X86RegSize::Qword => Instruction::with2::<iced_x86::Register, i32>(Code::Xor_rm64_imm32, dst.into(), src as i32),
+                    X86RegSize::SimdVec => panic!("Xor deosn't support simd vecs"),
+                }
+            },
+            (X86Operand::Reg(dst), X86Operand::MemDispl(src)) => {
+                match dst.size {
+                    X86RegSize::Byte => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Xor_r8_rm8, dst.into(), src.into()),
+                    X86RegSize::Word => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Xor_r16_rm16, dst.into(), src.into()),
+                    X86RegSize::Dword => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Xor_r32_rm32, dst.into(), src.into()),
+                    X86RegSize::Qword => Instruction::with2::<iced_x86::Register, iced_x86::MemoryOperand>(Code::Xor_r64_rm64, dst.into(), src.into()),
+                    X86RegSize::SimdVec => panic!("Xor deosn't support simd vecs"),
+                }
+            },
+            (X86Operand::MemDispl(dst), X86Operand::Reg(src)) => {
+                match dst.size {
+                    X86RegSize::Byte => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Xor_rm8_r8, dst.into(), src.into()),
+                    X86RegSize::Word => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Xor_rm16_r16, dst.into(), src.into()),
+                    X86RegSize::Dword => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Xor_rm32_r32, dst.into(), src.into()),
+                    X86RegSize::Qword => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Xor_rm64_r64, dst.into(), src.into()),
+                    X86RegSize::SimdVec => panic!("Xor deosn't support simd vecs"),
+                }
+            },
+            (X86Operand::MemDispl(dst), X86Operand::Const(src)) => {
+                match dst.size {
+                    X86RegSize::Byte => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Xor_rm8_imm8, dst.into(), src as i32),
+                    X86RegSize::Word => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Xor_rm16_imm16, dst.into(), src as i32),
+                    X86RegSize::Dword => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Xor_rm32_imm32, dst.into(), src as i32),
+                    X86RegSize::Qword => Instruction::with2::<iced_x86::MemoryOperand, i32>(Code::Xor_rm64_imm32, dst.into(), src as i32),
+                    X86RegSize::SimdVec => panic!("Xor deosn't support simd vecs"),
                 }
             },
 

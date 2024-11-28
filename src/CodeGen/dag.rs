@@ -36,6 +36,7 @@ pub enum DagOpCode {
     Mul,
     And,
     Or,
+    Xor,
 
     // Branches
     Br(String),
@@ -148,6 +149,10 @@ impl DagNode {
     /// Creates a new or dag node 
     #[inline]
     pub fn or(ls: DagOp, rs: DagOp, out: DagOp, ty:TypeMetadata) -> Self { DagNode::new_with_out(DagOpCode::Or, out, vec![ls, rs], ty) }
+
+    /// Creates a new xor dag node 
+    #[inline]
+    pub fn xor(ls: DagOp, rs: DagOp, out: DagOp, ty:TypeMetadata) -> Self { DagNode::new_with_out(DagOpCode::Xor, out, vec![ls, rs], ty) }
 
 }
 

@@ -63,6 +63,7 @@ impl Display for DagOpCode {
             DagOpCode::Sub => write!(f, "sub")?,
             DagOpCode::Mul => write!(f, "mul")?,
             DagOpCode::Or => write!(f, "or")?,
+            DagOpCode::Xor => write!(f, "xor")?,
             DagOpCode::GetFramePtr => write!(f, "intrinsics.getFramePtr")?,
             DagOpCode::GetStackPtr => write!(f, "intrinsics.getStackPtr")?,
             DagOpCode::Br(block) => write!(f, "branch {block}")?,

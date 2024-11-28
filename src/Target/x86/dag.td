@@ -46,6 +46,14 @@ def Pat<Or .., .. -> ..> int
     asm -> mov $out, %t1;
 }
 
+def Pat<Xor .., .. -> ..> int
+    map %t1, gr
+{
+    asm -> mov %t1, $1;
+    asm -> xor %t1, $2;
+    asm -> mov $out, %t1;
+}
+
 def Pat<Mul .., .. -> ..> int
     map %t1, gr
 {

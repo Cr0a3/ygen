@@ -200,8 +200,13 @@ impl DagVisitor for Or {
 }
 
 impl DagVisitor for Xor {
-    fn dag_visitor(&self, _dag: &mut Vec<dag::DagNode>) {
-        todo!()
+    fn dag_visitor(&self, dag: &mut Vec<dag::DagNode>) {
+        dag.push(DagNode::xor(
+            DagOp::from(&self.inner1), 
+            DagOp::from(&self.inner2), 
+            DagOp::var(self.inner3.to_owned()),
+            self.inner3.ty,
+        ));
     }
 }
 
