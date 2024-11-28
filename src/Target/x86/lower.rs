@@ -1,5 +1,7 @@
 //use opt::X86BasicOpt;
 
+use std::collections::HashMap;
+
 use crate::CodeGen::dag::DagNode;
 use crate::CodeGen::regalloc_iterated_col::ItRegCoalAlloc;
 use crate::IR::BlockId;
@@ -43,6 +45,8 @@ pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc,
         let mut asm: Vec<X86Instr> = Vec::new();
         for node in nodes {
             alloc.apply(node);
+
+            let mut overwrittes = HashMap::new();
             
             for overwrite in auto_gen::overwrittes(&node) {
                 // 1. Check if the value which is overwritten is currently in use
@@ -58,6 +62,8 @@ pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc,
                 let instr = super::asm::X86Instr::with2(X86Mnemonic::Mov, stack.into(), X86Operand::Reg(overwrite));
 
                 asm.push(instr);
+
+                overwrittes.insert(overwrite, stack);
             }
 
             let tmps = x86_tmps(node);
@@ -70,6 +76,14 @@ pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc,
             super::alloc::resolve(tmps, &mut node_asm, alloc);
 
             asm.extend_from_slice(&node_asm);
+
+            // restore overwritten registers
+
+            for (reg, stack_location) in overwrittes {
+                let instr = super::asm::X86Instr::with2(X86Mnemonic::Mov, X86Operand::Reg(reg), stack_location.into());
+
+                asm.push(instr);
+            }
 
         };
 
