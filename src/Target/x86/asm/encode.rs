@@ -5,40 +5,46 @@ use super::*;
 impl X86Instr {
     /// Encodes the x86 instruction
     pub fn encode(&self) -> Vec<u8> {
-        match self.mnemonic {
-            X86Mnemonic::Mov => self.encode_mov(),
-            X86Mnemonic::Movss => self.encode_movss(),
-            X86Mnemonic::Movsd => self.encode_movsd(),
-            X86Mnemonic::Movdqa =>self.encode_movdqa(),
-            X86Mnemonic::Ret => self.encode_ret(),
-            X86Mnemonic::Add => self.encode_add(),
-            X86Mnemonic::Addss => self.encode_addss(),
-            X86Mnemonic::Paddq => self.encode_paddq(),
-            X86Mnemonic::Paddd => self.encode_paddd(),
-            X86Mnemonic::Sub => self.encode_sub(),
-            X86Mnemonic::Psubq => self.encode_psubq(),
-            X86Mnemonic::Psubd => self.encode_psubd(),
-            X86Mnemonic::Psubw => self.encode_psubw(),
-            X86Mnemonic::Psubb => self.encode_psubb(),
-            X86Mnemonic::Lea => self.encode_lea(),
-            X86Mnemonic::Jmp => self.encode_jmp(),
-            X86Mnemonic::Je => self.encode_je(),
-            X86Mnemonic::Sete => self.encode_sete(),
-            X86Mnemonic::Setne => self.encode_setne(),
-            X86Mnemonic::Setl => self.encode_setl(),
-            X86Mnemonic::Setle => self.encode_setle(),
-            X86Mnemonic::Setg => self.encode_setg(),
-            X86Mnemonic::Setge => self.encode_setge(),
-            X86Mnemonic::Cmp => self.encode_cmp(),
-            X86Mnemonic::Pinsrb => self.encode_pinsrb(),
-            X86Mnemonic::Pinsrw => self.encode_pinsrw(),
-            X86Mnemonic::Pinsrd => self.encode_pinsrd(),
-            X86Mnemonic::Pinsrq => self.encode_pinsrq(),
-            X86Mnemonic::Insertps => self.encode_insertps(),
-            X86Mnemonic::Imul => self.encode_imul(),
-            X86Mnemonic::And => self.encode_and(),
-            X86Mnemonic::Or => self.encode_or(),
-            X86Mnemonic::Xor => self.encode_xor(),
+        let instr = self.fix_sizing();
+
+        match instr.mnemonic {
+            X86Mnemonic::Mov => instr.encode_mov(),
+            X86Mnemonic::Movss => instr.encode_movss(),
+            X86Mnemonic::Movsd => instr.encode_movsd(),
+            X86Mnemonic::Movdqa =>instr.encode_movdqa(),
+            X86Mnemonic::Ret => instr.encode_ret(),
+            X86Mnemonic::Add => instr.encode_add(),
+            X86Mnemonic::Addss => instr.encode_addss(),
+            X86Mnemonic::Paddq => instr.encode_paddq(),
+            X86Mnemonic::Paddd => instr.encode_paddd(),
+            X86Mnemonic::Sub => instr.encode_sub(),
+            X86Mnemonic::Psubq => instr.encode_psubq(),
+            X86Mnemonic::Psubd => instr.encode_psubd(),
+            X86Mnemonic::Psubw => instr.encode_psubw(),
+            X86Mnemonic::Psubb => instr.encode_psubb(),
+            X86Mnemonic::Lea => instr.encode_lea(),
+            X86Mnemonic::Jmp => instr.encode_jmp(),
+            X86Mnemonic::Je => instr.encode_je(),
+            X86Mnemonic::Sete => instr.encode_sete(),
+            X86Mnemonic::Setne => instr.encode_setne(),
+            X86Mnemonic::Setl => instr.encode_setl(),
+            X86Mnemonic::Setle => instr.encode_setle(),
+            X86Mnemonic::Setg => instr.encode_setg(),
+            X86Mnemonic::Setge => instr.encode_setge(),
+            X86Mnemonic::Cmp => instr.encode_cmp(),
+            X86Mnemonic::Pinsrb => instr.encode_pinsrb(),
+            X86Mnemonic::Pinsrw => instr.encode_pinsrw(),
+            X86Mnemonic::Pinsrd => instr.encode_pinsrd(),
+            X86Mnemonic::Pinsrq => instr.encode_pinsrq(),
+            X86Mnemonic::Insertps => instr.encode_insertps(),
+            X86Mnemonic::Imul => instr.encode_imul(),
+            X86Mnemonic::And => instr.encode_and(),
+            X86Mnemonic::Or => instr.encode_or(),
+            X86Mnemonic::Xor => instr.encode_xor(),
+            X86Mnemonic::Sar => instr.encode_sar(),
+            X86Mnemonic::Shr => instr.encode_shr(),
+            X86Mnemonic::Shl => instr.encode_shl(),
+            X86Mnemonic::Sal => instr.encode_sal(),
         }
     }
 
@@ -902,6 +908,150 @@ impl X86Instr {
             },
 
             _ => panic!("invalid variant: {self} (maybe unresolved tmps?)"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
+    }
+
+    fn encode_sar(&self) -> Vec<u8> {
+        let dst = self.op1.expect("expected dst");
+        let src = self.op1.expect("expected src");
+
+        let instr = match (dst, src) {
+            (X86Operand::Reg(ls), X86Operand::Reg(_)) => match ls.size {
+                X86RegSize::Byte => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Sar_rm8_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::Word => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Sar_rm16_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::Dword => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Sar_rm32_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::Qword => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Sar_rm64_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::SimdVec => panic!("sar doesn't support simd vectors"),
+            },
+            (X86Operand::Reg(ls), X86Operand::Const(rs)) => match ls.size {
+                X86RegSize::Byte => Instruction::with2::<iced_x86::Register, i32>(Code::Sar_rm8_CL, ls.into(), rs as i32),
+                X86RegSize::Word => Instruction::with2::<iced_x86::Register, i32>(Code::Sar_rm16_CL, ls.into(), rs as i32),
+                X86RegSize::Dword => Instruction::with2::<iced_x86::Register, i32>(Code::Sar_rm32_CL, ls.into(), rs as i32),
+                X86RegSize::Qword => Instruction::with2::<iced_x86::Register, i32>(Code::Sar_rm64_CL, ls.into(), rs as i32),
+                X86RegSize::SimdVec => panic!("sar doesn't support simd vectors"),
+            },
+            (X86Operand::MemDispl(ls), X86Operand::Reg(_)) => match ls.size {
+                X86RegSize::Byte => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Sar_rm8_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::Word => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Sar_rm16_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::Dword => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Sar_rm32_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::Qword => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Sar_rm64_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::SimdVec => panic!("sar doesn't support simd vectors"),
+            },
+            _ => panic!("invalid variant: {self}"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
+    }
+
+    fn encode_shr(&self) -> Vec<u8> {
+        let dst = self.op1.expect("expected dst");
+        let src = self.op1.expect("expected src");
+
+        let instr = match (dst, src) {
+            (X86Operand::Reg(ls), X86Operand::Reg(_)) => match ls.size {
+                X86RegSize::Byte => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Shr_rm8_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::Word => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Shr_rm16_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::Dword => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Shr_rm32_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::Qword => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Shr_rm64_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::SimdVec => panic!("shr doesn't support simd vectors"),
+            },
+            (X86Operand::Reg(ls), X86Operand::Const(rs)) => match ls.size {
+                X86RegSize::Byte => Instruction::with2::<iced_x86::Register, i32>(Code::Shr_rm8_CL, ls.into(), rs as i32),
+                X86RegSize::Word => Instruction::with2::<iced_x86::Register, i32>(Code::Shr_rm16_CL, ls.into(), rs as i32),
+                X86RegSize::Dword => Instruction::with2::<iced_x86::Register, i32>(Code::Shr_rm32_CL, ls.into(), rs as i32),
+                X86RegSize::Qword => Instruction::with2::<iced_x86::Register, i32>(Code::Shr_rm64_CL, ls.into(), rs as i32),
+                X86RegSize::SimdVec => panic!("shr doesn't support simd vectors"),
+            },
+            (X86Operand::MemDispl(ls), X86Operand::Reg(_)) => match ls.size {
+                X86RegSize::Byte => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Shr_rm8_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::Word => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Shr_rm16_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::Dword => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Shr_rm32_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::Qword => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Shr_rm64_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::SimdVec => panic!("shr doesn't support simd vectors"),
+            },
+            _ => panic!("invalid variant: {self}"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
+    }
+
+    fn encode_shl(&self) -> Vec<u8> {
+        let dst = self.op1.expect("expected dst");
+        let src = self.op1.expect("expected src");
+
+        let instr = match (dst, src) {
+            (X86Operand::Reg(ls), X86Operand::Reg(_)) => match ls.size {
+                X86RegSize::Byte => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Shl_rm8_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::Word => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Shl_rm16_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::Dword => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Shl_rm32_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::Qword => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Shl_rm64_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::SimdVec => panic!("shl doesn't support simd vectors"),
+            },
+            (X86Operand::Reg(ls), X86Operand::Const(rs)) => match ls.size {
+                X86RegSize::Byte => Instruction::with2::<iced_x86::Register, i32>(Code::Shl_rm8_CL, ls.into(), rs as i32),
+                X86RegSize::Word => Instruction::with2::<iced_x86::Register, i32>(Code::Shl_rm16_CL, ls.into(), rs as i32),
+                X86RegSize::Dword => Instruction::with2::<iced_x86::Register, i32>(Code::Shl_rm32_CL, ls.into(), rs as i32),
+                X86RegSize::Qword => Instruction::with2::<iced_x86::Register, i32>(Code::Shl_rm64_CL, ls.into(), rs as i32),
+                X86RegSize::SimdVec => panic!("shl doesn't support simd vectors"),
+            },
+            (X86Operand::MemDispl(ls), X86Operand::Reg(_)) => match ls.size {
+                X86RegSize::Byte => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Shl_rm8_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::Word => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Shl_rm16_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::Dword => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Shl_rm32_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::Qword => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Shl_rm64_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::SimdVec => panic!("shl doesn't support simd vectors"),
+            },
+            _ => panic!("invalid variant: {self}"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
+    }
+
+    fn encode_sal(&self) -> Vec<u8> {
+        let dst = self.op1.expect("expected dst");
+        let src = self.op1.expect("expected src");
+
+        let instr = match (dst, src) {
+            (X86Operand::Reg(ls), X86Operand::Reg(_)) => match ls.size {
+                X86RegSize::Byte => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Sal_rm8_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::Word => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Sal_rm16_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::Dword => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Sal_rm32_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::Qword => Instruction::with2::<iced_x86::Register, iced_x86::Register>(Code::Sal_rm64_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::SimdVec => panic!("sal doesn't support simd vectors"),
+            },
+            (X86Operand::Reg(ls), X86Operand::Const(rs)) => match ls.size {
+                X86RegSize::Byte => Instruction::with2::<iced_x86::Register, i32>(Code::Sal_rm8_CL, ls.into(), rs as i32),
+                X86RegSize::Word => Instruction::with2::<iced_x86::Register, i32>(Code::Sal_rm16_CL, ls.into(), rs as i32),
+                X86RegSize::Dword => Instruction::with2::<iced_x86::Register, i32>(Code::Sal_rm32_CL, ls.into(), rs as i32),
+                X86RegSize::Qword => Instruction::with2::<iced_x86::Register, i32>(Code::Sal_rm64_CL, ls.into(), rs as i32),
+                X86RegSize::SimdVec => panic!("sal doesn't support simd vectors"),
+            },
+            (X86Operand::MemDispl(ls), X86Operand::Reg(_)) => match ls.size {
+                X86RegSize::Byte => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Sal_rm8_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::Word => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Sal_rm16_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::Dword => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Sal_rm32_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::Qword => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Sal_rm64_CL, ls.into(), iced_x86::Register::CL),
+                X86RegSize::SimdVec => panic!("sal doesn't support simd vectors"),
+            },
+            _ => panic!("invalid variant: {self}"),
         }.expect("invalid instruction");
 
         BlockEncoder::encode(

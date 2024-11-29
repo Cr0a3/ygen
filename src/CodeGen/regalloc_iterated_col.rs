@@ -15,6 +15,8 @@ pub struct ItRegCoalAlloc<'a> {
     pub arg_processor: Option<fn(&mut ItRegCoalAlloc)>,
     /// The target specific memory processor
     pub mem_resolver: Option<fn(&mut ItRegCoalAlloc, &dag::DagNode, TypeMetadata) -> Memory>,
+    /// Returns target specfic register overwrites for the node
+    pub overwrite_proc: Option<fn(&dag::DagNode) -> Vec<Reg>>,
     /// The allocated vars
     pub vars: HashMap<String, DagOpTarget>,
     /// The current stack off
@@ -25,12 +27,13 @@ pub struct ItRegCoalAlloc<'a> {
 
 impl<'a> ItRegCoalAlloc<'a> {
     /// Creates a new iterated register coalescing register allocator
-    pub fn new(regs: Vec<Reg>, arg_proc: fn(&mut ItRegCoalAlloc), mem_proc: fn(&mut ItRegCoalAlloc, &dag::DagNode, TypeMetadata) -> Memory) -> Self {
+    pub fn new(regs: Vec<Reg>, arg_proc: fn(&mut ItRegCoalAlloc), mem_proc: fn(&mut ItRegCoalAlloc, &dag::DagNode, TypeMetadata) -> Memory, ov_proc: fn(&dag::DagNode) -> Vec<Reg>) -> Self {
         Self {
             regs: regs,
             curr_func: None,
             arg_processor: Some(arg_proc),
             mem_resolver: Some(mem_proc),
+            overwrite_proc: Some(ov_proc),
             vars: HashMap::new(),
             alloced_vars: HashMap::new(),
             stack: 0,
@@ -197,17 +200,20 @@ impl<'a> ItRegCoalAlloc<'a> {
     }
 
     /// Returns a location for the given temporary 
-    pub fn request_tmp(&mut self, tmp: &dag::DagTmpInfo) -> dag::DagOpTarget {
+    pub fn request_tmp(&mut self, _: &dag::DagNode, tmp: &dag::DagTmpInfo) -> dag::DagOpTarget {
         if tmp.requires_mem {
             let mem = self.alloc_stack(&&dag::DagNode::ret(TypeMetadata::u8), tmp.size);
-        
+            
             return DagOpTarget::Mem(mem);
         }
-
+        
+        
         // we pass in any node - it just doesn't matter which one
         let Some(reg) = self.get_fitting_reg(&&dag::DagNode::ret(TypeMetadata::u8), tmp.size) else {
             panic!("unable to get fitting register\nTODO: implement spills and recalls for tmps");
         };
+        
+        ydbg!("[REG ALLOC] resolved temporary ({:?}) -> {}", tmp, reg);
 
         DagOpTarget::Reg(reg)
     }
@@ -222,6 +228,8 @@ pub struct ItRegCoalAllocBase {
     pub arg_processor: Option<fn(&mut ItRegCoalAlloc)>,
     /// The target specific memory processor
     pub mem_processor: Option<fn(&mut ItRegCoalAlloc, &dag::DagNode, TypeMetadata) -> Memory>,
+    /// The target specific overwrite processor
+    pub overwrite_proc: Option<fn(&dag::DagNode) -> Vec<Reg>>,
     /// stack offset
     pub stack: i32,
 }
@@ -232,8 +240,9 @@ impl ItRegCoalAllocBase {
     pub fn fork<'a>(&self, func: &'a Function) -> ItRegCoalAlloc<'a> {
         let mut alloc = ItRegCoalAlloc::new(
             self.regs.to_owned(), 
-            self.arg_processor.to_owned().unwrap(), 
-            self.mem_processor.to_owned().unwrap()
+            self.arg_processor.unwrap(), 
+            self.mem_processor.unwrap(),
+            self.overwrite_proc.unwrap(),
         );
         
 

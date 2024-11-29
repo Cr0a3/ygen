@@ -3,6 +3,7 @@
 use std::collections::HashMap;
 
 use crate::CodeGen::dag::DagNode;
+use crate::CodeGen::reg::TargetReg;
 use crate::CodeGen::regalloc_iterated_col::ItRegCoalAlloc;
 use crate::IR::BlockId;
 use crate::{CodeGen::dag, Target::instr::McInstr};
@@ -64,6 +65,12 @@ pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc,
                 asm.push(instr);
 
                 overwrittes.insert(overwrite, stack);
+
+                alloc.regs = alloc.regs.iter().filter(|x| {
+                    if let TargetReg::X86(x86) = x.reg {
+                        x86.variant != overwrite.variant
+                    } else { true }
+                }).map(|x| x.to_owned()).collect::<Vec<crate::CodeGen::reg::Reg>>();
             }
 
             let tmps = x86_tmps(node);
@@ -73,7 +80,7 @@ pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc,
 
             //X86BasicOpt::opt(&mut node_asm);
 
-            super::alloc::resolve(tmps, &mut node_asm, alloc);
+            super::alloc::resolve(node, tmps, &mut node_asm, alloc);
 
             asm.extend_from_slice(&node_asm);
 
@@ -83,6 +90,8 @@ pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc,
                 let instr = super::asm::X86Instr::with2(X86Mnemonic::Mov, X86Operand::Reg(reg), stack_location.into());
 
                 asm.push(instr);
+
+                alloc.regs.push(crate::CodeGen::reg::Reg::new_x86(reg));
             }
 
         };
@@ -104,4 +113,16 @@ pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc,
 
 pub(super) fn x86_tmps(node: &DagNode) -> Vec<dag::DagTmpInfo> {
     auto_gen::tmps(node)
+}
+
+pub(super) fn ov_proc(node: &DagNode) -> Vec<crate::CodeGen::reg::Reg> {
+    let overwrittes = auto_gen::overwrittes(node);
+
+    let mut reg_ov = Vec::new();
+
+    for ov in overwrittes {
+        reg_ov.push(crate::CodeGen::reg::Reg::new_x86(ov));
+    }
+
+    reg_ov
 }

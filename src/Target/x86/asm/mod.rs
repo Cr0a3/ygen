@@ -64,6 +64,10 @@ pub enum X86Mnemonic {
     And,
     Or,
     Xor,
+    Sar,
+    Shr,
+    Sal,
+    Shl,
 }
 
 /// A X86 assembly operand
@@ -184,6 +188,10 @@ impl std::fmt::Display for X86Instr {
             X86Mnemonic::And => "and",
             X86Mnemonic::Or => "or",
             X86Mnemonic::Xor => "xor",
+            X86Mnemonic::Sar => "sar",
+            X86Mnemonic::Shr => "shr",
+            X86Mnemonic::Sal => "sal",
+            X86Mnemonic::Shl => "shl",
         })?;
         
         if let Some(op) = &self.op1 {

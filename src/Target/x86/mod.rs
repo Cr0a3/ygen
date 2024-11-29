@@ -72,6 +72,7 @@ pub fn initializeX86Target(call_conv: CallConv) -> BackendInfos {
         regs: free_regs,
         arg_processor: Some(alloc::arg_proc),
         mem_processor: Some(alloc::mem_proc),
+        overwrite_proc: Some(lower::ov_proc),
         stack: -8,
     };
 

@@ -142,3 +142,23 @@ impl X86MemDispl {
         })
     }
 }
+
+impl X86Instr {
+    /// Fixes possible sizing issues
+    pub fn fix_sizing(&self) -> Self {
+        let mut new_instr = *self;
+
+        if let Some(X86Operand::Reg(ls)) = self.op1 {
+            if let Some(X86Operand::Reg(rs)) = self.op2 {
+                if ls.size != rs.size {
+                    // we just make the ls type to the rs type
+                    let mut fixed_ls = ls;
+                    fixed_ls.size = rs.size;
+                    new_instr.op1 = Some(X86Operand::Reg(fixed_ls));
+                }
+            }
+        }
+
+        new_instr
+    }
+}

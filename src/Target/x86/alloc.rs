@@ -67,11 +67,11 @@ pub fn arg_proc(alloc: &mut ItRegCoalAlloc) {
     }
 }
 
-pub(super) fn resolve(tmp_infos: Vec<DagTmpInfo>, asm: &mut Vec<X86Instr>, alloc: &mut ItRegCoalAlloc) {    
+pub(super) fn resolve(node: &DagNode, tmp_infos: Vec<DagTmpInfo>, asm: &mut Vec<X86Instr>, alloc: &mut ItRegCoalAlloc) {    
     let mut tmps = HashMap::new();
 
     for tmp in &tmp_infos {
-        let loc = alloc.request_tmp(tmp);
+        let loc = alloc.request_tmp(node, tmp);
         tmps.insert(tmp.tmp_num, loc);
     }
 

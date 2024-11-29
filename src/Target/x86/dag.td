@@ -256,3 +256,53 @@ def Pat<VecInsrt fp, imm, imm -> fp> <4 x f32>
     asm -> movdqa $out, $1;
     asm -> insertps $out, $2;
 }
+
+
+def Pat<Shr .., .. -> gr> signed 
+    map %t1, gr
+    map %t2, gr
+    overwrite Rcx
+{
+    asm -> mov %t1, $2;
+    asm -> mov %t2, $1;
+    asm -> mov Operand::Reg(X86Reg::Rcx()), %t1;
+    asm -> sar %t2, Operand::Reg(X86Reg::Rcx());
+    asm -> mov $out, %t2;
+}
+
+def Pat<Shr .., .. -> gr> unsigned 
+    map %t1, gr
+    map %t2, gr
+    overwrite Rcx
+{
+    asm -> mov %t1, $2;
+    asm -> mov %t2, $1;
+    asm -> mov Operand::Reg(X86Reg::Rcx()), %t1;
+    asm -> shr %t2, Operand::Reg(X86Reg::Rcx());
+    asm -> mov $out, %t2;
+}
+
+
+def Pat<Shl .., .. -> gr> signed 
+    map %t1, gr
+    map %t2, gr
+    overwrite Rcx
+{
+    asm -> mov %t1, $2;
+    asm -> mov %t2, $1;
+    asm -> mov Operand::Reg(X86Reg::Rcx()), %t1;
+    asm -> sal %t2, Operand::Reg(X86Reg::Rcx());
+    asm -> mov $out, %t2;
+} 
+
+def Pat<Shl .., .. -> gr> unsigned 
+    map %t1, gr
+    map %t2, gr
+    overwrite Rcx
+{
+    asm -> mov %t1, $2;
+    asm -> mov %t2, $1;
+    asm -> mov Operand::Reg(X86Reg::Rcx()), %t1;
+    asm -> shl %t2, Operand::Reg(X86Reg::Rcx());
+    asm -> mov $out, %t2;
+}
