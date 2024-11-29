@@ -233,8 +233,12 @@ impl DagVisitor for Shr {
 }
 
 impl DagVisitor for Neg {
-    fn dag_visitor(&self, _dag: &mut Vec<dag::DagNode>) {
-        todo!()
+    fn dag_visitor(&self, dag: &mut Vec<dag::DagNode>) {
+        dag.push(DagNode::neg(
+            DagOp::from(&self.inner1), 
+            DagOp::var(self.inner2.to_owned()), 
+            self.inner1.get_ty()    
+        ));
     }
 }
 

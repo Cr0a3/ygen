@@ -306,3 +306,8 @@ def Pat<Shl .., .. -> gr> unsigned
     asm -> shl %t2, Operand::Reg(X86Reg::Rcx());
     asm -> mov $out, %t2;
 }
+
+def Pat<Neg .. -> ..> int {
+    asm -> mov $out, $1;
+    asm -> neg $out;
+}

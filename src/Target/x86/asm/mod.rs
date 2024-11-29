@@ -68,6 +68,8 @@ pub enum X86Mnemonic {
     Shr,
     Sal,
     Shl,
+
+    Neg,
 }
 
 /// A X86 assembly operand
@@ -192,6 +194,7 @@ impl std::fmt::Display for X86Instr {
             X86Mnemonic::Shr => "shr",
             X86Mnemonic::Sal => "sal",
             X86Mnemonic::Shl => "shl",
+            X86Mnemonic::Neg => "neg",
         })?;
         
         if let Some(op) = &self.op1 {

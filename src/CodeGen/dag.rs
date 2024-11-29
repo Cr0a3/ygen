@@ -39,6 +39,7 @@ pub enum DagOpCode {
     Xor,
     Shr,
     Shl,
+    Neg,
 
     // Branches
     Br(String),
@@ -163,6 +164,10 @@ impl DagNode {
     /// Creates a new shl dag node 
     #[inline]
     pub fn shl(ls: DagOp, rs: DagOp, out: DagOp, ty:TypeMetadata) -> Self { DagNode::new_with_out(DagOpCode::Shl, out, vec![ls, rs], ty) }
+
+    /// Creates a new neg dag node 
+    #[inline]
+    pub fn neg(ls: DagOp, out: DagOp, ty:TypeMetadata) -> Self { DagNode::new_with_out(DagOpCode::Neg, out, vec![ls], ty) }
 }
 
 impl DagOp {

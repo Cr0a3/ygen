@@ -45,6 +45,7 @@ impl X86Instr {
             X86Mnemonic::Shr => instr.encode_shr(),
             X86Mnemonic::Shl => instr.encode_shl(),
             X86Mnemonic::Sal => instr.encode_sal(),
+            X86Mnemonic::Neg => instr.encode_neg(),
         }
     }
 
@@ -1050,6 +1051,34 @@ impl X86Instr {
                 X86RegSize::Dword => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Sal_rm32_CL, ls.into(), iced_x86::Register::CL),
                 X86RegSize::Qword => Instruction::with2::<iced_x86::MemoryOperand, iced_x86::Register>(Code::Sal_rm64_CL, ls.into(), iced_x86::Register::CL),
                 X86RegSize::SimdVec => panic!("sal doesn't support simd vectors"),
+            },
+            _ => panic!("invalid variant: {self}"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
+    }
+
+    fn encode_neg(&self) -> Vec<u8> {
+        let dst = self.op1.expect("expected dst");
+        
+        let instr = match dst {
+            X86Operand::Reg(dst) => match dst.size {
+                X86RegSize::Byte => Instruction::with1::<iced_x86::Register>(Code::Neg_rm8, dst.into()),
+                X86RegSize::Word => Instruction::with1::<iced_x86::Register>(Code::Neg_rm16, dst.into()),
+                X86RegSize::Dword => Instruction::with1::<iced_x86::Register>(Code::Neg_rm32, dst.into()),
+                X86RegSize::Qword => Instruction::with1::<iced_x86::Register>(Code::Neg_rm64, dst.into()),
+                X86RegSize::SimdVec => panic!("neg doesn't support simd vec sized operands"),
+            },
+            X86Operand::MemDispl(dst) => match dst.size {
+                X86RegSize::Byte => Instruction::with1::<iced_x86::MemoryOperand>(Code::Neg_rm8, dst.into()),
+                X86RegSize::Word => Instruction::with1::<iced_x86::MemoryOperand>(Code::Neg_rm16, dst.into()),
+                X86RegSize::Dword => Instruction::with1::<iced_x86::MemoryOperand>(Code::Neg_rm32, dst.into()),
+                X86RegSize::Qword => Instruction::with1::<iced_x86::MemoryOperand>(Code::Neg_rm64, dst.into()),
+                X86RegSize::SimdVec => panic!("neg doesn't support simd vec sized operands"),
             },
             _ => panic!("invalid variant: {self}"),
         }.expect("invalid instruction");
