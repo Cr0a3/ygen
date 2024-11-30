@@ -80,8 +80,7 @@ impl TargetRegistry {
         self.triple = *triple;
     }
 
-    /// compiles the given function
-    pub fn compile_fn(&self, func: &crate::IR::Function, module: &mut Module) -> (Vec<u8>, Vec<crate::Obj::Link>) {
+    fn build_mcinstrs(&self, func: &crate::IR::Function, module: &mut Module) -> Vec<(crate::IR::BlockId, Vec<Box<dyn McInstr>>)>{
         let Some(allowment) = self.allowments.get(&self.triple.arch) else {
             panic!("unregistered type rule list for backend {}", self.triple.arch);
         };
@@ -104,16 +103,12 @@ impl TargetRegistry {
 
         let mut alloc = alloc.fork(&func);
 
-        let mc = lower.lower(&mut dag, &mut alloc, module);
+        lower.lower(&mut dag, &mut alloc, module)
+    }
 
-        let mut first = true;
-        for (name, instrs) in &mc {
-            if !first { println!(".{}", name.name); }
-            for instr in instrs {
-                println!("  {}", instr.asm());
-            }
-            first = false;
-        }
+    /// compiles the given function
+    pub fn compile_fn(&self, func: &crate::IR::Function, module: &mut Module) -> (Vec<u8>, Vec<crate::Obj::Link>) {
+        let mc = self.build_mcinstrs(func, module);
 
         // now we do block linking
 
@@ -194,8 +189,40 @@ impl TargetRegistry {
     }
 
     /// Prints the assembly code of the module to a string
-    pub fn print_asm(&self, _module: &crate::IR::Module) -> String {
-        todo!()
+    pub fn print_asm(&self, module: &mut crate::IR::Module) -> String {
+        let Some(mut printer) = self.asm_printers.get(&self.triple.arch).cloned() else {
+            panic!("no registered asm printer")
+        };
+
+        printer.start();
+
+        for (name, constant) in &module.consts {
+            printer.add_const(name, constant);
+        } 
+
+        for (name, func) in module.funcs.to_owned() {
+            printer.begin_func(&name);
+
+            let block_instrs = self.build_mcinstrs(&func, module);
+        
+            let mut first = true;
+
+            for (block, insts) in block_instrs {
+                printer.begin_block(&block.name, !first);
+
+                for inst in insts {
+                    printer.print_inst(&inst);
+                }
+
+                printer.end_block();
+
+                first = false;
+            }
+
+            printer.end_func();
+        }
+
+        printer.emit().to_owned()
     }
 
     /// Parses the input assembly for the target

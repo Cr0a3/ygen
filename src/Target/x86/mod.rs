@@ -94,10 +94,23 @@ pub fn initializeX86Target(call_conv: CallConv) -> BackendInfos {
     allow.add_supported_vec(VecTy { size: 16, ty: TypeMetadata::i8.into() });
     allow.add_supported_vec(VecTy { size: 16, ty: TypeMetadata::u8.into() });
 
+    // Assembly printer
+    let mut asm_printer = AsmPrinter::new();
+    asm_printer.const_pr = Some(|asm: &mut AsmPrinter, name: &String, consta: &crate::IR::Const| {
+        asm.line(format!("{name}:"));
+        asm.add_tab();
+
+        for byte in &consta.data {
+            asm.line(format!(".db {:#04}", *byte));
+        }
+
+        asm.remove_tab();
+    });
+
     BackendInfos {
         dag: DagLower::new(lower::x86_lower, lower::x86_tmps),
         mc: McCompile {},
-        asm_printer: AsmPrinter {},
+        asm_printer: asm_printer,
         parser: AsmParser {},
         allocator: alloc,
         allowment: allow,
