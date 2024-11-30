@@ -49,8 +49,19 @@ impl DagVisitor for Assign<Var, Type> {
 }
 
 impl DagVisitor for Assign<Var, Const> {
-    fn dag_visitor(&self, _dag: &mut Vec<dag::DagNode>) {
-        todo!()
+    fn dag_visitor(&self, dag: &mut Vec<dag::DagNode>) {
+        let mut to = DagOp::var(self.inner1.clone());
+        to.should_be_mem = false;
+        
+        dag.push(DagNode::copy(DagOp {
+                allocated: true,
+                target: dag::DagOpTarget::Constant(Type::Void), // doesn't matter only the operation matters for this operand
+                operation: dag::DagOperandOption::AdrMove(self.inner2.name.clone()),
+                should_be_mem: false,
+            }, 
+            to, 
+            TypeMetadata::ptr
+        ));
     }
 }
 

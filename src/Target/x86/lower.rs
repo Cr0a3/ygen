@@ -2,6 +2,7 @@
 
 use std::collections::HashMap;
 
+use crate::ydbg;
 use crate::CodeGen::dag::DagNode;
 use crate::CodeGen::reg::TargetReg;
 use crate::CodeGen::regalloc_iterated_col::ItRegCoalAlloc;
@@ -27,12 +28,12 @@ mod auto_gen {
 
     fn lower_br(asm: &mut Vec<Asm>, node: DagNode) {
         let DagOpCode::Br(target) = node.get_opcode() else { unreachable!() };
-        asm.push( Asm::with1(Mnemonic::Jmp, Operand::BlockRel(crate::Target::x86::add_block_rel(target))));
+        asm.push( Asm::with1(Mnemonic::Jmp, Operand::Rel(crate::Target::x86::add_rel(target), true)));
     }
 
     fn lower_breq(asm: &mut Vec<Asm>, node: DagNode) {
         let DagOpCode::BrIfEq(target) = node.get_opcode() else { unreachable!() };
-        asm.push( Asm::with1(Mnemonic::Je, Operand::BlockRel(crate::Target::x86::add_block_rel(target))));
+        asm.push( Asm::with1(Mnemonic::Je, Operand::Rel(crate::Target::x86::add_rel(target), true)));
     }
 
 
@@ -72,14 +73,13 @@ pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc,
                     } else { true }
                 }).map(|x| x.to_owned()).collect::<Vec<crate::CodeGen::reg::Reg>>();
             }
-
-            let tmps = x86_tmps(node);
-
+            
             let mut node_asm: Vec<X86Instr> = Vec::new();
             auto_gen::compile(&mut node_asm, node.to_owned(), module);
 
             //X86BasicOpt::opt(&mut node_asm);
 
+            let tmps = x86_tmps(node);
             super::alloc::resolve(node, tmps, &mut node_asm, alloc);
 
             asm.extend_from_slice(&node_asm);
@@ -112,7 +112,11 @@ pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc,
 }
 
 pub(super) fn x86_tmps(node: &DagNode) -> Vec<dag::DagTmpInfo> {
-    auto_gen::tmps(node)
+    let tmps = auto_gen::tmps(node);
+
+    ydbg!("[X86] tmps for `{node}`: {tmps:?}");
+
+    tmps
 }
 
 pub(super) fn ov_proc(node: &DagNode) -> Vec<crate::CodeGen::reg::Reg> {

@@ -80,7 +80,7 @@ pub enum X86Operand {
     Const(i64),
     MemDispl(X86MemDispl),
     Tmp(usize),
-    BlockRel(i64),
+    Rel(i64, /*branch to block*/bool),
 }
 
 /// A X86 memory displacment
@@ -92,6 +92,8 @@ pub struct X86MemDispl {
     displ: Option<i32>,
     scale: Option<i32>,
     size: X86RegSize,
+
+    rip_rel: Option<i64>,
 }
 
 /// What to do in the X86 displacment
@@ -141,12 +143,19 @@ impl std::fmt::Display for X86Operand {
                     write!(f, "* {scale}")?;
                 }
 
+                if let Some(rel) = mem.rip_rel {
+                    let target = crate::Target::x86::get_rel(rel);
+
+                    write!(f, "rel {target}")?;
+                }
+
                 write!(f, "]")?;
             },
             X86Operand::Tmp(t) => write!(f, "tmps.{t}")?,
-            X86Operand::BlockRel(block) => {
-                let block = crate::Target::x86::get_block_rel(*block);
-                write!(f, ".{block}")?;
+            X86Operand::Rel(rel, brt_bb) => {
+                if *brt_bb { write!(f, ".")?; }
+                let rel = crate::Target::x86::get_rel(*rel);
+                write!(f, "{rel}")?;
             },
         };
 
@@ -223,13 +232,13 @@ impl McInstr for X86Instr {
     }
 
     fn branch_to_block(&self) -> Option<crate::Obj::Link> {
-        if let Some(X86Operand::BlockRel(branch)) = &self.op1 {
+        if let Some(X86Operand::Rel(branch, block)) = &self.op1 {
             return Some(crate::Obj::Link {
                 from: String::new(),
-                to: crate::Target::x86::get_block_rel(*branch),
+                to: crate::Target::x86::get_rel(*branch),
                 at: 0,
                 addend: -4,
-                special: true,
+                special: *block,
                 kind: object::RelocationEncoding::X86Branch,
             });
         }
@@ -239,6 +248,36 @@ impl McInstr for X86Instr {
 
     fn relocation(&self) -> Option<crate::Obj::Link> {
         // TODO
+
+        if let Some(X86Operand::Rel(rel, to_block)) = &self.op1 {
+            if *to_block { return None; }
+
+            return Some(crate::Obj::Link {
+                from: String::new(),
+                to: crate::Target::x86::get_rel(*rel),
+                at: 0,
+                addend: -4,
+                special: false,
+                kind: object::RelocationEncoding::X86Branch,
+            })
+        }
+
+        if let Some(X86Operand::MemDispl(mem)) = &self.op2 {
+            if mem.rip_rel.is_none() { return None; }
+
+            let Some(rel) = mem.rip_rel else { unreachable!() };
+
+            
+
+            return Some(crate::Obj::Link {
+                from: String::new(),
+                to: crate::Target::x86::get_rel(rel),
+                at: 0,
+                addend: -4,
+                special: false,
+                kind: object::RelocationEncoding::X86RipRelative,
+            })
+        }
         
         None
     }

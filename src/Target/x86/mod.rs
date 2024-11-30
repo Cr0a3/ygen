@@ -101,7 +101,7 @@ pub fn initializeX86Target(call_conv: CallConv) -> BackendInfos {
         asm.add_tab();
 
         for byte in &consta.data {
-            asm.line(format!(".db {:#04}", *byte));
+            asm.line(format!(".db {:#02x}", *byte));
         }
 
         asm.remove_tab();
@@ -154,41 +154,41 @@ impl CallConv {
     }
 }
 
-static mut BLOCK_RELS: Option<Mutex<HashMap<i64, String>>> = None;
-static mut BLOCK_RELS_LAST: i64 = 0;
-static BLOCK_RELS_INIT: Once = Once::new();
+static mut RELS: Option<Mutex<HashMap<i64, String>>> = None;
+static mut RELS_LAST: i64 = 0;
+static RELS_INIT: Once = Once::new();
 
-fn add_block_rel(target: String) -> i64 {
-    if unsafe { BLOCK_RELS.is_none()} {
+fn add_rel(target: String) -> i64 {
+    if unsafe { RELS.is_none()} {
         unsafe {
-            BLOCK_RELS_INIT.call_once(|| {
-                BLOCK_RELS = Some(Mutex::new(HashMap::new()));
+            RELS_INIT.call_once(|| {
+                RELS = Some(Mutex::new(HashMap::new()));
             })
         }
     }
 
-    let map = unsafe { BLOCK_RELS.as_ref().expect("Global hashmap not initialized") };
+    let map = unsafe { RELS.as_ref().expect("Global hashmap not initialized") };
 
     let mut lock = map.lock().expect("Locking failed");
 
-    lock.insert(unsafe { BLOCK_RELS_LAST }, target);
+    lock.insert(unsafe {  RELS_LAST }, target);
 
     unsafe {
-        BLOCK_RELS_LAST += 1;
-        BLOCK_RELS_LAST - 1
+        RELS_LAST += 1;
+        RELS_LAST - 1
     } 
 }
 
-fn get_block_rel(target: i64) -> String {
-    if unsafe { BLOCK_RELS.is_none()} {
+fn get_rel(target: i64) -> String {
+    if unsafe { RELS.is_none()} {
         unsafe {
-            BLOCK_RELS_INIT.call_once(|| {
-                BLOCK_RELS = Some(Mutex::new(HashMap::new()));
+            RELS_INIT.call_once(|| {
+                RELS = Some(Mutex::new(HashMap::new()));
             })
         }
     }
 
-    let map = unsafe { BLOCK_RELS.as_ref().expect("Global hashmap not initialized") };
+    let map = unsafe { RELS.as_ref().expect("Global hashmap not initialized") };
 
     let lock = map.lock().expect("Locking failed");
 

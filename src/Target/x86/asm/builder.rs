@@ -118,6 +118,7 @@ impl From<Memory> for X86MemDispl {
             displ: Some(displ), 
             scale: None, 
             size: mem.size.into(),
+            rip_rel: None,
         }            
     }
 }
@@ -139,6 +140,22 @@ impl X86MemDispl {
             displ: None,
             scale: None,
             size: X86RegSize::Qword,
+            rip_rel: None,
+        })
+    }
+
+    /// Creates a rip relativ
+    pub fn rip(target: String) -> X86Operand {
+        let target = crate::Target::x86::add_rel(target);
+
+        X86Operand::MemDispl(X86MemDispl {
+            base: None,
+            option: X86MemOption::Nothing,
+            index: None,
+            displ: None,
+            scale: Some(1),
+            size: X86RegSize::Qword,
+            rip_rel: Some(target),
         })
     }
 }

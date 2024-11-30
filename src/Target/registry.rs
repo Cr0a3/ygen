@@ -129,6 +129,8 @@ impl TargetRegistry {
 
                 if let Some(mut reloc) = instr.relocation() {
                     reloc.at += encoded.len();
+
+                    reloc.from = func.name.to_owned();
                     
                     links.push(reloc);
                 }

@@ -1,6 +1,6 @@
 use crate::{CodeGen::{dag::{DagOp, DagOpTarget, DagOperandOption, DagTmpInfo, OperationHandler}, reg::TargetReg}, IR::TypeMetadata};
 
-use super::asm::{X86Instr, X86Operand};
+use super::{asm::{X86Instr, X86MemDispl, X86Mnemonic, X86Operand}, reg::X86Reg};
 
 /// The handler for operantions in the x86 backend
 pub struct X86OperationHandler;
@@ -11,13 +11,13 @@ impl OperationHandler for X86OperationHandler {
     type Instr = X86Instr;
 
     fn just_op(&self, op: &DagOp) -> bool {
-        // just_ops are all operations except constant fps
-        !op.is_operation_cfp()
+        // just_ops are all operations except constant fps and adress moves
+        !(op.is_operation_cfp() || op.is_operation_adrm())
     }
 
     fn inserts_instrs(&self, op: &DagOp) -> bool {
-        // just_ops are all operations except constant fps
-        !op.is_operation_cfp()
+        // cfp and adrms insert new instruction
+        op.is_operation_cfp() || op.is_operation_adrm()
     }
 
     fn requires_new_const(&self, op: &DagOp) -> bool {
@@ -28,6 +28,10 @@ impl OperationHandler for X86OperationHandler {
     fn compile_op(&self, op: &DagOp, _: Option<&crate::IR::Const>) -> Option<Self::Operand> {
         if op.is_operation_cfp() {
             panic!("constant fp operations require to be compiled using the `compile_instrs` function");
+        }
+
+        if op.is_operation_adrm() {
+            panic!("adrms need to be compiled using the `compile_instrs` function");
         }
 
         let mut operand = None;
@@ -59,24 +63,41 @@ impl OperationHandler for X86OperationHandler {
         operand
     }
 
-    fn compile_instrs(&self, op: &DagOp, _constant: Option<&crate::IR::Const>, _tmp: DagTmpInfo) -> Option<Vec<Self::Instr>> {
-        assert_eq!(op.get_operation(), DagOperandOption::ConstantFp);
+    fn compile_instrs(&self, op: &DagOp, _constant: Option<&crate::IR::Const>, tmp: DagTmpInfo) -> Option<Vec<Self::Instr>> {
+        if op.is_operation_adrm() {
+            // lea target, [adr]
+            let mut insts = Vec::new();
 
-        // movd target, [rel {}]
+            let target = op.get_adrm_target().unwrap();
 
-        todo!("implement constant fp operation")
+            let rel = X86MemDispl::rip(target);
+
+            insts.push(X86Instr::with2(X86Mnemonic::Lea, X86Operand::Tmp(tmp.tmp_num), rel));
+
+            return Some(insts)
+        }
+
+        if op.is_operation_cfp() {
+            // movd target, [rel {}]
+    
+            todo!("implement constant fp operation")
+        }
+
+        None
     }
 
     fn tmp(&self, op: &DagOp, num: usize) -> Vec<DagTmpInfo> {
-        if op.get_operation() != DagOperandOption::ConstantFp {
-            return Vec::new();
-        }
+        if op.is_operation_cfp() {
+            let mut tmp = DagTmpInfo::new(num, TypeMetadata::f64);
+            tmp.require_fp();
 
-        let mut tfp = DagTmpInfo::new(num, TypeMetadata::f32);
+            vec![tmp]
+        } else if op.is_operation_adrm() {
+            let mut tmp = DagTmpInfo::new(num, TypeMetadata::ptr);
+            tmp.require_fp();
 
-        tfp.require_fp();
-
-        vec![tfp]
+            vec![tmp]
+        } else { Vec::new() }
     }
 }
 

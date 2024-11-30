@@ -74,7 +74,7 @@ pub struct DagOp {
 }
 
 /// What to do with the operand target
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DagOperandOption {
     /// value gets loaded
     Load,
@@ -82,6 +82,8 @@ pub enum DagOperandOption {
     ConstantImm,
     /// a constant float
     ConstantFp,
+    /// move the adress
+    AdrMove(String),
 }
 
 /// A target for an operand
@@ -219,7 +221,7 @@ impl DagOp {
     /// Returns the operation of the dag operand
     #[inline]
     pub fn get_operation(&self) -> DagOperandOption {
-        self.operation
+        self.operation.clone()
     }
 
     /// Returns if the operation is load
@@ -238,6 +240,21 @@ impl DagOp {
     #[inline]
     pub fn is_operation_cfp(&self) -> bool {
         self.get_operation() == DagOperandOption::ConstantFp
+    }
+
+    /// Returns if the operation is an adress move
+    #[inline]
+    pub fn is_operation_adrm(&self) -> bool {
+        matches!(self.get_operation(), DagOperandOption::AdrMove(_))
+    }
+
+    /// Returns the adress move target
+    pub fn get_adrm_target(&self) -> Option<String> {
+        if !self.is_operation_adrm() { return None; }
+
+        let DagOperandOption::AdrMove(adr) = self.get_operation() else { unreachable!(); };
+
+        Some(adr)
     }
 }
 

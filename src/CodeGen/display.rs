@@ -86,7 +86,7 @@ impl Display for DagOpCode {
 
 impl Display for Memory {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "size_{}", self.size)?;
+        write!(f, "size_{} ", self.size)?;
 
         if self.fp_relativ {
             write!(f, "%frame.")?;

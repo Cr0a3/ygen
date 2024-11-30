@@ -365,7 +365,7 @@ impl X86Instr {
             X86Operand::Reg(reg) => Instruction::with1::<iced_x86::Register>(Code::Jmp_rm64, reg.into()),
             X86Operand::Const(imm) => Instruction::with1(Code::Jmp_rel32_64, imm as i32),
             X86Operand::MemDispl(mem) => Instruction::with1::<iced_x86::MemoryOperand>(Code::Jmp_rm64, mem.into()),
-            X86Operand::BlockRel(_) => Instruction::with_branch(Code::Jmp_rel32_64, 0), // branch will be resolved later
+            X86Operand::Rel(..) => Instruction::with_branch(Code::Jmp_rel32_64, 0), // branch will be resolved later
             _ => panic!("invalid variant: {self}"),
         }.expect("invalid instruction");
 
@@ -381,7 +381,7 @@ impl X86Instr {
 
         let instr = match target {
             X86Operand::Const(imm) => Instruction::with1(Code::Je_rel32_64, imm as i32),
-            X86Operand::BlockRel(_) => Instruction::with_branch(Code::Je_rel32_64, 0), // branch will be resolved later
+            X86Operand::Rel(..) => Instruction::with_branch(Code::Je_rel32_64, 0), // branch will be resolved later
             _ => panic!("invalid variant: {self}"),
         }.expect("invalid instruction");
 
@@ -1153,6 +1153,10 @@ impl Into<iced_x86::MemoryOperand> for X86MemDispl {
             if scale != 0 {
                 mem.scale = scale as u32;
             }
+        }
+
+        if let Some(_) = self.rip_rel {
+            mem.base = iced_x86::Register::RIP;
         }
 
         mem
