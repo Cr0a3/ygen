@@ -23,7 +23,7 @@ def Pat<Copy mem -> gr> {
 }
 
 def Pat<Add .., .. -> ..> int
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> mov %t1, $1;
     asm -> add %t1, $2;
@@ -31,7 +31,7 @@ def Pat<Add .., .. -> ..> int
 }
 
 def Pat<And .., .. -> ..> int
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> mov %t1, $1;
     asm -> and %t1, $2;
@@ -39,7 +39,7 @@ def Pat<And .., .. -> ..> int
 }
 
 def Pat<Or .., .. -> ..> int
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> mov %t1, $1;
     asm -> or %t1, $2;
@@ -47,7 +47,7 @@ def Pat<Or .., .. -> ..> int
 }
 
 def Pat<Xor .., .. -> ..> int
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> mov %t1, $1;
     asm -> xor %t1, $2;
@@ -55,7 +55,7 @@ def Pat<Xor .., .. -> ..> int
 }
 
 def Pat<Mul .., .. -> ..> int
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> mov %t1, $2;
     asm -> mov $out, $1;
@@ -63,7 +63,7 @@ def Pat<Mul .., .. -> ..> int
 }
 
 def Pat<Sub .., .. -> ..> int
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> mov %t1, $1;
     asm -> sub %t1, $2;
@@ -83,7 +83,7 @@ def Pat<GetStackPtr -> gr> {
 }
 
 def Pat<Add fp, fp -> fp> f32 
-    map %t1, fp
+    map %t1, fp;
 {
     asm -> movss %t1, $1;
     asm -> addss %t1, $2;
@@ -91,7 +91,7 @@ def Pat<Add fp, fp -> fp> f32
 }
 
 def Pat<Add fp, fp -> fp> <2 x i64> 
-    map %t1, fp
+    map %t1, fp;
 {
     asm -> movdqa %t1, $1;
     asm -> paddq %t1, $2;
@@ -99,7 +99,7 @@ def Pat<Add fp, fp -> fp> <2 x i64>
 }
 
 def Pat<Add fp, fp -> fp> <4 x i32> 
-    map %t1, fp
+    map %t1, fp;
 {
     asm -> movdqa %t1, $1;
     asm -> paddd %t1, $2;
@@ -107,7 +107,7 @@ def Pat<Add fp, fp -> fp> <4 x i32>
 }
 
 def Pat<Sub fp, fp -> fp> <4 x i32> 
-    map %t1, fp
+    map %t1, fp;
 {
     asm -> movdqa %t1, $1;
     asm -> psubd %t1, $2;
@@ -115,7 +115,7 @@ def Pat<Sub fp, fp -> fp> <4 x i32>
 }
 
 def Pat<Sub fp, fp -> fp> <2 x i64> 
-    map %t1, fp
+    map %t1, fp;
 {
     asm -> movdqa %t1, $1;
     asm -> psubq %t1, $2;
@@ -123,7 +123,7 @@ def Pat<Sub fp, fp -> fp> <2 x i64>
 }
 
 def Pat<Sub fp, fp -> fp> <8 x i16> 
-    map %t1, fp
+    map %t1, fp;
 {
     asm -> movdqa %t1, $1;
     asm -> psubw %t1, $2;
@@ -131,7 +131,7 @@ def Pat<Sub fp, fp -> fp> <8 x i16>
 }
 
 def Pat<Sub fp, fp -> fp> <16 x i8> 
-    map %t1, fp
+    map %t1, fp;
 {
     asm -> movdqa %t1, $1;
     asm -> psubb %t1, $2;
@@ -142,18 +142,18 @@ def Pat<Copy fp -> fp> <4 x i32> {
     asm -> movdqa $out, $1;
 }
 
-def Pat<Br(_)> hook lower_br {}
+def Pat<Br(_)> hook lower_br; {}
 def Pat<BrIfEq(_) gr, ..> 
-    map %t1, gr
-    hook lower_breq 
+    map %t1, gr;
+    hook lower_breq; 
 {
     asm -> mov %t1, $2;
     asm -> cmp $1, %t1;
 }
 
 def Pat<CmpEq .., .. -> ..> int 
-    map %t1, gr
-    map %t2, gr
+    map %t1, gr;
+    map %t2, gr;
 {
     asm -> mov %t1, $2;
     asm -> mov %t2, $1;
@@ -163,8 +163,8 @@ def Pat<CmpEq .., .. -> ..> int
 }
 
 def Pat<CmpNe .., .. -> ..> int 
-    map %t1, gr
-    map %t2, gr
+    map %t1, gr;
+    map %t2, gr;
 {
     asm -> mov %t1, $2;
     asm -> mov %t2, $1;
@@ -174,8 +174,8 @@ def Pat<CmpNe .., .. -> ..> int
 }
 
 def Pat<CmpLt .., .. -> ..> int 
-    map %t1, gr
-    map %t2, gr
+    map %t1, gr;
+    map %t2, gr;
 {
     asm -> mov %t1, $2;
     asm -> mov %t2, $1;
@@ -185,8 +185,8 @@ def Pat<CmpLt .., .. -> ..> int
 }
 
 def Pat<CmpLte .., .. -> ..> int 
-    map %t1, gr
-    map %t2, gr
+    map %t1, gr;
+    map %t2, gr;
 {
     asm -> mov %t1, $2;
     asm -> mov %t2, $1;
@@ -196,8 +196,8 @@ def Pat<CmpLte .., .. -> ..> int
 }
 
 def Pat<CmpGt .., .. -> ..> int 
-    map %t1, gr
-    map %t2, gr
+    map %t1, gr;
+    map %t2, gr;
 {
     asm -> mov %t1, $2;
     asm -> mov %t2, $1;
@@ -207,8 +207,8 @@ def Pat<CmpGt .., .. -> ..> int
 }
 
 def Pat<CmpGte .., .. -> ..> int 
-    map %t1, gr
-    map %t2, gr
+    map %t1, gr;
+    map %t2, gr;
 {
     asm -> mov %t1, $2;
     asm -> mov %t2, $1;
@@ -218,7 +218,7 @@ def Pat<CmpGte .., .. -> ..> int
 }
 
 def Pat<VecInsrt fp, imm, imm -> fp> <8 x i64> 
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> mov %t1, $3;
     asm -> movdqa $out, $1;
@@ -226,7 +226,7 @@ def Pat<VecInsrt fp, imm, imm -> fp> <8 x i64>
 }
 
 def Pat<VecInsrt fp, imm, imm -> fp> <4 x i32> 
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> mov %t1, $3;
     asm -> movdqa $out, $1;
@@ -234,7 +234,7 @@ def Pat<VecInsrt fp, imm, imm -> fp> <4 x i32>
 }
 
 def Pat<VecInsrt fp, imm, imm -> fp> <8 x i16> 
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> mov %t1, $3;
     asm -> movdqa $out, $1;
@@ -242,7 +242,7 @@ def Pat<VecInsrt fp, imm, imm -> fp> <8 x i16>
 }
 
 def Pat<VecInsrt fp, imm, imm -> fp> <16 x i8> 
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> mov %t1, $3;
     asm -> movdqa $out, $1;
@@ -250,7 +250,7 @@ def Pat<VecInsrt fp, imm, imm -> fp> <16 x i8>
 }
 
 def Pat<VecInsrt fp, imm, imm -> fp> <4 x f32> 
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> mov %t1, $3;
     asm -> movdqa $out, $1;
@@ -259,9 +259,9 @@ def Pat<VecInsrt fp, imm, imm -> fp> <4 x f32>
 
 
 def Pat<Shr .., .. -> gr> signed 
-    map %t1, gr
-    map %t2, gr
-    overwrite Rcx
+    map %t1, gr;
+    map %t2, gr;
+    overwrite Rcx;
 {
     asm -> mov %t1, $2;
     asm -> mov %t2, $1;
@@ -271,9 +271,9 @@ def Pat<Shr .., .. -> gr> signed
 }
 
 def Pat<Shr .., .. -> gr> unsigned 
-    map %t1, gr
-    map %t2, gr
-    overwrite Rcx
+    map %t1, gr;
+    map %t2, gr;
+    overwrite Rcx;
 {
     asm -> mov %t1, $2;
     asm -> mov %t2, $1;
@@ -284,9 +284,9 @@ def Pat<Shr .., .. -> gr> unsigned
 
 
 def Pat<Shl .., .. -> gr> signed 
-    map %t1, gr
-    map %t2, gr
-    overwrite Rcx
+    map %t1, gr;
+    map %t2, gr;
+    overwrite Rcx;
 {
     asm -> mov %t1, $2;
     asm -> mov %t2, $1;
@@ -296,9 +296,9 @@ def Pat<Shl .., .. -> gr> signed
 } 
 
 def Pat<Shl .., .. -> gr> unsigned 
-    map %t1, gr
-    map %t2, gr
-    overwrite Rcx
+    map %t1, gr;
+    map %t2, gr;
+    overwrite Rcx;
 {
     asm -> mov %t1, $2;
     asm -> mov %t2, $1;
@@ -313,92 +313,92 @@ def Pat<Neg .. -> ..> int {
 }
 
 def Pat<I8ToI16 .. -> ..> 
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> mov %t1, $1;
     asm -> movsx $out, %t1;
 }
 
 def Pat<I8ToI32 .. -> ..> 
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> mov %t1, $1;
     asm -> movsx $out, %t1;
 }
 
 def Pat<I8ToI64 .. -> ..> 
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> mov %t1, $1;
     asm -> movsx $out, %t1;
 }
 
 def Pat<I16ToI8 .. -> ..> 
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> mov %t1, $1;
     asm -> movsx $out, %t1;
 }
 
 def Pat<I16ToI32 .. -> ..> 
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> mov %t1, $1;
     asm -> movsx $out, %t1;
 }
 
 def Pat<I16ToI64 .. -> ..> 
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> mov %t1, $1;
     asm -> movsx $out, %t1;
 }
 
 def Pat<I32ToI8 .. -> ..> 
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> mov %t1, $1;
     asm -> movsx $out, %t1;
 }
 
 def Pat<I32ToI16 .. -> ..> 
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> mov %t1, $1;
     asm -> movsx $out, %t1;
 }
 
 def Pat<I32ToI64 .. -> ..> 
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> mov %t1, $1;
     asm -> movsxd $out, %t1;
 }
 
 def Pat<I64ToI8 .. -> ..> 
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> mov %t1, $1;
     asm -> movsx $out, %t1;
 }
 
 def Pat<I64ToI16 .. -> ..> 
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> mov %t1, $1;
     asm -> movsx $out, %t1;
 }
 
 def Pat<I64ToI32 .. -> ..> 
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> mov %t1, $1;
     asm -> movsx $out, %t1;
 }
 
 def Pat<I8ToF32 .. -> ..> 
-    map %t1, gr
-    map %t2, fp
+    map %t1, gr;
+    map %t2, fp;
 {
     asm -> mov %t1, $1;
     asm -> cvtsi2ss %t2, %t1;
@@ -406,8 +406,8 @@ def Pat<I8ToF32 .. -> ..>
 }
 
 def Pat<I16ToF32 .. -> ..> 
-    map %t1, gr
-    map %t2, fp
+    map %t1, gr;
+    map %t2, fp;
 {
     asm -> mov %t1, $1;
     asm -> cvtsi2ss %t2, %t1;
@@ -415,8 +415,8 @@ def Pat<I16ToF32 .. -> ..>
 }
 
 def Pat<I16ToF32 .. -> ..> 
-    map %t1, gr
-    map %t2, fp
+    map %t1, gr;
+    map %t2, fp;
 {
     asm -> mov %t1, $1;
     asm -> cvtsi2ss %t2, %t1;
@@ -424,8 +424,8 @@ def Pat<I16ToF32 .. -> ..>
 }
 
 def Pat<I32ToF32 .. -> ..> 
-    map %t1, gr
-    map %t2, fp
+    map %t1, gr;
+    map %t2, fp;
 {
     asm -> mov %t1, $1;
     asm -> cvtsi2ss %t2, %t1;
@@ -433,8 +433,8 @@ def Pat<I32ToF32 .. -> ..>
 }
 
 def Pat<I64ToF32 .. -> ..> 
-    map %t1, gr
-    map %t2, fp
+    map %t1, gr;
+    map %t2, fp;
 {
     asm -> mov %t1, $1;
     asm -> cvtsi2ss %t2, %t1;
@@ -442,8 +442,8 @@ def Pat<I64ToF32 .. -> ..>
 }
 
 def Pat<I8ToF64 .. -> ..> 
-    map %t1, gr
-    map %t2, fp
+    map %t1, gr;
+    map %t2, fp;
 {
     asm -> mov %t1, $1;
     asm -> cvtsi2sd %t2, %t1;
@@ -451,8 +451,8 @@ def Pat<I8ToF64 .. -> ..>
 }
 
 def Pat<I16ToF64 .. -> ..> 
-    map %t1, gr
-    map %t2, fp
+    map %t1, gr;
+    map %t2, fp;
 {
     asm -> mov %t1, $1;
     asm -> cvtsi2sd %t2, %t1;
@@ -460,8 +460,8 @@ def Pat<I16ToF64 .. -> ..>
 }
 
 def Pat<I32ToF64 .. -> ..> 
-    map %t1, gr
-    map %t2, fp
+    map %t1, gr;
+    map %t2, fp;
 {
     asm -> mov %t1, $1;
     asm -> cvtsi2sd %t2, %t1;
@@ -469,8 +469,8 @@ def Pat<I32ToF64 .. -> ..>
 }
 
 def Pat<I64ToF64 .. -> ..> 
-    map %t1, gr
-    map %t2, fp
+    map %t1, gr;
+    map %t2, fp;
 {
     asm -> mov %t1, $1;
     asm -> cvtsi2sd %t2, %t1;
@@ -478,71 +478,81 @@ def Pat<I64ToF64 .. -> ..>
 }
 
 def Pat<F32ToI8 .. -> ..> 
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> cvtss2si %t1, %t1;
     asm -> mov $out, %t2;
 }
 
 def Pat<F32ToI16 .. -> ..> 
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> cvtss2si %t1, %t1;
     asm -> mov $out, %t2;
 }
 
 def Pat<F32ToI32 .. -> ..> 
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> cvtss2si %t1, %t1;
     asm -> mov $out, %t2;
 }
 
 def Pat<F32ToI64 .. -> ..> 
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> cvtss2si %t1, %t1;
     asm -> mov $out, %t2;
 }
 
 def Pat<F64ToI8 .. -> ..> 
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> cvtsd2si %t1, %t1;
     asm -> mov $out, %t2;
 }
 
 def Pat<F64ToI16 .. -> ..> 
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> cvtsd2si %t1, %t1;
     asm -> mov $out, %t2;
 }
 
 def Pat<F64ToI32 .. -> ..> 
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> cvtsd2si %t1, %t1;
     asm -> mov $out, %t2;
 }
 
 def Pat<F64ToI64 .. -> ..> 
-    map %t1, gr
+    map %t1, gr;
 {
     asm -> cvtsd2si %t1, %t1;
     asm -> mov $out, %t2;
 }
 
 def Pat<F32ToF64 .. -> ..> 
-    map %t1, fp
+    map %t1, fp;
 {
     asm -> cvtss2sd %t1, %t1;
     asm -> movsd $out, %t2;
 }
 
 def Pat<F64ToF32 .. -> ..> 
-    map %t1, fp
+    map %t1, fp;
 {
     asm -> cvtsd2ss %t1, %t1;
     asm -> movss $out, %t2;
+}
+
+def Pat<Div .., .. -> ..> int  
+    map %t1, gr;
+    hook lower_divei;
+    overwrite Rax;
+    overwrite Rdx;
+{
+    asm -> mov %t1, $2;
+    asm -> mov Operand::Reg(Reg::Rax()), $1;
 }

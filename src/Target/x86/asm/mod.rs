@@ -80,6 +80,12 @@ pub enum X86Mnemonic {
     Cvtsd2si,
     Cvtss2sd,
     Cvtsd2ss,
+    Idiv,
+    Div,
+    Cbw,
+    Cwd,
+    Cdq,
+    Cqo
 }
 
 /// A X86 assembly operand
@@ -222,6 +228,12 @@ impl std::fmt::Display for X86Instr {
             X86Mnemonic::Cvtss2si => "cvtss2si",
             X86Mnemonic::Movsx => "movsx",
             X86Mnemonic::Movsxd => "movsxd",
+            X86Mnemonic::Idiv => "idiv",
+            X86Mnemonic::Div => "div",
+            X86Mnemonic::Cbw => "cbw",
+            X86Mnemonic::Cwd => "cwd",
+            X86Mnemonic::Cdq => "cdq",
+            X86Mnemonic::Cqo => "cqo",
         })?;
         
         if let Some(op) = &self.op1 {

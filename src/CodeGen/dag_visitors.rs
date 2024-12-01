@@ -224,8 +224,13 @@ impl DagVisitor for Mul {
 }
 
 impl DagVisitor for Div {
-    fn dag_visitor(&self, _dag: &mut Vec<dag::DagNode>) {
-        todo!()
+    fn dag_visitor(&self, dag: &mut Vec<dag::DagNode>) {
+        dag.push(DagNode::div(
+            DagOp::from(&self.inner1), 
+            DagOp::from(&self.inner2), 
+            DagOp::var(self.inner3.to_owned()),
+            self.inner3.ty,
+        ))
     }
 }
 

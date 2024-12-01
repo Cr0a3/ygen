@@ -54,6 +54,12 @@ impl X86Instr {
             X86Mnemonic::Cvtsd2si => instr.encode_cvtsd2si(),
             X86Mnemonic::Cvtss2sd => instr.encode_cvtss2sd(),
             X86Mnemonic::Cvtsd2ss => instr.encode_cvtsd2ss(),
+            X86Mnemonic::Idiv => instr.encode_idiv(),
+            X86Mnemonic::Div => instr.encode_div(),
+            X86Mnemonic::Cbw => instr.encode_cbw(),
+            X86Mnemonic::Cwd => instr.encode_cwd(),
+            X86Mnemonic::Cdq => instr.encode_cdq(),
+            X86Mnemonic::Cqo => instr.encode_cqo(),
         }
     }
 
@@ -1129,6 +1135,78 @@ impl X86Instr {
     fn encode_cvtsd2ss(&self) -> Vec<u8> {
         todo!()
     }
+
+    fn encode_idiv(&self) -> Vec<u8> {
+        let Some(op1) = self.op1 else { panic!("expected op1"); };
+        
+        let instr = match op1 {
+            X86Operand::Reg(reg) => match reg.size {
+                X86RegSize::Byte => Instruction::with1::<iced_x86::Register>(Code::Idiv_rm8, reg.into()),
+                X86RegSize::Word => Instruction::with1::<iced_x86::Register>(Code::Idiv_rm16, reg.into()),
+                X86RegSize::Dword => Instruction::with1::<iced_x86::Register>(Code::Idiv_rm32, reg.into()),
+                X86RegSize::Qword => Instruction::with1::<iced_x86::Register>(Code::Idiv_rm64, reg.into()),
+                _ => panic!("invalid size"),
+            },
+            X86Operand::MemDispl(mem) => match mem.size {
+                X86RegSize::Byte => Instruction::with1::<iced_x86::MemoryOperand>(Code::Idiv_rm8, mem.into()),
+                X86RegSize::Word => Instruction::with1::<iced_x86::MemoryOperand>(Code::Idiv_rm16, mem.into()),
+                X86RegSize::Dword => Instruction::with1::<iced_x86::MemoryOperand>(Code::Idiv_rm32, mem.into()),
+                X86RegSize::Qword => Instruction::with1::<iced_x86::MemoryOperand>(Code::Idiv_rm64, mem.into()),
+                _ => panic!("invalid size"),
+            },
+            _ => panic!("invalid variant: {self}"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
+    }
+
+    fn encode_div(&self) -> Vec<u8> {
+        let Some(op1) = self.op1 else { panic!("expected op1"); };
+        
+        let instr = match op1 {
+            X86Operand::Reg(reg) => match reg.size {
+                X86RegSize::Byte => Instruction::with1::<iced_x86::Register>(Code::Div_rm8, reg.into()),
+                X86RegSize::Word => Instruction::with1::<iced_x86::Register>(Code::Div_rm16, reg.into()),
+                X86RegSize::Dword => Instruction::with1::<iced_x86::Register>(Code::Div_rm32, reg.into()),
+                X86RegSize::Qword => Instruction::with1::<iced_x86::Register>(Code::Div_rm64, reg.into()),
+                _ => panic!("invalid size"),
+            },
+            X86Operand::MemDispl(mem) => match mem.size {
+                X86RegSize::Byte => Instruction::with1::<iced_x86::MemoryOperand>(Code::Div_rm8, mem.into()),
+                X86RegSize::Word => Instruction::with1::<iced_x86::MemoryOperand>(Code::Div_rm16, mem.into()),
+                X86RegSize::Dword => Instruction::with1::<iced_x86::MemoryOperand>(Code::Div_rm32, mem.into()),
+                X86RegSize::Qword => Instruction::with1::<iced_x86::MemoryOperand>(Code::Div_rm64, mem.into()),
+                _ => panic!("invalid size"),
+            },
+            _ => panic!("invalid variant: {self}"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
+    }
+
+    fn encode_cbw(&self) -> Vec<u8> {
+        vec![0x98]
+    }
+
+    fn encode_cwd(&self) -> Vec<u8> {
+        vec![0x99]
+    }
+
+    fn encode_cdq(&self) -> Vec<u8> {
+        vec![0x99]
+    }
+
+    fn encode_cqo(&self) -> Vec<u8> {
+        vec![0x48, 0x99]
+    }
 }
 
 impl Into<iced_x86::Register> for X86Reg {
@@ -1187,7 +1265,8 @@ impl Into<iced_x86::MemoryOperand> for X86MemDispl {
             mem.displ_size = 1;
         }
 
-        mem.scale = self.size.into();
+        // mem.scale = self.size.into();
+        mem.scale = 1;
 
         if let Some(scale) = self.scale {
             if scale != 0 {

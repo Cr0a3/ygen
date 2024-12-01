@@ -36,6 +36,39 @@ mod auto_gen {
         asm.push( Asm::with1(Mnemonic::Je, Operand::Rel(crate::Target::x86::add_rel(target), true)));
     }
 
+    /// Lowers the end of intenger division
+    fn lower_divei(asm: &mut Vec<Asm>, node: DagNode) {
+        // At the start our assembly looks like this:
+
+        // mov %t1, $2;
+        // mov rax, $1;
+
+        let prep = if node.ty.signed() {
+            let mnemonic = match node.ty.byteSize() {
+                1 => X86Mnemonic::Cbw,
+                2 => X86Mnemonic::Cwd,
+                4 => X86Mnemonic::Cdq,
+                8 => X86Mnemonic::Cqo,
+                _ => panic!(),
+            };
+
+            X86Instr::with0(mnemonic)
+        } else { 
+            X86Instr::with2(Mnemonic::Xor, X86Operand::Reg(X86Reg::Rdx()), X86Operand::Reg(X86Reg::Rdx())) 
+        };
+        asm.push(prep);
+
+        // we now implemented the rdx reset
+        // and only need to add following assembly lines:
+        // idiv %t1
+        // mov $out, rax
+        let div_mnemonic = match node.ty.signed() {
+            true => X86Mnemonic::Idiv,
+            false => X86Mnemonic::Div,
+        };
+        asm.push(X86Instr::with1(div_mnemonic, X86Operand::Tmp(1)));
+        asm.push(X86Instr::with2(X86Mnemonic::Mov, node.get_out().into(), X86Operand::Reg(X86Reg::Rax())));
+    }
 
     include!("dag.def");
 }
@@ -77,7 +110,7 @@ pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc,
             let mut node_asm: Vec<X86Instr> = Vec::new();
             auto_gen::compile(&mut node_asm, node.to_owned(), module);
 
-            //X86BasicOpt::opt(&mut node_asm);
+            //super::asm::opt::X86BasicOpt::opt(&mut node_asm);
 
             let tmps = x86_tmps(node);
             super::alloc::resolve(node, tmps, &mut node_asm, alloc);
@@ -96,7 +129,7 @@ pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc,
 
         };
 
-        //X86BasicOpt::opt(&mut asm);
+        //super::asm::opt::X86BasicOpt::opt(&mut asm);
 
         // now turn the asemmbly into `dyn McInstr`
         let mut mc_instrs: Vec<Box<dyn McInstr>> = Vec::new();
