@@ -311,3 +311,238 @@ def Pat<Neg .. -> ..> int {
     asm -> mov $out, $1;
     asm -> neg $out;
 }
+
+def Pat<I8ToI16 .. -> ..> 
+    map %t1, gr
+{
+    asm -> mov %t1, $1;
+    asm -> movsx $out, %t1;
+}
+
+def Pat<I8ToI32 .. -> ..> 
+    map %t1, gr
+{
+    asm -> mov %t1, $1;
+    asm -> movsx $out, %t1;
+}
+
+def Pat<I8ToI64 .. -> ..> 
+    map %t1, gr
+{
+    asm -> mov %t1, $1;
+    asm -> movsx $out, %t1;
+}
+
+def Pat<I16ToI8 .. -> ..> 
+    map %t1, gr
+{
+    asm -> mov %t1, $1;
+    asm -> movsx $out, %t1;
+}
+
+def Pat<I16ToI32 .. -> ..> 
+    map %t1, gr
+{
+    asm -> mov %t1, $1;
+    asm -> movsx $out, %t1;
+}
+
+def Pat<I16ToI64 .. -> ..> 
+    map %t1, gr
+{
+    asm -> mov %t1, $1;
+    asm -> movsx $out, %t1;
+}
+
+def Pat<I32ToI8 .. -> ..> 
+    map %t1, gr
+{
+    asm -> mov %t1, $1;
+    asm -> movsx $out, %t1;
+}
+
+def Pat<I32ToI16 .. -> ..> 
+    map %t1, gr
+{
+    asm -> mov %t1, $1;
+    asm -> movsx $out, %t1;
+}
+
+def Pat<I32ToI64 .. -> ..> 
+    map %t1, gr
+{
+    asm -> mov %t1, $1;
+    asm -> movsxd $out, %t1;
+}
+
+def Pat<I64ToI8 .. -> ..> 
+    map %t1, gr
+{
+    asm -> mov %t1, $1;
+    asm -> movsx $out, %t1;
+}
+
+def Pat<I64ToI16 .. -> ..> 
+    map %t1, gr
+{
+    asm -> mov %t1, $1;
+    asm -> movsx $out, %t1;
+}
+
+def Pat<I64ToI32 .. -> ..> 
+    map %t1, gr
+{
+    asm -> mov %t1, $1;
+    asm -> movsx $out, %t1;
+}
+
+def Pat<I8ToF32 .. -> ..> 
+    map %t1, gr
+    map %t2, fp
+{
+    asm -> mov %t1, $1;
+    asm -> cvtsi2ss %t2, %t1;
+    asm -> movss $out, %t2;
+}
+
+def Pat<I16ToF32 .. -> ..> 
+    map %t1, gr
+    map %t2, fp
+{
+    asm -> mov %t1, $1;
+    asm -> cvtsi2ss %t2, %t1;
+    asm -> movss $out, %t2;
+}
+
+def Pat<I16ToF32 .. -> ..> 
+    map %t1, gr
+    map %t2, fp
+{
+    asm -> mov %t1, $1;
+    asm -> cvtsi2ss %t2, %t1;
+    asm -> movss $out, %t2;
+}
+
+def Pat<I32ToF32 .. -> ..> 
+    map %t1, gr
+    map %t2, fp
+{
+    asm -> mov %t1, $1;
+    asm -> cvtsi2ss %t2, %t1;
+    asm -> movss $out, %t2;
+}
+
+def Pat<I64ToF32 .. -> ..> 
+    map %t1, gr
+    map %t2, fp
+{
+    asm -> mov %t1, $1;
+    asm -> cvtsi2ss %t2, %t1;
+    asm -> movss $out, %t2;
+}
+
+def Pat<I8ToF64 .. -> ..> 
+    map %t1, gr
+    map %t2, fp
+{
+    asm -> mov %t1, $1;
+    asm -> cvtsi2sd %t2, %t1;
+    asm -> movsd $out, %t2;
+}
+
+def Pat<I16ToF64 .. -> ..> 
+    map %t1, gr
+    map %t2, fp
+{
+    asm -> mov %t1, $1;
+    asm -> cvtsi2sd %t2, %t1;
+    asm -> movsd $out, %t2;
+}
+
+def Pat<I32ToF64 .. -> ..> 
+    map %t1, gr
+    map %t2, fp
+{
+    asm -> mov %t1, $1;
+    asm -> cvtsi2sd %t2, %t1;
+    asm -> movsd $out, %t2;
+}
+
+def Pat<I64ToF64 .. -> ..> 
+    map %t1, gr
+    map %t2, fp
+{
+    asm -> mov %t1, $1;
+    asm -> cvtsi2sd %t2, %t1;
+    asm -> movsd $out, %t2;
+}
+
+def Pat<F32ToI8 .. -> ..> 
+    map %t1, gr
+{
+    asm -> cvtss2si %t1, %t1;
+    asm -> mov $out, %t2;
+}
+
+def Pat<F32ToI16 .. -> ..> 
+    map %t1, gr
+{
+    asm -> cvtss2si %t1, %t1;
+    asm -> mov $out, %t2;
+}
+
+def Pat<F32ToI32 .. -> ..> 
+    map %t1, gr
+{
+    asm -> cvtss2si %t1, %t1;
+    asm -> mov $out, %t2;
+}
+
+def Pat<F32ToI64 .. -> ..> 
+    map %t1, gr
+{
+    asm -> cvtss2si %t1, %t1;
+    asm -> mov $out, %t2;
+}
+
+def Pat<F64ToI8 .. -> ..> 
+    map %t1, gr
+{
+    asm -> cvtsd2si %t1, %t1;
+    asm -> mov $out, %t2;
+}
+
+def Pat<F64ToI16 .. -> ..> 
+    map %t1, gr
+{
+    asm -> cvtsd2si %t1, %t1;
+    asm -> mov $out, %t2;
+}
+
+def Pat<F64ToI32 .. -> ..> 
+    map %t1, gr
+{
+    asm -> cvtsd2si %t1, %t1;
+    asm -> mov $out, %t2;
+}
+
+def Pat<F64ToI64 .. -> ..> 
+    map %t1, gr
+{
+    asm -> cvtsd2si %t1, %t1;
+    asm -> mov $out, %t2;
+}
+
+def Pat<F32ToF64 .. -> ..> 
+    map %t1, fp
+{
+    asm -> cvtss2sd %t1, %t1;
+    asm -> movsd $out, %t2;
+}
+
+def Pat<F64ToF32 .. -> ..> 
+    map %t1, fp
+{
+    asm -> cvtsd2ss %t1, %t1;
+    asm -> movss $out, %t2;
+}

@@ -91,8 +91,55 @@ impl DagVisitor for Call {
 }
 
 impl DagVisitor for Cast {
-    fn dag_visitor(&self, _dag: &mut Vec<dag::DagNode>) {
-        todo!()
+    fn dag_visitor(&self, dag: &mut Vec<dag::DagNode>) {
+        let opcode = match (self.getFromType().toSigned(), self.getCastType().toSigned()) {
+            (TypeMetadata::i8, TypeMetadata::i16) => dag::DagOpCode::I8ToI16,
+            (TypeMetadata::i8, TypeMetadata::i32) => dag::DagOpCode::I8ToI32,
+            (TypeMetadata::i8, TypeMetadata::i64) => dag::DagOpCode::I8ToI64,
+            (TypeMetadata::i8, TypeMetadata::f32) => dag::DagOpCode::I8ToF32,
+            (TypeMetadata::i8, TypeMetadata::f64) => dag::DagOpCode::I8ToF64,
+
+            (TypeMetadata::i16, TypeMetadata::i8) => dag::DagOpCode::I16ToI8,
+            (TypeMetadata::i16, TypeMetadata::i32) => dag::DagOpCode::I16ToI32,
+            (TypeMetadata::i16, TypeMetadata::i64) => dag::DagOpCode::I16ToI64,
+            (TypeMetadata::i16, TypeMetadata::f32) => dag::DagOpCode::I16ToF32,
+            (TypeMetadata::i16, TypeMetadata::f64) => dag::DagOpCode::I16ToF64,
+
+            (TypeMetadata::i32, TypeMetadata::i8) => dag::DagOpCode::I32ToI8,
+            (TypeMetadata::i32, TypeMetadata::i16) => dag::DagOpCode::I32ToI16,
+            (TypeMetadata::i32, TypeMetadata::i64) => dag::DagOpCode::I32ToI64,
+            (TypeMetadata::i32, TypeMetadata::f32) => dag::DagOpCode::I32ToF32,
+            (TypeMetadata::i32, TypeMetadata::f64) => dag::DagOpCode::I32ToF64,
+
+            (TypeMetadata::i64, TypeMetadata::i8) => dag::DagOpCode::I64ToI8,
+            (TypeMetadata::i64, TypeMetadata::i16) => dag::DagOpCode::I64ToI16,
+            (TypeMetadata::i64, TypeMetadata::i32) => dag::DagOpCode::I64ToI32,
+            (TypeMetadata::i64, TypeMetadata::f32) => dag::DagOpCode::I64ToF32,
+            (TypeMetadata::i64, TypeMetadata::f64) => dag::DagOpCode::I64ToF64,
+
+            (TypeMetadata::f32, TypeMetadata::i8) => dag::DagOpCode::F32ToI8,
+            (TypeMetadata::f32, TypeMetadata::i16) => dag::DagOpCode::F32ToI16,
+            (TypeMetadata::f32, TypeMetadata::i32) => dag::DagOpCode::F32ToI32,
+            (TypeMetadata::f32, TypeMetadata::i64) => dag::DagOpCode::F32ToI64,
+            (TypeMetadata::f32, TypeMetadata::f64) => dag::DagOpCode::F32ToF64,
+
+            (TypeMetadata::f64, TypeMetadata::i8) => dag::DagOpCode::F64ToI8,
+            (TypeMetadata::f64, TypeMetadata::i16) => dag::DagOpCode::F64ToI16,
+            (TypeMetadata::f64, TypeMetadata::i32) => dag::DagOpCode::F64ToI32,
+            (TypeMetadata::f64, TypeMetadata::i64) => dag::DagOpCode::F64ToI64,
+            (TypeMetadata::f64, TypeMetadata::f32) => dag::DagOpCode::F64ToF32,
+
+            (todo_from, todo_to) => todo!("cast: {todo_from} -> {todo_to}")
+        };
+
+        dag.push( DagNode::new_with_out(
+            opcode, 
+            DagOp::var(self.getOutput()), 
+            vec![
+                DagOp::from(&self.inner1), 
+            ],
+            self.getCastType()
+        ));
     }
 }
 

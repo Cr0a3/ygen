@@ -1,6 +1,6 @@
-use crate::{CodeGen::{dag::{DagOp, DagOpTarget, DagOperandOption, DagTmpInfo, OperationHandler}, reg::TargetReg}, IR::TypeMetadata};
+use crate::{CodeGen::{dag::{DagOp, DagOpTarget, DagTmpInfo, OperationHandler}, reg::TargetReg}, IR::TypeMetadata};
 
-use super::{asm::{X86Instr, X86MemDispl, X86Mnemonic, X86Operand}, reg::X86Reg};
+use super::asm::{X86Instr, X86MemDispl, X86Mnemonic, X86Operand};
 
 /// The handler for operantions in the x86 backend
 pub struct X86OperationHandler;

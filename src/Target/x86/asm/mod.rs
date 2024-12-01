@@ -70,6 +70,16 @@ pub enum X86Mnemonic {
     Shl,
 
     Neg,
+
+    Movsx,
+    Movsxd,
+
+    Cvtsi2sd,
+    Cvtsi2ss,
+    Cvtss2si,
+    Cvtsd2si,
+    Cvtss2sd,
+    Cvtsd2ss,
 }
 
 /// A X86 assembly operand
@@ -204,6 +214,14 @@ impl std::fmt::Display for X86Instr {
             X86Mnemonic::Sal => "sal",
             X86Mnemonic::Shl => "shl",
             X86Mnemonic::Neg => "neg",
+            X86Mnemonic::Cvtsd2si => "cvtsd2si",
+            X86Mnemonic::Cvtsd2ss => "cvtsd2ss",
+            X86Mnemonic::Cvtsi2sd => "cvtsi2sd",
+            X86Mnemonic::Cvtsi2ss => "cvtsi2ss",
+            X86Mnemonic::Cvtss2sd => "cvtss2sd",
+            X86Mnemonic::Cvtss2si => "cvtss2si",
+            X86Mnemonic::Movsx => "movsx",
+            X86Mnemonic::Movsxd => "movsxd",
         })?;
         
         if let Some(op) = &self.op1 {

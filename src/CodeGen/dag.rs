@@ -58,6 +58,43 @@ pub enum DagOpCode {
     VecInsrt,
 
     BrIfEq(String),
+
+    // Cast
+    I8ToI16,
+    I8ToI32,
+    I8ToI64,
+    I8ToF32,
+    I8ToF64,
+
+    I16ToI8,
+    I16ToI32,
+    I16ToI64,
+    I16ToF32,
+    I16ToF64,
+
+    I32ToI8,
+    I32ToI16,
+    I32ToI64,
+    I32ToF32,
+    I32ToF64,
+
+    I64ToI8,
+    I64ToI16,
+    I64ToI32,
+    I64ToF32,
+    I64ToF64,
+
+    F32ToI8,
+    F32ToI16,
+    F32ToI32,
+    F32ToI64,
+    F32ToF64,
+
+    F64ToI8,
+    F64ToI16,
+    F64ToI32,
+    F64ToI64,
+    F64ToF32,
 }
 
 /// A operand in the dag

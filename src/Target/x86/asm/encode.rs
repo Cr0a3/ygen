@@ -46,6 +46,14 @@ impl X86Instr {
             X86Mnemonic::Shl => instr.encode_shl(),
             X86Mnemonic::Sal => instr.encode_sal(),
             X86Mnemonic::Neg => instr.encode_neg(),
+            X86Mnemonic::Movsx => instr.encode_movsx(),
+            X86Mnemonic::Movsxd => instr.encode_movsxd(),
+            X86Mnemonic::Cvtsi2sd => instr.encode_cvtsi2sd(),
+            X86Mnemonic::Cvtsi2ss => instr.encode_cvtsi2ss(),
+            X86Mnemonic::Cvtss2si => instr.encode_cvtss2si(),
+            X86Mnemonic::Cvtsd2si => instr.encode_cvtsd2si(),
+            X86Mnemonic::Cvtss2sd => instr.encode_cvtss2sd(),
+            X86Mnemonic::Cvtsd2ss => instr.encode_cvtsd2ss(),
         }
     }
 
@@ -1088,6 +1096,38 @@ impl X86Instr {
             InstructionBlock::new(&[instr], 0), 
             BlockEncoderOptions::DONT_FIX_BRANCHES
         ).expect("encoding error").code_buffer
+    }
+
+    fn encode_movsx(&self) -> Vec<u8> {
+        todo!()
+    }
+    
+    fn encode_movsxd(&self) -> Vec<u8> {
+        todo!()
+    }
+
+    fn encode_cvtsi2sd(&self) -> Vec<u8> {
+        todo!()
+    }
+
+    fn encode_cvtsi2ss(&self) -> Vec<u8> {
+        todo!()
+    }
+
+    fn encode_cvtss2si(&self) -> Vec<u8> {
+        todo!()
+    }
+
+    fn encode_cvtsd2si(&self) -> Vec<u8> {
+        todo!()
+    }
+
+    fn encode_cvtss2sd(&self) -> Vec<u8> {
+        todo!()
+    }
+
+    fn encode_cvtsd2ss(&self) -> Vec<u8> {
+        todo!()
     }
 }
 
