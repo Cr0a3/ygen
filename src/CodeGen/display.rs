@@ -110,6 +110,7 @@ impl Display for DagOpCode {
             DagOpCode::F64ToI64 => write!(f, "f64.cast.i64")?,
             DagOpCode::F64ToF32 => write!(f, "f64.cast.i32")?,
             DagOpCode::Div => write!(f, "div")?,
+            DagOpCode::Rem => write!(f, "rem")?,
         }
         
         std::fmt::Result::Ok(())

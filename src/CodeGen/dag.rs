@@ -40,6 +40,7 @@ pub enum DagOpCode {
     Shr,
     Shl,
     Div,
+    Rem,
     Neg,
 
     // Branches
@@ -212,6 +213,10 @@ impl DagNode {
     /// Creates a new div dag node
     #[inline]
     pub fn div(ls: DagOp, rs: DagOp, out: DagOp, ty:TypeMetadata) -> Self { DagNode::new_with_out(DagOpCode::Div, out, vec![ls, rs], ty) }
+
+    /// Creates a new rem dag node
+    #[inline]
+    pub fn rem(ls: DagOp, rs: DagOp, out: DagOp, ty:TypeMetadata) -> Self { DagNode::new_with_out(DagOpCode::Rem, out, vec![ls, rs], ty) }
 }
 
 impl DagOp {

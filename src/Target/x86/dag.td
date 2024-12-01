@@ -549,7 +549,17 @@ def Pat<F64ToF32 .. -> ..>
 
 def Pat<Div .., .. -> ..> int  
     map %t1, gr;
-    hook lower_divei;
+    hook lower_divi;
+    overwrite Rax;
+    overwrite Rdx;
+{
+    asm -> mov %t1, $2;
+    asm -> mov Operand::Reg(Reg::Rax()), $1;
+}
+
+def Pat<Rem .., .. -> ..> int  
+    map %t1, gr;
+    hook lower_remi;
     overwrite Rax;
     overwrite Rdx;
 {

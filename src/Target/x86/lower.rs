@@ -37,7 +37,7 @@ mod auto_gen {
     }
 
     /// Lowers the end of intenger division
-    fn lower_divei(asm: &mut Vec<Asm>, node: DagNode) {
+    fn lower_divi(asm: &mut Vec<Asm>, node: DagNode) {
         // At the start our assembly looks like this:
 
         // mov %t1, $2;
@@ -68,6 +68,16 @@ mod auto_gen {
         };
         asm.push(X86Instr::with1(div_mnemonic, X86Operand::Tmp(1)));
         asm.push(X86Instr::with2(X86Mnemonic::Mov, node.get_out().into(), X86Operand::Reg(X86Reg::Rax())));
+    }
+
+    /// lowers the end of intenger rem
+    fn lower_remi(asm: &mut Vec<Asm>, node: DagNode) {
+        // it's nearly the same only the last instruction is different
+        // so we're just going to prentend like it's a division
+        lower_divi(asm, node.clone());
+        // and then change the last instruction
+        asm.pop();
+        asm.push(X86Instr::with2(X86Mnemonic::Mov, node.get_out().into(), X86Operand::Reg(X86Reg::Rdx())));
     }
 
     include!("dag.def");
