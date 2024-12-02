@@ -196,19 +196,38 @@ impl CallConv {
 
     /// Returns the nth x86 fp argument
     #[inline]
-    pub fn get_x86_arg_fp(&self, num: usize) -> Option<X86Reg> {match self {
-        CallConv::WindowsFastCall | CallConv::SystemV => match num {
-            0 => Some(X86Reg::Xmm0()),
-            1 => Some(X86Reg::Xmm1()),
-            2 => Some(X86Reg::Xmm2()),
-            3 => Some(X86Reg::Xmm3()),
-            4 => Some(X86Reg::Xmm4()),
-            5 => Some(X86Reg::Xmm5()),
-            6 => Some(X86Reg::Xmm6()),
-            7 => Some(X86Reg::Xmm7()),
-            _ => None,
-        },
-        _ => panic!("the calling convention {self:?} is not usable in the x86 backend")
+    pub fn get_x86_arg_fp(&self, num: usize) -> Option<X86Reg> {
+        match self {
+            CallConv::WindowsFastCall | CallConv::SystemV => match num {
+                0 => Some(X86Reg::Xmm0()),
+                1 => Some(X86Reg::Xmm1()),
+                2 => Some(X86Reg::Xmm2()),
+                3 => Some(X86Reg::Xmm3()),
+                4 => Some(X86Reg::Xmm4()),
+                5 => Some(X86Reg::Xmm5()),
+                6 => Some(X86Reg::Xmm6()),
+                7 => Some(X86Reg::Xmm7()),
+                _ => None,
+            },
+            _ => panic!("the calling convention {self:?} is not usable in the x86 backend")
+        }
     }
+
+    /// Returns the gr registers overwritten by the calling convention
+    pub fn get_x86_gr_overwrittes(&self) -> Vec<X86Reg> {
+        match self {
+            CallConv::SystemV           => vec![X86Reg::Rax(), X86Reg::Rcx(), X86Reg::Rdx(), X86Reg::Rsi(), X86Reg::Rdi(), X86Reg::R8(), X86Reg::R9(),  X86Reg::R10(), X86Reg::R11()],
+            CallConv::WindowsFastCall   => vec![X86Reg::Rax(), X86Reg::Rcx(), X86Reg::Rdx(), X86Reg::Rsi(), X86Reg::R8(),  X86Reg::R9(), X86Reg::R10(), X86Reg::R11()],
+            _ => panic!("the calling convention {self:?} is not usable in the x86 backend"),
+        }
+    }
+
+    /// Returns the fp registers overwritten by the calling convention
+    pub fn get_x86_fp_overwrittes(&self) -> Vec<X86Reg> {
+        match self {
+            CallConv::SystemV           => Vec::new(),
+            CallConv::WindowsFastCall   => vec![X86Reg::Xmm0(), X86Reg::Xmm1(), X86Reg::Xmm2(), X86Reg::Xmm3(), X86Reg::Xmm4(),  X86Reg::Xmm5()],
+            _ => panic!("the calling convention {self:?} is not usable in the x86 backend"),
+        }
     }
 }

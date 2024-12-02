@@ -566,3 +566,5 @@ def Pat<Rem .., .. -> ..> int
     asm -> mov %t1, $2;
     asm -> mov Operand::Reg(Reg::Rax()), $1;
 }
+
+def Pat<Call(_)> hook lower_call; {}

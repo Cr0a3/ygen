@@ -60,6 +60,7 @@ impl X86Instr {
             X86Mnemonic::Cwd => instr.encode_cwd(),
             X86Mnemonic::Cdq => instr.encode_cdq(),
             X86Mnemonic::Cqo => instr.encode_cqo(),
+            X86Mnemonic::Call => instr.encode_call(),
         }
     }
 
@@ -1206,6 +1207,23 @@ impl X86Instr {
 
     fn encode_cqo(&self) -> Vec<u8> {
         vec![0x48, 0x99]
+    }
+    fn encode_call(&self) -> Vec<u8> {
+        let target = self.op1.expect("expected call target");
+
+        let instr = match target {
+            X86Operand::Reg(reg) => Instruction::with1::<iced_x86::Register>(Code::Call_rm64, reg.into()),
+            X86Operand::Const(imm) => Instruction::with1(Code::Call_rel32_64, imm as i32),
+            X86Operand::MemDispl(mem) => Instruction::with1::<iced_x86::MemoryOperand>(Code::Call_rm64, mem.into()),
+            X86Operand::Rel(..) => Instruction::with_branch(Code::Call_rel32_64, 0), // branch will be resolved later
+            _ => panic!("invalid variant: {self}"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
     }
 }
 

@@ -58,6 +58,7 @@ impl DagVisitor for Assign<Var, Const> {
                 target: dag::DagOpTarget::Constant(Type::Void), // doesn't matter only the operation matters for this operand
                 operation: dag::DagOperandOption::AdrMove(self.inner2.name.clone()),
                 should_be_mem: false,
+                ty: TypeMetadata::ptr,
             }, 
             to, 
             TypeMetadata::ptr
@@ -86,7 +87,18 @@ impl DagVisitor for Call {
             return;
         }
 
-        todo!()
+        let mut args = Vec::new();
+
+        for arg in &self.args {
+            args.push( DagOp::from(arg.to_owned()) );
+        }
+
+        dag.push(DagNode::call(
+            self.func.name.to_owned(), 
+            args, 
+            DagOp::var(self.out.to_owned()), 
+            self.func.ty.ret
+        ));
     }
 }
 

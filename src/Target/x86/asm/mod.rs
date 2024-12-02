@@ -85,7 +85,8 @@ pub enum X86Mnemonic {
     Cbw,
     Cwd,
     Cdq,
-    Cqo
+    Cqo,
+    Call,
 }
 
 /// A X86 assembly operand
@@ -234,6 +235,7 @@ impl std::fmt::Display for X86Instr {
             X86Mnemonic::Cwd => "cwd",
             X86Mnemonic::Cdq => "cdq",
             X86Mnemonic::Cqo => "cqo",
+            X86Mnemonic::Call => "call",
         })?;
         
         if let Some(op) = &self.op1 {
@@ -263,6 +265,7 @@ impl McInstr for X86Instr {
 
     fn branch_to_block(&self) -> Option<crate::Obj::Link> {
         if let Some(X86Operand::Rel(branch, block)) = &self.op1 {
+            if !*block { return None; }
             return Some(crate::Obj::Link {
                 from: String::new(),
                 to: crate::Target::x86::get_rel(*branch),

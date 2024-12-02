@@ -97,6 +97,8 @@ pub enum DagOpCode {
     F64ToI32,
     F64ToI64,
     F64ToF32,
+
+    Call(String),
 }
 
 /// A operand in the dag
@@ -110,6 +112,8 @@ pub struct DagOp {
     pub operation: DagOperandOption,
     /// Should the operand be a memory location
     pub should_be_mem: bool,
+    /// The type of the operand
+    pub ty: TypeMetadata,
 }
 
 /// What to do with the operand target
@@ -217,6 +221,10 @@ impl DagNode {
     /// Creates a new rem dag node
     #[inline]
     pub fn rem(ls: DagOp, rs: DagOp, out: DagOp, ty:TypeMetadata) -> Self { DagNode::new_with_out(DagOpCode::Rem, out, vec![ls, rs], ty) }
+
+    /// Creates a new call dag node
+    #[inline]
+    pub fn call(target: String, operands: Vec<DagOp>, out: DagOp, out_ty:TypeMetadata) -> Self { DagNode::new_with_out(DagOpCode::Call(target), out, operands, out_ty) }
 }
 
 impl DagOp {
@@ -225,6 +233,7 @@ impl DagOp {
     pub fn var(var: Var) -> Self {
         Self {
             should_be_mem: var.ty == TypeMetadata::ptr,
+            ty: var.ty,
             allocated: false,
             target: DagOpTarget::UnallocatedVar(var),
             operation: DagOperandOption::Load,
@@ -239,6 +248,7 @@ impl DagOp {
             target: DagOpTarget::Reg(reg),
             operation: DagOperandOption::Load,
             should_be_mem: false,
+            ty: if reg.is_gr() { TypeMetadata::i64 } else { TypeMetadata::f64 }
         }
     }
 
@@ -250,6 +260,7 @@ impl DagOp {
             target: DagOpTarget::Mem(mem),
             operation: DagOperandOption::Load,
             should_be_mem: true,
+            ty: TypeMetadata::ptr,
         }
     }
 
@@ -262,6 +273,7 @@ impl DagOp {
             target: DagOpTarget::Constant(imm),
             operation: DagOperandOption::ConstantImm,
             should_be_mem: false,
+            ty: imm.into(),
         }
     }
 
@@ -316,6 +328,7 @@ impl Into<DagOp> for Type {
                 else { DagOperandOption::ConstantImm }
             },
             should_be_mem: false,
+            ty: self.into(),
         }
     }
 }
@@ -484,6 +497,7 @@ impl From<IROperand> for DagOp {
                     } else { unreachable!() }
                 },
                 should_be_mem: false,
+                ty: ty.into(),
             },
             IROperand::Var(var) => DagOp::var(var),
         }
@@ -505,6 +519,7 @@ impl From<&IROperand> for DagOp {
                     } else { unreachable!() }
                 },
                 should_be_mem: false,
+                ty: (*ty).into(),
             },
             IROperand::Var(var) => DagOp::var(var.to_owned()),
         }

@@ -26,18 +26,18 @@ mod auto_gen {
 
     use crate::CodeGen::dag::OperationHandler as oph;
 
-    fn lower_br(asm: &mut Vec<Asm>, node: DagNode) {
+    fn lower_br(asm: &mut Vec<Asm>, node: DagNode, _module: &mut crate::IR::Module) {
         let DagOpCode::Br(target) = node.get_opcode() else { unreachable!() };
         asm.push( Asm::with1(Mnemonic::Jmp, Operand::Rel(crate::Target::x86::add_rel(target), true)));
     }
 
-    fn lower_breq(asm: &mut Vec<Asm>, node: DagNode) {
+    fn lower_breq(asm: &mut Vec<Asm>, node: DagNode, _module: &mut crate::IR::Module) {
         let DagOpCode::BrIfEq(target) = node.get_opcode() else { unreachable!() };
         asm.push( Asm::with1(Mnemonic::Je, Operand::Rel(crate::Target::x86::add_rel(target), true)));
     }
 
     /// Lowers the end of intenger division
-    fn lower_divi(asm: &mut Vec<Asm>, node: DagNode) {
+    fn lower_divi(asm: &mut Vec<Asm>, node: DagNode, _module: &mut crate::IR::Module) {
         // At the start our assembly looks like this:
 
         // mov %t1, $2;
@@ -71,13 +71,62 @@ mod auto_gen {
     }
 
     /// lowers the end of intenger rem
-    fn lower_remi(asm: &mut Vec<Asm>, node: DagNode) {
+    fn lower_remi(asm: &mut Vec<Asm>, node: DagNode, _module: &mut crate::IR::Module) {
         // it's nearly the same only the last instruction is different
         // so we're just going to prentend like it's a division
-        lower_divi(asm, node.clone());
+        lower_divi(asm, node.clone(), _module);
         // and then change the last instruction
         asm.pop();
         asm.push(X86Instr::with2(X86Mnemonic::Mov, node.get_out().into(), X86Operand::Reg(X86Reg::Rdx())));
+    }
+
+    /// lowers the call dag node
+    fn lower_call(asm: &mut Vec<Asm>, node: DagNode, module: &mut crate::IR::Module) {
+        // The registers are automaticlly saved by the overwrite function
+        // so we only need todo two things here:
+        //   1. Process all arguments (e.g: moving them into their right register/memory/adress)
+        //   2. Call the function
+
+        // Here we lower the 1. step (moving args)
+        
+        let call = crate::Target::x86::get_call();
+
+        let mut arg_index = 0;
+
+        for arg in &node.ops {
+            let target = call.get_x86_arg(arg_index, arg.ty);
+
+            if let Some(reg) = target {
+                // We handle the copying using the Copy dag node
+                // so we don't need to handle funny types
+                let copy = DagNode::copy(
+                    arg.clone(),
+                    DagOp::reg(crate::CodeGen::reg::Reg::new_x86(reg)), 
+                    arg.ty
+                );
+                self::compile(asm, copy, module);
+            } else {
+                // Arg position is on the stack which is TODO
+                todo!("argument passing over the stack");
+            }
+
+            arg_index += 1;
+        }
+
+        // Here we lower the 2. step (call the function)
+
+        let DagOpCode::Call(target) = node.opcode.to_owned() else { unreachable!() };
+
+        let rel = crate::Target::x86::add_rel(target);
+        asm.push(X86Instr::with1(X86Mnemonic::Call, X86Operand::Rel(rel, false)));
+        
+        if node.get_ty().intenger() {
+            let mut ret = X86Reg::Rax();
+            ret.size = node.get_ty().byteSize().into();
+            asm.push(X86Instr::with2(X86Mnemonic::Mov, node.get_out().into(), X86Operand::Reg(ret)));
+        } else {
+            todo!()
+        }
     }
 
     include!("dag.def");
@@ -162,8 +211,21 @@ pub(super) fn x86_tmps(node: &DagNode) -> Vec<dag::DagTmpInfo> {
     tmps
 }
 
+/// Returns the registers overwritten by a call
+fn call_overwrittes() -> Vec<super::reg::X86Reg> {
+    let mut overwrittes = Vec::new();
+
+    overwrittes.extend(super::get_call().get_x86_gr_overwrittes());
+    overwrittes.extend(super::get_call().get_x86_fp_overwrittes());
+
+    overwrittes
+}
+
 pub(super) fn ov_proc(node: &DagNode) -> Vec<crate::CodeGen::reg::Reg> {
-    let overwrittes = auto_gen::overwrittes(node);
+    // This should handle most of the overwrittes, expect the one of the call node
+    let mut overwrittes = auto_gen::overwrittes(node);
+    // so if the node is a call node, we add the callee saved registers here
+    overwrittes.extend(call_overwrittes()); 
 
     let mut reg_ov = Vec::new();
 
