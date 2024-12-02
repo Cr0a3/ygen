@@ -225,7 +225,9 @@ pub(super) fn ov_proc(node: &DagNode) -> Vec<crate::CodeGen::reg::Reg> {
     // This should handle most of the overwrittes, expect the one of the call node
     let mut overwrittes = auto_gen::overwrittes(node);
     // so if the node is a call node, we add the callee saved registers here
-    overwrittes.extend(call_overwrittes()); 
+    if let dag::DagOpCode::Call(_) = node.get_opcode() {
+        overwrittes.extend(call_overwrittes()); 
+    }
 
     let mut reg_ov = Vec::new();
 
