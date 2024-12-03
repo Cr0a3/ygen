@@ -61,6 +61,9 @@ impl X86Instr {
             X86Mnemonic::Cdq => instr.encode_cdq(),
             X86Mnemonic::Cqo => instr.encode_cqo(),
             X86Mnemonic::Call => instr.encode_call(),
+            X86Mnemonic::Movq => instr.encode_movq(),
+            X86Mnemonic::Push => instr.encode_push(),
+            X86Mnemonic::Pop => instr.encode_pop(),
         }
     }
 
@@ -1216,6 +1219,63 @@ impl X86Instr {
             X86Operand::Const(imm) => Instruction::with1(Code::Call_rel32_64, imm as i32),
             X86Operand::MemDispl(mem) => Instruction::with1::<iced_x86::MemoryOperand>(Code::Call_rm64, mem.into()),
             X86Operand::Rel(..) => Instruction::with_branch(Code::Call_rel32_64, 0), // branch will be resolved later
+            _ => panic!("invalid variant: {self}"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
+    }
+
+    fn encode_movq(&self) -> Vec<u8> {
+        todo!()
+    }
+
+    fn encode_push(&self) -> Vec<u8> {
+        let operand = self.op1.expect("expected op1");
+
+        let instr = match operand {
+            X86Operand::Reg(reg) => match reg.size {
+                X86RegSize::Word => Instruction::with1::<iced_x86::Register>(Code::Push_r16, reg.into()),
+                X86RegSize::Dword => Instruction::with1::<iced_x86::Register>(Code::Push_r32, reg.into()),
+                X86RegSize::Qword => Instruction::with1::<iced_x86::Register>(Code::Push_r64, reg.into()),
+                X86RegSize::SimdVec | X86RegSize::Byte => panic!("invalid size for push"),
+            },
+            X86Operand::Const(constant) => Instruction::with1(Code::Push_imm16, constant as i32),
+            X86Operand::MemDispl(mem) => match mem.size {
+                X86RegSize::Word => Instruction::with1::<iced_x86::MemoryOperand>(Code::Push_rm16, mem.into()),
+                X86RegSize::Dword => Instruction::with1::<iced_x86::MemoryOperand>(Code::Push_rm32, mem.into()),
+                X86RegSize::Qword => Instruction::with1::<iced_x86::MemoryOperand>(Code::Push_rm64, mem.into()),
+                X86RegSize::SimdVec | X86RegSize::Byte => panic!("invalid size for push"),
+            },
+            _ => panic!("invalid variant: {self}"),
+        }.expect("invalid instruction");
+
+        BlockEncoder::encode(
+            64, 
+            InstructionBlock::new(&[instr], 0), 
+            BlockEncoderOptions::DONT_FIX_BRANCHES
+        ).expect("encoding error").code_buffer
+    }
+    
+    fn encode_pop(&self) -> Vec<u8> {
+        let operand = self.op1.expect("expected op1");
+
+        let instr = match operand {
+            X86Operand::Reg(reg) => match reg.size {
+                X86RegSize::Word => Instruction::with1::<iced_x86::Register>(Code::Pop_r16, reg.into()),
+                X86RegSize::Dword => Instruction::with1::<iced_x86::Register>(Code::Pop_r32, reg.into()),
+                X86RegSize::Qword => Instruction::with1::<iced_x86::Register>(Code::Pop_r64, reg.into()),
+                X86RegSize::SimdVec | X86RegSize::Byte => panic!("invalid size for pop"),
+            },
+            X86Operand::MemDispl(mem) => match mem.size {
+                X86RegSize::Word => Instruction::with1::<iced_x86::MemoryOperand>(Code::Pop_rm16, mem.into()),
+                X86RegSize::Dword => Instruction::with1::<iced_x86::MemoryOperand>(Code::Pop_rm32, mem.into()),
+                X86RegSize::Qword => Instruction::with1::<iced_x86::MemoryOperand>(Code::Pop_rm64, mem.into()),
+                X86RegSize::SimdVec | X86RegSize::Byte => panic!("invalid size for pop"),
+            },
             _ => panic!("invalid variant: {self}"),
         }.expect("invalid instruction");
 

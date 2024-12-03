@@ -125,13 +125,15 @@ impl TargetRegistry {
 
             let mut encoded = Vec::new();
             for instr in instrs {
-                encoded.extend_from_slice(&instr.encode());
+                encoded.extend(instr.encode());
 
                 if let Some(mut reloc) = instr.relocation() {
-                    reloc.at += encoded.len();
+                    reloc.at += encoded.len() + machine_code_len - 1;
 
                     reloc.from = func.name.to_owned();
                     
+                    println!("{reloc:?}");
+
                     links.push(reloc);
                 }
 
@@ -210,15 +212,18 @@ impl TargetRegistry {
             let mut first = true;
 
             for (block, insts) in block_instrs {
-                printer.begin_block(&block.name, !first);
+                if !block.name.as_str().contains("the epilog") && !block.name.as_str().contains("the prolog") {
+                    printer.begin_block(&block.name, !first);
+                    first = false;
+                } else {
+                    printer.begin_block(&block.name, false);
+                }
 
                 for inst in insts {
                     printer.print_inst(&inst);
                 }
 
                 printer.end_block();
-
-                first = false;
             }
 
             printer.end_func();

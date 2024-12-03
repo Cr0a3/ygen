@@ -26,25 +26,19 @@ pub enum X86Mnemonic {
     Movss,
     Movsd,
     Movdqa,
-
     Ret,
-
     Add,
     Addss,
     Paddq,
     Paddd,
-
     Sub,
     Psubq,
     Psubd,
     Psubw,
     Psubb,
-
     Lea,
-
     Jmp,
     Je,
-
     Sete,
     Setne,
     Setl,
@@ -52,15 +46,12 @@ pub enum X86Mnemonic {
     Setg,
     Setge,
     Cmp,
-
     Pinsrb,
     Pinsrw,
     Pinsrd,
     Pinsrq,
     Insertps,
-
     Imul,
-
     And,
     Or,
     Xor,
@@ -68,12 +59,9 @@ pub enum X86Mnemonic {
     Shr,
     Sal,
     Shl,
-
     Neg,
-
     Movsx,
     Movsxd,
-
     Cvtsi2sd,
     Cvtsi2ss,
     Cvtss2si,
@@ -87,6 +75,9 @@ pub enum X86Mnemonic {
     Cdq,
     Cqo,
     Call,
+    Movq,
+    Push,
+    Pop,
 }
 
 /// A X86 assembly operand
@@ -236,6 +227,9 @@ impl std::fmt::Display for X86Instr {
             X86Mnemonic::Cdq => "cdq",
             X86Mnemonic::Cqo => "cqo",
             X86Mnemonic::Call => "call",
+            X86Mnemonic::Movq => "movq",
+            X86Mnemonic::Push => "push",
+            X86Mnemonic::Pop => "pop",
         })?;
         
         if let Some(op) = &self.op1 {
@@ -300,8 +294,6 @@ impl McInstr for X86Instr {
 
             let Some(rel) = mem.rip_rel else { unreachable!() };
 
-            
-
             return Some(crate::Obj::Link {
                 from: String::new(),
                 to: crate::Target::x86::get_rel(rel),
@@ -313,5 +305,11 @@ impl McInstr for X86Instr {
         }
         
         None
+    }
+}
+
+impl Into<Box<dyn McInstr>> for X86Instr {
+    fn into(self) -> Box<dyn McInstr> {
+        Box::new( self.to_owned() )
     }
 }

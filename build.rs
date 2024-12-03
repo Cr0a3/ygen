@@ -8,7 +8,7 @@ fn visit_dirs(dir: &Path) -> io::Result<Vec<PathBuf>> {
             let entry = entry?;
             let path = entry.path();
             if path.is_dir() {
-                paths.extend_from_slice(&visit_dirs(&path)?);
+                paths.extend(visit_dirs(&path)?);
             } else {
                 if entry.path().extension().map_or(false, |ext| ext == "td") {
                     paths.push(entry.path());

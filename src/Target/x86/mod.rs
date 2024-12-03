@@ -158,6 +158,7 @@ static mut RELS: Option<Mutex<HashMap<i64, String>>> = None;
 static mut RELS_LAST: i64 = 0;
 static RELS_INIT: Once = Once::new();
 
+#[allow(static_mut_refs)]
 fn add_rel(target: String) -> i64 {
     if unsafe { RELS.is_none()} {
         unsafe {
@@ -179,6 +180,7 @@ fn add_rel(target: String) -> i64 {
     } 
 }
 
+#[allow(static_mut_refs)]
 fn get_rel(target: i64) -> String {
     if unsafe { RELS.is_none()} {
         unsafe {

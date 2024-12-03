@@ -1,14 +1,15 @@
 //use opt::X86BasicOpt;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 use crate::ydbg;
 use crate::CodeGen::dag::DagNode;
 use crate::CodeGen::reg::TargetReg;
 use crate::CodeGen::regalloc_iterated_col::ItRegCoalAlloc;
-use crate::IR::BlockId;
+use crate::IR::{BlockId, TypeMetadata};
 use crate::{CodeGen::dag, Target::instr::McInstr};
 use super::asm::*;
+use super::reg::X86Reg;
 
 #[allow(warnings)]
 mod auto_gen {
@@ -133,7 +134,7 @@ mod auto_gen {
 }
 
 pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc, module: &mut crate::IR::Module) -> Vec<(BlockId, Vec<Box<dyn McInstr>>)> {
-    let mut blocks = Vec::new();
+    let mut blocks = VecDeque::new();
     
     for (name, nodes) in &mut func.blocks {
         let mut asm: Vec<X86Instr> = Vec::new();
@@ -142,18 +143,37 @@ pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc,
 
             let mut overwrittes = HashMap::new();
             
-            for overwrite in auto_gen::overwrittes(&node) {
+            for overwrite in x86_overwrittesr(&node) {
                 // 1. Check if the value which is overwritten is currently in use
-                if !alloc.regs.contains(&crate::CodeGen::reg::Reg::new_x86(overwrite)) {
-                    continue;
+                let mut is_used = true;
+
+                for reg in &alloc.regs {
+                    if let crate::CodeGen::reg::TargetReg::X86(x86) = &reg.reg {
+                        if x86.variant == overwrite.variant {
+                            ydbg!("alloc.regs -> {:?}", alloc.regs);
+                            is_used = false;
+                            break;
+                        }
+                    }
                 }
 
+                if !is_used { continue; }
+
+
+                ydbg!("[X86] saving overwritten register: {overwrite}");
+
                 // 2. Allocate new spill location
-                // we feed random values into the mem processor cuz they will be ignored
-                let stack = super::alloc::mem_proc(alloc, &DagNode::new(dag::DagOpCode::Copy, crate::IR::TypeMetadata::Void), crate::IR::TypeMetadata::i64);
+                let ty = if overwrite.is_gr() { TypeMetadata::i64 } else if overwrite.is_fp() { TypeMetadata::f64 } else { todo!() };
+                let stack = super::alloc::mem_proc(alloc, &DagNode::new(dag::DagOpCode::Copy, crate::IR::TypeMetadata::Void), ty);
 
                 // We now create our instruction
-                let instr = super::asm::X86Instr::with2(X86Mnemonic::Mov, stack.into(), X86Operand::Reg(overwrite));
+
+                // at first we find the mnemonic
+                let mnemonic = if overwrite.is_gr() { X86Mnemonic::Mov } 
+                else if overwrite.is_fp() { X86Mnemonic::Movq } 
+                else { todo!() }; 
+                
+                let instr = super::asm::X86Instr::with2(mnemonic, stack.into(), X86Operand::Reg(overwrite));
 
                 asm.push(instr);
 
@@ -197,10 +217,45 @@ pub(super) fn x86_lower(func: &mut dag::DagFunction, alloc: &mut ItRegCoalAlloc,
                 mc_instrs.push(Box::new(instr));
         }
 
-        blocks.push((name.to_owned(), mc_instrs));
+        blocks.push_back((name.to_owned(), mc_instrs));
     };
 
-    blocks
+
+    // Here we add the prolog
+
+    let mut prolog = Vec::new();
+
+    if alloc.stack.abs() > 16 {
+        prolog.push(X86Instr::with1(X86Mnemonic::Push, X86Operand::Reg(X86Reg::Rbp())).into());
+        prolog.push(X86Instr::with2(X86Mnemonic::Sub, X86Operand::Reg(X86Reg::Rsp()), X86Operand::Const(alloc.stack.abs() as i64)).into());
+        prolog.push(X86Instr::with2(X86Mnemonic::Mov, X86Operand::Reg(X86Reg::Rbp()), X86Operand::Reg(X86Reg::Rsp())).into());
+    }
+
+    blocks.push_front((BlockId("the prolog (we can use this name cuz who really is going to type this out)?".to_string()), prolog));
+
+    // and the epilog
+
+    for (_, block) in &mut blocks {
+        if block.contains(&X86Instr::with0(X86Mnemonic::Ret).into()) {
+            // We now know that the block contains a return instruction
+            // we now need to add the epilog to it
+            // BEFORE the ret instruction
+            block.pop(); // remove return instruction
+
+            let mut epilog = Vec::new();
+
+            if alloc.stack.abs() > 16 {
+                epilog.push(X86Instr::with2(X86Mnemonic::Sub, X86Operand::Reg(X86Reg::Rsp()), X86Operand::Const(alloc.stack.abs() as i64)).into());
+                epilog.push(X86Instr::with1(X86Mnemonic::Pop, X86Operand::Reg(X86Reg::Rbp())).into());
+            }
+
+            block.extend(epilog);
+
+            block.push(X86Instr::with0(X86Mnemonic::Ret).into()); // and add the return instruction back
+        }
+    }
+    
+    blocks.into()
 }
 
 pub(super) fn x86_tmps(node: &DagNode) -> Vec<dag::DagTmpInfo> {
@@ -221,6 +276,17 @@ fn call_overwrittes() -> Vec<super::reg::X86Reg> {
     overwrittes
 }
 
+fn x86_overwrittesr(node: &DagNode) -> Vec<X86Reg> {
+    // This should handle most of the overwrittes, expect the one of the call node
+    let mut overwrittes = auto_gen::overwrittes(node);
+    // so if the node is a call node, we add the callee saved registers here
+    if let dag::DagOpCode::Call(_) = node.get_opcode() {
+        overwrittes.extend(call_overwrittes()); 
+    }
+
+    overwrittes
+}
+
 pub(super) fn ov_proc(node: &DagNode) -> Vec<crate::CodeGen::reg::Reg> {
     // This should handle most of the overwrittes, expect the one of the call node
     let mut overwrittes = auto_gen::overwrittes(node);
@@ -234,6 +300,8 @@ pub(super) fn ov_proc(node: &DagNode) -> Vec<crate::CodeGen::reg::Reg> {
     for ov in overwrittes {
         reg_ov.push(crate::CodeGen::reg::Reg::new_x86(ov));
     }
+
+    ydbg!("[X86] overwrittes for node {node}: {reg_ov:?}");
 
     reg_ov
 }

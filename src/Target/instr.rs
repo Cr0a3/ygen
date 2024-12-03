@@ -22,3 +22,9 @@ impl Display for Box<dyn McInstr> {
         write!(f, "{}", self.asm())
     }
 }
+
+impl PartialEq for Box<dyn McInstr> {
+    fn eq(&self, other: &Self) -> bool {
+        self.asm() == other.asm()
+    }
+}

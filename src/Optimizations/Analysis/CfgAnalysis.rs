@@ -73,7 +73,7 @@ impl CFGAnalysis {
         for (block, mut preds) in self.predecessors.clone() {
             let new_preds = self.preds_rec(&block, &mut preds);
 
-            self.predecessors.get_mut(&block).unwrap().extend_from_slice(&new_preds); 
+            self.predecessors.get_mut(&block).unwrap().extend(new_preds); 
         }
     }
 
