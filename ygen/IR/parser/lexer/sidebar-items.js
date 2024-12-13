@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["TokenType"],"struct":["IrLexer","Loc","Token"]};
