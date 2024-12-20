@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ColorClass"],"struct":["Cli","Color","ColorEncoder","ColorProfile","Error","SrcMngr","TokenMgr","TypeSwitch"],"trait":["Colorize","Pad","PrintErrorAndExit"]};
