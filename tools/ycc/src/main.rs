@@ -1,13 +1,12 @@
-use ygen::{Support::Cli, Target::Triple};
+use std::{io::Write, process::exit};
 
-mod ast;
+use ygen::{Support::Cli, Target::{initializeAllTargets, Triple}};
+use lang_c::driver::*;
+
 mod codegen;
-mod error;
-mod lexer;
-mod parser;
 mod utils;
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>>{
     let mut cli = Cli::new("ycc", "Ygens c compiler", "(latest)", "Cr0a3");
 
     // Standart stuff
@@ -47,6 +46,12 @@ fn main() {
     } else if cli.opt("vv") { // verbose version information
         println!("ycc v(latest) (c) Cr0a3");
         println!("Host-Target: {}", Triple::host());
+        std::process::exit(0);
+    }
+
+    if cli.opt("S") && cli.opt("emit-ir") {
+        println!("Error: ir and assembly can't be emitted at the same time");
+        std::process::exit(-1);
     }
     
     let triple = {
@@ -64,41 +69,38 @@ fn main() {
     };
 
     let infile = cli.arg_val("in").unwrap();
+    let mut out = utils::out_file(&infile, cli.arg_val("out"), cli.opt("S"), cli.opt("emit-ir"));
+    
+    let config = Config::default();
+    let parsed = parse(&config, infile);
 
-    let code = utils::read_in_file(&infile);
-    let out = utils::out_file(&infile, cli.arg_val("out"));
-
-    // Lexing Phase
-
-    let mut lexer = lexer::Lexer::new(&code);
-
-    lexer.lex();
-
-    let encountered_errors = lexer.errors.len() > 0; 
-
-    for error in &lexer.errors {
-        error.print(&code, &infile);
+    if let Err(err) = parsed {
+        println!("{err}");
+        exit(-1);
     }
 
-    if encountered_errors {
-        std::process::exit(-1);
+
+    let parsed = parsed.unwrap();
+
+    let mut codegen = codegen::CodeGeneration::new(parsed.unit.0);
+
+    codegen.codegen();
+
+    let mut targets = initializeAllTargets(triple)?;
+
+    if cli.opt("emit-ir") {
+        let ir = codegen.module.dump();
+
+        out.write_all(&ir.into_bytes())?;
+    } else if cli.opt("S") {
+        let asm = codegen.module.emitAsm(triple, &mut targets)?;
+
+        out.write_all(&asm.into_bytes())?;
+    } else {
+        let (obj, _) = codegen.module.emitMachineCode(triple, &mut targets, false)?;
+    
+        obj.emit(out, None)?;
     }
 
-    // Parsing phase
-
-    let mut parser = parser::Parser::new(&lexer.tokens);
-
-    parser.parse();
-
-    let encountered_errors = parser.errors.len() > 0; 
-
-    for error in &parser.errors {
-        error.print(&code, &infile);
-    }
-
-    if encountered_errors {
-        std::process::exit(-1);
-    }
-
-    println!("{:#?}", parser.out);
+    Ok(())
 }
