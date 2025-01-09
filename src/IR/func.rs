@@ -63,6 +63,8 @@ pub struct Function {
     
     pub(crate) linkage: Linkage,
     pub(crate) blocks: VecDeque<Block>,
+
+    pub(crate) curr_block: usize,
 }
 
 impl Function {
@@ -76,6 +78,8 @@ impl Function {
             name: name,
 
             linkage: Linkage::Internal,
+
+            curr_block: 0,
         }
     }
 
@@ -97,7 +101,30 @@ impl Function {
     /// Adds a new block to the function
     pub fn addBlock(&mut self, name: &str) -> BlockId {
         self.blocks.push_back(Block::new(name, &self));
+        self.curr_block = self.blocks.len() - 1;
         BlockId(name.to_owned())
+    }
+
+    /// Returns the current block
+    pub fn currentBlock(&self) -> BlockId {
+        let curr_block = self.blocks.back().expect("expected current block");
+        let name = curr_block.name.to_owned();
+
+        BlockId(name)
+    }
+
+    /// Sets the current block (Time: `O(n)`)
+    pub fn setCurrBlock(&mut self, curr_block: BlockId) {
+        let mut index = 0;
+
+        for block in &self.blocks {
+            if block.name == curr_block.name {
+                self.curr_block = index;
+                break;
+            }
+
+            index += 1;
+        }
     }
 
     /// Emits the Ir of the function into a string
