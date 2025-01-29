@@ -68,6 +68,8 @@ impl<'a> IrSemnatic<'a> {
             args: fun_args,
             ret: ret,
             any_args: false,
+            arg_count: 0,
+            visibility: *scope,
         };
 
         if args.1 {
