@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 
 use lang_c::{ast::*, span::Node};
-use ygen::{prelude::*, Target::Triple, IR::{FunctionType, Module, TypeMetadata}};
+use ygen::{prelude::*, IR::{FunctionType, Module, TypeMetadata}};
 
 /// Code generation using ygen
 pub struct CodeGeneration {
     src: Vec<Node<ExternalDeclaration>>,
+    ids: HashMap<String, FuncId>,
     pub module: Module,
     if_count: usize,
 
@@ -17,15 +18,80 @@ impl CodeGeneration {
             if_count: 0,
             src: src,
             module: Module::new(),
+            ids: HashMap::new(),
         }
     }
 
     pub fn codegen(&mut self) {
+        self.gather_ids();
+
         for node in self.src.clone() {
             match node.node {
-                ExternalDeclaration::Declaration(_) => todo!(),
+                ExternalDeclaration::Declaration(_) => {}, // nothing todo cuz it's either later defined or extern
                 ExternalDeclaration::StaticAssert(_) => todo!(),
                 ExternalDeclaration::FunctionDefinition(node) => self.gen_func(node),
+            }
+        }
+    }
+
+    fn get_fnid(&self, name: &str) -> &FuncId {
+        self.ids.get(name).expect(&format!("Unknown function: {name}"))
+    }
+
+    fn gather_ids(&mut self) {
+        for node in &self.src {
+            if let ExternalDeclaration::Declaration(decl) = &node.node {
+                let decl = &decl.node;
+
+                let mut ret: Option<TypeMetadata> = None;
+                for specifier in &decl.specifiers {
+                    if let DeclarationSpecifier::TypeSpecifier(ty) = &specifier.node {
+                        let ty = ty.node.to_owned();
+                        let ty: TypeWrapper = ty.into();
+                        ret = Some(ty.into());
+                    }
+                }
+                let ret = ret.expect("expected return type");
+
+                let name = match &decl.declarators[0].node.declarator.node.kind.node {
+                    lang_c::ast::DeclaratorKind::Identifier(node) => node.node.name.to_owned(),
+                    _ => panic!("expected function name"),
+                };
+                let parsed_args = decl.declarators[0].node.declarator.node.derived.to_vec();
+
+                let mut fn_ty = FunctionType::new(Vec::new(), ret);
+
+                if let Some(node) = parsed_args.get(0).cloned() {
+                    if let DerivedDeclarator::Function(func) = node.node {
+                        let func = func.node.to_owned();
+            
+                        if func.ellipsis == Ellipsis::Some {
+                            fn_ty.activate_dynamic_arguments();
+                        }
+            
+                        for arg in func.parameters {
+                            if arg.node.declarator.is_none() {
+                                let DeclarationSpecifier::TypeSpecifier(ty) = arg.node.specifiers.get(0).unwrap().to_owned().node else { panic!("exepected type")};
+                                let ty: TypeWrapper = ty.node.into();
+                                let ty: TypeMetadata = ty.into();
+                                fn_ty.add_arg(ty);
+                                continue;
+                            }
+
+                            let DeclaratorKind::Identifier(name) = arg.node.declarator.expect("expected argument name").node.kind.node else {panic!("expected ident")};
+                            let name = name.node.name;
+            
+                            let DeclarationSpecifier::TypeSpecifier(ty) = arg.node.specifiers.get(0).unwrap().to_owned().node else { panic!("exepected type")};
+                            let ty: TypeWrapper = ty.node.into();
+                            let ty: TypeMetadata = ty.into();
+            
+                            fn_ty.args.push((format!("%{name}"), ty));
+                        }
+                    }
+                }
+            
+                let id = FuncId::new(&name, fn_ty);
+                self.ids.insert(name.to_owned(), id);
             }
         }
     }
@@ -145,10 +211,10 @@ impl CodeGeneration {
                 } else { panic!("empty expressions are currently not supported") }
             },
             Statement::If(node) => self.gen_if(func, vars, node.node),
-            Statement::Switch(node) => todo!(),
-            Statement::While(node) => todo!(),
-            Statement::DoWhile(node) => todo!(),
-            Statement::For(node) => todo!(),
+            Statement::Switch(_node) => todo!(),
+            Statement::While(_node) => todo!(),
+            Statement::DoWhile(_node) => todo!(),
+            Statement::For(_node) => todo!(),
             Statement::Goto(_node) => todo!(),
             Statement::Continue => todo!(),
             Statement::Break => todo!(),
@@ -172,22 +238,22 @@ impl CodeGeneration {
         match expr {
             Expression::Identifier(node) => self.gen_load_var(func, vars, node),
             Expression::Constant(node) => self.gen_const(func, node),
-            Expression::StringLiteral(node) => todo!(),
-            Expression::GenericSelection(node) => todo!(),
-            Expression::Member(node) => todo!(),
+            Expression::StringLiteral(_node) => todo!(),
+            Expression::GenericSelection(_node) => todo!(),
+            Expression::Member(_node) => todo!(),
             Expression::Call(node) => self.gen_call(func, vars, node.node),
-            Expression::CompoundLiteral(node) => todo!(),
-            Expression::SizeOfTy(node) => todo!(),
-            Expression::SizeOfVal(node) => todo!(),
-            Expression::AlignOf(node) => todo!(),
-            Expression::UnaryOperator(node) => todo!(),
-            Expression::Cast(node) => todo!(),
+            Expression::CompoundLiteral(_node) => todo!(),
+            Expression::SizeOfTy(_node) => todo!(),
+            Expression::SizeOfVal(_node) => todo!(),
+            Expression::AlignOf(_node) => todo!(),
+            Expression::UnaryOperator(_node) => todo!(),
+            Expression::Cast(_node) => todo!(),
             Expression::BinaryOperator(node) => self.gen_binary(func, vars, node.node),
-            Expression::Conditional(node) => todo!(),
-            Expression::Comma(vec) => todo!(),
-            Expression::OffsetOf(node) => todo!(),
-            Expression::Statement(node) => todo!(),
-            Expression::VaArg(node) => todo!("va_args are unsuported"),
+            Expression::Conditional(_node) => todo!(),
+            Expression::Comma(_vec) => todo!(),
+            Expression::OffsetOf(_node) => todo!(),
+            Expression::Statement(_node) => todo!(),
+            Expression::VaArg(_node) => todo!("va_args are unsuported"),
         }
     }
 
@@ -226,8 +292,8 @@ impl CodeGeneration {
 
                 func.BuildAssign(Type::from_int(ty, val as f64))
             },
-            Constant::Float(float) => todo!(),
-            Constant::Character(chr) => todo!(),
+            Constant::Float(_float) => todo!(),
+            Constant::Character(_chr) => todo!(),
         }
     }
 
@@ -236,8 +302,19 @@ impl CodeGeneration {
     }
 
     fn gen_call(&mut self, func: &mut Function, vars: &mut HashMap<String, (Var, TypeMetadata)>, node: CallExpression) -> Var {
-        todo!()
+        let Expression::Identifier(func_name) = node.callee.node else { todo!("Only constant functions are currently supported") };
+        let func_name = func_name.node.name;
 
+        let mut args = Vec::new();
+
+        for arg in node.arguments {
+            let arg = arg.node;
+
+            let arg = self.gen_expression(func, vars, arg);
+            args.push(IROperand::Var(arg));
+        }
+
+        func.BuildCall(self.get_fnid(&func_name), args)
     }
 
     fn gen_binary(&mut self, func: &mut Function, vars: &mut HashMap<String, (Var, TypeMetadata)>, expr: BinaryOperatorExpression) -> Var {

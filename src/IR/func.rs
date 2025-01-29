@@ -19,16 +19,39 @@ pub struct FunctionType {
     pub ret: TypeMetadata,
     /// After the given arguments any argument type can be supplied (like the printf function - is in c ...)
     pub any_args: bool,
+
+    /// Visibility of the target function
+    pub visibility: Linkage,
+
+    /// count of arguments
+    pub(crate) arg_count: usize,
 }
 
 impl FunctionType {
     /// Creates a new function type
     pub fn new(args: Vec<(String, TypeMetadata)>, ret: TypeMetadata) -> Self {
         Self {
+            arg_count: args.len(),
             args: args,
             ret: ret,
             any_args: false,
+            visibility: Linkage::Internal,
         }
+    }
+
+    /// Overwrites the visibility to extern (imported from another file)
+    pub fn set_extern(&mut self) { 
+        self.visibility = Linkage::Extern;
+    }
+
+    /// Overwrites the visibility to external (seen outside and inside of the file)
+    pub fn set_external(&mut self) { 
+        self.visibility = Linkage::External;
+    }
+    
+    /// Overwrites the visibility to internal (private)
+    pub fn set_internal(&mut self) { 
+        self.visibility = Linkage::Internal;
     }
 
     /// Activates dynamic arguments
@@ -50,6 +73,12 @@ impl FunctionType {
         }
 
         panic!("the func has {} args but args {} is accesed", self.args.len(), num)
+    }
+
+    /// Adds a new argument
+    pub fn add_arg(&mut self, ty: TypeMetadata) {
+        self.arg_count = self.args.len();
+        self.args.push((format!("%{}", self.arg_count), ty));
     }
 }
 
@@ -286,4 +315,11 @@ pub fn Func(name: String, ty: FunctionType) -> Function {
 pub struct FuncId {
     pub(crate) name: String,
     pub(crate) ty: FunctionType,
+}
+
+impl FuncId {
+    /// Creates a new function id with the name `name` and type `ty`
+    pub fn new(name: &String, ty: FunctionType) -> Self {
+        Self { name: name.to_owned(), ty }
+    }
 }
