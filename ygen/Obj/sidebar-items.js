@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Decl","Linkage"],"struct":["DllBuilder","ExeBuilder","Link","ObjectBuilder"]};
