@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["AllowmentOption","Arch","CallConv","Environment","OS","ObjFormat","RegistryError","Vendor","WhiteListError"],"fn":["initializeAllTargets"],"mod":["wasm","x64"],"struct":["TargetBackendDescr","TargetRegistry","Triple","WhiteList"],"trait":["AsmPrinter","Compiler","Lexer"]};

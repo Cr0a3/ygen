@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["out_file","read_in_file"]};

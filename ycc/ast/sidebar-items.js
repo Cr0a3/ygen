@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["AstOperand","AstTypeMeta","Expr","Stmt","TopLevelStmt","Visibility"],"struct":["AstType","ConstStmt","EnumStmt","FuncStmt","GlobalStmt","StructStmt"]};
