@@ -19,16 +19,39 @@ pub struct FunctionType {
     pub ret: TypeMetadata,
     /// After the given arguments any argument type can be supplied (like the printf function - is in c ...)
     pub any_args: bool,
+
+    /// Visibility of the target function
+    pub visibility: Linkage,
+
+    /// count of arguments
+    pub(crate) arg_count: usize,
 }
 
 impl FunctionType {
     /// Creates a new function type
     pub fn new(args: Vec<(String, TypeMetadata)>, ret: TypeMetadata) -> Self {
         Self {
+            arg_count: args.len(),
             args: args,
             ret: ret,
             any_args: false,
+            visibility: Linkage::Internal,
         }
+    }
+
+    /// Overwrites the visibility to extern (imported from another file)
+    pub fn set_extern(&mut self) { 
+        self.visibility = Linkage::Extern;
+    }
+
+    /// Overwrites the visibility to external (seen outside and inside of the file)
+    pub fn set_external(&mut self) { 
+        self.visibility = Linkage::External;
+    }
+    
+    /// Overwrites the visibility to internal (private)
+    pub fn set_internal(&mut self) { 
+        self.visibility = Linkage::Internal;
     }
 
     /// Activates dynamic arguments
@@ -51,6 +74,12 @@ impl FunctionType {
 
         panic!("the func has {} args but args {} is accesed", self.args.len(), num)
     }
+
+    /// Adds a new argument
+    pub fn add_arg(&mut self, ty: TypeMetadata) {
+        self.arg_count = self.args.len();
+        self.args.push((format!("%{}", self.arg_count), ty));
+    }
 }
 
 /// A ir function with a known variable and arg size and count
@@ -63,6 +92,8 @@ pub struct Function {
     
     pub(crate) linkage: Linkage,
     pub(crate) blocks: VecDeque<Block>,
+
+    pub(crate) curr_block: usize,
 }
 
 impl Function {
@@ -76,6 +107,8 @@ impl Function {
             name: name,
 
             linkage: Linkage::Internal,
+
+            curr_block: 0,
         }
     }
 
@@ -97,7 +130,30 @@ impl Function {
     /// Adds a new block to the function
     pub fn addBlock(&mut self, name: &str) -> BlockId {
         self.blocks.push_back(Block::new(name, &self));
+        self.curr_block = self.blocks.len() - 1;
         BlockId(name.to_owned())
+    }
+
+    /// Returns the current block
+    pub fn currentBlock(&self) -> BlockId {
+        let curr_block = self.blocks.back().expect("expected current block");
+        let name = curr_block.name.to_owned();
+
+        BlockId(name)
+    }
+
+    /// Sets the current block (Time: `O(n)`)
+    pub fn setCurrBlock(&mut self, curr_block: BlockId) {
+        let mut index = 0;
+
+        for block in &self.blocks {
+            if block.name == curr_block.name {
+                self.curr_block = index;
+                break;
+            }
+
+            index += 1;
+        }
     }
 
     /// Emits the Ir of the function into a string
@@ -259,4 +315,11 @@ pub fn Func(name: String, ty: FunctionType) -> Function {
 pub struct FuncId {
     pub(crate) name: String,
     pub(crate) ty: FunctionType,
+}
+
+impl FuncId {
+    /// Creates a new function id with the name `name` and type `ty`
+    pub fn new(name: &String, ty: FunctionType) -> Self {
+        Self { name: name.to_owned(), ty }
+    }
 }

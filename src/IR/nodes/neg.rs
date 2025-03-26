@@ -78,7 +78,7 @@ impl Function {
             panic!("variables need to be signed to get negated");
         }
 
-        let block = self.blocks.back_mut().expect("expects current block");
+        let block = self.blocks.get_mut(self.curr_block).expect("invalid current block");
 
         let out = Var::new(block, var.ty);
 

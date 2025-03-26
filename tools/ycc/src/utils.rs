@@ -1,28 +1,7 @@
 use std::fs::File;
-use std::io::Read;
 use std::process::exit;
 
-pub fn read_in_file(path: &String) -> String {
-    let mut infile = match File::open(&path) {
-        Ok(file) => file,
-        Err(err) => {
-            println!("Error: {} {}", path, err);
-            exit(-1);
-        },
-    };
-
-    let mut input = String::new();
-    match infile.read_to_string(&mut input) {
-        Ok(_) => {},
-        Err(err) => {
-            println!("Error: {} {}", path, err);
-            exit(-1);
-        }
-    };
-
-    input
-}
-pub fn out_file(in_path: &String, out_path: Option<String>) -> File {
+pub fn out_file(in_path: &String, out_path: Option<String>, asm: bool, ir: bool) -> File {
     let path;
 
     if let Some(out_path) = out_path { path = out_path }
@@ -40,7 +19,13 @@ pub fn out_file(in_path: &String, out_path: Option<String>) -> File {
             name.push_str(slice);
         }
 
-        path = format!("{}.o", name);
+        if !asm && !ir {
+            path = format!("{}.o", name);
+        } else if asm {
+            path = format!("{}.asm", name);
+        } else {
+            path = format!("{}.ll", name);
+        }
     }
 
     match File::options().create(true).write(true).truncate(true).open(&path) {
