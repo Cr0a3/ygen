@@ -10,7 +10,7 @@ macro_rules! MathIrNode {
 
         impl $build_trait<Type, Type> for Function {
             fn $build_func(&mut self, op0: Type, op1: Type)  -> Var {
-                let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
+                let block = self.blocks.get_mut(self.curr_block).expect("invalid current block");
                 
                 let op0Ty: TypeMetadata = op0.into();
 
@@ -25,7 +25,7 @@ macro_rules! MathIrNode {
 
         impl $build_trait<Var, Type> for Function {
             fn $build_func(&mut self, op0: Var, op1: Type)  -> Var {
-                let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
+                let block = self.blocks.get_mut(self.curr_block).expect("invalid current block");
                 
                 let op0Ty: TypeMetadata = op0.ty.into();
 
@@ -40,7 +40,7 @@ macro_rules! MathIrNode {
 
         impl $build_trait<Type, Var> for Function {
             fn $build_func(&mut self, op0: Type, op1: Var)  -> Var {
-                let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
+                let block = self.blocks.get_mut(self.curr_block).expect("invalid current block");
                 
                 let op0Ty: TypeMetadata = op0.into();
 
@@ -55,7 +55,7 @@ macro_rules! MathIrNode {
 
         impl $build_trait<Var, Var> for Function {
             fn $build_func(&mut self, op0: Var, op1: Var)  -> Var {
-                let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
+                let block = self.blocks.get_mut(self.curr_block).expect("invalid current block");
                 
                 let op0Ty: TypeMetadata = op0.ty.into();
 
