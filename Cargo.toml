@@ -31,7 +31,7 @@ gimli = { version = "0.31.1", features = ["write"] }
 logos = "0.15.0"
 object = { version = "0.36.7", features = ["write"] }
 proc = { workspace = true }
-unescaper = "0.1.5"
+unescaper = "0.1.6"
 
 winapi = { version = "0.3.9", features = ["winnt", "memoryapi", "libloaderapi"], optional = true }
 libc = { version = "0.2.172", optional = true }
