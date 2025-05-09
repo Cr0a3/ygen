@@ -182,7 +182,7 @@ pub trait BuildBr<T> {
 
 impl BuildBr<&BlockId> for Function {
     fn BuildBr(&mut self, to: &BlockId) {
-        let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.get_mut(self.curr_block).expect("invalid current block");
 
         block.push_ir(Br::new( to.to_owned() ));
     }
@@ -198,7 +198,7 @@ pub trait BuildBrCond<T, U, Z> {
 
 impl BuildBrCond<Var, &BlockId, &BlockId> for Function {
     fn BuildBrCond(&mut self, val: Var, iftrue: &BlockId, iffalse: &BlockId) {
-        let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.get_mut(self.curr_block).expect("invalid current block");
 
         block.push_ir( BrCond::new(val, iftrue.to_owned(), iffalse.to_owned()));
     }
