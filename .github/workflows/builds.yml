@@ -2,7 +2,7 @@ name: Release build
 
 on:
   push:
-    branches: [ "rewrite" ]
+    branches: [ "rewrite", "main" ]
 
 env:
     CARGO_INCREMENTAL: 0
@@ -11,7 +11,7 @@ env:
 
 jobs:
     release:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-22.04
 
         steps:
             - name: Checkout repository
