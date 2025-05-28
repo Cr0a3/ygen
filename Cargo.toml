@@ -36,7 +36,7 @@ unescaper = "0.1.6"
 winapi = { version = "0.3.9", features = ["winnt", "memoryapi", "libloaderapi"], optional = true }
 libc = { version = "0.2.172", optional = true }
 iced-x86 = { version = "1.21.0", features = ["code_asm"] }
-wasm-encoder = "0.229.0"
+wasm-encoder = "0.232.0"
 
 [features]
 jit = ["dep:libc", "dep:winapi"]
