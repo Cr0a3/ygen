@@ -29,7 +29,7 @@ rustdoc-args = ["--allow", "warnings"]
 [dependencies]
 gimli = { version = "0.31.1", features = ["write"] }
 logos = "0.15.0"
-object = { version = "0.36.7", features = ["write"] }
+object = { version = "0.37.0", features = ["write"] }
 proc = { workspace = true }
 unescaper = "0.1.6"
 
