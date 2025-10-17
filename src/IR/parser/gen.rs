@@ -37,6 +37,7 @@ impl IrGen {
             name: name,
             linkage: scope,
             blocks: VecDeque::new(),
+            curr_block: 0,
         };
 
         for (name, block) in body {

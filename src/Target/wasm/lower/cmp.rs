@@ -10,8 +10,8 @@ pub(crate) fn wasm_lower_cmp(sink: &mut Vec<WasmMCInstr>, instr: &MachineInstr, 
     let out: WasmOperand = instr.out.unwrap().into();
 
     let mnemonic = match mode {
-        CmpMode::Eqal => WasmMnemonic::Eq,
-        CmpMode::NotEqal => WasmMnemonic::Ne,
+        CmpMode::Equal => WasmMnemonic::Eq,
+        CmpMode::NotEuqal => WasmMnemonic::Ne,
         CmpMode::GreaterThan => if instr.meta.float() {
             WasmMnemonic::Gt
         } else if instr.meta.signed() {

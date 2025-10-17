@@ -236,7 +236,7 @@ pub trait BuildSelect<T, U> {
 
 impl BuildSelect<Type, Type> for Function {
     fn BuildSelect(&mut self, cond: Var, yes: Type, no: Type) -> Var {
-        let block = self.blocks.back_mut().expect("expected valid current block");
+        let block = self.blocks.get_mut(self.curr_block).expect("invalid current block");
 
         let out = Var::new(block, yes.into());
 
@@ -253,7 +253,7 @@ impl BuildSelect<Type, Type> for Function {
 
 impl BuildSelect<Type, Var> for Function {
     fn BuildSelect(&mut self, cond: Var, yes: Type, no: Var) -> Var {
-        let block = self.blocks.back_mut().expect("expected valid current block");
+        let block = self.blocks.get_mut(self.curr_block).expect("invalid current block");
 
         let out = Var::new(block, yes.into());
 
@@ -270,7 +270,7 @@ impl BuildSelect<Type, Var> for Function {
 
 impl BuildSelect<Var, Type> for Function {
     fn BuildSelect(&mut self, cond: Var, yes: Var, no: Type) -> Var {
-        let block = self.blocks.back_mut().expect("expected valid current block");
+        let block = self.blocks.get_mut(self.curr_block).expect("invalid current block");
 
         let out = Var::new(block, yes.ty);
 
@@ -287,7 +287,7 @@ impl BuildSelect<Var, Type> for Function {
 
 impl BuildSelect<Var, Var> for Function {
     fn BuildSelect(&mut self, cond: Var, yes: Var, no: Var) -> Var {
-        let block = self.blocks.back_mut().expect("expected valid current block");
+        let block = self.blocks.get_mut(self.curr_block).expect("invalid current block");
 
         let out = Var::new(block, yes.ty);
 

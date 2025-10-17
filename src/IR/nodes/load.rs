@@ -78,7 +78,7 @@ impl EvalOptVisitor for Load {
 impl Function {
     /// the load instruction loads an value from an pointer into a normal variable
     pub fn BuildLoad(&mut self, ptr: Var, ty: TypeMetadata) -> Var {
-        let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.get_mut(self.curr_block).expect("invalid current block");
         
         let out = Var::new(block, ty);
 
