@@ -107,7 +107,7 @@ impl Function {
     /// }
     /// ```
     pub fn BuildGetelemptr(&mut self, var: Var, index: Var, ty: TypeMetadata) -> Var {
-        let block = self.blocks.back_mut().expect("expected current block");
+        let block = self.blocks.get_mut(self.curr_block).expect("invalid current block");
 
         let out = Var::new(block, ty);
 

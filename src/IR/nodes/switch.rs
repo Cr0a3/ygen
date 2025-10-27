@@ -116,7 +116,7 @@ impl IsNode for Switch {
 impl Function {
     /// Builds an switch statement
     pub fn BuildSwitch(&mut self, source: Var, default: &BlockId, cases: HashMap<Type, &BlockId>) {
-        let block = self.blocks.back_mut().expect("expected current block");
+        let block = self.blocks.get_mut(self.curr_block).expect("invalid current block");
 
         let mut owned_cases = HashMap::new();
 

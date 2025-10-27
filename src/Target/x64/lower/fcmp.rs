@@ -24,8 +24,8 @@ pub(crate) fn x64_lower_fcmp(sink: &mut Vec<X64MCInstr>, instr: &MachineInstr, m
     sink.push(X64MCInstr::with2(mnemonic, ls, rs));
 
     let mne = match mode {
-        CmpMode::Eqal => Mnemonic::Sete,
-        CmpMode::NotEqal => Mnemonic::Setne,
+        CmpMode::Equal => Mnemonic::Sete,
+        CmpMode::NotEuqal => Mnemonic::Setne,
         CmpMode::GreaterThan => Mnemonic::Setg,
         CmpMode::LessThan => Mnemonic::Setl,
         CmpMode::GreaterThanOrEqual => Mnemonic::Setge,

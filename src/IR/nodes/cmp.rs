@@ -9,9 +9,9 @@ use super::{Assign, Cmp, EvalOptVisitor, IROperand, Ir, IsNode};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum CmpMode {
     /// ls == rs
-    Eqal,
+    Equal,
     /// ls != rs
-    NotEqal,
+    NotEuqal,
     /// ls > rs
     GreaterThan,
     /// ls < rs
@@ -25,8 +25,8 @@ pub enum CmpMode {
 impl Display for CmpMode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", match self {
-            CmpMode::Eqal => "eq",
-            CmpMode::NotEqal => "ne",
+            CmpMode::Equal => "eq",
+            CmpMode::NotEuqal => "ne",
             CmpMode::GreaterThan => "ge",
             CmpMode::LessThan => "le",
             CmpMode::GreaterThanOrEqual => "gte",
@@ -119,8 +119,8 @@ impl Ir for Cmp {
 
 fn calc_based_on_mode(mode: &CmpMode, ls: &Type, rs: &Type, out: Var) -> Option<Box<dyn Ir>> {
     let condition_met = match mode {
-        CmpMode::Eqal => ls.val() == rs.val(),
-        CmpMode::NotEqal => ls.val() != rs.val(),
+        CmpMode::Equal => ls.val() == rs.val(),
+        CmpMode::NotEuqal => ls.val() != rs.val(),
         CmpMode::GreaterThan => ls.val() > rs.val(),
         CmpMode::LessThan => ls.val() < rs.val(),
         CmpMode::GreaterThanOrEqual => ls.val() >= rs.val(),
@@ -146,8 +146,8 @@ impl EvalOptVisitor for Cmp {
     fn eval(&self) -> Option<Box<dyn Ir>> {
         if self.ls == self.rs {
             let yes = match self.mode {
-                CmpMode::Eqal => 1,
-                CmpMode::NotEqal => 0,
+                CmpMode::Equal => 1,
+                CmpMode::NotEuqal => 0,
                 CmpMode::GreaterThan => 0,
                 CmpMode::LessThan => 0,
                 CmpMode::GreaterThanOrEqual => 1,
@@ -218,7 +218,7 @@ pub trait BuildCmp<T, U> {
 
 impl BuildCmp<Var, Var> for Function {
     fn BuildCmp(&mut self, mode: CmpMode, ls: Var, rs: Var) -> Var {
-        let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.get_mut(self.curr_block).expect("invalid current block");
         
         let out = Var::new(block, TypeMetadata::u8);
 
@@ -230,7 +230,7 @@ impl BuildCmp<Var, Var> for Function {
 
 impl BuildCmp<Var, Type> for Function {
     fn BuildCmp(&mut self, mode: CmpMode, ls: Var, rs: Type) -> Var {
-        let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.get_mut(self.curr_block).expect("invalid current block");
         
         let out = Var::new(block, TypeMetadata::u8);
 
@@ -242,7 +242,7 @@ impl BuildCmp<Var, Type> for Function {
 
 impl BuildCmp<Type, Var> for Function {
     fn BuildCmp(&mut self, mode: CmpMode, ls: Type, rs: Var) -> Var {
-        let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.get_mut(self.curr_block).expect("invalid current block");
         
         let out = Var::new(block, TypeMetadata::u8);
 
@@ -254,7 +254,7 @@ impl BuildCmp<Type, Var> for Function {
 
 impl BuildCmp<Type, Type> for Function {
     fn BuildCmp(&mut self, mode: CmpMode, ls: Type, rs: Type) -> Var {
-        let block = self.blocks.back_mut().expect("the IRBuilder needs to have an current block\nConsider creating one");
+        let block = self.blocks.get_mut(self.curr_block).expect("invalid current block");
         
         let out = Var::new(block, TypeMetadata::u8);
 

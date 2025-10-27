@@ -843,8 +843,8 @@ impl IrParser {
         } else { unreachable!() };
 
         let mode = match ident.as_str() {
-            "eq" => CmpMode::Eqal,
-            "ne" => CmpMode::NotEqal,
+            "eq" => CmpMode::Equal,
+            "ne" => CmpMode::NotEuqal,
             "ge" => CmpMode::GreaterThan,
             "le" => CmpMode::LessThan,
             "gte" => CmpMode::GreaterThanOrEqual,
